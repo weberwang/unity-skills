@@ -1,0 +1,7 @@
+schemaVersion: "1.0"
+taskId: visual.scene-arena.runtime-v1
+cameraPath: CaptureRig/ApprovedCamera
+allowMainCamera: false
+width: 1920
+height: 1080
+outputPath: Artifacts/Visual/scene-arena/runtime-v1.png

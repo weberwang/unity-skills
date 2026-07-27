@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/image-generation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "sceneId", "visualType", "subjectVersion",
+    "visualBibleVersion", "prompt", "references", "output", "candidates", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL", "ASSET_SOURCE"]},
+    "subjectVersion": {"type": "string", "minLength": 1},
+    "visualBibleVersion": {"type": "string", "minLength": 1},
+    "prompt": {"type": "string", "minLength": 1},
+    "negativePrompt": {"type": "string"},
+    "references": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directory", "format", "width", "height", "candidateCount"],
+      "properties": {
+        "directory": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "format": {"enum": ["PNG", "JPEG", "WEBP"]},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "candidateCount": {"type": "integer", "minimum": 1, "maximum": 16}
+      }
+    },
+    "provider": {"type": "string", "minLength": 1},
+    "model": {"type": "string", "minLength": 1},
+    "generatedAtUtc": {"type": "string", "format": "date-time"},
+    "candidates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "sha256", "visualVersion", "width", "height"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "visualVersion": {"type": "string", "minLength": 1},
+          "width": {"type": "integer", "minimum": 1},
+          "height": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "status": {"enum": ["PLANNED", "RUNNING", "GENERATED", "FAILED", "BLOCKED"]},
+    "failureReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "GENERATED"}}, "required": ["status"]},
+      "then": {"required": ["provider", "model", "generatedAtUtc"], "properties": {"candidates": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["FAILED", "BLOCKED"]}}, "required": ["status"]},
+      "then": {"required": ["failureReason"]}
+    }
+  ]
+}

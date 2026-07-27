@@ -1,0 +1,14 @@
+schemaVersion: "1.0"
+taskId: qa.scene-arena-intro
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+buildVersion: 0.1.0-dev.1
+generatedAtUtc: "2026-07-27T12:00:00Z"
+checks:
+  - id: compile.clean
+    category: compile
+    status: NOT_RUN
+    message: 等待 Unity 编译与 Console 增量检查
+    evidence: []
+status: NOT_RUN
+evidence: []

@@ -1,0 +1,20 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+version: visual-v1
+status: REVIEWING
+artDirection: 克制的近未来竞技场，清晰功能分区与高对比交互焦点
+palette:
+  primary: "#16324F"
+  secondary: "#6B7C93"
+  accent: "#F4B942"
+  background: "#0B1320"
+lighting: 冷色环境光配合暖色任务引导灯，避免大面积纯白高光
+materials:
+  - 哑光深色金属
+  - 半透明蓝色全息玻璃
+camera: 第三人称中距离跟随，水平视野保持主要目标可读
+uiLanguage: 紧凑无衬线文字、方角面板和琥珀色关键反馈
+avoid:
+  - 高饱和霓虹色铺满画面
+  - 影响轮廓识别的密集表面噪声
+reviews: []

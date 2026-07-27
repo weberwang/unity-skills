@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/scene-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "version", "purpose", "entryConditions", "exitConditions",
+    "dependencies", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
+    "qualityGate", "status", "approvals", "qualityReportPaths", "runtimeCapturePaths",
+    "qualityReports", "runtimeCaptures", "visualReviews", "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "entryConditions": {"$ref": "#/$defs/nonEmptyStrings"},
+    "exitConditions": {"$ref": "#/$defs/nonEmptyStrings"},
+    "dependencies": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "ownedAssets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "gameplayVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "uiVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "qualityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumFps", "maximumLoadTimeSeconds"],
+      "properties": {
+        "minimumFps": {"type": "number", "minimum": 0},
+        "maximumLoadTimeSeconds": {"type": "number", "minimum": 0}
+      }
+    },
+    "status": {"$ref": "common.schema.json#/$defs/taskStatus"},
+    "approvals": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
+    "qualityReportPaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "runtimeCapturePaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "qualityReports": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "runtimeCaptures": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "visualReviews": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["game", "ui", "runtime"],
+      "properties": {
+        "game": {"allOf": [{"$ref": "common.schema.json#/$defs/evidence"}, {"required": ["subjectId", "subjectVersion"], "properties": {"type": {"const": "visual-review"}}}]},
+        "ui": {"allOf": [{"$ref": "common.schema.json#/$defs/evidence"}, {"required": ["subjectId", "subjectVersion"], "properties": {"type": {"const": "visual-review"}}}]},
+        "runtime": {"allOf": [{"$ref": "common.schema.json#/$defs/evidence"}, {"required": ["subjectId", "subjectVersion"], "properties": {"type": {"const": "visual-review"}}}]}
+      }
+    },
+    "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "frozenAtUtc": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "DONE"}}, "required": ["status"]},
+      "then": {
+        "required": ["frozenAtUtc"],
+        "properties": {
+          "qualityReportPaths": {"minItems": 1},
+          "runtimeCapturePaths": {"minItems": 1},
+          "qualityReports": {"minItems": 1},
+          "runtimeCaptures": {"minItems": 1},
+          "evidence": {"minItems": 1},
+          "approvals": {
+            "minItems": 12,
+            "allOf": [
+              {"contains": {"properties": {"approvalType": {"const": "GAME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "GAME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "GAME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "GAME_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}},
+              {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}},
+              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}}
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "nonEmptyStrings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/visual-review.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "subjectType", "subjectId", "subjectVersion",
+    "round", "candidateEvidence", "reviews", "consolidatedChanges", "userDecision", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "subjectType": {"enum": ["VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL"]},
+    "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "subjectVersion": {"type": "string", "minLength": 1},
+    "round": {"type": "integer", "minimum": 1},
+    "previousReview": {"$ref": "common.schema.json#/$defs/evidence"},
+    "candidateEvidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
+    "consolidatedChanges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "userDecision": {"enum": ["PENDING", "APPROVED", "CHANGES_REQUESTED", "REJECTED"]},
+    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "status": {"enum": ["DRAFT", "REVIEWING", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "required": ["userApproval"],
+        "properties": {
+          "userDecision": {"const": "APPROVED"},
+          "reviews": {
+            "minItems": 3,
+            "allOf": [
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
+            ]
+          },
+          "userApproval": {"properties": {"authority": {"const": "USER"}}, "required": ["authority"]}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "CHANGES_REQUIRED"}}, "required": ["status"]},
+      "then": {"properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"]}
+    }
+  ]
+}

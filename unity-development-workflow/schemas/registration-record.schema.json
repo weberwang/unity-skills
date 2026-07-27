@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/registration-record.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "recordId", "taskId", "resourceId", "module", "type", "purpose",
+    "sourceVersion", "visualVersion", "sourcePath", "sourceSha256", "assetPath", "address",
+    "assetGuid", "importer", "approvals", "approvalEvidencePaths", "importReportPath", "status",
+    "licenseStatus", "unityValidation", "generatedAtUtc"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "recordId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "module": {"type": "string", "minLength": 1},
+    "type": {"enum": ["sprite", "texture", "model", "animation", "vfx", "font", "audio", "ui"]},
+    "purpose": {"type": "string", "minLength": 1},
+    "sourceVersion": {"type": "string", "minLength": 1},
+    "visualVersion": {"type": "string", "minLength": 1},
+    "sourcePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "assetPath": {"allOf": [{"$ref": "common.schema.json#/$defs/projectRelativePath"}, {"pattern": "^Assets/Art/Runtime(?:/|$)"}]},
+    "address": {"type": "string", "minLength": 1},
+    "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+    "importer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+      "properties": {
+        "textureType": {"type": "string", "minLength": 1},
+        "spriteMode": {"type": "string", "minLength": 1},
+        "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+        "filterMode": {"type": "string", "minLength": 1},
+        "wrapMode": {"type": "string", "minLength": 1},
+        "maxSize": {"type": "integer", "minimum": 32},
+        "compression": {"type": "string", "minLength": 1},
+        "sRgb": {"type": "boolean"},
+        "alphaIsTransparency": {"type": "boolean"},
+        "mipmaps": {"type": "boolean"},
+        "readWriteEnabled": {"type": "boolean"}
+      }
+    },
+    "approvalEvidencePaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "approvals": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
+    "importReportPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "status": {"const": "VALIDATED"},
+    "licenseStatus": {"const": "PENDING"},
+    "unityValidation": {"const": "PASS"},
+    "generatedAtUtc": {"type": "string", "format": "date-time"}
+  }
+}

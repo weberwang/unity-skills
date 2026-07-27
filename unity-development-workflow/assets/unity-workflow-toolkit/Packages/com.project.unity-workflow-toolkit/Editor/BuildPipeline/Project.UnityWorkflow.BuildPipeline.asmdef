@@ -1,0 +1,20 @@
+{
+  "name": "Project.UnityWorkflow.BuildPipeline",
+  "rootNamespace": "Project.UnityWorkflow.BuildPipeline",
+  "references": [
+    "Project.UnityWorkflow.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

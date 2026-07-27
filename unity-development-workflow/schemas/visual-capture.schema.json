@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/visual-capture.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "cameraPath", "allowMainCamera", "width", "height", "outputPath"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "cameraPath": {"type": "string"},
+    "allowMainCamera": {"type": "boolean"},
+    "width": {"const": 1920},
+    "height": {"const": 1080},
+    "outputPath": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        {"pattern": "^Artifacts/Visual/.+\\.png$"}
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"allowMainCamera": {"const": false}}, "required": ["allowMainCamera"]},
+      "then": {"properties": {"cameraPath": {"minLength": 1}}}
+    }
+  ]
+}

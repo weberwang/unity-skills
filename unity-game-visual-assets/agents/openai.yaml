@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 视觉与资源"
+  short_description: "全局视觉、效果图、拆图、导入与实机迭代"
+  default_prompt: "使用 $unity-game-visual-assets 生成、审查并接入 Unity 视觉资源。"

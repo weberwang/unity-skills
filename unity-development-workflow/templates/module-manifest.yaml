@@ -1,0 +1,17 @@
+schemaVersion: "1.0"
+modules:
+  - id: Foundation.Core
+    category: Foundation
+    owns:
+      - Assets/Scripts/Foundation
+    dependsOn: []
+    publicInterfaces:
+      - IGameClock
+  - id: Gameplay.Player
+    category: Gameplay
+    owns:
+      - Assets/Scripts/Gameplay/Player
+    dependsOn:
+      - Foundation.Core
+    publicInterfaces:
+      - IPlayerController

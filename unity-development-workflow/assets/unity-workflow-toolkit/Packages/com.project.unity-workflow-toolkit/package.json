@@ -1,0 +1,20 @@
+{
+  "name": "com.project.unity-workflow-toolkit",
+  "version": "0.1.0",
+  "displayName": "Unity Workflow Toolkit",
+  "description": "为 Unity 游戏开发工作流提供契约读取、结构化报告、图片导入与质量验证能力。",
+  "unity": "6000.0",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
+  "author": {
+    "name": "Project Workflow Team"
+  },
+  "keywords": [
+    "workflow",
+    "automation",
+    "editor",
+    "mcp"
+  ],
+  "samples": []
+}

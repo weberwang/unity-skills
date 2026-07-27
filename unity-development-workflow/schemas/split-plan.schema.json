@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/split-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "sceneId", "sourceVersion", "sourceImage",
+    "annotatedPreview", "items", "reviews", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceVersion": {"type": "string", "minLength": 1},
+    "sourceImage": {"$ref": "common.schema.json#/$defs/evidence"},
+    "annotatedPreview": {"$ref": "common.schema.json#/$defs/evidence"},
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "elementIndex", "purpose", "bounds", "targetSize", "alphaRequired", "pivot", "pixelsPerUnit", "delivery", "action"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "elementIndex": {"type": "integer", "minimum": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "bounds": {
+            "type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"],
+            "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}
+          },
+          "targetSize": {
+            "type": "object", "additionalProperties": false, "required": ["width", "height"],
+            "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}
+          },
+          "alphaRequired": {"type": "boolean"},
+          "pivot": {"type": "object", "additionalProperties": false, "required": ["x", "y"], "properties": {"x": {"type": "number", "minimum": 0, "maximum": 1}, "y": {"type": "number", "minimum": 0, "maximum": 1}}},
+          "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+          "border": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "integer", "minimum": 0}},
+          "delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE"]},
+          "action": {"enum": ["REUSE", "SPLIT", "REDRAW", "REGENERATE", "BLOCKED"]},
+          "existingAssetId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
+    "status": {"enum": ["DRAFT", "REVIEWING", "APPROVED", "CHANGES_REQUIRED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "reviews": {
+            "minItems": 3,
+            "allOf": [
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"]}
+    }
+  ]
+}

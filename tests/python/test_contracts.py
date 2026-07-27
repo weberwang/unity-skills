@@ -1,0 +1,779 @@
+from pathlib import Path
+import re
+
+import pytest
+import yaml
+
+from unity_workflow.contracts import (
+    _is_rfc3339_date_time,
+    load_yaml,
+    validate_contract,
+)
+
+
+ROOT = Path(__file__).parents[2] / "unity-development-workflow"
+TEMPLATES = ROOT / "templates"
+
+TEMPLATE_CONTRACTS = (
+    ("project-profile", "project-profile.yaml"),
+    ("module-manifest", "module-manifest.yaml"),
+    ("task-contract", "task-contract.yaml"),
+    ("scene-manifest", "scene-manifest.yaml"),
+    ("image-task", "image-task.yaml"),
+    ("visual-bible", "visual-bible.yaml"),
+    ("quality-gates", "quality-gates.yaml"),
+    ("asset-register", "project-docs/asset-register.yaml"),
+    ("delivery-manifest", "delivery-manifest.yaml"),
+    ("visual-capture", "visual-capture.yaml"),
+    ("delivery-preflight", "delivery-preflight.yaml"),
+    ("runtime-visual-evidence", "runtime-visual-evidence.yaml"),
+    ("s00-report", "s00-report.yaml"),
+    ("scene-report", "scene-report.yaml"),
+    ("visual-review", "visual-review.yaml"),
+    ("split-plan", "split-plan.yaml"),
+    ("image-generation", "image-generation.yaml"),
+    ("quality-report", "quality-report.yaml"),
+    ("registration-record", "registration-record.json"),
+)
+
+
+@pytest.mark.parametrize(("kind", "filename"), TEMPLATE_CONTRACTS)
+def test_template_matches_schema(kind: str, filename: str) -> None:
+    """每份模板都必须是可直接校验的完整契约。"""
+    payload = load_yaml(TEMPLATES / filename)
+    assert validate_contract(kind, payload) == []
+
+
+def test_task_rejects_missing_write_scope() -> None:
+    """任务缺少 scope 时，错误必须稳定定位到该字段。"""
+    payload = {"id": "gameplay.player", "module": "Gameplay.Player"}
+    issues = validate_contract("task-contract", payload)
+    assert any(issue.path == "$.scope" for issue in issues)
+
+
+def test_task_requires_unity_instance_only_for_l2() -> None:
+    """仅 Unity/共享状态写入任务必须绑定实例，离线任务不得携带实例。"""
+    payload = load_yaml(TEMPLATES / "task-contract.yaml")
+    payload["execution"].pop("unityInstance")
+    assert any(
+        issue.path == "$.execution.unityInstance"
+        for issue in validate_contract("task-contract", payload)
+    )
+
+    payload["execution"]["executionLevel"] = "L1"
+    assert validate_contract("task-contract", payload) == []
+
+    payload["execution"]["unityInstance"] = "StarfallArena@editor-01"
+    assert validate_contract("task-contract", payload)
+
+
+def test_unknown_contract_kind_is_rejected() -> None:
+    """未知契约类型不能静默跳过校验。"""
+    with pytest.raises(ValueError, match="未知契约类型"):
+        validate_contract("unknown", {})
+
+
+def test_load_yaml_rejects_top_level_list(tmp_path: Path) -> None:
+    """YAML 顶层必须是映射，避免后续接口类型不稳定。"""
+    source = tmp_path / "list.yaml"
+    source.write_text("- first\n- second\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=re.escape(str(source))):
+        load_yaml(source)
+
+
+def test_load_yaml_preserves_parse_error_cause_and_path(tmp_path: Path) -> None:
+    """解析失败必须带来源路径，并保留 PyYAML 原始异常。"""
+    source = tmp_path / "broken.yaml"
+    source.write_text("field: [\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=re.escape(str(source))) as raised:
+        load_yaml(source)
+    assert isinstance(raised.value.__cause__, yaml.YAMLError)
+
+
+def test_load_yaml_parses_supplied_byte_snapshot_instead_of_rereading(tmp_path: Path) -> None:
+    """提供源字节时必须解析该快照，避免再次读取已变化的文件。"""
+    source = tmp_path / "contract.yaml"
+    source.write_text("value: changed\n", encoding="utf-8")
+
+    payload = load_yaml(source, source_bytes="value: 原始快照\n".encode())
+
+    assert payload == {"value": "原始快照"}
+
+
+@pytest.mark.parametrize(
+    "invalid_path",
+    ("", "/Assets/file.txt", "C:/Assets/file.txt", "Assets\\file.txt", "Assets/../file.txt"),
+)
+def test_delivery_rejects_invalid_project_relative_path(invalid_path: str) -> None:
+    """交付物路径必须是安全、正斜杠形式的项目相对路径。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "version": "1.0.0",
+        "sourceRevision": "abc123",
+        "buildProfile": "Assets/Settings/Windows.asset",
+        "platform": "Windows",
+        "distributionChannel": "本地交付",
+        "generatedAtUtc": "2026-07-12T12:00:00Z",
+        "manageBuildResult": {
+            "status": "PASS",
+            "evidencePath": "Artifacts/build.json",
+        },
+        "artifacts": [
+            {
+                "path": invalid_path,
+                "sha256": "a" * 64,
+                "sizeBytes": 1,
+            }
+        ],
+        "launchCheck": {
+            "status": "PASS",
+            "evidencePath": "Artifacts/launch.json",
+        },
+        "qualityReportPaths": ["Artifacts/quality-report.json"],
+        "licensesPath": "docs/asset-register.yaml",
+        "privacyReviewPath": "docs/privacy-review.md",
+        "releaseNotesPath": "Artifacts/release-notes.md",
+        "knownIssues": [],
+        "rollback": "恢复上一稳定候选包",
+        "authorization": {
+            "approvedBy": "release-owner",
+            "approvedAtUtc": "2026-07-12T12:00:00Z",
+            "allowedActions": ["LOCAL_DELIVERY"],
+        },
+    }
+    issues = validate_contract("delivery-manifest", payload)
+    assert any(issue.path == "$.artifacts[0].path" for issue in issues)
+
+
+def test_validation_issues_are_sorted_by_path_and_message() -> None:
+    """错误按路径和消息排序，保证 CLI 与测试输出确定。"""
+    issues = validate_contract("task-contract", {})
+    assert issues == sorted(issues, key=lambda issue: (issue.path, issue.message))
+
+
+def test_module_manifest_rejects_duplicate_module_ids() -> None:
+    """JSON Schema 无法表达的模块 ID 唯一性由语义校验保障。"""
+    module = {
+        "id": "Gameplay.Player",
+        "category": "Gameplay",
+        "owns": ["Assets/Scripts/Gameplay/Player"],
+        "dependsOn": [],
+        "publicInterfaces": ["IPlayerController"],
+    }
+    payload = {"schemaVersion": "1.0", "modules": [module, dict(module)]}
+    issues = validate_contract("module-manifest", payload)
+    assert any(issue.path == "$.modules[1].id" and "重复" in issue.message for issue in issues)
+
+
+def test_module_manifest_rejects_unknown_cycle_and_overlapping_ownership() -> None:
+    """模块依赖和所有权必须支持确定性并行调度。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "modules": [
+            {
+                "id": "Gameplay.A",
+                "category": "Gameplay",
+                "owns": ["Assets/Scripts/Gameplay"],
+                "dependsOn": ["Gameplay.B", "Missing.Module"],
+                "publicInterfaces": [],
+            },
+            {
+                "id": "Gameplay.B",
+                "category": "Gameplay",
+                "owns": ["Assets/Scripts/Gameplay/Player"],
+                "dependsOn": ["Gameplay.A"],
+                "publicInterfaces": [],
+            },
+        ],
+    }
+
+    issues = validate_contract("module-manifest", payload)
+
+    assert any("未知依赖" in issue.message for issue in issues)
+    assert any("依赖存在环" in issue.message for issue in issues)
+    assert any("路径所有权" in issue.message for issue in issues)
+
+
+def test_quality_gates_require_each_lifecycle_gate_once() -> None:
+    """质量门配置必须恰好覆盖 G0 至 G3，不能用重复项凑满四行。"""
+    payload = load_yaml(TEMPLATES / "quality-gates.yaml")
+    payload["gates"][3]["id"] = "G2"
+
+    issues = validate_contract("quality-gates", payload)
+
+    assert any("质量门 ID 重复" in issue.message for issue in issues)
+    assert any("缺少质量门: G3" in issue.message for issue in issues)
+
+
+def test_asset_register_rejects_duplicate_runtime_identity() -> None:
+    """不同资源 ID 不得复用同一路径、地址或 Unity GUID。"""
+    base = {
+        "type": "sprite",
+        "purpose": "玩家图标",
+        "source": "generated",
+        "sourceVersion": "v1",
+        "path": "Assets/Art/Runtime/icon.png",
+        "address": "ui/icon",
+        "status": "PLANNED",
+        "licenseStatus": "PENDING",
+        "unityValidation": "NOT_RUN",
+        "approvals": [],
+        "evidence": [],
+    }
+    payload = {
+        "schemaVersion": "1.0",
+        "assets": [{"id": "asset.icon-a", **base}, {"id": "asset.icon-b", **base}],
+        "placeholders": [],
+    }
+
+    issues = validate_contract("asset-register", payload)
+
+    assert any(issue.path == "$.assets[1].path" for issue in issues)
+    assert any(issue.path == "$.assets[1].address" for issue in issues)
+
+
+def test_quality_report_rejects_invalid_utc_timestamp() -> None:
+    """时间字段必须符合 JSON Schema 的 date-time 格式。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "taskId": "qa.smoke-test",
+        "generatedAtUtc": "not-a-time",
+        "checks": [
+            {
+                "id": "compile.clean",
+                "category": "compile",
+                "status": "PASS",
+                "message": "编译完成且无错误",
+                "evidence": [],
+            }
+        ],
+        "status": "PASS",
+        "evidence": [],
+    }
+    issues = validate_contract("quality-report", payload)
+    assert any(issue.path == "$.generatedAtUtc" for issue in issues)
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    ("2026-07-12 12:00:00+00:00", "20260712T120000+0000"),
+)
+def test_quality_report_rejects_non_rfc3339_timestamp(timestamp: str) -> None:
+    """date-time 必须拒绝 ISO 8601 中超出 RFC 3339 的宽松写法。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "taskId": "qa.smoke-test",
+        "generatedAtUtc": timestamp,
+        "checks": [
+            {
+                "id": "compile.clean",
+                "category": "compile",
+                "status": "PASS",
+                "message": "编译完成且无错误",
+                "evidence": [],
+            }
+        ],
+        "status": "PASS",
+        "evidence": [],
+    }
+    issues = validate_contract("quality-report", payload)
+    assert any(issue.path == "$.generatedAtUtc" for issue in issues)
+
+
+def test_quality_report_accepts_lowercase_rfc3339_utc_suffix() -> None:
+    """RFC 3339 允许使用小写 z 表示 UTC。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "taskId": "qa.smoke-test",
+        "projectId": "starfall-arena",
+        "sourceRevision": "working-tree-snapshot-20260727",
+        "buildVersion": "0.1.0-dev.1",
+        "generatedAtUtc": "2026-07-12T12:00:00z",
+        "checks": [
+            {
+                "id": "compile.clean",
+                "category": "compile",
+                "status": "PASS",
+                "message": "编译完成且无错误",
+                "evidence": [_evidence("Artifacts/Quality/compile.json")],
+            }
+        ],
+        "status": "PASS",
+        "evidence": [_evidence("Artifacts/Quality/report.json")],
+    }
+    assert validate_contract("quality-report", payload) == []
+
+
+def test_delivery_evidence_timestamps_require_actual_utc() -> None:
+    """名称为 AtUtc 的交付证据不得使用非零时区偏移，避免 Schema 与 C# 预检分叉。"""
+    quality = load_yaml(TEMPLATES / "quality-report.yaml")
+    quality["generatedAtUtc"] = "2026-07-27T20:00:00+08:00"
+    runtime = load_yaml(TEMPLATES / "runtime-visual-evidence.yaml")
+    runtime["screenshot"]["capturedAtUtc"] = "2026-07-27T20:00:00+08:00"
+
+    assert any(
+        issue.path == "$.generatedAtUtc"
+        for issue in validate_contract("quality-report", quality)
+    )
+    assert any(
+        issue.path == "$.screenshot.capturedAtUtc"
+        for issue in validate_contract("runtime-visual-evidence", runtime)
+    )
+
+
+def test_quality_report_cannot_pass_with_blocked_check() -> None:
+    """存在阻塞检查时汇总结果不能标记为通过。"""
+    payload = {
+        "schemaVersion": "1.0",
+        "taskId": "qa.windows-build",
+        "generatedAtUtc": "2026-07-12T12:00:00Z",
+        "checks": [
+            {
+                "id": "build.windows",
+                "category": "build",
+                "status": "BLOCKED",
+                "message": "未安装 Unity",
+                "evidence": [],
+            }
+        ],
+        "status": "PASS",
+        "evidence": [],
+    }
+
+    issues = validate_contract("quality-report", payload)
+
+    assert any(issue.path == "$.checks[0].status" for issue in issues)
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    (
+        "2026-07-12 12:00:00+00:00",
+        "20260712T120000+0000",
+        "2026-07-12T12:34:60Z",
+    ),
+)
+def test_rfc3339_fallback_rejects_unsupported_timestamp(timestamp: str) -> None:
+    """回退检查器必须拒绝宽松 ISO 格式和首版不支持的闰秒。"""
+    assert not _is_rfc3339_date_time(timestamp)
+
+
+def test_rfc3339_fallback_accepts_lowercase_utc_suffix() -> None:
+    """回退检查器必须保留 RFC 3339 对小写 z 的支持。"""
+    assert _is_rfc3339_date_time("2026-07-12T12:00:00z")
+
+
+def test_approved_image_requires_approval_record() -> None:
+    """图片任务没有批准记录时不得进入 APPROVED。"""
+    payload = load_yaml(TEMPLATES / "image-task.yaml")
+    payload["status"] = "APPROVED"
+    issues = validate_contract("image-task", payload)
+    assert any(issue.path == "$.approvals" for issue in issues)
+    assert any(issue.path == "$.selectedCandidate" for issue in issues)
+
+
+def _approval(
+    approval_type: str,
+    authority: str,
+    subject_id: str,
+    subject_version: str,
+    *,
+    reviewer: str = "reviewer",
+    discipline: str | None = None,
+) -> dict[str, object]:
+    """创建带主体、版本和证据哈希的批准记录测试夹具。"""
+    approval: dict[str, object] = {
+        "approvalType": approval_type,
+        "authority": authority,
+        "subjectId": subject_id,
+        "subjectVersion": subject_version,
+        "approvedBy": reviewer,
+        "approvedAtUtc": "2026-07-27T12:00:00Z",
+        "evidencePath": f"Artifacts/Approvals/{reviewer}.json",
+        "evidenceSha256": "a" * 64,
+    }
+    if authority == "INDEPENDENT_REVIEWER":
+        approval["reviewTaskId"] = f"review.{reviewer}"
+        approval["reviewDiscipline"] = discipline or "QA"
+    return approval
+
+
+def _evidence(path: str = "Artifacts/Evidence/result.json") -> dict[str, str]:
+    """创建具有真实哈希形状的机器证据测试夹具。"""
+    return {"type": "test", "path": path, "sha256": "b" * 64}
+
+
+def test_pass_quality_gate_requires_exact_passing_results_and_evidence() -> None:
+    """质量门不能只把顶层状态改为 PASS 而省略检查结果。"""
+    payload = load_yaml(TEMPLATES / "quality-gates.yaml")
+    payload["gates"][0]["status"] = "PASS"
+    payload["gates"][0]["evidence"] = [_evidence()]
+    payload["gates"][0]["checkResults"] = [
+        {
+            "id": "scope.approved",
+            "status": "PASS",
+            "evidence": [_evidence("Artifacts/Evidence/scope.json")],
+        }
+    ]
+
+    issues = validate_contract("quality-gates", payload)
+
+    assert any(
+        issue.path == "$.gates[0].checkResults" and "一一对应" in issue.message
+        for issue in issues
+    )
+
+
+def test_pass_quality_gate_rejects_non_passing_required_check() -> None:
+    """任一必需检查不是 PASS 时不得把质量门标记为 PASS。"""
+    payload = load_yaml(TEMPLATES / "quality-gates.yaml")
+    gate = payload["gates"][0]
+    gate["status"] = "PASS"
+    gate["evidence"] = [_evidence()]
+    gate["checkResults"] = [
+        {
+            "id": check_id,
+            "status": "FAIL" if index == 0 else "PASS",
+            "failureReason": "范围尚未获批",
+            "evidence": [] if index == 0 else [_evidence(f"Artifacts/Evidence/{index}.json")],
+        }
+        for index, check_id in enumerate(gate["requiredChecks"])
+    ]
+
+    issues = validate_contract("quality-gates", payload)
+
+    assert any(issue.path.endswith("checkResults[0].status") for issue in issues)
+
+
+def test_done_scene_requires_all_visual_approvals_and_runtime_evidence() -> None:
+    """场景不能在缺少游戏、UI、实机审查和用户批准时冻结。"""
+    payload = load_yaml(TEMPLATES / "scene-manifest.yaml")
+    payload["status"] = "DONE"
+
+    issues = validate_contract("scene-manifest", payload)
+
+    paths = {issue.path for issue in issues}
+    assert "$.approvals" in paths
+    assert "$.qualityReportPaths" in paths
+    assert "$.runtimeCapturePaths" in paths
+    assert "$.evidence" in paths
+    assert "$.frozenAtUtc" in paths
+
+
+def test_done_scene_rejects_approval_from_old_scene_version() -> None:
+    """旧场景版本的批准记录不得复用到新的冻结版本。"""
+    payload = load_yaml(TEMPLATES / "scene-manifest.yaml")
+    payload.update(
+        {
+            "status": "DONE",
+            "frozenAtUtc": "2026-07-27T12:00:00Z",
+            "qualityReportPaths": ["Artifacts/Quality/scene.json"],
+            "runtimeCapturePaths": ["Artifacts/Visual/scene/runtime.png"],
+            "evidence": [_evidence()],
+        }
+    )
+    payload["approvals"] = [
+        _approval(approval_type, authority, payload["id"], "old-version", reviewer=f"r{index}")
+        for index, (approval_type, authority) in enumerate(
+            (
+                ("GAME_VISUAL", "INDEPENDENT_REVIEWER"),
+                ("GAME_VISUAL", "USER"),
+                ("UI_VISUAL", "INDEPENDENT_REVIEWER"),
+                ("UI_VISUAL", "USER"),
+                ("RUNTIME_VISUAL", "INDEPENDENT_REVIEWER"),
+                ("RUNTIME_VISUAL", "USER"),
+            )
+        )
+    ]
+
+    issues = validate_contract("scene-manifest", payload)
+
+    assert any(issue.path.endswith(".subjectVersion") for issue in issues)
+
+
+def test_approved_visual_bible_requires_three_independent_reviews_and_user_approval() -> None:
+    """全局视觉基线不能跳过三类独立审查或用户批准。"""
+    payload = load_yaml(TEMPLATES / "visual-bible.yaml")
+    payload["status"] = "APPROVED"
+
+    issues = validate_contract("visual-bible", payload)
+
+    assert any(issue.path == "$.approval" for issue in issues)
+    assert any(issue.path == "$.reviews" for issue in issues)
+
+
+def test_approved_visual_bible_rejects_reused_reviewer_identity() -> None:
+    """三类全局视觉审查必须来自不同任务和不同审查者。"""
+    payload = load_yaml(TEMPLATES / "visual-bible.yaml")
+    payload["status"] = "APPROVED"
+    payload["approval"] = _approval(
+        "VISUAL_BASELINE", "USER", payload["projectId"], payload["version"], reviewer="user"
+    )
+    payload["reviews"] = [
+        _approval(
+            "VISUAL_BASELINE",
+            "INDEPENDENT_REVIEWER",
+            payload["projectId"],
+            payload["version"],
+            reviewer="same-reviewer",
+            discipline=discipline,
+        )
+        for discipline in ("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY")
+    ]
+
+    issues = validate_contract("visual-bible", payload)
+
+    assert any("不同的审查任务" in issue.message for issue in issues)
+    assert any("不同的审查者" in issue.message for issue in issues)
+
+
+def test_delivery_candidate_requires_successful_build_launch_and_evidence() -> None:
+    """未执行构建和启动检查的交付清单不能成为候选。"""
+    payload = load_yaml(TEMPLATES / "delivery-manifest.yaml")
+    payload["status"] = "CANDIDATE"
+
+    issues = validate_contract("delivery-manifest", payload)
+
+    paths = {issue.path for issue in issues}
+    assert "$.manageBuildResult.status" in paths
+    assert "$.launchCheck.status" in paths
+    assert "$.artifacts" in paths
+    assert "$.qualityReportPaths" in paths
+    assert "$.evidence" in paths
+
+
+def test_release_approved_delivery_requires_user_authorization() -> None:
+    """候选技术证据齐备仍不能替代用户的最终发布授权。"""
+    payload = load_yaml(TEMPLATES / "delivery-manifest.yaml")
+    payload.update(
+        {
+            "status": "RELEASE_APPROVED",
+            "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
+            "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
+            "artifacts": [
+                {"path": "Artifacts/Delivery/game.zip", "sha256": "c" * 64, "sizeBytes": 1}
+            ],
+            "qualityReportPaths": ["Artifacts/Quality/global.json"],
+            "evidence": [_evidence("Artifacts/Delivery/summary.json")],
+        }
+    )
+
+    issues = validate_contract("delivery-manifest", payload)
+
+    assert any(issue.path == "$.authorization" for issue in issues)
+
+
+def test_independent_approval_requires_review_task_and_discipline() -> None:
+    """仅填写 reviewer 字符串不能冒充独立审查记录。"""
+    payload = load_yaml(TEMPLATES / "image-task.yaml")
+    payload["status"] = "APPROVED"
+    payload["selectedCandidate"] = {
+        "path": "ArtSource/Generated/visual.player-portrait/processed/player.png",
+        "sha256": "d" * 64,
+        "visualVersion": "visual-v1",
+    }
+    approval = _approval(
+        "GAME_VISUAL", "INDEPENDENT_REVIEWER", payload["id"], payload["sourceVersion"]
+    )
+    approval.pop("reviewTaskId")
+    approval.pop("reviewDiscipline")
+    payload["approvals"] = [approval]
+
+    issues = validate_contract("image-task", payload)
+
+    assert any(issue.path.endswith("reviewTaskId") for issue in issues)
+    assert any(issue.path.endswith("reviewDiscipline") for issue in issues)
+
+
+def test_approved_image_binds_approvals_and_review_to_selected_visual_version() -> None:
+    """图片批准必须绑定任务 ID、已选候选版本及三代理最终审查。"""
+    payload = load_yaml(TEMPLATES / "image-task.yaml")
+    payload["status"] = "APPROVED"
+    payload["selectedCandidate"] = {
+        "path": "ArtSource/Generated/visual.player-portrait/processed/player.png",
+        "sha256": "d" * 64,
+        "visualVersion": "visual-v2",
+    }
+    payload["finalVisualReview"] = {
+        "type": "visual-review",
+        "path": "Artifacts/Visual/Reviews/player-final.yaml",
+        "sha256": "e" * 64,
+        "subjectId": payload["id"],
+        "subjectVersion": "visual-v2",
+    }
+    payload["approvals"] = [
+        _approval("GAME_VISUAL", "INDEPENDENT_REVIEWER", payload["id"], "visual-v2", reviewer=f"image-{index}", discipline=discipline)
+        for index, discipline in enumerate(("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"))
+    ]
+    payload["approvals"].append(_approval("GAME_VISUAL", "USER", payload["id"], "visual-v2", reviewer="user"))
+    assert validate_contract("image-task", payload) == []
+
+    payload["approvals"][0]["subjectVersion"] = payload["sourceVersion"]
+    issues = validate_contract("image-task", payload)
+    assert any(issue.path == "$.approvals[0].subjectVersion" for issue in issues)
+
+
+def test_delivery_preflight_rejects_bare_artifacts_directory() -> None:
+    """交付输出必须位于 Artifacts 的子目录，不能直接覆盖根目录。"""
+    payload = load_yaml(TEMPLATES / "delivery-preflight.yaml")
+    payload["outputDirectory"] = "Artifacts"
+    assert any(issue.path == "$.outputDirectory" for issue in validate_contract("delivery-preflight", payload))
+
+
+def test_approved_runtime_visual_requires_review_and_user_approval() -> None:
+    """Windows 实机证据没有独立审查和用户确认时不得进入 APPROVED。"""
+    payload = load_yaml(TEMPLATES / "runtime-visual-evidence.yaml")
+    payload["status"] = "APPROVED"
+
+    issues = validate_contract("runtime-visual-evidence", payload)
+
+    assert any(issue.path == "$.reviews" for issue in issues)
+    assert any(issue.path == "$.userApprovals" for issue in issues)
+
+
+def test_runtime_visual_rejects_approval_for_different_build_version() -> None:
+    """实机截图批准不能跨构建版本复用。"""
+    payload = load_yaml(TEMPLATES / "runtime-visual-evidence.yaml")
+    payload["status"] = "APPROVED"
+    payload["reviews"] = [
+        _approval(
+            "RUNTIME_VISUAL",
+            "INDEPENDENT_REVIEWER",
+            payload["sceneId"],
+            "old-build",
+            reviewer="runtime-reviewer",
+        )
+    ]
+    payload["userApprovals"] = [
+        _approval(
+            "RUNTIME_VISUAL",
+            "USER",
+            payload["sceneId"],
+            "old-build",
+            reviewer="user",
+        )
+    ]
+
+    issues = validate_contract("runtime-visual-evidence", payload)
+
+    assert any(issue.path.endswith(".subjectVersion") for issue in issues)
+
+
+def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
+    """强化负例后，证据齐全的质量门、视觉、场景、实机和交付仍应可通过。"""
+    gates = load_yaml(TEMPLATES / "quality-gates.yaml")
+    gate = gates["gates"][0]
+    gate["status"] = "PASS"
+    gate["evidence"] = [_evidence("Artifacts/Gates/G0.json")]
+    gate["checkResults"] = [
+        {
+            "id": check_id,
+            "status": "PASS",
+            "evidence": [_evidence(f"Artifacts/Gates/{index}.json")],
+        }
+        for index, check_id in enumerate(gate["requiredChecks"])
+    ]
+    assert validate_contract("quality-gates", gates) == []
+
+    bible = load_yaml(TEMPLATES / "visual-bible.yaml")
+    bible["status"] = "APPROVED"
+    bible["reviews"] = [
+        _approval(
+            "VISUAL_BASELINE",
+            "INDEPENDENT_REVIEWER",
+            bible["projectId"],
+            bible["version"],
+            reviewer=f"visual-reviewer-{index}",
+            discipline=discipline,
+        )
+        for index, discipline in enumerate(
+            ("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY")
+        )
+    ]
+    bible["approval"] = _approval(
+        "VISUAL_BASELINE", "USER", bible["projectId"], bible["version"], reviewer="user"
+    )
+    assert validate_contract("visual-bible", bible) == []
+
+    scene = load_yaml(TEMPLATES / "scene-manifest.yaml")
+    scene.update(
+        {
+            "status": "DONE",
+            "frozenAtUtc": "2026-07-27T12:00:00Z",
+            "qualityReportPaths": ["Artifacts/Quality/scene.json"],
+            "runtimeCapturePaths": ["Artifacts/Visual/Runtime/scene.png"],
+            "qualityReports": [_evidence("Artifacts/Quality/scene.json")],
+            "runtimeCaptures": [_evidence("Artifacts/Visual/Runtime/scene.json")],
+            "evidence": [_evidence("Artifacts/Scenes/scene.json")],
+        }
+    )
+    scene["approvals"] = []
+    for approval_type in ("GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL"):
+        for discipline in ("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"):
+            scene["approvals"].append(
+                _approval(
+                    approval_type,
+                    "INDEPENDENT_REVIEWER",
+                    scene["id"],
+                    scene["version"],
+                    reviewer=f"{approval_type.lower().replace('_', '-')}-{discipline.lower().replace('_', '-')}",
+                    discipline=discipline,
+                )
+            )
+        scene["approvals"].append(
+            _approval(approval_type, "USER", scene["id"], scene["version"], reviewer=f"user-{approval_type.lower()}")
+        )
+    assert validate_contract("scene-manifest", scene) == []
+
+    runtime = load_yaml(TEMPLATES / "runtime-visual-evidence.yaml")
+    runtime["status"] = "APPROVED"
+    runtime["reviews"] = [
+        _approval(
+            "RUNTIME_VISUAL",
+            "INDEPENDENT_REVIEWER",
+            runtime["sceneId"],
+            runtime["buildVersion"],
+            reviewer="runtime-reviewer",
+        )
+    ]
+    runtime["userApprovals"] = [
+        _approval(
+            "RUNTIME_VISUAL", "USER", runtime["sceneId"], runtime["buildVersion"], reviewer="user"
+        )
+    ]
+    assert validate_contract("runtime-visual-evidence", runtime) == []
+
+    delivery = load_yaml(TEMPLATES / "delivery-manifest.yaml")
+    delivery.update(
+        {
+            "projectId": "starfall-arena",
+            "status": "RELEASE_APPROVED",
+            "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
+            "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
+            "artifacts": [
+                {"path": "Artifacts/Delivery/game.zip", "sha256": "c" * 64, "sizeBytes": 1}
+            ],
+            "qualityReportPaths": ["Artifacts/Quality/global.json"],
+            "qualityReports": [_evidence("Artifacts/Quality/global.json")],
+            "runtimeVisualEvidence": [_evidence("Artifacts/Visual/Runtime/global.json")],
+            "evidence": [_evidence("Artifacts/Delivery/summary.json")],
+            "authorization": {
+                "approval": _approval(
+                    "RELEASE", "USER", delivery["id"], delivery["version"], reviewer="release-owner"
+                ),
+                "allowedActions": ["LOCAL_DELIVERY"],
+            },
+        }
+    )
+    assert validate_contract("delivery-manifest", delivery) == []
+
+
+@pytest.mark.parametrize(("_kind", "filename"), TEMPLATE_CONTRACTS)
+def test_templates_are_utf8_without_placeholders(_kind: str, filename: str) -> None:
+    """模板必须以 UTF-8 保存，且不能遗留未定义占位符。"""
+    text = (TEMPLATES / filename).read_text(encoding="utf-8")
+    upper_text = text.upper()
+    assert "TBD" not in upper_text
+    assert "TODO" not in upper_text
+    assert "NULL" not in upper_text
+    assert "\\" not in text

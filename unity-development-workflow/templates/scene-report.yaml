@@ -1,0 +1,42 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+sceneId: scene.arena-intro
+sceneVersion: scene-v1
+sourceRevision: working-tree-snapshot-20260727
+buildVersion: 0.1.0-dev.1
+generatedAtUtc: "2026-07-27T12:00:00Z"
+sceneManifest:
+  type: scene-manifest
+  path: Artifacts/Scenes/scene.arena-intro.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: scene.arena-intro
+  subjectVersion: scene-v1
+greybox:
+  id: scene.greybox
+  status: NOT_RUN
+  evidence: []
+gameVisual:
+  id: visual.game
+  status: NOT_RUN
+  evidence: []
+implementation:
+  id: scene.implementation
+  status: NOT_RUN
+  evidence: []
+uiVisual:
+  id: visual.ui
+  status: NOT_RUN
+  evidence: []
+runtimeComparison:
+  id: visual.runtime
+  status: NOT_RUN
+  evidence: []
+tests:
+  id: scene.tests
+  status: NOT_RUN
+  evidence: []
+performance:
+  id: scene.performance
+  status: NOT_RUN
+  evidence: []
+status: NOT_RUN

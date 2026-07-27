@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 玩法开发"
+  short_description: "实现可测试的玩法、场景、交互与状态"
+  default_prompt: "使用 $unity-gameplay-development 实现已批准的 Unity 游戏增量并提供证据。"

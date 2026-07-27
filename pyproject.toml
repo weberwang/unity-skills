@@ -1,0 +1,17 @@
+[project]
+name = "unity-development-workflow"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "jsonschema",
+    "PyYAML",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["unity-development-workflow/scripts"]
+

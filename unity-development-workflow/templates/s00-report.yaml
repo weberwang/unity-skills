@@ -1,0 +1,35 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+foundationVersion: foundation-v1
+sourceRevision: working-tree-snapshot-20260727
+generatedAtUtc: "2026-07-27T12:00:00Z"
+scope:
+  - 启动、场景加载、输入、配置、存档、UI Toolkit、日志与测试骨架
+sharedCapabilities:
+  - id: foundation.scene-loading
+    usedByScenes:
+      - scene.arena-intro
+      - scene.arena-battle
+changedPaths:
+  - Assets/Scripts/Foundation
+qualityReports:
+  - type: quality-report
+    path: Artifacts/Quality/s00-baseline.yaml
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    subjectId: qa.s00-baseline
+    subjectVersion: foundation-v1
+    sourceRevision: working-tree-snapshot-20260727
+    buildVersion: 0.1.0-dev.0
+console:
+  id: console.clean
+  status: NOT_RUN
+  evidence: []
+emptyWindowsBuild:
+  status: NOT_RUN
+  buildVersion: 0.1.0-dev.0
+  artifact:
+    type: windows-build
+    path: Artifacts/Builds/Windows/0.1.0-dev.0/starfall-arena.exe
+    sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+reviews: []
+status: NOT_RUN

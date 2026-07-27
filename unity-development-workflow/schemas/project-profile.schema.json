@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/project-profile.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "workflow", "unity", "delivery", "capabilities", "paths", "quality"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "gate", "qualityTargetsStatus"],
+      "properties": {
+        "channel": {"enum": ["QUICK", "STANDARD", "RELEASE"]},
+        "gate": {"enum": ["G0", "G1", "G2", "G3"]},
+        "qualityTargetsStatus": {"enum": ["PROPOSED", "APPROVED"]}
+      }
+    },
+    "unity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "renderPipeline"],
+      "properties": {
+        "version": {"const": "6"},
+        "renderPipeline": {"const": "URP"}
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "distributionChannel"],
+      "properties": {
+        "platform": {"const": "Windows"},
+        "distributionChannel": {"type": "string", "minLength": 1}
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["login", "cloudSave", "purchases", "ads", "analytics", "crashReporting", "online"],
+      "properties": {
+        "login": {"type": "boolean"},
+        "cloudSave": {"type": "boolean"},
+        "purchases": {"type": "boolean"},
+        "ads": {"type": "boolean"},
+        "analytics": {"type": "boolean"},
+        "crashReporting": {"type": "boolean"},
+        "online": {"type": "boolean"}
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generatedSourceRoot", "runtimeArtRoot", "artifactRoot"],
+      "properties": {
+        "generatedSourceRoot": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "runtimeArtRoot": {"const": "Assets/Art/Runtime"},
+        "artifactRoot": {"$ref": "common.schema.json#/$defs/projectRelativePath"}
+      }
+    },
+    "quality": {"$ref": "#/$defs/qualityBudget"}
+  },
+  "$defs": {
+    "qualityBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimumFps", "maximumCpuFrameTimeMs", "maximumGpuFrameTimeMs",
+        "maximumMemoryMb", "maximumGcAllocKbPerFrame",
+        "maximumDrawCalls", "maximumTextureMemoryMb", "maximumBuildSizeMb",
+        "maximumLoadTimeSeconds"
+      ],
+      "properties": {
+        "minimumFps": {"type": "number", "minimum": 0},
+        "maximumCpuFrameTimeMs": {"type": "number", "minimum": 0},
+        "maximumGpuFrameTimeMs": {"type": "number", "minimum": 0},
+        "maximumMemoryMb": {"type": "number", "minimum": 0},
+        "maximumGcAllocKbPerFrame": {"type": "number", "minimum": 0},
+        "maximumDrawCalls": {"type": "number", "minimum": 0},
+        "maximumTextureMemoryMb": {"type": "number", "minimum": 0},
+        "maximumBuildSizeMb": {"type": "number", "minimum": 0},
+        "maximumLoadTimeSeconds": {"type": "number", "minimum": 0}
+      }
+    }
+  }
+}

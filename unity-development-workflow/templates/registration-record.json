@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "recordId": "registration.asset-arena-background.v1",
+  "taskId": "image.arena-background",
+  "resourceId": "asset.arena-background",
+  "module": "Visual.Arena",
+  "type": "sprite",
+  "purpose": "竞技场背景",
+  "sourceVersion": "source-v1",
+  "visualVersion": "visual-v1",
+  "sourcePath": "ArtSource/Generated/arena-background/processed/background.png",
+  "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "assetPath": "Assets/Art/Runtime/Arena/background.png",
+  "address": "Assets/Art/Runtime/Arena/background.png",
+  "assetGuid": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "importer": {
+    "textureType": "Sprite",
+    "spriteMode": "Single",
+    "pixelsPerUnit": 100,
+    "filterMode": "Bilinear",
+    "wrapMode": "Clamp",
+    "maxSize": 2048,
+    "compression": "Uncompressed",
+    "sRgb": true,
+    "alphaIsTransparency": true,
+    "mipmaps": false,
+    "readWriteEnabled": false
+  },
+  "approvalEvidencePaths": [
+    "Artifacts/Approvals/image.arena-background.json"
+  ],
+  "approvals": [
+    {
+      "approvalType": "GAME_VISUAL",
+      "authority": "USER",
+      "subjectId": "image.arena-background",
+      "subjectVersion": "visual-v1",
+      "approvedBy": "visual-owner",
+      "approvedAtUtc": "2026-07-27T12:00:00Z",
+      "evidencePath": "Artifacts/Approvals/image.arena-background.json",
+      "evidenceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ],
+  "importReportPath": "Artifacts/Imports/image.arena-background.json",
+  "status": "VALIDATED",
+  "licenseStatus": "PENDING",
+  "unityValidation": "PASS",
+  "generatedAtUtc": "2026-07-27T12:00:00Z"
+}

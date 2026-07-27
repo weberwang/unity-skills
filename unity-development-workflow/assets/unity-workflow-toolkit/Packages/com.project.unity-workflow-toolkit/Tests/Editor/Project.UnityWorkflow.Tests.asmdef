@@ -1,0 +1,37 @@
+{
+  "name": "Project.UnityWorkflow.Tests",
+  "rootNamespace": "Project.UnityWorkflow.Tests",
+  "references": [
+    "MCPForUnity.Editor",
+    "Project.UnityWorkflow.Core",
+    "Project.UnityWorkflow.ImagePipeline",
+    "Project.UnityWorkflow.ProjectValidation",
+    "Project.UnityWorkflow.VisualQA",
+    "Project.UnityWorkflow.BuildPipeline",
+    "Project.UnityWorkflow.McpTools"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UWT_UNITY_MCP"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.coplaydev.unity-mcp",
+      "expression": "[10.0.0,11.0.0)",
+      "define": "UWT_UNITY_MCP"
+    }
+  ],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

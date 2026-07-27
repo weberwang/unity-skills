@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 数值设计"
+  short_description: "设计并验证可配置的难度、经济与成长模型"
+  default_prompt: "使用 $unity-game-balance 设计或校准 Unity 游戏数值。"

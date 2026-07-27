@@ -1,0 +1,40 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+gates:
+  - id: G0
+    status: WAITING_APPROVAL
+    requiredChecks:
+      - scope.approved
+      - visual-bible.approved
+      - windows-distribution.approved
+    checkResults: []
+    evidence: []
+  - id: G1
+    status: NOT_RUN
+    requiredChecks:
+      - s00.verified
+      - vertical-slice.playable
+      - visual.runtime-approved
+      - build.windows-development
+    checkResults: []
+    evidence: []
+  - id: G2
+    status: NOT_RUN
+    requiredChecks:
+      - scope.complete
+      - assets.production-ready
+      - regression.pass
+      - performance.pass
+      - defects.p0-p1-resolved
+    checkResults: []
+    evidence: []
+  - id: G3
+    status: NOT_RUN
+    requiredChecks:
+      - candidate.verified
+      - licenses.verified
+      - privacy.verified
+      - rollback.ready
+      - user.release-approved
+    checkResults: []
+    evidence: []

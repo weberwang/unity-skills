@@ -1,0 +1,16 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+sceneId: scene.arena-intro
+buildVersion: "0.1.0-dev.1"
+sourceRevision: working-tree-snapshot-20260727
+buildArtifactSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+captureSource: WINDOWS_STANDALONE
+screenshot:
+  path: Artifacts/Visual/Runtime/scene.arena-intro/0.1.0-dev.1.png
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  width: 1920
+  height: 1080
+  capturedAtUtc: "2026-07-27T12:00:00Z"
+status: REVIEWING
+reviews: []
+userApprovals: []

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/scene-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "projectId", "sceneId", "sceneVersion", "sourceRevision", "buildVersion",
+    "generatedAtUtc", "sceneManifest", "greybox", "gameVisual", "implementation", "uiVisual",
+    "runtimeComparison", "tests", "performance", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneVersion": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "buildVersion": {"type": "string", "minLength": 1},
+    "generatedAtUtc": {"type": "string", "format": "date-time"},
+    "sceneManifest": {"$ref": "common.schema.json#/$defs/evidence"},
+    "greybox": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "gameVisual": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "implementation": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "uiVisual": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "runtimeComparison": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "tests": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "performance": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+    "failureReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "greybox": {"properties": {"status": {"const": "PASS"}}},
+          "gameVisual": {"properties": {"status": {"const": "PASS"}}},
+          "implementation": {"properties": {"status": {"const": "PASS"}}},
+          "uiVisual": {"properties": {"status": {"const": "PASS"}}},
+          "runtimeComparison": {"properties": {"status": {"const": "PASS"}}},
+          "tests": {"properties": {"status": {"const": "PASS"}}},
+          "performance": {"properties": {"status": {"const": "PASS"}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["FAIL", "BLOCKED"]}}, "required": ["status"]},
+      "then": {"required": ["failureReason"]}
+    }
+  ]
+}

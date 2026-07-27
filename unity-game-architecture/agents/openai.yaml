@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 技术架构"
+  short_description: "建立 Unity 模块、生命周期和构建基线"
+  default_prompt: "使用 $unity-game-architecture 设计或评审 Unity 6 项目的技术边界。"

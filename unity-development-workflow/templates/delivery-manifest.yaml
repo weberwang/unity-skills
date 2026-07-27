@@ -1,0 +1,24 @@
+schemaVersion: "1.0"
+id: delivery.windows-rc1
+projectId: starfall-arena
+status: DRAFT
+version: "0.1.0-rc.1"
+sourceRevision: working-tree-snapshot-20260727
+buildProfile: Assets/Settings/BuildProfiles/Windows.asset
+platform: Windows
+distributionChannel: 本地交付
+generatedAtUtc: "2026-07-27T10:00:00Z"
+manageBuildResult:
+  status: NOT_RUN
+artifacts: []
+launchCheck:
+  status: NOT_RUN
+qualityReportPaths: []
+qualityReports: []
+runtimeVisualEvidence: []
+licensesPath: docs/asset-register.yaml
+privacyReviewPath: docs/privacy-review.md
+releaseNotesPath: Artifacts/Delivery/release-notes.md
+knownIssues: []
+rollback: 保留上一稳定候选包及哈希，失败时恢复该版本并重新执行启动检查。
+evidence: []

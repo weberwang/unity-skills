@@ -1,0 +1,18 @@
+schemaVersion: "1.0"
+id: imagegen.scene-arena-intro.game-v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+visualType: GAME_VISUAL
+subjectVersion: scene-v1
+visualBibleVersion: visual-v1
+prompt: 生成符合全局视觉基线的竞技场开场游戏效果图
+negativePrompt: 不使用不可实现的复杂透视和不可读界面文字
+references: []
+output:
+  directory: ArtSource/Generated/scene.arena-intro/game-v1
+  format: PNG
+  width: 1920
+  height: 1080
+  candidateCount: 3
+candidates: []
+status: PLANNED

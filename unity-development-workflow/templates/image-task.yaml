@@ -1,0 +1,35 @@
+schemaVersion: "1.0"
+id: visual.player-portrait
+resourceId: ui.player-portrait.scout
+sourceVersion: visual-v1
+module: Presentation.Player
+assetType: character-portrait
+useCase: 玩家选择界面的角色头像
+brief: 深蓝装甲的科幻侦察员半身像，清晰轮廓，柔和侧光
+references:
+  - Assets/Art/References/PlayerSilhouette.png
+output:
+  candidateCount: 4
+  aspectRatio: "1:1"
+  alphaRequired: true
+  targetPath: Assets/Art/Runtime/UI/Portraits
+  filename: player-scout.png
+unityImport:
+  textureType: Sprite
+  spriteMode: Single
+  pixelsPerUnit: 100
+  filterMode: Bilinear
+  wrapMode: Clamp
+  maxSize: 2048
+  compression: HighQuality
+  sRgb: true
+  alphaIsTransparency: true
+  mipmaps: false
+  readWriteEnabled: false
+acceptance:
+  - type: silhouette-readable
+    required: true
+  - type: palette-consistent
+    required: true
+status: REVIEWING
+approvals: []

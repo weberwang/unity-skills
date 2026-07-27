@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/asset-register.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "registerVersion", "sourceRevision", "assets", "placeholders"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "registerVersion": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "purpose", "source", "sourceVersion", "path", "address", "status", "licenseStatus", "unityValidation", "approvals", "evidence"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "type": {"enum": ["sprite", "texture", "model", "animation", "vfx", "font", "audio", "ui"]},
+          "purpose": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "sourceVersion": {"type": "string", "minLength": 1},
+          "visualVersion": {"type": "string", "minLength": 1},
+          "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "address": {"type": "string", "minLength": 1},
+          "guid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+          "importerReportPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "registrationRecordPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "importer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+            "properties": {
+              "textureType": {"type": "string", "minLength": 1},
+              "spriteMode": {"type": "string", "minLength": 1},
+              "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+              "filterMode": {"type": "string", "minLength": 1},
+              "wrapMode": {"type": "string", "minLength": 1},
+              "maxSize": {"type": "integer", "minimum": 32},
+              "compression": {"type": "string", "minLength": 1},
+              "sRgb": {"type": "boolean"},
+              "alphaIsTransparency": {"type": "boolean"},
+              "mipmaps": {"type": "boolean"},
+              "readWriteEnabled": {"type": "boolean"}
+            }
+          },
+          "status": {"enum": ["PLANNED", "REVIEWING", "APPROVED", "IMPORTED", "VALIDATED", "SUPERSEDED", "BLOCKED"]},
+          "licenseStatus": {"enum": ["PENDING", "APPROVED", "BLOCKED"]},
+          "licenseEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
+          "unityValidation": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+          "approvals": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
+          "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"enum": ["IMPORTED", "VALIDATED"]}}, "required": ["status"]},
+            "then": {"required": ["sourceSha256", "guid", "importerReportPath", "registrationRecordPath", "importer"]}
+          },
+          {
+            "if": {"properties": {"status": {"const": "VALIDATED"}}, "required": ["status"]},
+            "then": {
+              "properties": {
+                "unityValidation": {"const": "PASS"},
+                "evidence": {"minItems": 1}
+              }
+            }
+          },
+          {
+            "if": {"properties": {"licenseStatus": {"const": "APPROVED"}}, "required": ["licenseStatus"]},
+            "then": {"required": ["licenseEvidence"]}
+          }
+        ]
+      }
+    },
+    "placeholders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "owner", "deadlineGate"],
+        "properties": {
+          "assetId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "owner": {"type": "string", "minLength": 1},
+          "deadlineGate": {"enum": ["G1", "G2"]}
+        }
+      }
+    }
+  }
+}

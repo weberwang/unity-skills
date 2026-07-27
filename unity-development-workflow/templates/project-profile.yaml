@@ -1,0 +1,34 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+workflow:
+  channel: STANDARD
+  gate: G0
+  qualityTargetsStatus: PROPOSED
+unity:
+  version: "6"
+  renderPipeline: URP
+delivery:
+  platform: Windows
+  distributionChannel: 本地交付
+capabilities:
+  login: false
+  cloudSave: false
+  purchases: false
+  ads: false
+  analytics: false
+  crashReporting: false
+  online: false
+paths:
+  generatedSourceRoot: Assets/Generated
+  runtimeArtRoot: Assets/Art/Runtime
+  artifactRoot: Artifacts/Windows
+quality:
+  minimumFps: 60
+  maximumCpuFrameTimeMs: 16.67
+  maximumGpuFrameTimeMs: 16.67
+  maximumMemoryMb: 2048
+  maximumGcAllocKbPerFrame: 1
+  maximumDrawCalls: 1200
+  maximumTextureMemoryMb: 1024
+  maximumBuildSizeMb: 4096
+  maximumLoadTimeSeconds: 8

@@ -1,0 +1,41 @@
+schemaVersion: "1.0"
+id: split.scene-arena-intro.game-v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+sourceVersion: game-v1
+sourceImage:
+  type: approved-game-visual
+  path: ArtSource/Approved/scene.arena-intro/game-v1.png
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: scene.arena-intro
+  subjectVersion: scene-v1
+annotatedPreview:
+  type: annotated-split-preview
+  path: Artifacts/Visual/Split/scene.arena-intro/game-v1-annotated.png
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+items:
+  - id: asset.arena-intro.background
+    elementIndex: 1
+    purpose: 竞技场开场背景
+    bounds:
+      x: 0
+      y: 0
+      width: 1920
+      height: 1080
+    targetSize:
+      width: 1920
+      height: 1080
+    alphaRequired: false
+    pivot:
+      x: 0.5
+      y: 0.5
+    pixelsPerUnit: 100
+    border:
+      - 0
+      - 0
+      - 0
+      - 0
+    delivery: SINGLE_SPRITE
+    action: SPLIT
+reviews: []
+status: REVIEWING

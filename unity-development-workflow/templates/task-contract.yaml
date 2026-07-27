@@ -1,0 +1,26 @@
+schemaVersion: "1.0"
+id: gameplay.player-controller
+module: Gameplay.Player
+dependsOn:
+  - foundation.game-clock
+scope:
+  read:
+    - Assets/Scripts/Foundation
+  write:
+    - Assets/Scripts/Gameplay/Player
+locks:
+  - type: path
+    resource: Assets/Scripts/Gameplay/Player
+    mode: write
+execution:
+  agentRole: gameplay-engineer
+  executionLevel: L2
+  isolation: path-ownership
+  unityInstance: StarfallArena@editor-01
+acceptance:
+  - type: edit-mode-tests
+    required: true
+  - type: compile-clean
+    required: true
+outputs:
+  - Assets/Scripts/Gameplay/Player/PlayerController.cs

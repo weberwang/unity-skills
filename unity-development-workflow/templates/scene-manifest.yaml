@@ -1,0 +1,45 @@
+schemaVersion: "1.0"
+id: scene.arena-intro
+version: scene-v1
+purpose: 展示玩家进入竞技场并完成首次移动教学
+entryConditions:
+  - 玩家档案已加载
+exitConditions:
+  - 玩家到达竞技场中心
+dependencies:
+  - gameplay.player-controller
+ownedAssets:
+  - Assets/Scenes/ArenaIntro.unity
+gameplayVisualTasks:
+  - visual.arena-environment
+uiVisualTasks:
+  - visual.movement-prompt
+qualityGate:
+  minimumFps: 60
+  maximumLoadTimeSeconds: 5
+status: READY
+approvals: []
+qualityReportPaths: []
+runtimeCapturePaths: []
+qualityReports: []
+runtimeCaptures: []
+visualReviews:
+  game:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/game-final.yaml
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+  ui:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/ui-final.yaml
+    sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+  runtime:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/runtime-final.yaml
+    sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+evidence: []

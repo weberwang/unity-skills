@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/delivery-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "projectId", "status", "version", "sourceRevision", "buildProfile", "platform", "distributionChannel", "generatedAtUtc", "manageBuildResult", "artifacts", "launchCheck", "qualityReportPaths", "qualityReports", "runtimeVisualEvidence", "licensesPath", "privacyReviewPath", "releaseNotesPath", "knownIssues", "rollback", "evidence"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "status": {"enum": ["DRAFT", "CANDIDATE", "RELEASE_APPROVED", "BLOCKED"]},
+    "version": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "buildProfile": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "platform": {"const": "Windows"},
+    "distributionChannel": {"type": "string", "minLength": 1},
+    "generatedAtUtc": {"type": "string", "format": "date-time"},
+    "manageBuildResult": {"$ref": "#/$defs/checkResult"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "sizeBytes"],
+        "properties": {
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "sizeBytes": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "launchCheck": {"$ref": "#/$defs/checkResult"},
+    "qualityReportPaths": {
+      "type": "array",
+      "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}
+    },
+    "qualityReports": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "runtimeVisualEvidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "licensesPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "privacyReviewPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "releaseNotesPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+    "knownIssues": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "rollback": {"type": "string", "minLength": 1},
+    "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "blockedReason": {"type": "string", "minLength": 1},
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval", "allowedActions"],
+      "properties": {
+        "approval": {
+          "allOf": [
+            {"$ref": "common.schema.json#/$defs/approval"},
+            {"properties": {"approvalType": {"const": "RELEASE"}, "authority": {"const": "USER"}}}
+          ]
+        },
+        "allowedActions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["LOCAL_DELIVERY", "SIGN", "UPLOAD", "PUBLISH", "OVERWRITE_STABLE"]}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"enum": ["CANDIDATE", "RELEASE_APPROVED"]}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "manageBuildResult": {"properties": {"status": {"const": "PASS"}}},
+          "launchCheck": {"properties": {"status": {"const": "PASS"}}},
+          "artifacts": {"minItems": 1},
+          "qualityReportPaths": {"minItems": 1},
+          "qualityReports": {"minItems": 1},
+          "runtimeVisualEvidence": {"minItems": 1},
+          "evidence": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "RELEASE_APPROVED"}}, "required": ["status"]},
+      "then": {"required": ["authorization"]}
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"]}
+    }
+  ],
+  "$defs": {
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+        "evidence": {"$ref": "common.schema.json#/$defs/evidence"},
+        "failureReason": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
+          "then": {"required": ["evidence"]}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["FAIL", "BLOCKED"]}}, "required": ["status"]},
+          "then": {"required": ["failureReason"]}
+        }
+      ]
+    }
+  }
+}

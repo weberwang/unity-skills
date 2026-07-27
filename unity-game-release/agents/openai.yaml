@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity Windows 发布"
+  short_description: "准备候选包、许可、发行资料与交付放行"
+  default_prompt: "使用 $unity-game-release 准备 Unity Windows 候选交付物。"

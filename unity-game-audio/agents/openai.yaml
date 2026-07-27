@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 音频设计"
+  short_description: "规划音频反馈、混音、授权和 Windows 接入"
+  default_prompt: "使用 $unity-game-audio 设计并验证 Unity 游戏音频。"

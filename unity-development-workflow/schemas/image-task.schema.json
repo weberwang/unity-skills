@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/image-task.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "resourceId", "sourceVersion", "module", "assetType", "useCase", "brief",
+    "references", "output", "unityImport", "acceptance", "status", "approvals"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceVersion": {"type": "string", "minLength": 1},
+    "module": {"type": "string", "minLength": 1},
+    "assetType": {"type": "string", "minLength": 1},
+    "useCase": {"type": "string", "minLength": 1},
+    "brief": {"type": "string", "minLength": 1},
+    "references": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateCount", "aspectRatio", "alphaRequired", "targetPath", "filename"],
+      "properties": {
+        "candidateCount": {"type": "integer", "minimum": 1},
+        "aspectRatio": {"type": "string", "pattern": "^[1-9][0-9]*:[1-9][0-9]*$"},
+        "alphaRequired": {"type": "boolean"},
+        "targetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "filename": {"type": "string", "pattern": "^[^/\\\\]+\\.[A-Za-z0-9]+$"}
+      }
+    },
+    "selectedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "visualVersion"],
+      "properties": {
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "visualVersion": {"type": "string", "minLength": 1}
+      }
+    },
+    "finalVisualReview": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"required": ["subjectId", "subjectVersion"], "properties": {"type": {"const": "visual-review"}}}
+      ]
+    },
+    "unityImport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+      "properties": {
+        "textureType": {"enum": ["Default", "Sprite", "NormalMap"]},
+        "spriteMode": {"enum": ["Single", "Multiple", "None"]},
+        "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+        "filterMode": {"enum": ["Point", "Bilinear", "Trilinear"]},
+        "wrapMode": {"enum": ["Repeat", "Clamp", "Mirror", "MirrorOnce"]},
+        "maxSize": {"type": "integer", "minimum": 32},
+        "compression": {"enum": ["None", "LowQuality", "NormalQuality", "HighQuality"]},
+        "sRgb": {"type": "boolean"},
+        "alphaIsTransparency": {"type": "boolean"},
+        "mipmaps": {"type": "boolean"},
+        "readWriteEnabled": {"type": "boolean"}
+      }
+    },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "required"],
+        "properties": {
+          "type": {"type": "string", "minLength": 1},
+          "required": {"type": "boolean"}
+        }
+      }
+    },
+    "status": {"$ref": "common.schema.json#/$defs/taskStatus"},
+    "approvals": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/approval"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "required": ["selectedCandidate", "finalVisualReview"],
+        "properties": {
+          "approvals": {
+            "minItems": 4,
+            "allOf": [
+              {"contains": {"properties": {"authority": {"const": "USER"}}, "required": ["authority"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
