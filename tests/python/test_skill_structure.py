@@ -24,6 +24,7 @@ REFERENCE_NAMES = (
     "scene-2d-adaptation.md",
     "visual-workflow.md",
     "asset-pipeline.md",
+    "3d-asset-workflow.md",
     "quality-gates.md",
     "delivery.md",
     "project-artifacts.md",
@@ -31,6 +32,8 @@ REFERENCE_NAMES = (
 ROLE_SKILLS = (
     "unity-game-production",
     "unity-game-architecture",
+    "unity-game-3d-modeling",
+    "unity-game-3d-texturing",
     "unity-gameplay-development",
     "unity-game-balance",
     "unity-game-visual-assets",

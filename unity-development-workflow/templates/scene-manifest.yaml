@@ -40,6 +40,30 @@ gameplayVisualTasks:
   - visual.arena-environment
 uiVisualTasks:
   - visual.movement-prompt
+prefabStructure:
+  type: prefab-structure
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
+  sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+highFidelityVisualReview:
+  type: visual-review
+  path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+assetMap:
+  type: split-plan
+  path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  subjectId: split.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+prefabAssembly:
+  type: prefab-assembly
+  path: Artifacts/Visual/Assembly/scene.arena-intro.v1.yaml
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  subjectId: prefab-assembly.scene-arena-intro.v1
+  subjectVersion: prefab-assembly-v1
 qualityGate:
   minimumFps: 60
   maximumLoadTimeSeconds: 5

@@ -434,7 +434,7 @@ def test_scene_2d_adaptation_deeply_verifies_all_runtime_evidence(tmp_path: Path
         verifier.verify_reference(reference)
 
 
-def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_path: Path) -> None:
+def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_path: Path, monkeypatch) -> None:
     """拆分源必须与所引 image-generation 中的真实候选路径、哈希和版本一致。"""
     config, _, _ = _gate_fixture(tmp_path)
     gate_config = yaml.safe_load(config.read_text(encoding="utf-8"))
@@ -466,8 +466,8 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
             "id": "imagegen.asset-source.v1",
             "projectId": "starfall-arena",
             "sceneId": "scene.arena-intro",
-            "visualType": "ASSET_SOURCE",
-            "generationMode": "RUNTIME_ASSET_SOURCE",
+            "visualType": "GAME_VISUAL",
+            "generationMode": "SCENE_CONCEPT",
             "subjectVersion": "visual-v1",
             "visualBibleVersion": "visual-v1",
             "visualBibleEvidence": bible_evidence,
@@ -481,7 +481,7 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
                 "candidateCount": 1,
             },
             "candidates": [candidate],
-            "status": "GENERATED",
+            "status": "USER_CONFIRMED",
             "provider": "test-provider",
             "model": "test-model",
             "generatedAtUtc": "2026-07-27T12:00:00Z",
@@ -489,7 +489,7 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
     )
     generation_path = tmp_path / "Artifacts" / "Visual" / "generation.yaml"
     _write_yaml(generation_path, generation)
-    regeneration = {
+    high_fidelity_generation = {
         "type": "image-generation",
         "path": "Artifacts/Visual/generation.yaml",
         "sha256": _sha256(generation_path),
@@ -501,10 +501,287 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
         "candidateVisualVersion": candidate["visualVersion"],
     }
 
-    verifier._verify_split_plan_source({"regenerationEvidence": regeneration})
-    regeneration["candidateSha256"] = "f" * 64
+    high_fidelity_review = {
+        "type": "visual-review",
+        "path": "Artifacts/Visual/review.yaml",
+        "sha256": "e" * 64,
+        "subjectId": generation["id"],
+        "subjectVersion": candidate["visualVersion"],
+    }
+    review = {
+        "status": "REVIEW_APPROVED",
+        "subjectId": generation["id"],
+        "subjectVersion": candidate["visualVersion"],
+    }
+    structure = yaml.safe_load(
+        (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
+    )
+    structure["status"] = "APPROVED"
+    structure_reference = {
+        "type": "prefab-structure",
+        "path": "Artifacts/Visual/prefab-structure.yaml",
+        "sha256": "d" * 64,
+        "subjectId": structure["id"],
+        "subjectVersion": structure["version"],
+    }
+    monkeypatch.setattr(verifier, "verify_reference", lambda reference: None)
+    contracts = {
+        "prefab-structure": structure,
+        "image-generation": generation,
+        "visual-review": review,
+    }
+    monkeypatch.setattr(
+        verifier,
+        "_load_referenced_contract",
+        lambda reference: contracts[reference["type"]],
+    )
+    payload = {
+        "projectId": "starfall-arena",
+        "sceneId": "scene.arena-intro",
+        "prefabStructureEvidence": structure_reference,
+        "highFidelityGenerationEvidence": high_fidelity_generation,
+        "highFidelityReviewEvidence": high_fidelity_review,
+        "items": [{"id": "asset.background", "targetPrefabNodeIds": ["node.arena-background"]}],
+    }
+    verifier._verify_split_plan_source(payload)
+    high_fidelity_generation["candidateSha256"] = "f" * 64
     with pytest.raises(GateEvidenceError, match="路径、哈希或视觉版本不匹配"):
-        verifier._verify_split_plan_source({"regenerationEvidence": regeneration})
+        verifier._verify_split_plan_source(payload)
+
+
+def test_split_plan_rejects_target_node_absent_from_approved_p0(monkeypatch) -> None:
+    """P3 资产条目不得映射到已批准 P0 结构之外的节点。"""
+    verifier = _EvidenceVerifier(
+        Path.cwd(),
+        "starfall-arena",
+        "revision-001",
+        "0.1.0-dev.1",
+        "G2",
+        "project-state-v1",
+        {},
+    )
+    structure = yaml.safe_load(
+        (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
+    )
+    structure["status"] = "APPROVED"
+    generation = {
+        "id": "imagegen.scene-arena-intro.game-v1",
+        "status": "USER_CONFIRMED",
+        "candidates": [
+            {
+                "id": "candidate.scene-arena-intro.game-1",
+                "path": "ArtSource/Approved/scene.arena-intro/game-v1.png",
+                "sha256": "a" * 64,
+                "visualVersion": "game-v1",
+            }
+        ],
+    }
+    review = {
+        "status": "REVIEW_APPROVED",
+        "subjectId": generation["id"],
+        "subjectVersion": "game-v1",
+    }
+    contracts = {
+        "prefab-structure": structure,
+        "image-generation": generation,
+        "visual-review": review,
+    }
+    monkeypatch.setattr(verifier, "verify_reference", lambda reference: None)
+    monkeypatch.setattr(verifier, "_load_referenced_contract", lambda reference: contracts[reference["type"]])
+    payload = yaml.safe_load((ROOT / "templates" / "split-plan.yaml").read_text(encoding="utf-8"))
+    payload["items"][0]["targetPrefabNodeIds"] = ["node.not-in-p0"]
+
+    with pytest.raises(GateEvidenceError, match="P0 中不存在"):
+        verifier._verify_split_plan_source(payload)
+
+
+def test_prefab_structure_gate_recurses_visual_bible(monkeypatch) -> None:
+    """P0 的全局视觉引用未获批准时必须由递归门禁阻断。"""
+    verifier = _EvidenceVerifier(
+        Path.cwd(),
+        "starfall-arena",
+        "revision-001",
+        "0.1.0-dev.1",
+        "G2",
+        "project-state-v1",
+        {},
+    )
+    payload = yaml.safe_load(
+        (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
+    )
+
+    def reject_unapproved_visual_bible(reference: object) -> None:
+        """模拟深验发现 Visual Bible 尚未批准。"""
+        if isinstance(reference, dict) and reference.get("type") == "visual-bible":
+            raise GateEvidenceError("visual-bible 状态未通过")
+
+    monkeypatch.setattr(verifier, "verify_reference", reject_unapproved_visual_bible)
+
+    with pytest.raises(GateEvidenceError, match="visual-bible 状态未通过"):
+        verifier._verify_nested("prefab-structure", payload)
+
+
+@pytest.mark.parametrize(
+    ("mismatch", "message"),
+    (
+        ("prefab-path", "Prefab ID 或路径"),
+        ("node-parent", "节点 ID、父子关系或 Transform"),
+        ("node-transform", "节点 ID、父子关系或 Transform"),
+        ("scene-instance", "场景路径或 Prefab 实例"),
+    ),
+)
+def test_prefab_assembly_must_preserve_approved_p0_structure(
+    monkeypatch,
+    mismatch: str,
+    message: str,
+) -> None:
+    """最终拼装不得改写 P0 的 Prefab、节点层级、Transform 或场景实例。"""
+    verifier = _EvidenceVerifier(
+        Path.cwd(),
+        "starfall-arena",
+        "revision-001",
+        "0.1.0-dev.1",
+        "G2",
+        "project-state-v1",
+        {},
+    )
+    structure = yaml.safe_load(
+        (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
+    )
+    structure["status"] = "APPROVED"
+    split_plan = yaml.safe_load(
+        (ROOT / "templates" / "split-plan.yaml").read_text(encoding="utf-8")
+    )
+    assembly = yaml.safe_load(
+        (ROOT / "templates" / "prefab-assembly.yaml").read_text(encoding="utf-8")
+    )
+    if mismatch == "prefab-path":
+        assembly["prefabs"][0]["path"] = "Assets/Prefabs/Scenes/Other.prefab"
+    elif mismatch == "node-parent":
+        assembly["prefabs"][0]["nodes"][1].pop("parentId")
+    elif mismatch == "node-transform":
+        assembly["prefabs"][0]["nodes"][1]["position"]["x"] = 10
+    else:
+        assembly["scene"]["prefabInstances"][0]["position"]["x"] = 10
+
+    contracts = {"prefab-structure": structure, "split-plan": split_plan}
+    monkeypatch.setattr(verifier, "verify_reference", lambda reference: None)
+    monkeypatch.setattr(verifier, "_load_referenced_contract", lambda reference: contracts[reference["type"]])
+
+    with pytest.raises(GateEvidenceError, match=message):
+        verifier._verify_prefab_assembly_bindings(assembly)
+
+
+def test_prefab_assembly_gate_recurses_cleanup_evidence(monkeypatch) -> None:
+    """最终拼装门禁必须递归验证低保真清理证据文件。"""
+    verifier = _EvidenceVerifier(
+        Path.cwd(),
+        "starfall-arena",
+        "revision-001",
+        "0.1.0-dev.1",
+        "G2",
+        "project-state-v1",
+        {},
+    )
+    payload = yaml.safe_load(
+        (ROOT / "templates" / "prefab-assembly.yaml").read_text(encoding="utf-8")
+    )
+    payload["lowFidelityCleanup"]["evidence"] = [
+        {
+            "type": "low-fidelity-cleanup-report",
+            "path": "Artifacts/Validation/cleanup.yaml",
+            "sha256": "a" * 64,
+            "subjectId": payload["id"],
+            "subjectVersion": payload["version"],
+        }
+    ]
+
+    def reject_missing_cleanup_report(reference: object) -> None:
+        """模拟清理报告文件缺失，确认错误不会被顶层证据掩盖。"""
+        if isinstance(reference, dict) and reference.get("type") == "low-fidelity-cleanup-report":
+            raise GateEvidenceError("清理报告不存在")
+
+    monkeypatch.setattr(verifier, "_verify_prefab_assembly_bindings", lambda contract: None)
+    monkeypatch.setattr(verifier, "verify_reference", reject_missing_cleanup_report)
+
+    with pytest.raises(GateEvidenceError, match="清理报告不存在"):
+        verifier._verify_nested("prefab-assembly", payload)
+
+
+@pytest.mark.parametrize(
+    ("removed_type", "target_id", "target_path", "message"),
+    (
+        (
+            "SCENE_OBJECT",
+            "node.arena-background",
+            "Assets/Scenes/ArenaIntro.unity#ArenaRoot/Background",
+            "P0 结构节点",
+        ),
+        (
+            "ASSET",
+            "asset.low-fidelity-preview",
+            "Artifacts/Visual/Structure/scene.arena-intro.v1.png",
+            "审计证据",
+        ),
+    ),
+)
+def test_low_fidelity_cleanup_preserves_p0_structure_and_audit_evidence(
+    removed_type: str,
+    target_id: str,
+    target_path: str,
+    message: str,
+) -> None:
+    """清理只能删除灰盒占位内容，不能删除 P0 节点或审计证据。"""
+    verifier = _EvidenceVerifier(
+        Path.cwd(),
+        "starfall-arena",
+        "revision-001",
+        "0.1.0-dev.1",
+        "G2",
+        "project-state-v1",
+        {},
+    )
+    structure = yaml.safe_load(
+        (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
+    )
+    assembly = yaml.safe_load(
+        (ROOT / "templates" / "prefab-assembly.yaml").read_text(encoding="utf-8")
+    )
+    cleanup = assembly["lowFidelityCleanup"]
+    cleanup.update(
+        {
+            "removedItems": [
+                {
+                    "id": "cleanup.removed-item",
+                    "itemType": removed_type,
+                    "targetId": target_id,
+                    "targetPath": target_path,
+                    "reason": "移除灰盒或临时占位内容",
+                }
+            ],
+            "remainingPlaceholderCount": 0,
+            "structurePreserved": True,
+            "referencesClean": True,
+            "evidence": [
+                {
+                    "type": "low-fidelity-cleanup-report",
+                    "path": "Artifacts/Validation/cleanup.yaml",
+                    "sha256": "b" * 64,
+                    "subjectId": assembly["id"],
+                    "subjectVersion": assembly["version"],
+                }
+            ],
+            "status": "PASS",
+        }
+    )
+
+    with pytest.raises(GateEvidenceError, match=message):
+        verifier._verify_low_fidelity_cleanup(
+            assembly,
+            structure,
+            assembly["prefabStructureEvidence"],
+            assembly["splitPlanEvidence"],
+        )
 
 
 def test_cached_contract_still_rechecks_each_reference_identity(tmp_path: Path) -> None:

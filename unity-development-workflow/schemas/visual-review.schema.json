@@ -18,11 +18,18 @@
     "round": {"type": "integer", "minimum": 1},
     "previousReview": {"$ref": "common.schema.json#/$defs/evidence"},
     "candidateEvidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "generationEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "image-generation"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
     "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
     "consolidatedChanges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "userDecision": {"enum": ["PENDING", "APPROVED", "CHANGES_REQUESTED", "REJECTED"]},
     "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
-    "status": {"enum": ["DRAFT", "REVIEWING", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "BLOCKED"]},
+    "returnGate": {"enum": ["P1"]},
+    "status": {"enum": ["DRAFT", "REVIEWING", "CHANGES_REQUIRED", "REVIEW_APPROVED", "APPROVED", "REJECTED", "BLOCKED"]},
     "blockedReason": {"type": "string", "minLength": 1}
   },
   "allOf": [
@@ -45,8 +52,29 @@
       }
     },
     {
+      "if": {"properties": {"status": {"const": "REVIEW_APPROVED"}}, "required": ["status"]},
+      "then": {
+        "required": ["generationEvidence"],
+        "properties": {
+          "subjectType": {"enum": ["GAME_VISUAL", "UI_VISUAL"]},
+          "userDecision": {"const": "PENDING"},
+          "reviews": {
+            "minItems": 3,
+            "allOf": [
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
+            ]
+          }
+        }
+      }
+    },
+    {
       "if": {"properties": {"status": {"const": "CHANGES_REQUIRED"}}, "required": ["status"]},
-      "then": {"properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}}}
+      "then": {
+        "required": ["returnGate"],
+        "properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}, "returnGate": {"const": "P1"}}
+      }
     },
     {
       "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},

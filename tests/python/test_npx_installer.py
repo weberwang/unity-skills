@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -9,6 +10,19 @@ import pytest
 ROOT = Path(__file__).parents[2]
 PACKAGE_PATH = ROOT / "package.json"
 INSTALLER_PATH = ROOT / "scripts" / "install-project-skills.mjs"
+EXPECTED_SKILL_NAMES = (
+    "unity-development-workflow",
+    "unity-game-3d-modeling",
+    "unity-game-3d-texturing",
+    "unity-game-architecture",
+    "unity-game-audio",
+    "unity-game-balance",
+    "unity-game-production",
+    "unity-game-qa-performance",
+    "unity-game-release",
+    "unity-game-visual-assets",
+    "unity-gameplay-development",
+)
 
 
 def test_package_exposes_single_npx_entry() -> None:
@@ -19,16 +33,22 @@ def test_package_exposes_single_npx_entry() -> None:
     assert package["type"] == "module"
     assert package["bin"] == {"unity-skills": "./scripts/install-project-skills.mjs"}
     assert package["engines"]["node"] == ">=22.20.0"
-    assert len([path for path in package["files"] if path.startswith("unity-")]) == 9
-    assert "scripts/install-project-skills.mjs" in package["files"]
+    assert package["files"] == ["scripts/install-project-skills.mjs", *EXPECTED_SKILL_NAMES]
 
 
 def test_npx_installer_bundles_fixed_skill_allowlist() -> None:
     """远程安装器必须从当前包复制固定白名单中的全部 Skills。"""
     source = INSTALLER_PATH.read_text(encoding="utf-8")
+    allowlist_match = re.search(
+        r"const SKILL_NAMES = Object\.freeze\(\[(.*?)\]\);",
+        source,
+        flags=re.DOTALL,
+    )
 
     assert "const PACKAGE_ROOT" in source
-    assert "const SKILL_NAMES" in source
+    assert allowlist_match is not None
+    installed_names = tuple(re.findall(r'"([a-z0-9-]+)"', allowlist_match.group(1)))
+    assert installed_names == EXPECTED_SKILL_NAMES
     assert 'resolve(projectRoot, ".agents")' in source
     assert "cpSync(source, target" in source
     assert "skills@" not in source
@@ -89,7 +109,7 @@ def test_npx_installer_copies_current_package_and_requires_force(tmp_path: Path)
     assert first.returncode == 0
 
     package = json.loads(PACKAGE_PATH.read_text(encoding="utf-8"))
-    skill_names = [path for path in package["files"] if path.startswith("unity-")]
+    skill_names = list(EXPECTED_SKILL_NAMES)
     target_root = tmp_path / ".agents" / "skills"
     assert sorted(path.name for path in target_root.iterdir()) == sorted(skill_names)
     for name in skill_names:

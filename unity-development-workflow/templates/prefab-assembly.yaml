@@ -1,0 +1,65 @@
+schemaVersion: "1.0"
+id: prefab-assembly.scene-arena-intro.v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+version: prefab-assembly-v1
+prefabStructureEvidence:
+  type: prefab-structure
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+splitPlanEvidence:
+  type: split-plan
+  path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  subjectId: split.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+assetBindings:
+  - itemId: asset.arena-intro.background
+    resourceId: asset.arena-background
+    productionType: IMAGE_TASK
+    productionEvidence:
+      type: image-task
+      path: Artifacts/Visual/Items/asset.arena-background.yaml
+      sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      subjectId: visual.arena-background
+      subjectVersion: arena-background-v1
+    assetPath: Assets/Art/Runtime/Arena/background.png
+    assetGuid: dddddddddddddddddddddddddddddddd
+prefabs:
+  - id: prefab.arena-root
+    path: Assets/Prefabs/Scenes/ArenaRoot.prefab
+    nodes:
+      - id: node.arena-root
+        name: ArenaRoot
+        components: [Transform]
+        position: {x: 0, y: 0, z: 0}
+        rotation: {x: 0, y: 0, z: 0}
+        scale: {x: 1, y: 1, z: 1}
+      - id: node.arena-background
+        parentId: node.arena-root
+        name: Background
+        resourceId: asset.arena-background
+        components: [Transform, SpriteRenderer]
+        position: {x: 0, y: 0, z: 1}
+        rotation: {x: 0, y: 0, z: 0}
+        scale: {x: 1, y: 1, z: 1}
+scene:
+  path: Assets/Scenes/ArenaIntro.unity
+  prefabInstances:
+    - id: instance.arena-root
+      prefabId: prefab.arena-root
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0}
+      scale: {x: 1, y: 1, z: 1}
+lowFidelityCleanup:
+  removedItems: []
+  remainingPlaceholderCount: 1
+  structurePreserved: false
+  referencesClean: false
+  evidence: []
+  status: NOT_RUN
+unityValidation: NOT_RUN
+evidence: []
+status: PLANNED

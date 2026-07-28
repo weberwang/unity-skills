@@ -1,17 +1,23 @@
 schemaVersion: "1.0"
-id: review.scene-arena-intro.game-v1.round-1
+id: review.imagegen.scene-arena-intro.game-v1.round-1
 projectId: starfall-arena
 sceneId: scene.arena-intro
 subjectType: GAME_VISUAL
-subjectId: scene.arena-intro
-subjectVersion: scene-v1
+subjectId: imagegen.scene-arena-intro.game-v1
+subjectVersion: game-visual-v1
 round: 1
 candidateEvidence:
   - type: generated-image
     path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.png
     sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    subjectId: scene.arena-intro
-    subjectVersion: scene-v1
+    subjectId: imagegen.scene-arena-intro.game-v1
+    subjectVersion: game-visual-v1
+generationEvidence:
+  type: image-generation
+  path: Artifacts/Visual/Generation/scene.arena-intro.game-v1.yaml
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: scene-v1
 reviews: []
 consolidatedChanges: []
 userDecision: PENDING

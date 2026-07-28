@@ -34,6 +34,8 @@ CONTRACT_TYPES = {
     "image-generation",
     "image-task",
     "scene-2d-adaptation",
+    "prefab-structure",
+    "prefab-assembly",
 }
 
 REQUIRED_STATUSES = {
@@ -45,13 +47,15 @@ REQUIRED_STATUSES = {
     "scene-report": {"PASS"},
     "registration-record": {"VALIDATED"},
     "delivery-manifest": {"CANDIDATE", "RELEASE_APPROVED"},
-    "visual-review": {"APPROVED"},
+    "visual-review": {"APPROVED", "REVIEW_APPROVED"},
     "visual-bible": {"APPROVED"},
     "s00-report": {"PASS"},
     "split-plan": {"APPROVED"},
-    "image-generation": {"GENERATED"},
+    "image-generation": {"GENERATED", "USER_CONFIRMED"},
     "image-task": {"APPROVED"},
     "scene-2d-adaptation": {"VERIFIED"},
+    "prefab-structure": {"APPROVED"},
+    "prefab-assembly": {"VERIFIED"},
 }
 
 REQUIRED_CHECK_EVIDENCE_TYPES = {
@@ -365,6 +369,14 @@ class _EvidenceVerifier:
             references.extend(payload.get("qualityReports", []))
             references.extend(payload.get("runtimeCaptures", []))
             references.extend(payload.get("visualReviews", {}).values())
+            references.extend(
+                (
+                    payload.get("prefabStructure"),
+                    payload.get("highFidelityVisualReview"),
+                    payload.get("assetMap"),
+                    payload.get("prefabAssembly"),
+                )
+            )
             references.extend(payload.get("evidence", []))
         elif kind == "scene-report":
             references.append(payload.get("sceneManifest"))
@@ -377,6 +389,7 @@ class _EvidenceVerifier:
             references.append(payload.get("emptyWindowsBuild", {}).get("artifact"))
             references.extend(_approval_references(payload.get("reviews", [])))
         elif kind == "visual-review":
+            references.append(payload.get("generationEvidence"))
             references.extend(payload.get("candidateEvidence", []))
             references.extend(_approval_references(payload.get("reviews", [])))
             references.extend(_approval_references([payload.get("userApproval")]))
@@ -387,8 +400,18 @@ class _EvidenceVerifier:
             references.extend(_approval_references([payload.get("approval")]))
         elif kind == "split-plan":
             self._verify_split_plan_source(payload)
-            references.extend((payload.get("visualBibleEvidence"), payload.get("regenerationEvidence"), payload.get("sourceImage"), payload.get("annotatedPreview")))
+            references.extend(
+                (
+                    payload.get("visualBibleEvidence"),
+                    payload.get("prefabStructureEvidence"),
+                    payload.get("highFidelityGenerationEvidence"),
+                    payload.get("highFidelityReviewEvidence"),
+                    payload.get("sourceImage"),
+                    payload.get("annotatedPreview"),
+                )
+            )
             references.extend(_approval_references(payload.get("reviews", [])))
+            references.extend(_approval_references([payload.get("userApproval")]))
         elif kind == "decomposition-plan":
             decision = payload.get("decision", {})
             references.extend(_approval_references([decision.get("userApproval")]))
@@ -398,15 +421,17 @@ class _EvidenceVerifier:
             references.append(payload.get("decompositionPlan"))
         elif kind == "image-generation":
             references.append(payload.get("visualBibleEvidence"))
+            references.extend((payload.get("prefabStructureEvidence"), payload.get("splitPlanEvidence")))
             references.extend(
                 {"type": "visual-reference", "path": item.get("path"), "sha256": item.get("sha256")}
                 for item in payload.get("references", [])
                 if isinstance(item, Mapping)
             )
             references.extend({"type": "generated-image", "path": item.get("path"), "sha256": item.get("sha256")} for item in payload.get("candidates", []))
+            references.extend(_approval_references([payload.get("userApproval")]))
         elif kind == "image-task":
             self._verify_image_task_split_binding(payload)
-            references.extend((payload.get("visualBibleEvidence"), payload.get("regenerationEvidence"), payload.get("splitPlanEvidence"), payload.get("finalVisualReview")))
+            references.extend((payload.get("visualBibleEvidence"), payload.get("itemGenerationEvidence"), payload.get("splitPlanEvidence"), payload.get("finalVisualReview")))
             references.extend(_approval_references(payload.get("approvals", [])))
             candidate = payload.get("selectedCandidate", {})
             references.append({"type": "selected-image", "path": candidate.get("path"), "sha256": candidate.get("sha256")})
@@ -437,42 +462,91 @@ class _EvidenceVerifier:
                         if evidence.get("buildVersion") != self.build_version:
                             raise GateEvidenceError("2D 运行截图 buildVersion 不匹配")
                     references.append(evidence)
+        elif kind == "prefab-structure":
+            references.extend((payload.get("visualBibleEvidence"), payload.get("lowFidelityPreview")))
+            references.extend(_approval_references([payload.get("userApproval")]))
+        elif kind == "prefab-assembly":
+            self._verify_prefab_assembly_bindings(payload)
+            references.extend((payload.get("prefabStructureEvidence"), payload.get("splitPlanEvidence")))
+            references.extend(
+                item.get("productionEvidence")
+                for item in payload.get("assetBindings", [])
+                if isinstance(item, Mapping)
+            )
+            cleanup = payload.get("lowFidelityCleanup")
+            if isinstance(cleanup, Mapping):
+                references.extend(cleanup.get("evidence", []))
+            references.extend(payload.get("evidence", []))
 
         for reference in references:
             if reference is not None:
                 self.verify_reference(reference)
 
     def _verify_split_plan_source(self, payload: Mapping[str, Any]) -> None:
-        """确认拆分源图确实是所引 image-generation 契约中的同一生成候选。"""
-        regeneration = payload.get("regenerationEvidence")
-        if not isinstance(regeneration, Mapping):
-            raise GateEvidenceError("split-plan 缺少重新生成契约引用")
-        self.verify_reference(regeneration)
-        generation = self._load_referenced_contract(regeneration)
+        """确认 P3 资产地图严格绑定 P1 已确认候选与 P2 独立审阅。"""
+        structure_reference = payload.get("prefabStructureEvidence")
+        generation_reference = payload.get("highFidelityGenerationEvidence")
+        review_reference = payload.get("highFidelityReviewEvidence")
+        if not all(
+            isinstance(reference, Mapping)
+            for reference in (structure_reference, generation_reference, review_reference)
+        ):
+            raise GateEvidenceError("split-plan 缺少 P0 结构、P1 高保真生成或 P2 审阅引用")
+        self.verify_reference(structure_reference)
+        structure = self._load_referenced_contract(structure_reference)
+        if structure.get("status") != "APPROVED":
+            raise GateEvidenceError("split-plan 只接受 APPROVED P0 Prefab 结构")
+        if payload.get("projectId") != structure.get("projectId") or payload.get("sceneId") != structure.get("sceneId"):
+            raise GateEvidenceError("split-plan 项目或场景身份与 P0 结构不一致")
+        known_node_ids = {
+            node.get("id")
+            for prefab in structure.get("prefabs", [])
+            if isinstance(prefab, Mapping)
+            for node in prefab.get("nodes", [])
+            if isinstance(node, Mapping)
+        }
+        for item in payload.get("items", []):
+            if not isinstance(item, Mapping):
+                continue
+            unknown = set(item.get("targetPrefabNodeIds", [])) - known_node_ids
+            if unknown:
+                raise GateEvidenceError(
+                    f"P3 条目 {item.get('id')} 引用了 P0 中不存在的 Prefab 节点：{', '.join(sorted(unknown))}"
+                )
+        self.verify_reference(generation_reference)
+        generation = self._load_referenced_contract(generation_reference)
+        if generation.get("status") != "USER_CONFIRMED":
+            raise GateEvidenceError("split-plan 只接受 P1 USER_CONFIRMED 高保真生成")
         candidate = next(
             (
                 item
                 for item in generation.get("candidates", [])
-                if isinstance(item, Mapping) and item.get("id") == regeneration.get("candidateId")
+                if isinstance(item, Mapping) and item.get("id") == generation_reference.get("candidateId")
             ),
             None,
         )
         if candidate is None:
-            raise GateEvidenceError("split-plan 引用的重新生成候选不存在")
+            raise GateEvidenceError("split-plan 引用的 P1 已确认候选不存在")
         expected = {
-            "path": regeneration.get("candidatePath"),
-            "sha256": regeneration.get("candidateSha256"),
-            "visualVersion": regeneration.get("candidateVisualVersion"),
+            "path": generation_reference.get("candidatePath"),
+            "sha256": generation_reference.get("candidateSha256"),
+            "visualVersion": generation_reference.get("candidateVisualVersion"),
         }
         if any(candidate.get(field) != value for field, value in expected.items()):
-            raise GateEvidenceError("split-plan 重新生成候选的路径、哈希或视觉版本不匹配")
+            raise GateEvidenceError("split-plan 的 P1 候选路径、哈希或视觉版本不匹配")
+        self.verify_reference(review_reference)
+        review = self._load_referenced_contract(review_reference)
+        if review.get("status") != "REVIEW_APPROVED":
+            raise GateEvidenceError("split-plan 只接受 P2 REVIEW_APPROVED 审阅")
+        if review.get("subjectId") != generation.get("id") or review.get("subjectVersion") != candidate.get("visualVersion"):
+            raise GateEvidenceError("P2 审阅未绑定 P1 已确认候选")
 
     def _verify_image_task_split_binding(self, payload: Mapping[str, Any]) -> None:
-        """确认最终资源绑定真实拆分条目，并沿用该拆分方案的重新生成源。"""
+        """确认单图任务绑定真实 P3 条目，且最终候选来自对应单图生成。"""
         split_reference = payload.get("splitPlanEvidence")
-        regeneration = payload.get("regenerationEvidence")
-        if not isinstance(split_reference, Mapping) or not isinstance(regeneration, Mapping):
-            raise GateEvidenceError("image-task 缺少拆分或重新生成契约引用")
+        item_generation = payload.get("itemGenerationEvidence")
+        if not isinstance(split_reference, Mapping) or not isinstance(item_generation, Mapping):
+            raise GateEvidenceError("image-task 缺少资产地图或单项生成契约引用")
         self.verify_reference(split_reference)
         split_plan = self._load_referenced_contract(split_reference)
         item = next(
@@ -485,14 +559,158 @@ class _EvidenceVerifier:
             ),
             None,
         )
-        if item is None or item.get("action") == "BLOCKED":
+        if item is None or item.get("action") not in {"GENERATE", "REDRAW", "EXPORT_LAYER"}:
             raise GateEvidenceError("image-task 引用的拆分条目不存在或仍被阻塞")
-        plan_regeneration = split_plan.get("regenerationEvidence")
-        if not isinstance(plan_regeneration, Mapping):
-            raise GateEvidenceError("被引用 split-plan 缺少重新生成来源")
-        for field in ("path", "sha256", "subjectId", "subjectVersion"):
-            if regeneration.get(field) != plan_regeneration.get(field):
-                raise GateEvidenceError("image-task 与 split-plan 的重新生成来源不一致")
+        expected_item = {
+            "itemVersion": split_reference.get("itemVersion"),
+            "itemSpecSha256": split_reference.get("itemSpecSha256"),
+            "resourceId": split_reference.get("resourceId"),
+        }
+        if any(item.get(field) != value for field, value in expected_item.items()):
+            raise GateEvidenceError("image-task 与资产地图条目规格不一致")
+        self.verify_reference(item_generation)
+        generation = self._load_referenced_contract(item_generation)
+        if generation.get("generationMode") != "RUNTIME_ASSET_ITEM" or generation.get("status") != "GENERATED":
+            raise GateEvidenceError("image-task 只接受已完成的单图生成契约")
+        generation_split = generation.get("splitPlanEvidence")
+        if not isinstance(generation_split, Mapping):
+            raise GateEvidenceError("单图生成缺少资产地图条目绑定")
+        for field in ("itemId", "itemVersion", "itemSpecSha256", "resourceId"):
+            if generation_split.get(field) != split_reference.get(field):
+                raise GateEvidenceError("单图生成与 image-task 的资产地图条目不一致")
+        selected = payload.get("selectedCandidate")
+        if not isinstance(selected, Mapping):
+            raise GateEvidenceError("image-task 缺少最终候选")
+        if not any(
+            isinstance(candidate, Mapping)
+            and all(candidate.get(field) == selected.get(field) for field in ("path", "sha256", "visualVersion"))
+            for candidate in generation.get("candidates", [])
+        ):
+            raise GateEvidenceError("image-task 最终候选不属于对应单图生成结果")
+
+    def _verify_prefab_assembly_bindings(self, payload: Mapping[str, Any]) -> None:
+        """确认最终拼装保持 P0 结构，并完整覆盖 P3 资产生产绑定。"""
+        structure_reference = payload.get("prefabStructureEvidence")
+        split_reference = payload.get("splitPlanEvidence")
+        if not isinstance(structure_reference, Mapping) or not isinstance(split_reference, Mapping):
+            raise GateEvidenceError("prefab-assembly 缺少 P0 Prefab 结构或 P3 资产地图引用")
+        self.verify_reference(structure_reference)
+        structure = self._load_referenced_contract(structure_reference)
+        if structure.get("status") != "APPROVED":
+            raise GateEvidenceError("prefab-assembly 只接受 APPROVED P0 Prefab 结构")
+        if payload.get("projectId") != structure.get("projectId") or payload.get("sceneId") != structure.get("sceneId"):
+            raise GateEvidenceError("prefab-assembly 项目或场景身份与 P0 结构不一致")
+
+        expected_prefabs, expected_nodes = _prefab_structure_snapshot(structure.get("prefabs"))
+        actual_prefabs, actual_nodes = _prefab_assembly_snapshot(payload.get("prefabs"))
+        if actual_prefabs != expected_prefabs:
+            raise GateEvidenceError("prefab-assembly 的 Prefab ID 或路径与 P0 结构不一致")
+        if actual_nodes != expected_nodes:
+            raise GateEvidenceError("prefab-assembly 的节点 ID、父子关系或 Transform 与 P0 结构不一致")
+
+        scene = payload.get("scene")
+        if not isinstance(scene, Mapping):
+            raise GateEvidenceError("prefab-assembly 缺少场景拼装结果")
+        expected_instances = _prefab_instance_snapshot(structure.get("sceneInstances"))
+        actual_instances = _prefab_instance_snapshot(scene.get("prefabInstances"))
+        expected_scene_paths = {
+            item.get("scenePath")
+            for item in structure.get("sceneInstances", [])
+            if isinstance(item, Mapping)
+        }
+        if expected_scene_paths != {scene.get("path")} or actual_instances != expected_instances:
+            raise GateEvidenceError("prefab-assembly 的场景路径或 Prefab 实例与 P0 结构不一致")
+
+        self._verify_low_fidelity_cleanup(payload, structure, structure_reference, split_reference)
+
+        self.verify_reference(split_reference)
+        split_plan = self._load_referenced_contract(split_reference)
+        expected_type = {
+            "REUSE": "REUSED_ASSET",
+            "GENERATE": "IMAGE_TASK",
+            "REDRAW": "IMAGE_TASK",
+            "EXPORT_LAYER": "EXPORTED_LAYER",
+            "PROGRAMMATIC": "PROGRAMMATIC",
+            "MODEL_3D": "MODEL_3D",
+            "MATERIAL": "MATERIAL",
+            "VFX": "VFX",
+            "CODE": "CODE",
+        }
+        expected = {
+            (item.get("id"), item.get("resourceId")): expected_type.get(item.get("action"))
+            for item in split_plan.get("items", [])
+            if isinstance(item, Mapping) and item.get("action") != "BLOCKED"
+        }
+        actual = {
+            (item.get("itemId"), item.get("resourceId")): item.get("productionType")
+            for item in payload.get("assetBindings", [])
+            if isinstance(item, Mapping)
+        }
+        if actual != expected:
+            raise GateEvidenceError("prefab-assembly 生产绑定未完整覆盖 P3 资产地图或类型不匹配")
+
+    def _verify_low_fidelity_cleanup(
+        self,
+        payload: Mapping[str, Any],
+        structure: Mapping[str, Any],
+        structure_reference: Mapping[str, Any],
+        split_reference: Mapping[str, Any],
+    ) -> None:
+        """确认灰盒与占位内容已清零，同时保留 P0 结构和全部审计证据。"""
+        cleanup = payload.get("lowFidelityCleanup")
+        if not isinstance(cleanup, Mapping):
+            raise GateEvidenceError("prefab-assembly 缺少低保真清理记录")
+        if (
+            cleanup.get("status") != "PASS"
+            or cleanup.get("remainingPlaceholderCount") != 0
+            or cleanup.get("structurePreserved") is not True
+            or cleanup.get("referencesClean") is not True
+            or not cleanup.get("evidence")
+        ):
+            raise GateEvidenceError("低保真清理未达到 PASS、占位清零、结构保留、引用清洁且证据齐全")
+
+        prefab_ids: set[object] = set()
+        prefab_paths: set[object] = set()
+        node_ids: set[object] = set()
+        for prefab in structure.get("prefabs", []):
+            if not isinstance(prefab, Mapping):
+                continue
+            prefab_ids.add(prefab.get("id"))
+            prefab_paths.add(prefab.get("path"))
+            node_ids.update(
+                node.get("id")
+                for node in prefab.get("nodes", [])
+                if isinstance(node, Mapping)
+            )
+        instance_ids = {
+            item.get("id")
+            for item in structure.get("sceneInstances", [])
+            if isinstance(item, Mapping)
+        }
+        protected_paths = prefab_paths | {
+            structure_reference.get("path"),
+            split_reference.get("path"),
+        }
+        for evidence in (
+            structure.get("visualBibleEvidence"),
+            structure.get("lowFidelityPreview"),
+            *cleanup.get("evidence", []),
+            *payload.get("evidence", []),
+        ):
+            if isinstance(evidence, Mapping):
+                protected_paths.add(evidence.get("path"))
+
+        for item in cleanup.get("removedItems", []):
+            if not isinstance(item, Mapping):
+                continue
+            item_type = item.get("itemType")
+            target_id = item.get("targetId")
+            if item_type == "PREFAB" and target_id in prefab_ids:
+                raise GateEvidenceError("低保真清理不得删除 P0 Prefab")
+            if item_type == "SCENE_OBJECT" and target_id in node_ids | instance_ids:
+                raise GateEvidenceError("低保真清理不得删除 P0 结构节点或场景实例")
+            if item.get("targetPath") in protected_paths:
+                raise GateEvidenceError("低保真清理不得删除 P0 Prefab 或审计证据")
 
     def _load_referenced_contract(self, reference: Mapping[str, Any]) -> dict[str, Any]:
         """在项目根目录内读取已完成哈希校验的契约引用。"""
@@ -500,6 +718,53 @@ class _EvidenceVerifier:
         if not isinstance(raw_path, str):
             raise GateEvidenceError("契约引用缺少路径")
         return _load_document(_resolve_within(self.root, Path(raw_path)))
+
+
+def _prefab_structure_snapshot(prefabs_value: object) -> tuple[dict[object, object], dict[tuple[object, object], object]]:
+    """提取 P0 中必须被最终拼装原样保留的 Prefab 与节点结构。"""
+    prefabs: dict[object, object] = {}
+    nodes: dict[tuple[object, object], object] = {}
+    for prefab in prefabs_value if isinstance(prefabs_value, list) else []:
+        if not isinstance(prefab, Mapping):
+            continue
+        prefab_id = prefab.get("id")
+        prefabs[prefab_id] = prefab.get("path")
+        for node in prefab.get("nodes", []):
+            if not isinstance(node, Mapping):
+                continue
+            nodes[(prefab_id, node.get("id"))] = _node_structure_snapshot(node)
+    return prefabs, nodes
+
+
+def _prefab_assembly_snapshot(prefabs_value: object) -> tuple[dict[object, object], dict[tuple[object, object], object]]:
+    """提取最终拼装的 Prefab 与节点结构用于和 P0 做精确比较。"""
+    return _prefab_structure_snapshot(prefabs_value)
+
+
+def _node_structure_snapshot(node: Mapping[str, Any]) -> dict[str, object]:
+    """保留节点所属层级与 Transform，忽略资源和运行时组件等后续填充字段。"""
+    return {
+        "parentId": node.get("parentId"),
+        "position": node.get("position"),
+        "rotation": node.get("rotation"),
+        "scale": node.get("scale"),
+    }
+
+
+def _prefab_instance_snapshot(instances_value: object) -> dict[object, object]:
+    """提取场景实例身份、父子关系和 Transform，确保装配未偏离 P0。"""
+    instances: dict[object, object] = {}
+    for instance in instances_value if isinstance(instances_value, list) else []:
+        if not isinstance(instance, Mapping):
+            continue
+        instances[instance.get("id")] = {
+            "prefabId": instance.get("prefabId"),
+            "parentId": instance.get("parentId"),
+            "position": instance.get("position"),
+            "rotation": instance.get("rotation"),
+            "scale": instance.get("scale"),
+        }
+    return instances
 
 
 def _approval_references(approvals: object) -> list[dict[str, Any]]:

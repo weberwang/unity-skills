@@ -13,7 +13,7 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL", "ASSET_SOURCE"]},
-    "generationMode": {"enum": ["GLOBAL_DIRECTION", "SCENE_CONCEPT", "RUNTIME_ASSET_SOURCE"]},
+    "generationMode": {"enum": ["GLOBAL_DIRECTION", "SCENE_CONCEPT", "RUNTIME_ASSET_ITEM"]},
     "subjectVersion": {"type": "string", "minLength": 1},
     "visualBibleVersion": {"type": "string", "minLength": 1},
     "visualBibleEvidence": {
@@ -23,10 +23,32 @@
       ]
     },
     "styleAuthority": {"enum": ["GLOBAL_DESIGN_BRIEF", "APPROVED_VISUAL_BIBLE"]},
+    "prefabStructureEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "prefab-structure"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "splitPlanEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256", "subjectId", "subjectVersion", "itemId", "itemVersion", "itemSpecSha256", "resourceId"],
+      "properties": {
+        "type": {"const": "split-plan"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "subjectVersion": {"type": "string", "minLength": 1},
+        "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "itemVersion": {"type": "string", "minLength": 1},
+        "itemSpecSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
+      }
+    },
     "referencePolicy": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["screenshotAllowedUses", "screenshotStyleTransfer", "screenshotPixelReuse", "regenerateBeforeSplit"],
+      "required": ["screenshotAllowedUses", "screenshotStyleTransfer", "screenshotPixelReuse", "independentItemGenerationRequired"],
       "properties": {
         "screenshotAllowedUses": {
           "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
@@ -34,7 +56,7 @@
         },
         "screenshotStyleTransfer": {"const": "FORBIDDEN"},
         "screenshotPixelReuse": {"const": "FORBIDDEN"},
-        "regenerateBeforeSplit": {"const": true}
+        "independentItemGenerationRequired": {"const": true}
       }
     },
     "prompt": {"type": "string", "minLength": 1},
@@ -90,7 +112,19 @@
         }
       }
     },
-    "status": {"enum": ["PLANNED", "RUNNING", "GENERATED", "FAILED", "BLOCKED"]},
+    "selectedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256", "visualVersion"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "visualVersion": {"type": "string", "minLength": 1}
+      }
+    },
+    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "status": {"enum": ["PLANNED", "RUNNING", "GENERATED", "USER_CONFIRMED", "FAILED", "BLOCKED"]},
     "failureReason": {"type": "string", "minLength": 1}
   },
   "allOf": [
@@ -103,12 +137,30 @@
       }
     },
     {
-      "if": {"properties": {"generationMode": {"const": "RUNTIME_ASSET_SOURCE"}}, "required": ["generationMode"]},
-      "then": {"properties": {"visualType": {"const": "ASSET_SOURCE"}}}
+      "if": {"properties": {"generationMode": {"const": "SCENE_CONCEPT"}}, "required": ["generationMode"]},
+      "then": {"required": ["prefabStructureEvidence"]}
     },
     {
-      "if": {"properties": {"status": {"const": "GENERATED"}}, "required": ["status"]},
+      "if": {"properties": {"generationMode": {"const": "RUNTIME_ASSET_ITEM"}}, "required": ["generationMode"]},
+      "then": {
+        "required": ["splitPlanEvidence"],
+        "properties": {"visualType": {"const": "ASSET_SOURCE"}}
+      }
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["GENERATED", "USER_CONFIRMED"]}}, "required": ["status"]},
       "then": {"required": ["provider", "model", "generatedAtUtc"], "properties": {"candidates": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "USER_CONFIRMED"}}, "required": ["status"]},
+      "then": {
+        "required": ["selectedCandidate", "userApproval"],
+        "properties": {
+          "generationMode": {"const": "SCENE_CONCEPT"},
+          "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL"]},
+          "userApproval": {"properties": {"authority": {"const": "USER"}}, "required": ["authority"]}
+        }
+      }
     },
     {
       "if": {"properties": {"status": {"enum": ["FAILED", "BLOCKED"]}}, "required": ["status"]},

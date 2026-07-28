@@ -7,6 +7,7 @@
     "schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "id", "version", "dimension", "purpose", "lifecycle", "decompositionPlan",
     "entryConditions", "exitConditions", "dependencies", "moduleDependencies",
     "sharedCapabilities", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
+    "prefabStructure", "highFidelityVisualReview", "assetMap", "prefabAssembly",
     "qualityGate", "status", "approvals", "qualityReportPaths", "runtimeCapturePaths",
     "qualityReports", "runtimeCaptures", "visualReviews", "evidence"
   ],
@@ -46,6 +47,30 @@
     "ownedAssets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "gameplayVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
     "uiVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "prefabStructure": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "prefab-structure"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "highFidelityVisualReview": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "visual-review"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "assetMap": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "split-plan"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "prefabAssembly": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "prefab-assembly"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
     "qualityGate": {
       "type": "object",
       "additionalProperties": false,

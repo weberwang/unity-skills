@@ -4,33 +4,57 @@ projectId: starfall-arena
 sceneId: scene.arena-intro
 sourceVersion: game-v1
 visualBibleVersion: visual-v1
-sourceOrigin: REGENERATED_FROM_APPROVED_VISUAL
+sourceOrigin: HIGH_FIDELITY_CONFIRMED
 visualBibleEvidence:
   type: visual-bible
   path: Artifacts/Visual/Global/visual-v1.yaml
   sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
   subjectId: starfall-arena
   subjectVersion: visual-v1
-regenerationEvidence:
-  type: image-generation
-  path: Artifacts/Visual/Generation/scene.arena-intro.asset-source-v1.yaml
+prefabStructureEvidence:
+  type: prefab-structure
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
   sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  subjectId: imagegen.scene-arena-intro.asset-source-v1
-  subjectVersion: game-v1
-  candidateId: candidate.scene-arena-intro.asset-source-1
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+highFidelityGenerationEvidence:
+  type: image-generation
+  path: Artifacts/Visual/Generation/scene.arena-intro.game-v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: scene-v1
+  candidateId: candidate.scene-arena-intro.game-1
   candidatePath: ArtSource/Approved/scene.arena-intro/game-v1.png
   candidateSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   candidateVisualVersion: game-v1
+highFidelityReviewEvidence:
+  type: visual-review
+  path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.yaml
+  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: game-v1
 sourceImage:
-  type: regenerated-asset-source
+  type: confirmed-high-fidelity-visual
   path: ArtSource/Approved/scene.arena-intro/game-v1.png
   sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  subjectId: scene.arena-intro
+  subjectId: imagegen.scene-arena-intro.game-v1
   subjectVersion: game-v1
+sourceDimensions:
+  width: 1920
+  height: 1080
 annotatedPreview:
   type: annotated-split-preview
   path: Artifacts/Visual/Split/scene.arena-intro/game-v1-annotated.png
   sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  sourcePath: ArtSource/Approved/scene.arena-intro/game-v1.png
+  sourceSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  sourceVersion: game-v1
+  width: 1920
+  height: 1080
+coverageDeclaration:
+  allRequiredVisualElementsMapped: true
+  declaredItemCount: 1
+  excludedElements: []
 splitQuestions:
   - id: split-question.background-independence
     question: 背景是否必须作为独立运行时资源，能否由程序化色块或现有资源替代
@@ -38,9 +62,16 @@ splitQuestions:
     decisionImpact: 保留单张不透明背景并限制到目标分辨率，避免增加透明叠加开销
 items:
   - id: asset.arena-intro.background
+    resourceId: asset.arena-background
+    itemVersion: arena-background-spec-v1
+    itemSpecSha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     elementIndex: 1
+    assetType: background-sprite
     purpose: 竞技场开场背景
+    generationBrief: 依据已批准效果图和 Visual Bible 独立生成完整竞技场背景，不复用效果图成品像素
     splitRationale: 背景需独立缩放和替换，且不参与角色透明排序
+    targetPrefabNodeIds:
+      - node.arena-background
     bounds:
       x: 0
       y: 0
@@ -60,6 +91,6 @@ items:
       - 0
       - 0
     delivery: SINGLE_SPRITE
-    action: SPLIT
+    action: GENERATE
 reviews: []
 status: REVIEWING

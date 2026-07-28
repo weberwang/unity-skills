@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/prefab-structure.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "sceneId", "version", "visualBibleVersion",
+    "visualBibleEvidence", "prefabs", "sceneInstances", "lowFidelityPreview", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "visualBibleVersion": {"type": "string", "minLength": 1},
+    "visualBibleEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "visual-bible"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "prefabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "purpose", "nodes"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "purpose": {"type": "string", "minLength": 1},
+          "nodes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/$defs/node"}
+          }
+        }
+      }
+    },
+    "sceneInstances": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "prefabId", "scenePath", "position", "rotation", "scale"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "prefabId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "scenePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "position": {"$ref": "#/$defs/vector3"},
+          "rotation": {"$ref": "#/$defs/vector3"},
+          "scale": {"$ref": "#/$defs/vector3"}
+        }
+      }
+    },
+    "lowFidelityPreview": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "low-fidelity-prefab-preview"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "status": {"enum": ["DRAFT", "REVIEWING", "APPROVED", "CHANGES_REQUIRED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "required": ["userApproval"],
+        "properties": {
+          "userApproval": {
+            "properties": {
+              "approvalType": {"const": "PREFAB_STRUCTURE"},
+              "authority": {"const": "USER"}
+            },
+            "required": ["approvalType", "authority"]
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"]}
+    }
+  ],
+  "$defs": {
+    "vector3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "z": {"type": "number"}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "nodeType", "interactive", "position", "rotation", "scale", "components"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "name": {"type": "string", "minLength": 1},
+        "nodeType": {"enum": ["CONTAINER", "VISUAL", "UI", "INTERACTION", "CAMERA", "LIGHT"]},
+        "interactive": {"type": "boolean"},
+        "plannedResourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "position": {"$ref": "#/$defs/vector3"},
+        "rotation": {"$ref": "#/$defs/vector3"},
+        "scale": {"$ref": "#/$defs/vector3"},
+        "components": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

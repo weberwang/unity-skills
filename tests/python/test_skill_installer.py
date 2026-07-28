@@ -6,6 +6,19 @@ import pytest
 
 ROOT = Path(__file__).parents[2]
 SCRIPT_PATH = ROOT / "scripts" / "install_project_skills.py"
+EXPECTED_SKILL_NAMES = {
+    "unity-development-workflow",
+    "unity-game-3d-modeling",
+    "unity-game-3d-texturing",
+    "unity-game-architecture",
+    "unity-game-audio",
+    "unity-game-balance",
+    "unity-game-production",
+    "unity-game-qa-performance",
+    "unity-game-release",
+    "unity-game-visual-assets",
+    "unity-gameplay-development",
+}
 
 
 def load_installer():
@@ -23,9 +36,11 @@ def test_installs_all_discovered_skills(tmp_path: Path) -> None:
 
     installed = installer.install_skills(tmp_path, False)
 
-    assert len(installed) == 9
+    assert {path.name for path in installed} == EXPECTED_SKILL_NAMES
     assert all((path / "SKILL.md").is_file() for path in installed)
     assert (tmp_path / ".agents" / "skills" / "unity-development-workflow").is_dir()
+    assert (tmp_path / ".agents" / "skills" / "unity-game-3d-modeling").is_dir()
+    assert (tmp_path / ".agents" / "skills" / "unity-game-3d-texturing").is_dir()
 
 
 def test_refuses_existing_skill_without_force(tmp_path: Path) -> None:

@@ -1,4 +1,4 @@
-"""验证全局视觉权威、截图参考边界与资源重新生成门禁。"""
+"""验证全局视觉权威、截图参考边界与逐项资源生成门禁。"""
 
 from pathlib import Path
 import sys
@@ -43,8 +43,8 @@ def test_screenshot_reference_cannot_authorize_style_transfer() -> None:
     assert any(issue.path.endswith("styleTransfer") for issue in issues)
 
 
-def test_generated_candidate_cannot_reuse_screenshot_pixels() -> None:
-    """候选与截图哈希相同时必须识别为直接像素复用。"""
+def test_generated_or_confirmed_candidate_cannot_reuse_screenshot_pixels() -> None:
+    """生成中或用户已确认的候选都必须拒绝直接复用截图像素。"""
     payload = load_yaml(TEMPLATES / "image-generation.yaml")
     payload.update(
         {
@@ -75,9 +75,10 @@ def test_generated_candidate_cannot_reuse_screenshot_pixels() -> None:
         for index, character in enumerate(("a", "b", "c"), start=1)
     ]
 
-    issues = validate_contract("image-generation", payload)
-
-    assert any(issue.path == "$.candidates[0].sha256" for issue in issues)
+    for status in ("GENERATED", "USER_CONFIRMED"):
+        payload["status"] = status
+        issues = validate_contract("image-generation", payload)
+        assert any(issue.path == "$.candidates[0].sha256" for issue in issues)
 
 
 def test_scene_generation_binds_approved_visual_bible_version() -> None:
@@ -90,6 +91,18 @@ def test_scene_generation_binds_approved_visual_bible_version() -> None:
     assert any(issue.path == "$.visualBibleEvidence.subjectVersion" for issue in issues)
 
 
+def test_prefab_structure_binds_current_visual_bible() -> None:
+    """P0 结构必须引用当前项目和版本的全局视觉基线。"""
+    payload = load_yaml(TEMPLATES / "prefab-structure.yaml")
+    payload["visualBibleEvidence"]["subjectId"] = "other-project"
+    payload["visualBibleEvidence"]["subjectVersion"] = "visual-old"
+
+    paths = {issue.path for issue in validate_contract("prefab-structure", payload)}
+
+    assert "$.visualBibleEvidence.subjectId" in paths
+    assert "$.visualBibleEvidence.subjectVersion" in paths
+
+
 def test_image_task_requires_one_declaration_per_reference() -> None:
     """逐项资源的每个参考路径都必须声明允许用途和禁止事项。"""
     payload = load_yaml(TEMPLATES / "image-task.yaml")
@@ -100,8 +113,8 @@ def test_image_task_requires_one_declaration_per_reference() -> None:
     assert any(issue.path == "$.referenceDeclarations" for issue in issues)
 
 
-def test_split_plan_rejects_non_regenerated_source() -> None:
-    """截图或场景效果图不能跳过重新生成直接进入拆分。"""
+def test_asset_map_rejects_unconfirmed_visual_source() -> None:
+    """资产地图只能框选 P1 已确认并经 P2 审阅的高保真效果图。"""
     payload = load_yaml(TEMPLATES / "split-plan.yaml")
     payload["sourceImage"]["type"] = "approved-game-visual"
 
@@ -110,32 +123,56 @@ def test_split_plan_rejects_non_regenerated_source() -> None:
     assert any(issue.path == "$.sourceImage.type" for issue in issues)
 
 
-def test_split_source_must_match_regeneration_candidate_path_and_hash() -> None:
-    """拆分源图的路径、哈希和版本必须与重新生成契约声明的同一候选一致。"""
+def test_split_source_must_match_confirmed_high_fidelity_candidate() -> None:
+    """资产地图源图必须与 P1 已确认的高保真候选路径、哈希和版本一致。"""
     payload = load_yaml(TEMPLATES / "split-plan.yaml")
-    payload["regenerationEvidence"]["candidatePath"] = "ArtSource/Approved/other.png"
-    payload["regenerationEvidence"]["candidateSha256"] = "f" * 64
-    payload["regenerationEvidence"]["candidateVisualVersion"] = "game-v2"
+    payload["highFidelityGenerationEvidence"]["candidatePath"] = "ArtSource/Approved/other.png"
+    payload["highFidelityGenerationEvidence"]["candidateSha256"] = "f" * 64
+    payload["highFidelityGenerationEvidence"]["candidateVisualVersion"] = "game-v2"
 
     issues = validate_contract("split-plan", payload)
 
     paths = {issue.path for issue in issues}
-    assert "$.regenerationEvidence.candidatePath" in paths
-    assert "$.regenerationEvidence.candidateSha256" in paths
-    assert "$.regenerationEvidence.candidateVisualVersion" in paths
+    assert "$.highFidelityGenerationEvidence.candidatePath" in paths
+    assert "$.highFidelityGenerationEvidence.candidateSha256" in paths
+    assert "$.highFidelityGenerationEvidence.candidateVisualVersion" in paths
 
 
-def test_regeneration_and_split_evidence_types_are_contract_identifiers() -> None:
-    """深度门禁依赖的证据类型不能退化为普通图片或任意字符串。"""
+def test_annotated_preview_must_bind_exact_source_image_and_dimensions() -> None:
+    """资产地图标注图必须明确证明框选发生在同一张高保真效果图上。"""
+    payload = load_yaml(TEMPLATES / "split-plan.yaml")
+    payload["annotatedPreview"].update(
+        {
+            "sourcePath": "ArtSource/Approved/other.png",
+            "sourceSha256": "f" * 64,
+            "sourceVersion": "game-old",
+            "width": 1,
+            "height": 1,
+        }
+    )
+
+    paths = {issue.path for issue in validate_contract("split-plan", payload)}
+
+    assert {
+        "$.annotatedPreview.sourcePath",
+        "$.annotatedPreview.sourceSha256",
+        "$.annotatedPreview.sourceVersion",
+        "$.annotatedPreview.width",
+        "$.annotatedPreview.height",
+    }.issubset(paths)
+
+
+def test_high_fidelity_and_asset_map_evidence_types_are_contract_identifiers() -> None:
+    """P1 高保真生成和 P3 资产地图证据不能退化为普通图片。"""
     split = load_yaml(TEMPLATES / "split-plan.yaml")
-    split["regenerationEvidence"]["type"] = "generated-image"
+    split["highFidelityGenerationEvidence"]["type"] = "generated-image"
     assert any(
-        issue.path == "$.regenerationEvidence.type"
+        issue.path == "$.highFidelityGenerationEvidence.type"
         for issue in validate_contract("split-plan", split)
     )
 
     image_task = load_yaml(TEMPLATES / "image-task.yaml")
-    image_task["regenerationEvidence"] = {
+    image_task["itemGenerationEvidence"] = {
         "type": "generated-image",
         "path": "Artifacts/Visual/generation.yaml",
         "sha256": "a" * 64,
@@ -150,18 +187,18 @@ def test_regeneration_and_split_evidence_types_are_contract_identifiers() -> Non
         "subjectVersion": image_task["sourceVersion"],
         "itemId": image_task["resourceId"],
         "itemElementIndex": 1,
-        "itemPath": "ArtSource/Generated/player.png",
-        "itemSha256": "c" * 64,
-        "itemVisualVersion": "player-v1",
+        "itemVersion": image_task["sourceVersion"],
+        "itemSpecSha256": "c" * 64,
+        "resourceId": image_task["resourceId"],
     }
 
     paths = {issue.path for issue in validate_contract("image-task", image_task)}
-    assert "$.regenerationEvidence.type" in paths
+    assert "$.itemGenerationEvidence.type" in paths
     assert "$.splitPlanEvidence.type" in paths
 
 
-def test_image_candidate_must_match_bound_split_item() -> None:
-    """逐项审查的最终候选必须与拆分证据中的资源、路径、哈希和版本完全一致。"""
+def test_image_task_must_match_bound_asset_map_item() -> None:
+    """逐项图片任务必须绑定资产地图中的资源 ID 和条目版本。"""
     payload = load_yaml(TEMPLATES / "image-task.yaml")
     payload["selectedCandidate"] = {
         "path": "ArtSource/Generated/player.png",
@@ -176,18 +213,16 @@ def test_image_candidate_must_match_bound_split_item() -> None:
         "subjectVersion": payload["sourceVersion"],
         "itemId": "asset.other",
         "itemElementIndex": 1,
-        "itemPath": "ArtSource/Generated/other.png",
-        "itemSha256": "c" * 64,
-        "itemVisualVersion": "other-v1",
+        "itemVersion": "other-v1",
+        "itemSpecSha256": "c" * 64,
+        "resourceId": "asset.other",
     }
 
     issues = validate_contract("image-task", payload)
 
     paths = {issue.path for issue in issues}
-    assert "$.splitPlanEvidence.itemId" in paths
-    assert "$.splitPlanEvidence.itemPath" in paths
-    assert "$.splitPlanEvidence.itemSha256" in paths
-    assert "$.splitPlanEvidence.itemVisualVersion" in paths
+    assert "$.splitPlanEvidence.resourceId" in paths
+    assert "$.splitPlanEvidence.itemVersion" in paths
 
 
 def test_approved_visual_bible_requires_selected_direction_and_final_review() -> None:
@@ -202,8 +237,8 @@ def test_approved_visual_bible_requires_selected_direction_and_final_review() ->
     assert "$.finalVisualReview" in issue_paths
 
 
-def test_gate_recurses_through_visual_regeneration_chain(monkeypatch) -> None:
-    """门禁必须递归读取全局视觉、重新生成、拆分方案和逐项审查证据。"""
+def test_gate_recurses_through_structured_visual_asset_chain(monkeypatch) -> None:
+    """门禁必须递归读取全局视觉、高保真候选、资产地图和逐项审查证据。"""
     verifier = _EvidenceVerifier(
         Path.cwd(),
         "starfall-arena",
@@ -256,7 +291,7 @@ def test_gate_recurses_through_visual_regeneration_chain(monkeypatch) -> None:
     image_task.update(
         {
             "visualBibleEvidence": split["visualBibleEvidence"],
-            "regenerationEvidence": {
+            "itemGenerationEvidence": {
                 "type": "image-generation",
                 "path": "Artifacts/Visual/source.yaml",
                 "sha256": "d" * 64,
@@ -271,9 +306,9 @@ def test_gate_recurses_through_visual_regeneration_chain(monkeypatch) -> None:
                 "subjectVersion": image_task["sourceVersion"],
                 "itemId": image_task["resourceId"],
                 "itemElementIndex": 1,
-                "itemPath": "ArtSource/Generated/item.png",
-                "itemSha256": "1" * 64,
-                "itemVisualVersion": "item-v1",
+                "itemVersion": image_task["sourceVersion"],
+                "itemSpecSha256": "1" * 64,
+                "resourceId": image_task["resourceId"],
             },
             "finalVisualReview": {
                 "type": "visual-review",
@@ -295,6 +330,6 @@ def test_gate_recurses_through_visual_regeneration_chain(monkeypatch) -> None:
         "visual-review",
         "visual-reference",
         "image-generation",
-        "regenerated-asset-source",
+        "confirmed-high-fidelity-visual",
         "split-plan",
     }.issubset(evidence_types)

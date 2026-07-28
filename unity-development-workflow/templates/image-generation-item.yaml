@@ -1,0 +1,41 @@
+schemaVersion: "1.0"
+id: imagegen.asset.arena-background.v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+visualType: ASSET_SOURCE
+generationMode: RUNTIME_ASSET_ITEM
+subjectVersion: arena-background-spec-v1
+visualBibleVersion: visual-v1
+visualBibleEvidence:
+  type: visual-bible
+  path: Artifacts/Visual/Global/visual-v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+styleAuthority: APPROVED_VISUAL_BIBLE
+splitPlanEvidence:
+  type: split-plan
+  path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  subjectId: split.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+  itemId: asset.arena-intro.background
+  itemVersion: arena-background-spec-v1
+  itemSpecSha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  resourceId: asset.arena-background
+referencePolicy:
+  screenshotAllowedUses: [CONTENT, COMPOSITION, INFORMATION_HIERARCHY]
+  screenshotStyleTransfer: FORBIDDEN
+  screenshotPixelReuse: FORBIDDEN
+  independentItemGenerationRequired: true
+prompt: 依据已批准 Visual Bible、效果图中的框选内容和资源规格独立生成完整竞技场背景
+negativePrompt: 不裁切或复用效果图成品像素，不复制截图风格
+references: []
+output:
+  directory: ArtSource/Generated/asset.arena-background/v1
+  format: PNG
+  width: 1920
+  height: 1080
+  candidateCount: 3
+candidates: []
+status: PLANNED

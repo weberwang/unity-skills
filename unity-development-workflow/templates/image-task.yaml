@@ -25,11 +25,11 @@ visualBibleEvidence:
   sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: starfall-arena
   subjectVersion: visual-v1
-regenerationEvidence:
+itemGenerationEvidence:
   type: image-generation
-  path: Artifacts/Visual/Generation/player-select.asset-source-v1.yaml
+  path: Artifacts/Visual/Generation/asset.player-portrait.scout.v1.yaml
   sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-  subjectId: imagegen.player-select.asset-source-v1
+  subjectId: imagegen.asset.player-portrait.scout.v1
   subjectVersion: visual-v1
 splitPlanEvidence:
   type: split-plan
@@ -39,9 +39,9 @@ splitPlanEvidence:
   subjectVersion: visual-v1
   itemId: ui.player-portrait.scout
   itemElementIndex: 1
-  itemPath: ArtSource/Generated/visual.player-portrait/processed/player-scout.png
-  itemSha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  itemVisualVersion: player-scout-v1
+  itemVersion: visual-v1
+  itemSpecSha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  resourceId: ui.player-portrait.scout
 selectedCandidate:
   path: ArtSource/Generated/visual.player-portrait/processed/player-scout.png
   sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

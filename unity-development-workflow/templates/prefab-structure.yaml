@@ -1,0 +1,49 @@
+schemaVersion: "1.0"
+id: prefab-structure.scene-arena-intro.v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+version: prefab-structure-v1
+visualBibleVersion: visual-v1
+visualBibleEvidence:
+  type: visual-bible
+  path: Artifacts/Visual/Global/visual-v1.yaml
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+prefabs:
+  - id: prefab.arena-root
+    path: Assets/Prefabs/Scenes/ArenaRoot.prefab
+    purpose: 竞技场视觉和交互结构根节点
+    nodes:
+      - id: node.arena-root
+        name: ArenaRoot
+        nodeType: CONTAINER
+        interactive: false
+        position: {x: 0, y: 0, z: 0}
+        rotation: {x: 0, y: 0, z: 0}
+        scale: {x: 1, y: 1, z: 1}
+        components: [Transform]
+      - id: node.arena-background
+        parentId: node.arena-root
+        name: Background
+        nodeType: VISUAL
+        interactive: false
+        plannedResourceId: asset.arena-background
+        position: {x: 0, y: 0, z: 1}
+        rotation: {x: 0, y: 0, z: 0}
+        scale: {x: 1, y: 1, z: 1}
+        components: [Transform, SpriteRenderer]
+sceneInstances:
+  - id: instance.arena-root
+    prefabId: prefab.arena-root
+    scenePath: Assets/Scenes/ArenaIntro.unity
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0}
+    scale: {x: 1, y: 1, z: 1}
+lowFidelityPreview:
+  type: low-fidelity-prefab-preview
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.png
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+status: REVIEWING

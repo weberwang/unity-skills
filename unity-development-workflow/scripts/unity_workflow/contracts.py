@@ -19,6 +19,7 @@ from unity_workflow.decomposition_contract import (
     decomposition_plan_issues,
     decomposition_reference_issues,
 )
+from unity_workflow.prefab_contracts import prefab_assembly_issues, prefab_structure_issues
 
 from .scene_2d_contract import validate_scene_2d_adaptation, validate_scene_manifest_2d_reference
 
@@ -53,6 +54,8 @@ SCHEMA_FILENAMES = {
     "image-generation": "image-generation.schema.json",
     "registration-record": "registration-record.schema.json",
     "scene-2d-adaptation": "scene-2d-adaptation.schema.json",
+    "prefab-structure": "prefab-structure.schema.json",
+    "prefab-assembly": "prefab-assembly.schema.json",
 }
 
 
@@ -162,6 +165,10 @@ def validate_contract(
             ValidationIssue(path, message)
             for path, message in validate_scene_2d_adaptation(payload)
         )
+    if kind == "prefab-structure":
+        issues.extend(prefab_structure_issues(payload, ValidationIssue))
+    if kind == "prefab-assembly":
+        issues.extend(prefab_assembly_issues(payload, ValidationIssue))
     return sorted(set(issues), key=lambda issue: (issue.path, issue.message))
 
 
@@ -516,6 +523,8 @@ def _image_task_approval_issues(payload: Mapping[str, Any]) -> list[ValidationIs
         if isinstance(item, Mapping) and item.get("authority") == "INDEPENDENT_REVIEWER"
     ]
     issues.extend(_unique_three_reviewer_issues(reviews, "$.approvals", "图片"))
+    if any(item.get("authority") == "USER" for item in payload.get("approvals", []) if isinstance(item, Mapping)):
+        issues.append(ValidationIssue("$.approvals", "逐图审查不得新增 P0/P1/P3 之外的用户批准门"))
     reference = payload.get("finalVisualReview")
     if isinstance(reference, Mapping):
         if reference.get("type") != "visual-review":
@@ -529,7 +538,7 @@ def _image_task_approval_issues(payload: Mapping[str, Any]) -> list[ValidationIs
 
 def _visual_review_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
     """校验最终视觉审查的三代理独立性、批准类型和主体版本。"""
-    if payload.get("status") != "APPROVED":
+    if payload.get("status") not in {"APPROVED", "REVIEW_APPROVED"}:
         return []
     approval_type = payload.get("subjectType")
     reviews = payload.get("reviews")
@@ -545,7 +554,7 @@ def _visual_review_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
         if review.get("approvalType") != approval_type:
             issues.append(ValidationIssue(f"$.reviews[{index}].approvalType", "审查类型必须匹配 subjectType"))
     user = payload.get("userApproval")
-    if isinstance(user, Mapping):
+    if payload.get("status") == "APPROVED" and isinstance(user, Mapping):
         issues.extend(_subject_binding_issues([user], expected_id=payload.get("subjectId"), expected_version=payload.get("subjectVersion"), path="$.userApproval"))
         if user.get("approvalType") != approval_type:
             issues.append(ValidationIssue("$.userApproval.approvalType", "用户批准类型必须匹配 subjectType"))
@@ -561,15 +570,22 @@ def _split_plan_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
         if len(indices) != len(set(indices)):
             issues.append(ValidationIssue("$.items", "拆分项 elementIndex 必须唯一"))
     if payload.get("status") == "APPROVED":
-        reviews = [item for item in payload.get("reviews", []) if isinstance(item, Mapping)]
-        issues.extend(_subject_binding_issues(reviews, expected_id=payload.get("id"), expected_version=payload.get("sourceVersion"), path="$.reviews"))
-        issues.extend(_unique_three_reviewer_issues(reviews, "$.reviews", "拆分方案"))
+        approval = payload.get("userApproval")
+        if isinstance(approval, Mapping):
+            issues.extend(
+                _subject_binding_issues(
+                    [approval],
+                    expected_id=payload.get("id"),
+                    expected_version=payload.get("sourceVersion"),
+                    path="$.userApproval",
+                )
+            )
     return issues
 
 
 def _image_generation_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
     """确保生成完成时候选数量、尺寸、ID 和路径与输出规格一致。"""
-    if payload.get("status") != "GENERATED":
+    if payload.get("status") not in {"GENERATED", "USER_CONFIRMED"}:
         return []
     candidates = payload.get("candidates")
     output = payload.get("output")
@@ -586,6 +602,34 @@ def _image_generation_issues(payload: Mapping[str, Any]) -> list[ValidationIssue
             continue
         if item.get("width") != output.get("width") or item.get("height") != output.get("height"):
             issues.append(ValidationIssue(f"$.candidates[{index}]", "候选尺寸必须匹配输出规格"))
+    if payload.get("status") == "USER_CONFIRMED":
+        selected = payload.get("selectedCandidate")
+        if isinstance(selected, Mapping):
+            identities = {
+                (item.get("id"), item.get("path"), item.get("sha256"), item.get("visualVersion"))
+                for item in candidates
+                if isinstance(item, Mapping)
+            }
+            identity = (
+                selected.get("id"),
+                selected.get("path"),
+                selected.get("sha256"),
+                selected.get("visualVersion"),
+            )
+            if identity not in identities:
+                issues.append(ValidationIssue("$.selectedCandidate", "P1 用户确认候选必须来自当前生成结果"))
+        approval = payload.get("userApproval")
+        if isinstance(approval, Mapping) and isinstance(selected, Mapping):
+            if approval.get("approvalType") != payload.get("visualType"):
+                issues.append(ValidationIssue("$.userApproval.approvalType", "P1 用户批准类型必须匹配效果图类型"))
+            issues.extend(
+                _subject_binding_issues(
+                    [approval],
+                    expected_id=payload.get("id"),
+                    expected_version=selected.get("visualVersion"),
+                    path="$.userApproval",
+                )
+            )
     return issues
 
 

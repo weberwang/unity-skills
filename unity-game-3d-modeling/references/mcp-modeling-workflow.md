@@ -1,0 +1,44 @@
+# 基于 MCP 的建模工作流
+
+## 能力选择
+
+| 路径 | 适用范围 | 必要检查 |
+| --- | --- | --- |
+| Unity MCP `probuilder` | 灰盒、模块件、低模、碰撞原型 | 工具组已启用；结果仍需保存、导入与运行验证 |
+| Unity MCP `asset_gen.generate_model` | 文本或图片驱动的候选模型 | 供应商、成本、上传、许可、格式和纹理选项已获批准 |
+| Unity MCP `import_model_file` | 本地 FBX、OBJ、GLB、glTF | 输入在批准目录；glTF/GLB 项目已具备 glTFast |
+| 本地 DCC MCP | 精确拓扑、UV、重拓扑、LOD 与复杂修改 | 连接、活动源文件、能力、写入范围和脚本已批准 |
+
+[`generate_model`](https://coplaydev.github.io/unity-mcp/reference/tools/asset_gen/generate_model) 是异步任务：保存 job ID，用 `status` 轮询，用 `cancel` 取消。不要用长时间阻塞等待代替状态检查。开始前调用 `list_providers`，不要假定 Tripo、Meshy 或其他供应商已配置。本地模型导入遵循 [`import_model_file`](https://coplaydev.github.io/unity-mcp/reference/tools/asset_gen/import_model_file) 的格式和项目范围限制。文档只是能力基线；每次必须以当前绑定实例实际发现的工具及参数 Schema 为准，缺失或不匹配时 `BLOCKED`。
+
+## 模型规格
+
+每项至少记录：
+
+- 资源 ID、Visual Bible 版本、用途、目标观看距离与参考尺寸。
+- Unity 单位、朝向、上轴、前轴、Pivot 和归零变换。
+- 轮廓、模块边界、拓扑/三角面预算、法线/切线、UV 集与允许重叠。
+- 材质槽、LOD 层级和阈值、Collider 类型、运行时修改需求。
+- 文件格式、命名、目录、平台预算、来源、许可与禁止内容。
+
+## 生成与修整
+
+1. 先做低成本 blockout，固定相机与尺寸参考，验证轮廓和交互体积。
+2. 生成式供应商输出必须保留原始响应、提示词、参数和下载哈希；生成纹理只作为候选，不替代后续 PBR 工作流。
+3. 拓扑修整不得静默改变已批准轮廓、材质槽、UV 或交互边界。
+4. 冻结几何后生成 UV 哈希。纹理阶段发现 UV 问题时退回建模角色创建新版本，不在纹理阶段暗改。
+5. 为每个版本生成可复现模型配方；无法复现的手工操作记录操作人、工具版本和前后哈希。
+
+## Unity 验收
+
+- 外部模型的 ModelImporter：Scale Factor、坐标转换、法线、切线、网格优化、Read/Write 和压缩符合预算。ProBuilder 原生 Mesh/Prefab 无 ModelImporter 时验证可重建 recipe、Mesh、Prefab 和场景引用，不伪造导入器记录。
+- Mesh：无意外开口、退化面、反面、非有限顶点、材质槽漂移或未批准子网格。
+- Prefab：Renderer、LODGroup、Collider 和引用完整；不存在 Missing Script、粉色材质或控制台错误。
+- 视觉：在中性转台、掠射光、目标机位和目标场景检查比例、轮廓、法线、LOD 跳变与碰撞边界。
+- 性能：记录各 LOD 三角面、Renderer/材质槽数量、批次影响与内存估算。
+
+模型和材质必须使用各自的类型化导入证据。若现有登记 Schema 只支持纹理字段，停止合并并报告契约缺口。
+
+## DCC 安全基线
+
+第三方 DCC MCP 可能暴露任意代码执行和文件读取能力。只允许本地可信服务器、固定版本、批准的活动文件和最小工具集；执行前审查脚本，禁止 shell、网络、环境变量、凭据、项目外文件和动态依赖。保留源文件检查点、MCP 调用记录与所有输出哈希。

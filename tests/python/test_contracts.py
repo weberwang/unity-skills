@@ -21,6 +21,8 @@ TEMPLATE_CONTRACTS = (
     ("decomposition-plan", "decomposition-plan.yaml"),
     ("task-contract", "task-contract.yaml"),
     ("scene-manifest", "scene-manifest.yaml"),
+    ("prefab-structure", "prefab-structure.yaml"),
+    ("prefab-assembly", "prefab-assembly.yaml"),
     ("image-task", "image-task.yaml"),
     ("visual-bible", "visual-bible.yaml"),
     ("quality-gates", "quality-gates.yaml"),
@@ -34,6 +36,7 @@ TEMPLATE_CONTRACTS = (
     ("visual-review", "visual-review.yaml"),
     ("split-plan", "split-plan.yaml"),
     ("image-generation", "image-generation.yaml"),
+    ("image-generation", "image-generation-item.yaml"),
     ("quality-report", "quality-report.yaml"),
     ("registration-record", "registration-record.json"),
     ("scene-2d-adaptation", "scene-2d-adaptation.yaml"),
@@ -732,7 +735,7 @@ def test_approved_image_binds_approvals_and_review_to_selected_visual_version() 
         "subjectId": "starfall-arena",
         "subjectVersion": payload["visualBibleVersion"],
     }
-    payload["regenerationEvidence"] = {
+    payload["itemGenerationEvidence"] = {
         "type": "image-generation",
         "path": "Artifacts/Visual/Generation/player-source-v1.yaml",
         "sha256": "b" * 64,
@@ -747,9 +750,9 @@ def test_approved_image_binds_approvals_and_review_to_selected_visual_version() 
         "subjectVersion": payload["sourceVersion"],
         "itemId": payload["resourceId"],
         "itemElementIndex": 1,
-        "itemPath": payload["selectedCandidate"]["path"],
-        "itemSha256": payload["selectedCandidate"]["sha256"],
-        "itemVisualVersion": payload["selectedCandidate"]["visualVersion"],
+        "itemVersion": payload["sourceVersion"],
+        "itemSpecSha256": "c" * 64,
+        "resourceId": payload["resourceId"],
     }
     payload["finalVisualReview"] = {
         "type": "visual-review",
@@ -762,13 +765,54 @@ def test_approved_image_binds_approvals_and_review_to_selected_visual_version() 
         _approval("GAME_VISUAL", "INDEPENDENT_REVIEWER", payload["id"], "visual-v2", reviewer=f"image-{index}", discipline=discipline)
         for index, discipline in enumerate(("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"))
     ]
-    payload["approvals"].append(_approval("GAME_VISUAL", "USER", payload["id"], "visual-v2", reviewer="user"))
     assert validate_contract("image-task", payload) == []
 
     payload["approvals"][0]["subjectVersion"] = payload["sourceVersion"]
     issues = validate_contract("image-task", payload)
     assert any(issue.path == "$.approvals[0].subjectVersion" for issue in issues)
 
+
+def test_verified_prefab_assembly_requires_complete_low_fidelity_cleanup() -> None:
+    """最终拼装 VERIFIED 前必须完成占位清零、结构保留、引用清洁和证据留存。"""
+    payload = load_yaml(TEMPLATES / "prefab-assembly.yaml")
+    payload["status"] = "VERIFIED"
+    payload["unityValidation"] = "PASS"
+    payload["evidence"] = [
+        {
+            "type": "unity-prefab-validation",
+            "path": "Artifacts/Validation/prefab-assembly.yaml",
+            "sha256": "a" * 64,
+        }
+    ]
+
+    paths = {issue.path for issue in validate_contract("prefab-assembly", payload)}
+
+    assert {
+        "$.lowFidelityCleanup.status",
+        "$.lowFidelityCleanup.remainingPlaceholderCount",
+        "$.lowFidelityCleanup.structurePreserved",
+        "$.lowFidelityCleanup.referencesClean",
+        "$.lowFidelityCleanup.evidence",
+    }.issubset(paths)
+
+
+def test_low_fidelity_cleanup_evidence_binds_current_assembly() -> None:
+    """清理证据不得从其他 Prefab Assembly 版本复用。"""
+    payload = load_yaml(TEMPLATES / "prefab-assembly.yaml")
+    payload["lowFidelityCleanup"]["evidence"] = [
+        {
+            "type": "low-fidelity-cleanup-report",
+            "path": "Artifacts/Validation/cleanup.yaml",
+            "sha256": "b" * 64,
+            "subjectId": "prefab-assembly.other",
+            "subjectVersion": "assembly-old",
+        }
+    ]
+
+    paths = {issue.path for issue in validate_contract("prefab-assembly", payload)}
+
+    assert "$.lowFidelityCleanup.evidence[0].subjectId" in paths
+    assert "$.lowFidelityCleanup.evidence[0].subjectVersion" in paths
 
 def test_delivery_preflight_rejects_bare_artifacts_directory() -> None:
     """交付输出必须位于 Artifacts 的子目录，不能直接覆盖根目录。"""

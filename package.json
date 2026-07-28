@@ -12,6 +12,8 @@
   "files": [
     "scripts/install-project-skills.mjs",
     "unity-development-workflow",
+    "unity-game-3d-modeling",
+    "unity-game-3d-texturing",
     "unity-game-architecture",
     "unity-game-audio",
     "unity-game-balance",

@@ -46,7 +46,7 @@
         {"properties": {"type": {"const": "visual-bible"}}, "required": ["type", "subjectId", "subjectVersion"]}
       ]
     },
-    "regenerationEvidence": {
+    "itemGenerationEvidence": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
         {"properties": {"type": {"const": "image-generation"}}, "required": ["type", "subjectId", "subjectVersion"]}
@@ -57,7 +57,7 @@
       "additionalProperties": false,
       "required": [
         "type", "path", "sha256", "subjectId", "subjectVersion",
-        "itemId", "itemElementIndex", "itemPath", "itemSha256", "itemVisualVersion"
+        "itemId", "itemElementIndex", "itemVersion", "itemSpecSha256", "resourceId"
       ],
       "properties": {
         "type": {"const": "split-plan"},
@@ -67,9 +67,9 @@
         "subjectVersion": {"type": "string", "minLength": 1},
         "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
         "itemElementIndex": {"type": "integer", "minimum": 1},
-        "itemPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "itemSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-        "itemVisualVersion": {"type": "string", "minLength": 1}
+        "itemVersion": {"type": "string", "minLength": 1},
+        "itemSpecSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
       }
     },
     "output": {
@@ -138,12 +138,11 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["visualBibleEvidence", "regenerationEvidence", "splitPlanEvidence", "selectedCandidate", "finalVisualReview"],
+        "required": ["visualBibleEvidence", "itemGenerationEvidence", "splitPlanEvidence", "selectedCandidate"],
         "properties": {
           "approvals": {
-            "minItems": 4,
+            "minItems": 3,
             "allOf": [
-              {"contains": {"properties": {"authority": {"const": "USER"}}, "required": ["authority"]}},
               {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
               {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
               {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}

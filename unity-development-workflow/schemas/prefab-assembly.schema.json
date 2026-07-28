@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/prefab-assembly.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "sceneId", "version", "prefabStructureEvidence",
+    "splitPlanEvidence", "assetBindings", "prefabs", "scene", "lowFidelityCleanup",
+    "unityValidation", "evidence", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "prefabStructureEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "prefab-structure"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "splitPlanEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "split-plan"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "assetBindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["itemId", "resourceId", "productionType", "productionEvidence", "assetPath", "assetGuid"],
+        "properties": {
+          "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "productionType": {"enum": ["IMAGE_TASK", "MODEL_3D", "MATERIAL", "VFX", "CODE", "REUSED_ASSET", "PROGRAMMATIC", "EXPORTED_LAYER"]},
+          "productionEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
+          "assetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"}
+        }
+      }
+    },
+    "prefabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "nodes"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "nodes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "name", "components", "position", "rotation", "scale"],
+              "properties": {
+                "id": {"$ref": "common.schema.json#/$defs/taskId"},
+                "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "name": {"type": "string", "minLength": 1},
+                "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "components": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+                "position": {"$ref": "#/$defs/vector3"},
+                "rotation": {"$ref": "#/$defs/vector3"},
+                "scale": {"$ref": "#/$defs/vector3"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "prefabInstances"],
+      "properties": {
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "prefabInstances": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "prefabId", "position", "rotation", "scale"],
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/taskId"},
+              "prefabId": {"$ref": "common.schema.json#/$defs/taskId"},
+              "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+              "position": {"$ref": "#/$defs/vector3"},
+              "rotation": {"$ref": "#/$defs/vector3"},
+              "scale": {"$ref": "#/$defs/vector3"}
+            }
+          }
+        }
+      }
+    },
+    "lowFidelityCleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "removedItems", "remainingPlaceholderCount", "structurePreserved",
+        "referencesClean", "evidence", "status"
+      ],
+      "properties": {
+        "removedItems": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "itemType", "targetId", "targetPath", "reason"],
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/taskId"},
+              "itemType": {"enum": ["COMPONENT", "ASSET", "PREFAB", "SCENE_OBJECT", "MATERIAL", "MESH", "SPRITE"]},
+              "targetId": {"type": "string", "minLength": 1},
+              "targetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+              "reason": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "remainingPlaceholderCount": {"type": "integer", "minimum": 0},
+        "structurePreserved": {"type": "boolean"},
+        "referencesClean": {"type": "boolean"},
+        "evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "allOf": [
+              {"$ref": "common.schema.json#/$defs/evidence"},
+              {"required": ["subjectId", "subjectVersion"]}
+            ]
+          }
+        },
+        "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+        "failureReason": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["FAIL", "BLOCKED"]}}, "required": ["status"]},
+          "then": {"required": ["failureReason"]}
+        }
+      ]
+    },
+    "unityValidation": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+    "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "status": {"enum": ["PLANNED", "ASSEMBLED", "VERIFIED", "FAILED", "BLOCKED"]},
+    "failureReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "VERIFIED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "lowFidelityCleanup": {
+            "properties": {
+              "remainingPlaceholderCount": {"const": 0},
+              "structurePreserved": {"const": true},
+              "referencesClean": {"const": true},
+              "evidence": {"minItems": 1},
+              "status": {"const": "PASS"}
+            }
+          },
+          "unityValidation": {"const": "PASS"},
+          "evidence": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["FAILED", "BLOCKED"]}}, "required": ["status"]},
+      "then": {"required": ["failureReason"]}
+    }
+  ],
+  "$defs": {
+    "vector3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "z": {"type": "number"}
+      }
+    }
+  }
+}

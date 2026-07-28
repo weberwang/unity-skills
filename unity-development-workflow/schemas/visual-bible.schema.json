@@ -55,11 +55,11 @@
     "assetRegeneration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode", "regenerateBeforeSplit", "splitOnlyAfterReview"],
+      "required": ["mode", "independentItemGenerationRequired", "assetMapOnlyAfterReview"],
       "properties": {
         "mode": {"const": "REGENERATE_FROM_VISUAL_BIBLE"},
-        "regenerateBeforeSplit": {"const": true},
-        "splitOnlyAfterReview": {"const": true}
+        "independentItemGenerationRequired": {"const": true},
+        "assetMapOnlyAfterReview": {"const": true}
       }
     },
     "directionCandidates": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},

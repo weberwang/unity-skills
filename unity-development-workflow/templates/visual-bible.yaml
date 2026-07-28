@@ -38,7 +38,7 @@ referencePolicy:
   screenshotPixelReuse: FORBIDDEN
 assetRegeneration:
   mode: REGENERATE_FROM_VISUAL_BIBLE
-  regenerateBeforeSplit: true
-  splitOnlyAfterReview: true
+  independentItemGenerationRequired: true
+  assetMapOnlyAfterReview: true
 directionCandidates: []
 reviews: []

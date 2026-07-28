@@ -47,7 +47,11 @@ def image_generation_policy_issues(payload: Mapping[str, Any], issue: IssueFacto
                     issue,
                 )
             )
-    if payload.get("status") != "GENERATED":
+    if payload.get("generationMode") == "RUNTIME_ASSET_ITEM":
+        split = payload.get("splitPlanEvidence")
+        if isinstance(split, Mapping) and split.get("itemVersion") != payload.get("subjectVersion"):
+            issues.append(issue("$.splitPlanEvidence.itemVersion", "单图生成必须绑定当前资产地图条目版本"))
+    if payload.get("status") not in {"GENERATED", "USER_CONFIRMED"}:
         return issues
     screenshot_hashes = {
         item.get("sha256")
@@ -74,34 +78,20 @@ def image_task_policy_issues(payload: Mapping[str, Any], issue: IssueFactory) ->
     bible = payload.get("visualBibleEvidence")
     if isinstance(bible, Mapping) and bible.get("subjectVersion") != payload.get("visualBibleVersion"):
         issues.append(issue("$.visualBibleEvidence.subjectVersion", "全局视觉证据必须绑定当前 Visual Bible 版本"))
-    regeneration = payload.get("regenerationEvidence")
-    if isinstance(regeneration, Mapping) and regeneration.get("subjectVersion") != payload.get("sourceVersion"):
-        issues.append(issue("$.regenerationEvidence.subjectVersion", "重新生成契约必须绑定当前来源版本"))
+    item_generation = payload.get("itemGenerationEvidence")
+    if isinstance(item_generation, Mapping) and item_generation.get("subjectVersion") != payload.get("sourceVersion"):
+        issues.append(issue("$.itemGenerationEvidence.subjectVersion", "单项生成契约必须绑定当前来源版本"))
     split = payload.get("splitPlanEvidence")
-    selected = payload.get("selectedCandidate")
     if isinstance(split, Mapping):
-        if split.get("subjectVersion") != payload.get("sourceVersion"):
-            issues.append(issue("$.splitPlanEvidence.subjectVersion", "拆分方案必须绑定当前来源版本"))
-        if split.get("itemId") != payload.get("resourceId"):
-            issues.append(issue("$.splitPlanEvidence.itemId", "拆分条目必须绑定当前资源 ID"))
-        if isinstance(selected, Mapping):
-            for evidence_field, candidate_field, label in (
-                ("itemPath", "path", "路径"),
-                ("itemSha256", "sha256", "SHA-256"),
-                ("itemVisualVersion", "visualVersion", "视觉版本"),
-            ):
-                if split.get(evidence_field) != selected.get(candidate_field):
-                    issues.append(
-                        issue(
-                            f"$.splitPlanEvidence.{evidence_field}",
-                            f"拆分条目{label}必须与最终候选一致",
-                        )
-                    )
+        if split.get("resourceId") != payload.get("resourceId"):
+            issues.append(issue("$.splitPlanEvidence.resourceId", "资产地图资源 ID 必须匹配当前图片任务"))
+        if split.get("itemVersion") != payload.get("sourceVersion"):
+            issues.append(issue("$.splitPlanEvidence.itemVersion", "图片任务必须绑定当前资产地图条目版本"))
     return issues
 
 
 def split_plan_policy_issues(payload: Mapping[str, Any], issue: IssueFactory) -> list[Any]:
-    """确保拆分基于批准基线的重新生成源图，并避免问题清单出现重复身份。"""
+    """确保资产地图绑定 P1/P2 结果、覆盖全部元素并保持框选范围有效。"""
     issues: list[Any] = []
     questions = _mapping_items(payload.get("splitQuestions"))
     question_ids = [item.get("id") for item in questions]
@@ -118,35 +108,65 @@ def split_plan_policy_issues(payload: Mapping[str, Any], issue: IssueFactory) ->
                 issue,
             )
         )
-    regeneration = payload.get("regenerationEvidence")
-    if isinstance(regeneration, Mapping) and regeneration.get("subjectVersion") != payload.get("sourceVersion"):
-        issues.append(issue("$.regenerationEvidence.subjectVersion", "重新生成契约必须绑定当前拆分来源版本"))
+    generation = payload.get("highFidelityGenerationEvidence")
+    review = payload.get("highFidelityReviewEvidence")
     source = payload.get("sourceImage")
     if isinstance(source, Mapping):
-        if source.get("type") != "regenerated-asset-source":
-            issues.append(issue("$.sourceImage.type", "拆分源图必须是依据批准全局视觉重新生成的生产源图"))
-        issues.extend(
-            _evidence_binding_issues(
-                source,
-                payload.get("sceneId"),
-                payload.get("sourceVersion"),
-                "$.sourceImage",
-                issue,
-            )
-        )
-        if isinstance(regeneration, Mapping):
+        if isinstance(generation, Mapping):
             for evidence_field, source_field, label in (
                 ("candidatePath", "path", "路径"),
                 ("candidateSha256", "sha256", "SHA-256"),
                 ("candidateVisualVersion", "subjectVersion", "视觉版本"),
             ):
-                if regeneration.get(evidence_field) != source.get(source_field):
+                if generation.get(evidence_field) != source.get(source_field):
                     issues.append(
                         issue(
-                            f"$.regenerationEvidence.{evidence_field}",
-                            f"重新生成候选{label}必须与拆分源图一致",
+                            f"$.highFidelityGenerationEvidence.{evidence_field}",
+                            f"P1 高保真候选{label}必须与资产地图源图一致",
                         )
                     )
+    if isinstance(generation, Mapping) and isinstance(review, Mapping):
+        if review.get("subjectId") != generation.get("subjectId"):
+            issues.append(issue("$.highFidelityReviewEvidence.subjectId", "P2 审阅必须绑定 P1 高保真生成任务"))
+        if review.get("subjectVersion") != generation.get("candidateVisualVersion"):
+            issues.append(issue("$.highFidelityReviewEvidence.subjectVersion", "P2 审阅必须绑定 P1 已确认候选版本"))
+
+    annotated = payload.get("annotatedPreview")
+    dimensions = payload.get("sourceDimensions")
+    if isinstance(annotated, Mapping) and isinstance(source, Mapping):
+        for annotated_field, source_field, label in (
+            ("sourcePath", "path", "路径"),
+            ("sourceSha256", "sha256", "SHA-256"),
+            ("sourceVersion", "subjectVersion", "版本"),
+        ):
+            if annotated.get(annotated_field) != source.get(source_field):
+                issues.append(
+                    issue(
+                        f"$.annotatedPreview.{annotated_field}",
+                        f"标注预览的源图{label}必须与高保真源图一致",
+                    )
+                )
+    if isinstance(annotated, Mapping) and isinstance(dimensions, Mapping):
+        for field, label in (("width", "宽度"), ("height", "高度")):
+            if annotated.get(field) != dimensions.get(field):
+                issues.append(issue(f"$.annotatedPreview.{field}", f"标注预览{label}必须与源图尺寸一致"))
+
+    items = _mapping_items(payload.get("items"))
+    coverage = payload.get("coverageDeclaration")
+    if isinstance(coverage, Mapping) and coverage.get("declaredItemCount") != len(items):
+        issues.append(issue("$.coverageDeclaration.declaredItemCount", "资产地图声明数量必须等于实际条目数"))
+    if payload.get("status") == "APPROVED" and any(item.get("action") == "BLOCKED" for item in items):
+        issues.append(issue("$.items", "P3 用户批准前不得存在 BLOCKED 资产条目"))
+    if isinstance(dimensions, Mapping):
+        width = dimensions.get("width")
+        height = dimensions.get("height")
+        if isinstance(width, int) and isinstance(height, int):
+            for index, item in enumerate(items):
+                bounds = item.get("bounds")
+                if not isinstance(bounds, Mapping):
+                    continue
+                if bounds.get("x", 0) + bounds.get("width", 0) > width or bounds.get("y", 0) + bounds.get("height", 0) > height:
+                    issues.append(issue(f"$.items[{index}].bounds", "框选范围不得超出高保真源图"))
     return issues
 
 

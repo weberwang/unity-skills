@@ -50,7 +50,8 @@
         "approvalType": {
           "enum": [
             "VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL",
-            "DECOMPOSITION", "QUALITY_GATE", "RELEASE", "RISK_WAIVER"
+            "PREFAB_STRUCTURE", "ASSET_MAP", "DECOMPOSITION", "QUALITY_GATE",
+            "RELEASE", "RISK_WAIVER"
           ]
         },
         "authority": {"enum": ["USER", "INDEPENDENT_REVIEWER"]},
