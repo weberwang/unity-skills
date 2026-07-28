@@ -6,21 +6,22 @@ S00 通过后，为每个场景进行需求、实现、视觉、测试、审批�
 
 ## 输入
 
-- 当前场景 manifest、场景需求、依赖状态和 Visual Bible。
+- 当前场景 manifest、其引用的已批准拆分决策、场景需求、依赖状态和 Visual Bible。
 - S00 公共接口、资源所有权与当前用户批准记录。
 - 游戏效果图、UI 效果图和实机捕获的候选或证据。
 
 ## 执行步骤
 
-1. 校验场景 manifest，明确玩法、内容、UI、性能预算与验收标准。
+1. 校验场景 manifest 与 `decompositionPlan` 引用，确认场景 ID、版本、生命周期、模块依赖、共享能力和拥有路径仍在用户批准范围；不一致时返回拆分拷问，不得进入 G1/G2 实现。
 2. 创建灰盒并验证最小交互路径，同时冻结本场景资源依赖、UI 信息架构和验收测试。
-3. 生成游戏效果图候选，由视觉一致性、Unity 可实现性、UX/可读性代理独立审查；按合并修改清单迭代，直到用户批准。
-4. 串行实现玩法、内容与表现，按资源登记复用或进入拆分/生成流程，避免扩大共享接口。
-5. 生成 UI 效果图候选并执行相同审查循环，直到用户批准；再用 UI Toolkit 实现可交互 UI，效果图不得替代实现。
-6. 接入已登记、授权、逐项检查和 Unity 验证通过的正式资源与音频；占位资源登记责任人和截止门禁。
-7. 先用官方 `manage_build` 生成 Windows Standalone，再运行 `python scripts/capture_windows_runtime.py --project-root <项目> --executable <Artifacts/Builds 下 EXE> --project-id <ID> --scene-id <场景> --build-version <版本> --source-revision <修订> --screenshot <Artifacts/Visual/Runtime 下 PNG> --evidence <Artifacts/Visual/Runtime 下 JSON>` 捕获真实游戏窗口。脚本只产出 `CAPTURED` 证据，随后必须与已批准游戏/UI 效果图对比，交由三个独立审查子代理，修复并重新构建、捕获，直到用户批准。
-8. 执行场景测试、冒烟、可访问性、视觉与性能门禁，证据齐全后冻结场景。
-9. 可提前只读准备下一场景，但禁止提前写其正式共享状态；当前场景冻结后再切换主场景。
+3. 若为 2D 场景，按总控已加载的 2D 场景屏幕适配规则建立契约：竖屏固定高度且 UI Toolkit `match=1`，横屏固定宽度且 `match=0`；产生的左右或上下边带必须由无交互纯视觉背景覆盖。
+4. 生成游戏效果图候选，由视觉一致性、Unity 可实现性、UX/可读性代理独立审查；按合并修改清单迭代，直到用户批准。
+5. 串行实现玩法、内容与表现，按资源登记复用或进入拆分/生成流程，避免扩大共享接口。
+6. 生成 UI 效果图候选并执行相同审查循环，直到用户批准；再用 UI Toolkit 实现可交互 UI，效果图不得替代实现。
+7. 接入已登记、授权、逐项检查和 Unity 验证通过的正式资源与音频；占位资源登记责任人和截止门禁。
+8. 先用官方 `manage_build` 生成 Windows Standalone，再运行 `python scripts/capture_windows_runtime.py --project-root <项目> --executable <Artifacts/Builds 下 EXE> --project-id <ID> --scene-id <场景> --build-version <版本> --source-revision <修订> --screenshot <Artifacts/Visual/Runtime 下 PNG> --evidence <Artifacts/Visual/Runtime 下 JSON>` 捕获真实游戏窗口。脚本只产出 `CAPTURED` 证据，随后必须与已批准游戏/UI 效果图对比，交由三个独立审查子代理，修复并重新构建、捕获，直到用户批准。
+9. 执行场景测试、冒烟、可访问性、视觉与性能门禁；2D 场景还必须验证参考、边带、裁切三类分辨率，证据齐全后冻结场景。
+10. 可提前只读准备下一场景，但禁止提前写其正式共享状态；当前场景冻结后再切换主场景。
 
 ## 子代理角色与并行边界
 
@@ -36,11 +37,12 @@ S00 通过后，为每个场景进行需求、实现、视觉、测试、审批�
 
 ## 机器可读输出
 
-更新 `scene-manifest.yaml`，并按 `scene-report`、`visual-review`、`runtime-visual-evidence` 契约输出场景报告、游戏/UI/实机最终审查与 Windows 实机证据。`scene-manifest` 的 DONE 必须引用三份状态为 APPROVED 的最终视觉审查、质量报告和实机证据；引用均带 SHA-256、场景 ID 与场景版本，冻结前由 `gate evaluate` 深度解析。
+更新 `scene-manifest.yaml`，并按 `scene-report`、`visual-review`、`runtime-visual-evidence` 契约输出场景报告、游戏/UI/实机最终审查与 Windows 实机证据。2D 场景还要引用状态为 `VERIFIED` 的 `scene-2d-adaptation` 契约，其中 Unity 配置、EditMode 和逐分辨率运行截图必须是结构化 PASS 证据。`scene-manifest` 的 DONE 必须引用三份状态为 APPROVED 的最终视觉审查、质量报告和实机证据；引用均带 SHA-256、场景 ID 与场景版本，冻结前由 `gate evaluate` 深度解析。
 
 ## 通过条件
 
 - 灰盒、实现、UI Toolkit、测试和性能证据全部通过。
+- 2D 场景的高度/宽度基准、纯视觉边带、无黑边和交互安全区均通过目标分辨率矩阵。
 - 游戏效果图、UI 效果图和实机效果均经过独立审查、修改闭环与用户批准。
 - 场景没有未声明共享写入，冻结状态可追溯。
 

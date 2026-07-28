@@ -2,7 +2,12 @@ schemaVersion: "1.0"
 projectId: starfall-arena
 version: visual-v1
 status: REVIEWING
+designPillars:
+  - 克制而清晰
+  - 竞技焦点优先
 artDirection: 克制的近未来竞技场，清晰功能分区与高对比交互焦点
+worldLanguage: 大体块低频结构承载空间，关键目标用高对比发光细节引导
+assetLanguage: 轮廓简洁、材质层级明确，装饰密度服从玩法识别和性能预算
 palette:
   primary: "#16324F"
   secondary: "#6B7C93"
@@ -14,7 +19,26 @@ materials:
   - 半透明蓝色全息玻璃
 camera: 第三人称中距离跟随，水平视野保持主要目标可读
 uiLanguage: 紧凑无衬线文字、方角面板和琥珀色关键反馈
+typography: 窄体无衬线用于标题，中性无衬线用于正文，最小字号服从 Windows 可读性测试
+iconography: 两级线宽的几何图标，以轮廓和负形区分类别，不依赖颜色单独传义
+motionLanguage: 短促线性入场配合轻微缩放，重要状态使用单次节奏脉冲，禁止持续干扰动画
+readabilityRules:
+  - 交互目标必须同时具备轮廓、明度和动势中的至少两种区分
+  - 正文与背景对比度必须通过项目可访问性门禁
 avoid:
   - 高饱和霓虹色铺满画面
   - 影响轮廓识别的密集表面噪声
+referencePolicy:
+  styleAuthority: APPROVED_VISUAL_BIBLE
+  screenshotAllowedUses:
+    - CONTENT
+    - COMPOSITION
+    - INFORMATION_HIERARCHY
+  screenshotStyleTransfer: FORBIDDEN
+  screenshotPixelReuse: FORBIDDEN
+assetRegeneration:
+  mode: REGENERATE_FROM_VISUAL_BIBLE
+  regenerateBeforeSplit: true
+  splitOnlyAfterReview: true
+directionCandidates: []
 reviews: []

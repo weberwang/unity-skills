@@ -1,0 +1,143 @@
+schemaVersion: "1.0"
+id: decomposition.starfall-arena.v1
+projectId: starfall-arena
+version: decomposition-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+targetGate: G0
+interrogation:
+  - id: CORE_LOOP
+    question: 哪些行为必须在同一可玩闭环内完成，拆开后是否会破坏反馈？
+    answer: 移动、交互和结算属于同一玩法闭环，但由稳定接口连接。
+    conclusion: SPLIT
+  - id: PLAYER_JOURNEY
+    question: 玩家何时感知到明确的阶段切换，是否值得形成独立场景？
+    answer: 进入竞技场是有加载与教学语义的明确阶段切换。
+    conclusion: SPLIT
+  - id: SCENE_LIFECYCLE
+    question: 场景的进入、退出、重开和卸载边界是否可独立验证？
+    answer: 竞技场场景具有独立进入条件、胜利出口和重开路径。
+    conclusion: SPLIT
+  - id: PERSISTENCE_BOUNDARY
+    question: 哪些状态跨场景保存，谁负责版本与失败恢复？
+    answer: 玩家档案由 Foundation.Core 管理，场景只消费只读快照并提交结果。
+    conclusion: SHARED
+  - id: SHARED_CAPABILITY
+    question: 候选共享能力是否至少被两个已确认场景使用？
+    answer: 场景加载同时服务开场和战斗场景，满足双场景复用条件。
+    conclusion: SHARED
+  - id: OWNERSHIP
+    question: 每条代码、资源与文档路径能否归属唯一模块或场景？
+    answer: Foundation 与 Gameplay 使用互不重叠的目录，场景资产归场景清单。
+    conclusion: SPLIT
+  - id: DEPENDENCY_DIRECTION
+    question: 依赖方向是否单向且不要求运行时代码引用 Editor 实现？
+    answer: Gameplay 只依赖 Foundation 公共接口，不反向依赖且不引用 Editor 程序集。
+    conclusion: SPLIT
+  - id: ASSET_BOUNDARY
+    question: 美术、音频和配置资源由场景独占还是由公共能力共享？
+    answer: 竞技场环境归场景，通用输入图标经登记后由 Presentation.Shared 持有。
+    conclusion: KEEP
+  - id: UI_BOUNDARY
+    question: UI 是场景内容、持久覆盖层还是跨场景导航，生命周期由谁管理？
+    answer: 教学提示随竞技场卸载，暂停菜单由持久 UI 根管理。
+    conclusion: SPLIT
+  - id: PERFORMANCE_BUDGET
+    question: 拆分是否改善加载、内存和渲染预算，还是制造额外切换成本？
+    answer: 独立竞技场允许按场景卸载环境资源，加载预算保持五秒内。
+    conclusion: SPLIT
+  - id: TEST_BOUNDARY
+    question: 每个模块与场景是否有独立入口、可观察结果和失败注入点？
+    answer: 玩法规则可 EditMode 验证，竞技场主路径可 PlayMode 与 Windows 冒烟验证。
+    conclusion: SPLIT
+  - id: DELIVERY_IMPACT
+    question: 拆分是否改变 Build Profile、场景列表、许可或发行边界？
+    answer: 只更新受控场景列表，不增加平台、许可或分发能力。
+    conclusion: KEEP
+  - id: MERGE_RECOVERY
+    question: 若边界不成立，如何停止拆分、合并回父级并恢复可构建状态？
+    answer: 保留原入口，先回滚场景列表再将实现合并回 Gameplay.Player。
+    conclusion: KEEP
+proposedModules:
+  - id: Foundation.Core
+    category: Foundation
+    responsibility: 提供时间、场景加载与玩家档案边界
+    ownerRole: unity-game-architecture
+    owns:
+      - Assets/Scripts/Foundation
+    dependsOn: []
+    publicInterfaces:
+      - IGameClock
+      - ISceneLoader
+    sceneConsumers:
+      - scene.arena-intro
+      - scene.arena-battle
+    decision: SPLIT
+    rationale: 多场景消费且生命周期独立
+  - id: Gameplay.Player
+    category: Gameplay
+    responsibility: 实现玩家移动、输入解释与交互规则
+    ownerRole: unity-gameplay-development
+    owns:
+      - Assets/Scripts/Gameplay/Player
+    dependsOn:
+      - Foundation.Core
+    publicInterfaces:
+      - IPlayerController
+    sceneConsumers:
+      - scene.arena-intro
+      - scene.arena-battle
+    decision: SPLIT
+    rationale: 玩法规则可独立测试且依赖方向单一
+proposedScenes:
+  - id: scene.arena-intro
+    purpose: 承载进入竞技场与首次移动教学
+    lifecycle: GAMEPLAY
+    entryCondition: 玩家档案已加载
+    exitCondition: 玩家到达竞技场中心
+    owns:
+      - Assets/Scenes/ArenaIntro.unity
+    dependsOnScenes: []
+    moduleDependencies:
+      - Foundation.Core
+      - Gameplay.Player
+    decision: SPLIT
+    rationale: 具有独立的玩家阶段、加载和验收边界
+  - id: scene.arena-battle
+    purpose: 承载完整竞技场战斗与结算
+    lifecycle: GAMEPLAY
+    entryCondition: 入场教学已完成
+    exitCondition: 战斗结算已提交
+    owns:
+      - Assets/Scenes/ArenaBattle.unity
+    dependsOnScenes:
+      - scene.arena-intro
+    moduleDependencies:
+      - Foundation.Core
+      - Gameplay.Player
+    decision: SPLIT
+    rationale: 战斗可独立重开、卸载与性能验证
+sharedCapabilities:
+  - id: foundation.scene-loading
+    ownerModule: Foundation.Core
+    consumerScenes:
+      - scene.arena-intro
+      - scene.arena-battle
+    decision: PROMOTE_SHARED
+    rationale: 两个已确认场景共同消费且生命周期独立
+rejectedCandidates:
+  - targetType: SHARED_CAPABILITY
+    targetId: gameplay.arena-tutorial
+    reason: 当前仅开场场景使用，不满足双场景复用条件
+    recoveryAction: KEEP_CURRENT_BOUNDARY
+decision:
+  outcome: CHANGES_REQUIRED
+  rationale: 问题已回答，等待用户逐项确认模块、场景与共享能力边界
+  approvedModuleIds: []
+  approvedSceneIds: []
+recoveryExit:
+  resumeAt: WAIT_FOR_USER
+  action: 用户拒绝时保留当前边界，并按拒绝项合并回责任模块
+  conditions:
+    - 未取得用户确认不得创建目录、程序集定义或场景文件
+status: AWAITING_USER

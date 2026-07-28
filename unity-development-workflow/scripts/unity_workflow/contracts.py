@@ -13,11 +13,28 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
+from unity_workflow.decomposition_contract import (
+    EXPECTED_GATE_CHECKS,
+    decomposition_freshness_issues,
+    decomposition_plan_issues,
+    decomposition_reference_issues,
+)
+
+from .scene_2d_contract import validate_scene_2d_adaptation, validate_scene_manifest_2d_reference
+
+from unity_workflow.visual_contracts import (
+    image_generation_policy_issues,
+    image_task_policy_issues,
+    split_plan_policy_issues,
+    visual_bible_policy_issues,
+)
+
 
 SCHEMA_DIRECTORY = Path(__file__).parents[2] / "schemas"
 SCHEMA_FILENAMES = {
     "project-profile": "project-profile.schema.json",
     "module-manifest": "module-manifest.schema.json",
+    "decomposition-plan": "decomposition-plan.schema.json",
     "task-contract": "task-contract.schema.json",
     "scene-manifest": "scene-manifest.schema.json",
     "image-task": "image-task.schema.json",
@@ -35,6 +52,7 @@ SCHEMA_FILENAMES = {
     "split-plan": "split-plan.schema.json",
     "image-generation": "image-generation.schema.json",
     "registration-record": "registration-record.schema.json",
+    "scene-2d-adaptation": "scene-2d-adaptation.schema.json",
 }
 
 
@@ -103,21 +121,32 @@ def validate_contract(
     ]
     if kind == "module-manifest":
         issues.extend(_module_graph_issues(payload))
+        issues.extend(_convert_decomposition_issues(decomposition_reference_issues(payload)))
+    if kind == "decomposition-plan":
+        issues.extend(_convert_decomposition_issues(decomposition_plan_issues(payload)))
     if kind == "quality-gates":
         issues.extend(_identifier_set_issues(payload, "gates", {"G0", "G1", "G2", "G3"}, "质量门"))
         issues.extend(_quality_gate_pass_issues(payload))
     if kind == "scene-manifest":
+        issues.extend(ValidationIssue(path, message) for path, message in validate_scene_manifest_2d_reference(payload))
         issues.extend(_scene_approval_issues(payload))
+        issues.extend(_convert_decomposition_issues(decomposition_reference_issues(payload)))
+    if kind == "s00-report":
+        issues.extend(_convert_decomposition_issues(decomposition_reference_issues(payload)))
     if kind == "image-task":
         issues.extend(_image_task_approval_issues(payload))
+        issues.extend(image_task_policy_issues(payload, ValidationIssue))
     if kind == "visual-bible":
         issues.extend(_visual_bible_approval_issues(payload))
+        issues.extend(visual_bible_policy_issues(payload, ValidationIssue))
     if kind == "visual-review":
         issues.extend(_visual_review_issues(payload))
     if kind == "split-plan":
         issues.extend(_split_plan_issues(payload))
+        issues.extend(split_plan_policy_issues(payload, ValidationIssue))
     if kind == "image-generation":
         issues.extend(_image_generation_issues(payload))
+        issues.extend(image_generation_policy_issues(payload, ValidationIssue))
     if kind == "registration-record":
         issues.extend(_registration_record_issues(payload))
     if kind == "delivery-manifest":
@@ -128,6 +157,11 @@ def validate_contract(
         issues.extend(_asset_register_issues(payload))
     if kind == "quality-report":
         issues.extend(_quality_status_issues(payload))
+    if kind == "scene-2d-adaptation":
+        issues.extend(
+            ValidationIssue(path, message)
+            for path, message in validate_scene_2d_adaptation(payload)
+        )
     return sorted(set(issues), key=lambda issue: (issue.path, issue.message))
 
 
@@ -233,8 +267,13 @@ def _module_graph_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
     return issues
 
 
-def _dependency_cycle_issues(dependencies: Mapping[str, tuple[str, ...]]) -> list[ValidationIssue]:
-    """以迭代拓扑排序识别成环模块，避免递归深度影响大型清单。"""
+def _dependency_cycle_issues(
+    dependencies: Mapping[str, tuple[str, ...]],
+    *,
+    label: str = "模块",
+    path: str = "$.modules",
+) -> list[ValidationIssue]:
+    """以迭代拓扑排序识别依赖环，避免递归深度影响大型清单。"""
     known = set(dependencies)
     indegrees = {module_id: 0 for module_id in known}
     dependants: dict[str, list[str]] = {module_id: [] for module_id in known}
@@ -257,7 +296,7 @@ def _dependency_cycle_issues(dependencies: Mapping[str, tuple[str, ...]]) -> lis
     if visited == len(known):
         return []
     cycle_ids = sorted(module_id for module_id, degree in indegrees.items() if degree > 0)
-    return [ValidationIssue("$.modules", f"模块依赖存在环: {', '.join(cycle_ids)}")]
+    return [ValidationIssue(path, f"{label}依赖存在环: {', '.join(cycle_ids)}")]
 
 
 def _paths_overlap(left: str, right: str) -> bool:
@@ -266,6 +305,18 @@ def _paths_overlap(left: str, right: str) -> bool:
     right_parts = tuple(part for part in right.split("/") if part)
     minimum = min(len(left_parts), len(right_parts))
     return left_parts[:minimum] == right_parts[:minimum]
+
+
+def _convert_decomposition_issues(issues: Sequence[Any]) -> list[ValidationIssue]:
+    """把独立拆分验证器的问题转换为公共稳定问题类型。"""
+    return [ValidationIssue(issue.path, issue.message) for issue in issues]
+
+
+def validate_decomposition_freshness(
+    control: Mapping[str, Any], payload: Mapping[str, Any]
+) -> list[ValidationIssue]:
+    """对外暴露当前拆分指针的新鲜度校验。"""
+    return _convert_decomposition_issues(decomposition_freshness_issues(control, payload))
 
 
 def _duplicate_item_id_issues(
@@ -364,11 +415,21 @@ def _quality_gate_pass_issues(payload: Mapping[str, Any]) -> list[ValidationIssu
 
     issues: list[ValidationIssue] = []
     for gate_index, gate in enumerate(gates):
-        if not isinstance(gate, Mapping) or gate.get("status") != "PASS":
+        if not isinstance(gate, Mapping):
             continue
         required_checks = gate.get("requiredChecks")
         check_results = gate.get("checkResults")
         if not isinstance(required_checks, Sequence) or isinstance(required_checks, (str, bytes)):
+            continue
+        expected_checks = EXPECTED_GATE_CHECKS.get(gate.get("id"))
+        if expected_checks is not None and set(required_checks) != expected_checks:
+            issues.append(
+                ValidationIssue(
+                    f"$.gates[{gate_index}].requiredChecks",
+                    f"{gate.get('id')} 必需检查集合不完整或包含未定义项",
+                )
+            )
+        if gate.get("status") != "PASS":
             continue
         if not isinstance(check_results, Sequence) or isinstance(check_results, (str, bytes)):
             continue

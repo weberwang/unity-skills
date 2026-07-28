@@ -10,11 +10,23 @@
     "workflow": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["channel", "gate", "qualityTargetsStatus"],
+      "required": ["channel", "gate", "qualityTargetsStatus", "sourceRevision", "projectStateVersion", "decomposition"],
       "properties": {
         "channel": {"enum": ["QUICK", "STANDARD", "RELEASE"]},
         "gate": {"enum": ["G0", "G1", "G2", "G3"]},
-        "qualityTargetsStatus": {"enum": ["PROPOSED", "APPROVED"]}
+        "qualityTargetsStatus": {"enum": ["PROPOSED", "APPROVED"]},
+        "sourceRevision": {"type": "string", "minLength": 1},
+        "projectStateVersion": {"type": "string", "minLength": 1},
+        "decomposition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version", "status"],
+          "properties": {
+            "id": {"$ref": "common.schema.json#/$defs/taskId"},
+            "version": {"type": "string", "minLength": 1},
+            "status": {"enum": ["DRAFT", "QUESTIONING", "AWAITING_USER", "APPROVED", "REJECTED", "BLOCKED"]}
+          }
+        }
       }
     },
     "unity": {

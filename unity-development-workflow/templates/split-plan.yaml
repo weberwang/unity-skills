@@ -3,20 +3,44 @@ id: split.scene-arena-intro.game-v1
 projectId: starfall-arena
 sceneId: scene.arena-intro
 sourceVersion: game-v1
+visualBibleVersion: visual-v1
+sourceOrigin: REGENERATED_FROM_APPROVED_VISUAL
+visualBibleEvidence:
+  type: visual-bible
+  path: Artifacts/Visual/Global/visual-v1.yaml
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+regenerationEvidence:
+  type: image-generation
+  path: Artifacts/Visual/Generation/scene.arena-intro.asset-source-v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: imagegen.scene-arena-intro.asset-source-v1
+  subjectVersion: game-v1
+  candidateId: candidate.scene-arena-intro.asset-source-1
+  candidatePath: ArtSource/Approved/scene.arena-intro/game-v1.png
+  candidateSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  candidateVisualVersion: game-v1
 sourceImage:
-  type: approved-game-visual
+  type: regenerated-asset-source
   path: ArtSource/Approved/scene.arena-intro/game-v1.png
   sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: scene.arena-intro
-  subjectVersion: scene-v1
+  subjectVersion: game-v1
 annotatedPreview:
   type: annotated-split-preview
   path: Artifacts/Visual/Split/scene.arena-intro/game-v1-annotated.png
   sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+splitQuestions:
+  - id: split-question.background-independence
+    question: 背景是否必须作为独立运行时资源，能否由程序化色块或现有资源替代
+    answer: 背景承担竞技场身份和纵深，现有资源无法表达，必须独立交付
+    decisionImpact: 保留单张不透明背景并限制到目标分辨率，避免增加透明叠加开销
 items:
   - id: asset.arena-intro.background
     elementIndex: 1
     purpose: 竞技场开场背景
+    splitRationale: 背景需独立缩放和替换，且不参与角色透明排序
     bounds:
       x: 0
       y: 0

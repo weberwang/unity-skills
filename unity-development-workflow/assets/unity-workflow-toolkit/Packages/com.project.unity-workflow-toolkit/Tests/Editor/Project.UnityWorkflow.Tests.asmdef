@@ -4,6 +4,7 @@
   "references": [
     "MCPForUnity.Editor",
     "Project.UnityWorkflow.Core",
+    "Project.UnityWorkflow.Runtime",
     "Project.UnityWorkflow.ImagePipeline",
     "Project.UnityWorkflow.ProjectValidation",
     "Project.UnityWorkflow.VisualQA",

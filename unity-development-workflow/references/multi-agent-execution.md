@@ -19,7 +19,7 @@
 5. 临时失败走 `RUNNING → RETRYABLE_FAILED → ASSIGNED`，最多重派两次；两次重派后再次失败保持 `RETRYABLE_FAILED`，释放任务锁并上报主代理。
 6. 开发代理提交证据后由独立审查代理判断；禁止开发代理自批。
 7. 同一时间只允许一个主场景进入正式验收。
-8. Worktree 只在多个并发写入者存在时用于工作区隔离；单写入者、顺序任务和只读任务使用当前工作区。Git/Worktree 不参与质量门或状态机。
+8. 默认使用当前工作区和严格路径所有权；只有用户明确要求时才允许用 Worktree 隔离多个并发写入者。Git/Worktree 不参与质量门或状态机。
 
 评审拒绝走 `SELF_VERIFIED → REJECTED` 或 `REVIEWING → REJECTED`。任一非终态可进入 `CONFLICTED` 或 `CANCELLED`；`DONE`、`REJECTED`、`CONFLICTED`、`CANCELLED` 均为终态。
 
@@ -27,7 +27,7 @@
 
 - 角色包括侦察、规划、开发、视觉生成、测试、审查和交付代理。
 - L0 可并行；不同路径的 L1 可并行；同一 Unity 项目的 L2 正式写入必须串行。
-- 多个 Unity Worktree 可以并行写各自物理项目，但共享场景、ProjectSettings、Packages 和公共接口仍应分配给单一所有者，集成后统一复验。
+- 用户明确授权 Worktree 后，多个物理 Unity 项目副本可以并行写入；共享场景、ProjectSettings、Packages 和公共接口仍分配给单一所有者，集成后统一复验。
 - 报告契约必须包含 `task_id`、`actor`、`status`、`changed_paths`、`commands`、`evidence`、`risks` 和 `next_action`。
 
 ## 所需锁与 Unity 权限

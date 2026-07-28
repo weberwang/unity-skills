@@ -1,10 +1,21 @@
 schemaVersion: "1.0"
 projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+activeDecomposition:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 gates:
   - id: G0
     status: WAITING_APPROVAL
     requiredChecks:
       - scope.approved
+      - decomposition.approved
       - visual-bible.approved
       - windows-distribution.approved
     checkResults: []
@@ -26,6 +37,7 @@ gates:
       - regression.pass
       - performance.pass
       - defects.p0-p1-resolved
+      - scenes.2d-adaptation-verified
     checkResults: []
     evidence: []
   - id: G3

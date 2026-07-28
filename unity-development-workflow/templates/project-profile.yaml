@@ -4,6 +4,12 @@ workflow:
   channel: STANDARD
   gate: G0
   qualityTargetsStatus: PROPOSED
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+  decomposition:
+    id: decomposition.starfall-arena.v1
+    version: decomposition-v1
+    status: AWAITING_USER
 unity:
   version: "6"
   renderPipeline: URP

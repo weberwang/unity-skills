@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/scene-2d-adaptation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "sceneId", "sceneVersion", "orientation", "referenceResolution",
+    "worldCamera", "uiToolkit", "interactiveSafeArea", "decorativeBands",
+    "testResolutions", "status", "verification"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sceneVersion": {"type": "string", "minLength": 1},
+    "orientation": {"enum": ["PORTRAIT", "LANDSCAPE"]},
+    "referenceResolution": {"$ref": "#/$defs/resolution"},
+    "worldCamera": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection", "pixelsPerUnit", "fitAxis"],
+      "properties": {
+        "projection": {"const": "ORTHOGRAPHIC"},
+        "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+        "fitAxis": {"enum": ["HEIGHT", "WIDTH"]}
+      }
+    },
+    "uiToolkit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scaleMode", "screenMatchMode", "match", "referenceResolution"],
+      "properties": {
+        "scaleMode": {"const": "ScaleWithScreenSize"},
+        "screenMatchMode": {"const": "MatchWidthOrHeight"},
+        "match": {"type": "number", "minimum": 0, "maximum": 1},
+        "referenceResolution": {"$ref": "#/$defs/resolution"}
+      }
+    },
+    "interactiveSafeArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height", "overflowAllowed"],
+      "properties": {
+        "x": {"type": "integer", "minimum": 0},
+        "y": {"type": "integer", "minimum": 0},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "overflowAllowed": {"const": false}
+      }
+    },
+    "decorativeBands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blackBarsAllowed", "interactionAllowed", "purpose", "generationBasis",
+        "renderBehindGameplay", "assets"
+      ],
+      "properties": {
+        "blackBarsAllowed": {"const": false},
+        "interactionAllowed": {"const": false},
+        "purpose": {"const": "PURE_VISUAL"},
+        "generationBasis": {"const": "GLOBAL_VISUAL_BASELINE"},
+        "renderBehindGameplay": {"const": true},
+        "assets": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["edge", "resourceId", "path", "sha256", "interactive"],
+            "properties": {
+              "edge": {"enum": ["LEFT", "RIGHT", "TOP", "BOTTOM"]},
+              "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+              "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+              "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+              "interactive": {"const": false}
+            }
+          }
+        }
+      }
+    },
+    "testResolutions": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "width", "height", "expectedOutcome", "expectedBandEdges", "status"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "width": {"type": "integer", "minimum": 1},
+          "height": {"type": "integer", "minimum": 1},
+          "expectedOutcome": {"enum": ["EXACT", "DECORATIVE_BANDS", "CROP"]},
+          "expectedBandEdges": {
+            "type": "array",
+            "uniqueItems": true,
+            "maxItems": 2,
+            "items": {"enum": ["LEFT", "RIGHT", "TOP", "BOTTOM"]}
+          },
+          "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]}
+        }
+      }
+    },
+    "status": {"enum": ["PROPOSED", "APPROVED", "VERIFIED"]},
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unityConfiguration", "editMode", "runtimeScreenshots"],
+      "properties": {
+        "unityConfiguration": {"$ref": "#/$defs/unityConfigurationCheck"},
+        "editMode": {"$ref": "#/$defs/editModeCheck"},
+        "runtimeScreenshots": {"$ref": "#/$defs/runtimeScreenshotCheck"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"orientation": {"const": "PORTRAIT"}}, "required": ["orientation"]},
+      "then": {
+        "properties": {
+          "referenceResolution": {"properties": {"height": {"exclusiveMinimum": 1}}},
+          "worldCamera": {"properties": {"fitAxis": {"const": "HEIGHT"}}},
+          "uiToolkit": {"properties": {"match": {"const": 1}}},
+          "decorativeBands": {
+            "properties": {
+              "assets": {
+                "allOf": [
+                  {"contains": {"properties": {"edge": {"const": "LEFT"}}, "required": ["edge"]}},
+                  {"contains": {"properties": {"edge": {"const": "RIGHT"}}, "required": ["edge"]}}
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"orientation": {"const": "LANDSCAPE"}}, "required": ["orientation"]},
+      "then": {
+        "properties": {
+          "worldCamera": {"properties": {"fitAxis": {"const": "WIDTH"}}},
+          "uiToolkit": {"properties": {"match": {"const": 0}}},
+          "decorativeBands": {
+            "properties": {
+              "assets": {
+                "allOf": [
+                  {"contains": {"properties": {"edge": {"const": "TOP"}}, "required": ["edge"]}},
+                  {"contains": {"properties": {"edge": {"const": "BOTTOM"}}, "required": ["edge"]}}
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "VERIFIED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "unityConfiguration": {
+                "properties": {"status": {"const": "PASS"}, "evidence": {"minItems": 1}}
+              },
+              "editMode": {
+                "properties": {"status": {"const": "PASS"}, "evidence": {"minItems": 1}}
+              },
+              "runtimeScreenshots": {
+                "properties": {"status": {"const": "PASS"}, "evidence": {"minItems": 3}}
+              }
+            }
+          },
+          "testResolutions": {
+            "items": {"properties": {"status": {"const": "PASS"}}}
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    },
+    "checkStatus": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
+    "unityConfigurationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"$ref": "#/$defs/checkStatus"},
+        "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/unityConfigurationEvidence"}},
+        "failureReason": {"type": "string", "minLength": 1}
+      }
+    },
+    "editModeCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"$ref": "#/$defs/checkStatus"},
+        "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/editModeEvidence"}},
+        "failureReason": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtimeScreenshotCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"$ref": "#/$defs/checkStatus"},
+        "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/runtimeScreenshotEvidence"}},
+        "failureReason": {"type": "string", "minLength": 1}
+      }
+    },
+    "unityConfigurationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "unityVersion", "componentPath"],
+      "properties": {
+        "type": {"const": "unity-2d-adaptation-config"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "sceneVersion": {"type": "string", "minLength": 1},
+        "sourceRevision": {"type": "string", "minLength": 1},
+        "projectStateVersion": {"type": "string", "minLength": 1},
+        "unityVersion": {"type": "string", "minLength": 1},
+        "componentPath": {"type": "string", "minLength": 1}
+      }
+    },
+    "editModeEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "testSuite", "totalTests", "passedTests", "failedTests"],
+      "properties": {
+        "type": {"const": "unity-editmode-test-report"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "sceneVersion": {"type": "string", "minLength": 1},
+        "sourceRevision": {"type": "string", "minLength": 1},
+        "projectStateVersion": {"type": "string", "minLength": 1},
+        "testSuite": {"const": "Scene2DAdaptationTests"},
+        "totalTests": {"type": "integer", "minimum": 1},
+        "passedTests": {"type": "integer", "minimum": 1},
+        "failedTests": {"const": 0}
+      }
+    },
+    "runtimeScreenshotEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "resolutionId", "width", "height", "buildVersion", "blackBarsStatus", "bandVisibilityStatus", "interactionSafetyStatus"],
+      "properties": {
+        "type": {"const": "runtime-2d-adaptation-screenshot"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "sceneVersion": {"type": "string", "minLength": 1},
+        "sourceRevision": {"type": "string", "minLength": 1},
+        "projectStateVersion": {"type": "string", "minLength": 1},
+        "resolutionId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "buildVersion": {"type": "string", "minLength": 1},
+        "blackBarsStatus": {"const": "PASS"},
+        "bandVisibilityStatus": {"const": "PASS"},
+        "interactionSafetyStatus": {"const": "PASS"}
+      }
+    }
+  }
+}

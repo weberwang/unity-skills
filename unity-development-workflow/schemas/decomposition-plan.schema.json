@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/decomposition-plan.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "version", "sourceRevision", "projectStateVersion", "targetGate", "interrogation",
+    "proposedModules", "proposedScenes", "sharedCapabilities", "rejectedCandidates",
+    "decision", "recoveryExit", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "targetGate": {"enum": ["G0", "G1", "G2"]},
+    "interrogation": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "answer", "conclusion"],
+        "properties": {
+          "id": {
+            "enum": [
+              "CORE_LOOP", "PLAYER_JOURNEY", "SCENE_LIFECYCLE", "PERSISTENCE_BOUNDARY",
+              "SHARED_CAPABILITY", "OWNERSHIP", "DEPENDENCY_DIRECTION", "ASSET_BOUNDARY",
+              "UI_BOUNDARY", "PERFORMANCE_BUDGET", "TEST_BOUNDARY", "DELIVERY_IMPACT",
+              "MERGE_RECOVERY"
+            ]
+          },
+          "question": {"type": "string", "minLength": 1},
+          "answer": {"type": "string", "minLength": 1},
+          "conclusion": {"enum": ["SPLIT", "KEEP", "SHARED", "DEFER", "BLOCKED"]},
+          "evidence": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}}
+        }
+      }
+    },
+    "proposedModules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "category", "responsibility", "ownerRole", "owns", "dependsOn",
+          "publicInterfaces", "sceneConsumers", "decision", "rationale"
+        ],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9.]{0,95}$"},
+          "category": {"enum": ["Foundation", "Shared", "Gameplay", "Presentation", "Content", "QA", "Delivery"]},
+          "responsibility": {"type": "string", "minLength": 1},
+          "ownerRole": {"type": "string", "minLength": 1},
+          "owns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+          "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "publicInterfaces": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "sceneConsumers": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+          "decision": {"enum": ["SPLIT", "KEEP", "MERGE", "DEFER"]},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "proposedScenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "purpose", "lifecycle", "entryCondition", "exitCondition", "owns",
+          "dependsOnScenes", "moduleDependencies", "decision", "rationale"
+        ],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "purpose": {"type": "string", "minLength": 1},
+          "lifecycle": {"enum": ["BOOT", "MENU", "GAMEPLAY", "OVERLAY", "RESULT", "PERSISTENT"]},
+          "entryCondition": {"type": "string", "minLength": 1},
+          "exitCondition": {"type": "string", "minLength": 1},
+          "owns": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+          "dependsOnScenes": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+          "moduleDependencies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "decision": {"enum": ["SPLIT", "KEEP", "MERGE", "DEFER"]},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "sharedCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "ownerModule", "consumerScenes", "decision", "rationale"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "ownerModule": {"type": "string", "minLength": 1},
+          "consumerScenes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+          "decision": {"enum": ["PROMOTE_SHARED", "KEEP_LOCAL", "DEFER"]},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "rejectedCandidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["targetType", "targetId", "reason", "recoveryAction"],
+        "properties": {
+          "targetType": {"enum": ["MODULE", "SCENE", "SHARED_CAPABILITY"]},
+          "targetId": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "recoveryAction": {"enum": ["KEEP_CURRENT_BOUNDARY", "MERGE_INTO_PARENT", "RETURN_TO_QUESTIONING", "REQUEST_USER_DECISION"]}
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "rationale", "approvedModuleIds", "approvedSceneIds"],
+      "properties": {
+        "outcome": {"enum": ["APPROVE_SPLIT", "REJECT_SPLIT", "CHANGES_REQUIRED"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "approvedModuleIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "approvedSceneIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+        "userApproval": {"$ref": "common.schema.json#/$defs/approval"}
+      }
+    },
+    "recoveryExit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resumeAt", "action", "conditions"],
+      "properties": {
+        "resumeAt": {"enum": ["CONTINUE_TO_S00", "RETURN_TO_DISCOVERY", "RETURN_TO_GLOBAL_VISUAL", "KEEP_CURRENT_BOUNDARIES", "WAIT_FOR_USER"]},
+        "action": {"type": "string", "minLength": 1},
+        "conditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "status": {"enum": ["DRAFT", "QUESTIONING", "AWAITING_USER", "APPROVED", "REJECTED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "decision": {"required": ["userApproval"], "properties": {"outcome": {"const": "APPROVE_SPLIT"}}},
+          "recoveryExit": {"properties": {"resumeAt": {"const": "CONTINUE_TO_S00"}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "REJECTED"}}, "required": ["status"]},
+      "then": {
+        "properties": {
+          "rejectedCandidates": {"minItems": 1},
+          "decision": {"required": ["userApproval"], "properties": {"outcome": {"const": "REJECT_SPLIT"}}},
+          "recoveryExit": {"properties": {"resumeAt": {"enum": ["RETURN_TO_DISCOVERY", "RETURN_TO_GLOBAL_VISUAL", "KEEP_CURRENT_BOUNDARIES"]}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"], "properties": {"recoveryExit": {"properties": {"resumeAt": {"const": "WAIT_FOR_USER"}}}}}
+    }
+  ]
+}

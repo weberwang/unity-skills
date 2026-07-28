@@ -50,7 +50,7 @@
         "approvalType": {
           "enum": [
             "VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL",
-            "QUALITY_GATE", "RELEASE", "RISK_WAIVER"
+            "DECOMPOSITION", "QUALITY_GATE", "RELEASE", "RISK_WAIVER"
           ]
         },
         "authority": {"enum": ["USER", "INDEPENDENT_REVIEWER"]},
@@ -83,6 +83,7 @@
         "subjectId": {"$ref": "#/$defs/taskId"},
         "subjectVersion": {"type": "string", "minLength": 1},
         "sourceRevision": {"type": "string", "minLength": 1},
+        "projectStateVersion": {"type": "string", "minLength": 1},
         "buildVersion": {"type": "string", "minLength": 1}
       }
     },

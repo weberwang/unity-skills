@@ -7,6 +7,7 @@ import yaml
 from unity_workflow.contracts import (
     _is_rfc3339_date_time,
     load_yaml,
+    validate_decomposition_freshness,
     validate_contract,
 )
 
@@ -17,6 +18,7 @@ TEMPLATES = ROOT / "templates"
 TEMPLATE_CONTRACTS = (
     ("project-profile", "project-profile.yaml"),
     ("module-manifest", "module-manifest.yaml"),
+    ("decomposition-plan", "decomposition-plan.yaml"),
     ("task-contract", "task-contract.yaml"),
     ("scene-manifest", "scene-manifest.yaml"),
     ("image-task", "image-task.yaml"),
@@ -34,6 +36,7 @@ TEMPLATE_CONTRACTS = (
     ("image-generation", "image-generation.yaml"),
     ("quality-report", "quality-report.yaml"),
     ("registration-record", "registration-record.json"),
+    ("scene-2d-adaptation", "scene-2d-adaptation.yaml"),
 )
 
 
@@ -192,6 +195,133 @@ def test_module_manifest_rejects_unknown_cycle_and_overlapping_ownership() -> No
     assert any("未知依赖" in issue.message for issue in issues)
     assert any("依赖存在环" in issue.message for issue in issues)
     assert any("路径所有权" in issue.message for issue in issues)
+
+
+def test_decomposition_plan_requires_all_interrogation_questions() -> None:
+    """拆分前必须逐项回答完整拷问清单，不能通过删题绕过确认。"""
+    payload = load_yaml(TEMPLATES / "decomposition-plan.yaml")
+    payload["interrogation"].pop()
+
+    issues = validate_contract("decomposition-plan", payload)
+
+    assert any("缺少拆分拷问" in issue.message for issue in issues)
+
+
+def test_decomposition_plan_rejects_invalid_boundaries_and_shared_promotion() -> None:
+    """未知依赖、重叠所有权与单场景共享上移必须在用户确认前暴露。"""
+    payload = load_yaml(TEMPLATES / "decomposition-plan.yaml")
+    payload["proposedModules"][1]["owns"] = ["Assets/Scripts/Foundation/Player"]
+    payload["proposedScenes"][1]["moduleDependencies"] = ["Missing.Module"]
+    payload["sharedCapabilities"][0]["consumerScenes"] = ["scene.arena-intro"]
+
+    issues = validate_contract("decomposition-plan", payload)
+
+    assert any("路径所有权" in issue.message for issue in issues)
+    assert any("未知模块" in issue.message for issue in issues)
+    assert any("至少两个场景消费者" in issue.message for issue in issues)
+
+
+def test_decomposition_plan_rejects_scene_ownership_overlap() -> None:
+    """候选场景不得与其他场景或模块拥有相同及父子路径。"""
+    payload = load_yaml(TEMPLATES / "decomposition-plan.yaml")
+    payload["proposedScenes"][0]["owns"] = ["Assets/Scripts/Foundation/SceneGlue"]
+    payload["proposedScenes"][1]["owns"] = ["Assets/Scripts/Foundation/SceneGlue/Child"]
+
+    issues = validate_contract("decomposition-plan", payload)
+
+    messages = [issue.message for issue in issues if issue.path.endswith(".owns")]
+    assert any("与模块 Foundation.Core 重叠" in message for message in messages)
+    assert any("与 scene.arena-intro 重叠" in message for message in messages)
+
+
+def test_approved_decomposition_requires_bound_user_confirmation_and_exact_sets() -> None:
+    """只有用户确认且批准集合与 SPLIT 候选完全一致时才能进入 S00。"""
+    payload = load_yaml(TEMPLATES / "decomposition-plan.yaml")
+    payload["status"] = "APPROVED"
+    payload["decision"].update(
+        {
+            "outcome": "APPROVE_SPLIT",
+            "approvedModuleIds": ["Foundation.Core"],
+            "approvedSceneIds": ["scene.arena-intro", "scene.arena-battle"],
+            "userApproval": _approval(
+                "DECOMPOSITION",
+                "USER",
+                payload["id"],
+                payload["version"],
+                reviewer="scope-owner",
+            ),
+        }
+    )
+    payload["recoveryExit"]["resumeAt"] = "CONTINUE_TO_S00"
+
+    issues = validate_contract("decomposition-plan", payload)
+
+    assert any(issue.path == "$.decision.approvedModuleIds" for issue in issues)
+    payload["decision"]["approvedModuleIds"] = ["Foundation.Core", "Gameplay.Player"]
+    assert validate_contract("decomposition-plan", payload) == []
+
+
+def test_unapproved_decomposition_cannot_continue_to_s00() -> None:
+    """等待确认、阻断或拒绝状态都不能声明继续进入 S00。"""
+    payload = load_yaml(TEMPLATES / "decomposition-plan.yaml")
+    payload["recoveryExit"]["resumeAt"] = "CONTINUE_TO_S00"
+
+    issues = validate_contract("decomposition-plan", payload)
+
+    assert any(issue.path == "$.recoveryExit.resumeAt" for issue in issues)
+
+
+def test_new_awaiting_decomposition_invalidates_old_downstream_binding() -> None:
+    """项目切换到新待确认拆分版本后，旧模块、场景和 S00 引用必须失效。"""
+    profile = load_yaml(TEMPLATES / "project-profile.yaml")
+    profile["workflow"]["decomposition"]["status"] = "APPROVED"
+    artifacts = [
+        load_yaml(TEMPLATES / "module-manifest.yaml"),
+        load_yaml(TEMPLATES / "scene-manifest.yaml"),
+        load_yaml(TEMPLATES / "s00-report.yaml"),
+    ]
+    for artifact in artifacts:
+        assert validate_decomposition_freshness(profile, artifact) == []
+
+    profile["workflow"].update(
+        {
+            "sourceRevision": "working-tree-snapshot-20260728",
+            "projectStateVersion": "project-state-v2",
+            "decomposition": {
+                "id": "decomposition.starfall-arena.v2",
+                "version": "decomposition-v2",
+                "status": "AWAITING_USER",
+            },
+        }
+    )
+
+    for artifact in artifacts:
+        issues = validate_decomposition_freshness(profile, artifact)
+        paths = {issue.path for issue in issues}
+        assert "$.decompositionPlan" in paths
+        assert "$.decompositionPlan.subjectId" in paths
+        assert "$.decompositionPlan.subjectVersion" in paths
+        assert "$.decompositionPlan.sourceRevision" in paths
+        assert "$.decompositionPlan.projectStateVersion" in paths
+
+
+@pytest.mark.parametrize("filename", ("module-manifest.yaml", "scene-manifest.yaml", "s00-report.yaml"))
+def test_downstream_decomposition_reference_must_match_own_revision(filename: str) -> None:
+    """模块、场景和 S00 不得引用其他源码修订或项目状态版本的拆分批准。"""
+    payload = load_yaml(TEMPLATES / filename)
+    payload["decompositionPlan"]["sourceRevision"] = "stale-revision"
+    payload["decompositionPlan"]["projectStateVersion"] = "stale-project-state"
+    kind = {
+        "module-manifest.yaml": "module-manifest",
+        "scene-manifest.yaml": "scene-manifest",
+        "s00-report.yaml": "s00-report",
+    }[filename]
+
+    issues = validate_contract(kind, payload)
+
+    paths = {issue.path for issue in issues}
+    assert "$.decompositionPlan.sourceRevision" in paths
+    assert "$.decompositionPlan.projectStateVersion" in paths
 
 
 def test_quality_gates_require_each_lifecycle_gate_once() -> None:
@@ -366,6 +496,7 @@ def test_rfc3339_fallback_accepts_lowercase_utc_suffix() -> None:
 def test_approved_image_requires_approval_record() -> None:
     """图片任务没有批准记录时不得进入 APPROVED。"""
     payload = load_yaml(TEMPLATES / "image-task.yaml")
+    payload.pop("selectedCandidate")
     payload["status"] = "APPROVED"
     issues = validate_contract("image-task", payload)
     assert any(issue.path == "$.approvals" for issue in issues)
@@ -594,6 +725,32 @@ def test_approved_image_binds_approvals_and_review_to_selected_visual_version() 
         "sha256": "d" * 64,
         "visualVersion": "visual-v2",
     }
+    payload["visualBibleEvidence"] = {
+        "type": "visual-bible",
+        "path": "Artifacts/Visual/Global/visual-v1.yaml",
+        "sha256": "a" * 64,
+        "subjectId": "starfall-arena",
+        "subjectVersion": payload["visualBibleVersion"],
+    }
+    payload["regenerationEvidence"] = {
+        "type": "image-generation",
+        "path": "Artifacts/Visual/Generation/player-source-v1.yaml",
+        "sha256": "b" * 64,
+        "subjectId": "imagegen.player-source-v1",
+        "subjectVersion": payload["sourceVersion"],
+    }
+    payload["splitPlanEvidence"] = {
+        "type": "split-plan",
+        "path": "Artifacts/Visual/Split/player-v1.yaml",
+        "sha256": "c" * 64,
+        "subjectId": "split.player-v1",
+        "subjectVersion": payload["sourceVersion"],
+        "itemId": payload["resourceId"],
+        "itemElementIndex": 1,
+        "itemPath": payload["selectedCandidate"]["path"],
+        "itemSha256": payload["selectedCandidate"]["sha256"],
+        "itemVisualVersion": payload["selectedCandidate"]["visualVersion"],
+    }
     payload["finalVisualReview"] = {
         "type": "visual-review",
         "path": "Artifacts/Visual/Reviews/player-final.yaml",
@@ -677,6 +834,24 @@ def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
 
     bible = load_yaml(TEMPLATES / "visual-bible.yaml")
     bible["status"] = "APPROVED"
+    bible["directionCandidates"] = [
+        {
+            "type": "global-direction",
+            "path": f"Artifacts/Visual/Global/direction-{index}.png",
+            "sha256": character * 64,
+            "subjectId": bible["projectId"],
+            "subjectVersion": bible["version"],
+        }
+        for index, character in enumerate(("a", "b"), start=1)
+    ]
+    bible["selectedDirection"] = dict(bible["directionCandidates"][0])
+    bible["finalVisualReview"] = {
+        "type": "visual-review",
+        "path": "Artifacts/Visual/Global/visual-v1-review.yaml",
+        "sha256": "c" * 64,
+        "subjectId": bible["projectId"],
+        "subjectVersion": bible["version"],
+    }
     bible["reviews"] = [
         _approval(
             "VISUAL_BASELINE",

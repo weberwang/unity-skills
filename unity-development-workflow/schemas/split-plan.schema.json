@@ -4,8 +4,9 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sceneId", "sourceVersion", "sourceImage",
-    "annotatedPreview", "items", "reviews", "status"
+    "schemaVersion", "id", "projectId", "sceneId", "sourceVersion", "visualBibleVersion",
+    "sourceOrigin", "visualBibleEvidence", "regenerationEvidence", "sourceImage",
+    "annotatedPreview", "splitQuestions", "items", "reviews", "status"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -13,19 +14,68 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sourceVersion": {"type": "string", "minLength": 1},
-    "sourceImage": {"$ref": "common.schema.json#/$defs/evidence"},
+    "visualBibleVersion": {"type": "string", "minLength": 1},
+    "sourceOrigin": {"const": "REGENERATED_FROM_APPROVED_VISUAL"},
+    "visualBibleEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "visual-bible"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "regenerationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type", "path", "sha256", "subjectId", "subjectVersion",
+        "candidateId", "candidatePath", "candidateSha256", "candidateVisualVersion"
+      ],
+      "properties": {
+        "type": {"const": "image-generation"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "subjectVersion": {"type": "string", "minLength": 1},
+        "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "candidatePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "candidateSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "candidateVisualVersion": {"type": "string", "minLength": 1}
+      }
+    },
+    "sourceImage": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "regenerated-asset-source"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
     "annotatedPreview": {"$ref": "common.schema.json#/$defs/evidence"},
+    "splitQuestions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "answer", "decisionImpact"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "question": {"type": "string", "minLength": 1},
+          "answer": {"type": "string", "minLength": 1},
+          "decisionImpact": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "items": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "elementIndex", "purpose", "bounds", "targetSize", "alphaRequired", "pivot", "pixelsPerUnit", "delivery", "action"],
+        "required": ["id", "elementIndex", "purpose", "splitRationale", "bounds", "targetSize", "alphaRequired", "pivot", "pixelsPerUnit", "delivery", "action"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "elementIndex": {"type": "integer", "minimum": 1},
           "purpose": {"type": "string", "minLength": 1},
+          "splitRationale": {"type": "string", "minLength": 1},
           "bounds": {
             "type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"],
             "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}

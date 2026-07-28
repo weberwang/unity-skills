@@ -1,13 +1,39 @@
 schemaVersion: "1.0"
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
 id: scene.arena-intro
 version: scene-v1
+dimension: 2D
 purpose: 展示玩家进入竞技场并完成首次移动教学
+lifecycle: GAMEPLAY
+decompositionPlan:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+adaptation2D:
+  type: scene-2d-adaptation
+  path: Artifacts/Scenes/scene.arena-intro/adaptation-2d.yaml
+  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  subjectId: scene.arena-intro
+  subjectVersion: scene-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 entryConditions:
   - 玩家档案已加载
 exitConditions:
   - 玩家到达竞技场中心
 dependencies:
   - gameplay.player-controller
+moduleDependencies:
+  - Foundation.Core
+  - Gameplay.Player
+sharedCapabilities:
+  - foundation.scene-loading
 ownedAssets:
   - Assets/Scenes/ArenaIntro.unity
 gameplayVisualTasks:

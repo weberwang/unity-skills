@@ -1,0 +1,74 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+sceneId: scene.arena-intro
+sceneVersion: scene-v1
+orientation: PORTRAIT
+referenceResolution:
+  width: 1080
+  height: 1920
+worldCamera:
+  projection: ORTHOGRAPHIC
+  pixelsPerUnit: 100
+  fitAxis: HEIGHT
+uiToolkit:
+  scaleMode: ScaleWithScreenSize
+  screenMatchMode: MatchWidthOrHeight
+  match: 1
+  referenceResolution:
+    width: 1080
+    height: 1920
+interactiveSafeArea:
+  x: 0
+  y: 0
+  width: 1080
+  height: 1920
+  overflowAllowed: false
+decorativeBands:
+  blackBarsAllowed: false
+  interactionAllowed: false
+  purpose: PURE_VISUAL
+  generationBasis: GLOBAL_VISUAL_BASELINE
+  renderBehindGameplay: true
+  assets:
+    - edge: LEFT
+      resourceId: art.arena-side-left
+      path: Assets/Art/Runtime/Backgrounds/ArenaSideLeft.png
+      sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      interactive: false
+    - edge: RIGHT
+      resourceId: art.arena-side-right
+      path: Assets/Art/Runtime/Backgrounds/ArenaSideRight.png
+      sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      interactive: false
+testResolutions:
+  - id: portrait-reference
+    width: 1080
+    height: 1920
+    expectedOutcome: EXACT
+    expectedBandEdges: []
+    status: NOT_RUN
+  - id: portrait-wider
+    width: 1280
+    height: 1920
+    expectedOutcome: DECORATIVE_BANDS
+    expectedBandEdges: [LEFT, RIGHT]
+    status: NOT_RUN
+  - id: portrait-narrower
+    width: 900
+    height: 1920
+    expectedOutcome: CROP
+    expectedBandEdges: []
+    status: NOT_RUN
+status: PROPOSED
+verification:
+  unityConfiguration:
+    status: NOT_RUN
+    evidence: []
+  editMode:
+    status: NOT_RUN
+    evidence: []
+  runtimeScreenshots:
+    status: NOT_RUN
+    evidence: []

@@ -21,6 +21,7 @@ REFERENCE_NAMES = (
     "foundation-workflow.md",
     "game-implementation.md",
     "scene-loop.md",
+    "scene-2d-adaptation.md",
     "visual-workflow.md",
     "asset-pipeline.md",
     "quality-gates.md",

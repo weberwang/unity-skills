@@ -4,8 +4,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sceneId", "visualType", "subjectVersion",
-    "visualBibleVersion", "prompt", "references", "output", "candidates", "status"
+    "schemaVersion", "id", "projectId", "sceneId", "visualType", "generationMode", "subjectVersion",
+    "visualBibleVersion", "styleAuthority", "referencePolicy", "prompt", "references", "output", "candidates", "status"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -13,11 +13,51 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL", "ASSET_SOURCE"]},
+    "generationMode": {"enum": ["GLOBAL_DIRECTION", "SCENE_CONCEPT", "RUNTIME_ASSET_SOURCE"]},
     "subjectVersion": {"type": "string", "minLength": 1},
     "visualBibleVersion": {"type": "string", "minLength": 1},
+    "visualBibleEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "visual-bible"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "styleAuthority": {"enum": ["GLOBAL_DESIGN_BRIEF", "APPROVED_VISUAL_BIBLE"]},
+    "referencePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["screenshotAllowedUses", "screenshotStyleTransfer", "screenshotPixelReuse", "regenerateBeforeSplit"],
+      "properties": {
+        "screenshotAllowedUses": {
+          "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true,
+          "items": {"enum": ["CONTENT", "COMPOSITION", "INFORMATION_HIERARCHY"]}
+        },
+        "screenshotStyleTransfer": {"const": "FORBIDDEN"},
+        "screenshotPixelReuse": {"const": "FORBIDDEN"},
+        "regenerateBeforeSplit": {"const": true}
+      }
+    },
     "prompt": {"type": "string", "minLength": 1},
     "negativePrompt": {"type": "string"},
-    "references": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "references": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["referenceType", "path", "sha256", "allowedUses", "styleTransfer"],
+        "properties": {
+          "referenceType": {"enum": ["SCREENSHOT", "BRAND_ASSET", "CONTENT_REFERENCE", "ART_REFERENCE"]},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "allowedUses": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"enum": ["CONTENT", "COMPOSITION", "INFORMATION_HIERARCHY"]}
+          },
+          "styleTransfer": {"const": "FORBIDDEN"}
+        }
+      }
+    },
     "output": {
       "type": "object",
       "additionalProperties": false,
@@ -54,6 +94,18 @@
     "failureReason": {"type": "string", "minLength": 1}
   },
   "allOf": [
+    {
+      "if": {"properties": {"generationMode": {"const": "GLOBAL_DIRECTION"}}, "required": ["generationMode"]},
+      "then": {"properties": {"styleAuthority": {"const": "GLOBAL_DESIGN_BRIEF"}}},
+      "else": {
+        "required": ["visualBibleEvidence"],
+        "properties": {"styleAuthority": {"const": "APPROVED_VISUAL_BIBLE"}}
+      }
+    },
+    {
+      "if": {"properties": {"generationMode": {"const": "RUNTIME_ASSET_SOURCE"}}, "required": ["generationMode"]},
+      "then": {"properties": {"visualType": {"const": "ASSET_SOURCE"}}}
+    },
     {
       "if": {"properties": {"status": {"const": "GENERATED"}}, "required": ["status"]},
       "then": {"required": ["provider", "model", "generatedAtUtc"], "properties": {"candidates": {"minItems": 1}}}

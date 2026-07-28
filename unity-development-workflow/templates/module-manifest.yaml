@@ -1,17 +1,39 @@
 schemaVersion: "1.0"
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+decompositionPlan:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+status: APPROVED
 modules:
   - id: Foundation.Core
     category: Foundation
+    responsibility: 提供时间、场景加载与玩家档案边界
+    ownerRole: unity-game-architecture
     owns:
       - Assets/Scripts/Foundation
     dependsOn: []
     publicInterfaces:
       - IGameClock
+    sceneConsumers:
+      - scene.arena-intro
+      - scene.arena-battle
   - id: Gameplay.Player
     category: Gameplay
+    responsibility: 实现玩家移动、输入解释与交互规则
+    ownerRole: unity-gameplay-development
     owns:
       - Assets/Scripts/Gameplay/Player
     dependsOn:
       - Foundation.Core
     publicInterfaces:
       - IPlayerController
+    sceneConsumers:
+      - scene.arena-intro
+      - scene.arena-battle

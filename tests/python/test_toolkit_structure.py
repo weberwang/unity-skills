@@ -30,6 +30,8 @@ def test_toolkit_contains_all_planned_modules_and_tools() -> None:
     """UPM 包必须覆盖 Core、图片、项目、视觉、构建和 MCP 六个模块。"""
     required_files = (
         "package.json",
+        "Runtime/Project.UnityWorkflow.Runtime.asmdef",
+        "Runtime/Scene2DAdaptation.cs",
         "Editor/Core/WorkflowPaths.cs",
         "Editor/Core/EditorStabilityGuard.cs",
         "Editor/Core/ManifestLoader.cs",
@@ -39,6 +41,7 @@ def test_toolkit_contains_all_planned_modules_and_tools() -> None:
         "Editor/ImagePipeline/AssetTargetLock.cs",
         "Editor/ImagePipeline/ResourceRegistrationRecord.cs",
         "Editor/ProjectValidation/ProjectValidationService.cs",
+        "Editor/ProjectValidation/Scene2DAdaptationValidationService.cs",
         "Editor/VisualQA/VisualCaptureService.cs",
         "Editor/BuildPipeline/DeliveryPreflightService.cs",
         "Editor/McpTools/ValidateProjectTool.cs",
@@ -48,6 +51,7 @@ def test_toolkit_contains_all_planned_modules_and_tools() -> None:
         "Tests/Editor/CoreTests.cs",
         "Tests/Editor/ImagePipelineTests.cs",
         "Tests/Editor/ProjectValidationTests.cs",
+        "Tests/Editor/Scene2DAdaptationTests.cs",
         "Tests/Editor/VisualCaptureTests.cs",
         "Tests/Editor/DeliveryPreflightTests.cs",
         "Tests/Editor/McpToolTests.cs",
@@ -62,11 +66,15 @@ def test_asmdefs_are_valid_and_unique() -> None:
     names: list[str] = []
     for path in PACKAGE_ROOT.rglob("*.asmdef"):
         payload = json.loads(read_text(path))
-        assert payload["includePlatforms"] == ["Editor"]
+        if path.parent.name == "Runtime":
+            assert payload["includePlatforms"] == []
+        else:
+            assert payload["includePlatforms"] == ["Editor"]
         names.append(payload["name"])
 
     assert len(names) == len(set(names))
     assert "Project.UnityWorkflow.McpTools" in names
+    assert "Project.UnityWorkflow.Runtime" in names
     assert "Project.UnityWorkflow.Tests" in names
 
 

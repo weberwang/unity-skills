@@ -2,12 +2,50 @@ schemaVersion: "1.0"
 id: visual.player-portrait
 resourceId: ui.player-portrait.scout
 sourceVersion: visual-v1
+visualBibleVersion: visual-v1
+generationMode: REGENERATE_FROM_APPROVED_VISUAL
+styleAuthority: APPROVED_VISUAL_BIBLE
 module: Presentation.Player
 assetType: character-portrait
 useCase: 玩家选择界面的角色头像
 brief: 深蓝装甲的科幻侦察员半身像，清晰轮廓，柔和侧光
 references:
   - Assets/Art/References/PlayerSilhouette.png
+referenceDeclarations:
+  - path: Assets/Art/References/PlayerSilhouette.png
+    referenceType: CONTENT_REFERENCE
+    allowedUses:
+      - CONTENT
+      - COMPOSITION
+    styleTransfer: FORBIDDEN
+    pixelReuse: FORBIDDEN
+visualBibleEvidence:
+  type: visual-bible
+  path: Artifacts/Visual/Global/visual-v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+regenerationEvidence:
+  type: image-generation
+  path: Artifacts/Visual/Generation/player-select.asset-source-v1.yaml
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  subjectId: imagegen.player-select.asset-source-v1
+  subjectVersion: visual-v1
+splitPlanEvidence:
+  type: split-plan
+  path: Artifacts/Visual/Split/player-select.visual-v1.yaml
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  subjectId: split.player-select.visual-v1
+  subjectVersion: visual-v1
+  itemId: ui.player-portrait.scout
+  itemElementIndex: 1
+  itemPath: ArtSource/Generated/visual.player-portrait/processed/player-scout.png
+  itemSha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  itemVisualVersion: player-scout-v1
+selectedCandidate:
+  path: ArtSource/Generated/visual.player-portrait/processed/player-scout.png
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  visualVersion: player-scout-v1
 output:
   candidateCount: 4
   aspectRatio: "1:1"

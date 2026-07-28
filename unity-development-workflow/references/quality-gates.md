@@ -12,7 +12,7 @@ S00、每个场景冻结、全局回归和 Windows 交付前读取。
 
 ## 执行步骤
 
-1. 先判定生命周期门：G0 范围与全局视觉；G1 S00 与端到端垂直切片；G2 全场景、正式资源和全局回归；G3 候选包、合规和用户放行。
+1. 先判定生命周期门：G0 范围、用户确认的模块/场景拆分与全局视觉；G1 S00 与端到端垂直切片；G2 全场景、正式资源和全局回归；G3 候选包、合规和用户放行。
 2. 依次验证 Schema、静态检查、脚本校验、编译和 Console 增量。
 3. 激活 `testing` 后分别以 `run_tests` 启动 EditMode/PlayMode 异步任务，并通过测试任务查询取得最终结果、用例数和失败详情。
 4. 对目标场景运行启动、输入设备、主路径、暂停恢复、窗口/分辨率变化、重开与退出冒烟。
@@ -21,7 +21,7 @@ S00、每个场景冻结、全局回归和 Windows 交付前读取。
 7. 使用 `manage_build` 执行 Windows 构建，并对候选包进行干净启动与长时间运行检查。
 8. 核对正式资源唯一登记、授权、导入验证、占位清零和当前版本一致性。
 9. 每项只报告实际运行结果；环境或工具缺失时标记 `BLOCKED`，未运行标记 `NOT_RUN`，不得标记通过。
-10. 填充每个 requiredCheck 的实际结果与证据后，运行 `workflow.py gate evaluate --config <quality-gates> --gate <G0-G3> --project-root <项目> --project-id <ID> --source-revision <修订> --build-version <版本> --output <结果>`。求值器递归校验质量报告、实机视觉、场景、资源登记、登记事实和交付清单的文件存在性、Schema、状态、身份、版本与 SHA-256，并原子输出；任一必需门禁失败时停止状态推进，P0/P1 必须修复或获得用户明确豁免。
+10. 填充每个 requiredCheck 的实际结果与证据后，运行 `workflow.py gate evaluate --config <quality-gates> --gate <G0-G3> --project-root <项目> --project-id <ID> --source-revision <修订> --build-version <版本> --output <结果>`。质量门根部的 `activeDecomposition` 是当前唯一拆分指针；G0 的 `decomposition.approved` 必须直接包含状态为 `APPROVED` 的同一拆分契约；G1 的 S00 报告和 G2 的场景清单必须绑定相同 ID、版本、`sourceRevision` 与 `projectStateVersion`。求值器校验文件存在性、Schema、状态、身份、版本与 SHA-256，并原子输出；任一必需门禁失败时停止状态推进，P0/P1 必须修复或获得用户明确豁免。
 
 ## 子代理角色与并行边界
 

@@ -2,7 +2,8 @@
   "name": "Project.UnityWorkflow.ProjectValidation",
   "rootNamespace": "Project.UnityWorkflow.ProjectValidation",
   "references": [
-    "Project.UnityWorkflow.Core"
+    "Project.UnityWorkflow.Core",
+    "Project.UnityWorkflow.Runtime"
   ],
   "includePlatforms": [
     "Editor"

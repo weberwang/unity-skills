@@ -2,7 +2,20 @@ schemaVersion: "1.0"
 projectId: starfall-arena
 foundationVersion: foundation-v1
 sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
 generatedAtUtc: "2026-07-27T12:00:00Z"
+decompositionPlan:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+moduleManifest:
+  type: module-manifest
+  path: Artifacts/Planning/module-manifest.yaml
+  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 scope:
   - 启动、场景加载、输入、配置、存档、UI Toolkit、日志与测试骨架
 sharedCapabilities:

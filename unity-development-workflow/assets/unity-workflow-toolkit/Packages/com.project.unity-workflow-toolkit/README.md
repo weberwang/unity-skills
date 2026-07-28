@@ -5,6 +5,7 @@
 - Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
 - ProjectValidation：Unity 6、URP、Windows、构建场景、资源引用、asmdef 循环与 Console 基线检查。
+- Runtime：`Adaptive2DViewport` 为 2D 场景提供竖屏高度适配、横屏宽度适配、UI Toolkit match 配置和无交互装饰边带布局。
 - VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代 Windows Standalone 实机视觉证据。
 - BuildPipeline：在官方构建前检查 Windows、版本、场景、质量报告、视觉批准与输出保护。
 - McpTools：把四项业务服务作为 unity-mcp 短同步自定义工具暴露。
@@ -44,3 +45,9 @@
 ```
 
 若环境未安装 Unity，只能完成文件结构、JSON 与 C# 静态检查，不能把 EditMode 测试标记为通过。
+
+## 2D 场景适配
+
+竖屏使用固定 `Camera.orthographicSize = referenceHeight / pixelsPerUnit / 2`，并把 PanelSettings 的 Match Width or Height 设为 `1`；横屏按目标 aspect 反算正交半高以固定参考宽度，并把 match 设为 `0`。目标比例产生额外可见区域时，组件只启用对应的 LEFT/RIGHT 或 TOP/BOTTOM 两张 SpriteRenderer。
+
+边带对象必须是无父级的独立对象，且层级中只能含 Transform 与 SpriteRenderer；任何 Collider、Collider2D、脚本或其他组件都会令严格校验失败。Renderer 与材质 Alpha 必须至少为 0.99，材质需受当前平台支持，边带位于摄像机 Culling Mask 内，并使用严格低于玩法内容的 Sorting Layer/Order。纹理需开启 Read/Write，Editor 校验会扫描 Sprite 实际区域并要求至少 99% 像素达到可见 Alpha，防止透明图片绕过检查。边带资源只负责视觉延展，不得放置按钮、提示或玩法信息。场景还必须使用 `scene-2d-adaptation` 契约验证参考、边带、裁切三类分辨率。

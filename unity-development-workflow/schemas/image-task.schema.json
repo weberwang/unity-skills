@@ -4,19 +4,74 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "resourceId", "sourceVersion", "module", "assetType", "useCase", "brief",
-    "references", "output", "unityImport", "acceptance", "status", "approvals"
+    "schemaVersion", "id", "resourceId", "sourceVersion", "visualBibleVersion", "generationMode",
+    "styleAuthority", "module", "assetType", "useCase", "brief", "references", "referenceDeclarations",
+    "output", "unityImport", "acceptance", "status", "approvals"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sourceVersion": {"type": "string", "minLength": 1},
+    "visualBibleVersion": {"type": "string", "minLength": 1},
+    "generationMode": {"const": "REGENERATE_FROM_APPROVED_VISUAL"},
+    "styleAuthority": {"const": "APPROVED_VISUAL_BIBLE"},
     "module": {"type": "string", "minLength": 1},
     "assetType": {"type": "string", "minLength": 1},
     "useCase": {"type": "string", "minLength": 1},
     "brief": {"type": "string", "minLength": 1},
     "references": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "referenceDeclarations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "referenceType", "allowedUses", "styleTransfer", "pixelReuse"],
+        "properties": {
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "referenceType": {"enum": ["SCREENSHOT", "BRAND_ASSET", "CONTENT_REFERENCE", "ART_REFERENCE"]},
+          "allowedUses": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"enum": ["CONTENT", "COMPOSITION", "INFORMATION_HIERARCHY"]}
+          },
+          "styleTransfer": {"const": "FORBIDDEN"},
+          "pixelReuse": {"const": "FORBIDDEN"}
+        }
+      }
+    },
+    "visualBibleEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "visual-bible"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "regenerationEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "image-generation"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
+    "splitPlanEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type", "path", "sha256", "subjectId", "subjectVersion",
+        "itemId", "itemElementIndex", "itemPath", "itemSha256", "itemVisualVersion"
+      ],
+      "properties": {
+        "type": {"const": "split-plan"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "subjectVersion": {"type": "string", "minLength": 1},
+        "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "itemElementIndex": {"type": "integer", "minimum": 1},
+        "itemPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "itemSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "itemVisualVersion": {"type": "string", "minLength": 1}
+      }
+    },
     "output": {
       "type": "object",
       "additionalProperties": false,
@@ -83,7 +138,7 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["selectedCandidate", "finalVisualReview"],
+        "required": ["visualBibleEvidence", "regenerationEvidence", "splitPlanEvidence", "selectedCandidate", "finalVisualReview"],
         "properties": {
           "approvals": {
             "minItems": 4,

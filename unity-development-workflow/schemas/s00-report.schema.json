@@ -4,8 +4,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "projectId", "foundationVersion", "sourceRevision", "generatedAtUtc",
-    "scope", "sharedCapabilities", "changedPaths", "qualityReports", "console",
+    "schemaVersion", "projectId", "foundationVersion", "sourceRevision", "projectStateVersion", "generatedAtUtc",
+    "decompositionPlan", "moduleManifest", "scope", "sharedCapabilities", "changedPaths", "qualityReports", "console",
     "emptyWindowsBuild", "reviews", "status"
   ],
   "properties": {
@@ -13,7 +13,20 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "foundationVersion": {"type": "string", "minLength": 1},
     "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
     "generatedAtUtc": {"type": "string", "format": "date-time"},
+    "decompositionPlan": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"required": ["subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"], "properties": {"type": {"const": "decomposition-plan"}}}
+      ]
+    },
+    "moduleManifest": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "module-manifest"}}}
+      ]
+    },
     "scope": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "sharedCapabilities": {
       "type": "array",

@@ -4,19 +4,45 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "version", "purpose", "entryConditions", "exitConditions",
-    "dependencies", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
+    "schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "id", "version", "dimension", "purpose", "lifecycle", "decompositionPlan",
+    "entryConditions", "exitConditions", "dependencies", "moduleDependencies",
+    "sharedCapabilities", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
     "qualityGate", "status", "approvals", "qualityReportPaths", "runtimeCapturePaths",
     "qualityReports", "runtimeCaptures", "visualReviews", "evidence"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "version": {"type": "string", "minLength": 1},
+    "dimension": {"enum": ["2D", "3D"]},
     "purpose": {"type": "string", "minLength": 1},
+    "lifecycle": {"enum": ["BOOT", "MENU", "GAMEPLAY", "OVERLAY", "RESULT", "PERSISTENT"]},
+    "decompositionPlan": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "decomposition-plan"}}
+        }
+      ]
+    },
+    "adaptation2D": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "scene-2d-adaptation"}}
+        }
+      ]
+    },
     "entryConditions": {"$ref": "#/$defs/nonEmptyStrings"},
     "exitConditions": {"$ref": "#/$defs/nonEmptyStrings"},
     "dependencies": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "moduleDependencies": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "sharedCapabilities": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
     "ownedAssets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "gameplayVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
     "uiVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
@@ -49,6 +75,14 @@
     "frozenAtUtc": {"type": "string", "format": "date-time"}
   },
   "allOf": [
+    {
+      "if": {"properties": {"dimension": {"const": "2D"}}, "required": ["dimension"]},
+      "then": {"required": ["adaptation2D"]}
+    },
+    {
+      "if": {"properties": {"dimension": {"const": "3D"}}, "required": ["dimension"]},
+      "then": {"not": {"required": ["adaptation2D"]}}
+    },
     {
       "if": {"properties": {"status": {"const": "DONE"}}, "required": ["status"]},
       "then": {

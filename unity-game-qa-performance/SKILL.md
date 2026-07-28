@@ -1,6 +1,6 @@
 ---
 name: unity-game-qa-performance
-description: Unity 游戏的测试与性能角色。需要建立或执行 EditMode、PlayMode、场景冒烟、回归、输入、分辨率、稳定性、Profiler、内存、渲染和 Windows 候选验证并给出可复现证据时使用。
+description: Unity 游戏的测试与性能角色。需要建立或执行 EditMode、PlayMode、场景冒烟、回归、输入、2D 多比例适配、稳定性、Profiler、内存、渲染和 Windows 候选验证并给出可复现证据时使用。
 ---
 
 # Unity 测试与性能
@@ -17,6 +17,7 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 2. 激活 `testing` 工具组后运行测试并查询异步任务到终态；记录版本、用例数、失败详情与原始日志。
 3. 激活 `profiling` 后记录环境与采集方式，采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体；必要时使用内存快照与 Frame Debugger。
 4. 缺陷记录版本、场景、设备、复现步骤、预期/实际、证据、P0-P3、所有者和回归状态。
-5. G2/G3 汇总阻断、用户豁免、未测风险和候选包对应关系；没有可复现证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
+5. 2D 场景至少覆盖参考比例、装饰边带比例和外围裁切比例，复算摄像机与 UI match，检查无黑边、纯视觉边带、无 Collider/交互组件及交互安全区不越界。
+6. G2/G3 汇总阻断、用户豁免、未测风险和候选包对应关系；没有可复现证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。
