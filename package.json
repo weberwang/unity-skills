@@ -1,0 +1,29 @@
+{
+  "name": "unity-skills",
+  "version": "1.0.0",
+  "description": "Unity 6 游戏协作 Skills 的项目级安装器",
+  "type": "module",
+  "bin": {
+    "unity-skills": "./scripts/install-project-skills.mjs"
+  },
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "files": [
+    "scripts/install-project-skills.mjs",
+    "unity-development-workflow",
+    "unity-game-architecture",
+    "unity-game-audio",
+    "unity-game-balance",
+    "unity-game-production",
+    "unity-game-qa-performance",
+    "unity-game-release",
+    "unity-game-visual-assets",
+    "unity-gameplay-development"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weberwang/unity-skills.git"
+  },
+  "license": "MIT"
+}

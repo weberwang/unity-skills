@@ -10,13 +10,35 @@
 
 ## 安装 Skills
 
-在本仓库运行本地安装器，把总控与八个角色 Skill 复制到目标项目：
+需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控与八个角色 Skill 复制到项目的 `.agents/skills/`：
+
+```powershell
+npx -y github:weberwang/unity-skills
+```
+
+也可以在任意目录显式指定目标项目：
+
+```powershell
+npx -y github:weberwang/unity-skills D:\Projects\my-game
+```
+
+安装器直接复制本次 npx 下载包内的全部九个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
+
+```powershell
+npx -y skills@1.5.19 add weberwang/unity-skills -l --full-depth
+```
+
+已克隆本仓库时，仍可使用本地安装器；它默认拒绝覆盖同名 Skill，只有明确替换时才添加 `--force`：
 
 ```powershell
 uv run .\scripts\install_project_skills.py --project-root D:\Projects\my-game
 ```
 
-安装器默认拒绝覆盖目标中的同名 Skill；只有明确要替换时才使用 `--force`。
+明确要用当前远端版本替换项目中已安装的同名 Skills 时：
+
+```powershell
+npx -y github:weberwang/unity-skills --force
+```
 
 ## 安装 Unity MCP 与 Toolkit
 
@@ -73,13 +95,13 @@ uv run .\.agents\skills\unity-development-workflow\scripts\capture_windows_runti
 默认只创建项目配置、GDD、TDD 和控制面：
 
 ```powershell
-python .\unity-development-workflow\scripts\initialize_project_docs.py --project-root D:\Projects\my-game --project-id my-game
+python .\.agents\skills\unity-development-workflow\scripts\initialize_project_docs.py --project-root D:\Projects\my-game --project-id my-game
 ```
 
 进入对应阶段后再创建可选文档：
 
 ```powershell
-python .\unity-development-workflow\scripts\initialize_project_docs.py --project-root D:\Projects\my-game --project-id my-game --include balance,assets,audio,qa,distribution,release
+python .\.agents\skills\unity-development-workflow\scripts\initialize_project_docs.py --project-root D:\Projects\my-game --project-id my-game --include balance,assets,audio,qa,distribution,release
 ```
 
 脚本默认拒绝覆盖已有文件；`--force` 只在用户明确要求覆盖时使用。

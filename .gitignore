@@ -11,6 +11,16 @@ __pycache__/
 coverage.xml
 htmlcov/
 
+# Node.js、npm 与 npx 生成内容
+node_modules/
+.npm/
+.pnpm-store/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tgz
+
 # 本地代理与工作流临时状态
 .superpowers/
 *.mutex
