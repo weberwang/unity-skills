@@ -190,6 +190,27 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
     gates["activeDecomposition"]["sourceRevision"] = "revision-001"
     gates["activeDecomposition"]["projectStateVersion"] = decomposition["projectStateVersion"]
     visual_bible_evidence = _visual_bible_evidence(project)
+    profile = yaml.safe_load((ROOT / "templates" / "project-profile.yaml").read_text(encoding="utf-8"))
+    profile["workflow"].update(
+        {
+            "qualityTargetsStatus": "APPROVED",
+            "sourceRevision": "revision-001",
+            "projectStateVersion": decomposition["projectStateVersion"],
+            "decomposition": {
+                "id": decomposition["id"],
+                "version": decomposition["version"],
+                "status": "APPROVED",
+            },
+        }
+    )
+    profile_path = project / "Artifacts" / "Planning" / "project-profile.yaml"
+    _write_yaml(profile_path, profile)
+    profile_evidence = {
+        "type": "project-profile",
+        "path": "Artifacts/Planning/project-profile.yaml",
+        "sha256": _sha256(profile_path),
+        "subjectId": profile["projectId"],
+    }
     gate = gates["gates"][0]
     gate["status"] = "WAITING_APPROVAL"
     gate["evidence"] = [report_evidence]
@@ -198,7 +219,9 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
             "id": check_id,
             "status": "PASS",
             "evidence": [
-                decomposition_evidence
+                profile_evidence
+                if check_id in {"scope.approved", "windows-distribution.approved"}
+                else decomposition_evidence
                 if check_id == "decomposition.approved"
                 else visual_bible_evidence
                 if check_id == "visual-bible.approved"
@@ -234,6 +257,67 @@ def test_gate_evaluate_rejects_tampered_nested_evidence(tmp_path: Path) -> None:
     assert result["status"] == "FAIL"
     evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
     assert any("哈希不匹配" in item.get("failureReason", "") for item in evaluated["gates"][0]["checkResults"])
+
+
+def test_contract_evidence_requires_explicit_subject_version(tmp_path: Path) -> None:
+    """契约证据省略版本绑定时必须失败。"""
+    config, output, _ = _gate_fixture(tmp_path)
+    gates = yaml.safe_load(config.read_text(encoding="utf-8"))
+    visual_check = next(
+        item for item in gates["gates"][0]["checkResults"] if item["id"] == "visual-bible.approved"
+    )
+    visual_check["evidence"][0].pop("subjectVersion")
+    _write_yaml(config, gates)
+
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
+
+    assert result["status"] == "FAIL"
+    evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
+    failure = next(
+        item["failureReason"]
+        for item in evaluated["gates"][0]["checkResults"]
+        if item["id"] == "visual-bible.approved"
+    )
+    assert "缺少 subjectVersion" in failure
+
+
+def test_later_gate_rejects_unpassed_upstream_gate(tmp_path: Path) -> None:
+    """后续门禁不得跳过未通过的前置门禁。"""
+    config, first_output, _ = _gate_fixture(tmp_path)
+    assert evaluate_gate(
+        config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", first_output
+    )["status"] == "PASS"
+    gates = yaml.safe_load(first_output.read_text(encoding="utf-8"))
+    gates["gates"][0]["status"] = "FAIL"
+    second_config = tmp_path / "Artifacts" / "Gates" / "skip-gate.yaml"
+    second_output = tmp_path / "Artifacts" / "Gates" / "skip-gate-result.yaml"
+    _write_yaml(second_config, gates)
+
+    result = evaluate_gate(
+        second_config, "G1", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", second_output
+    )
+
+    assert result["status"] == "FAIL"
+    evaluated = yaml.safe_load(second_output.read_text(encoding="utf-8"))
+    assert "前置质量门 G0 未通过" in evaluated["gates"][1]["checkResults"][0]["failureReason"]
+
+
+@pytest.mark.parametrize("mutation", ["REMOVE", "ADD_UNKNOWN", "MOVE_FROM_G1"])
+def test_gate_rejects_noncanonical_required_checks(tmp_path: Path, mutation: str) -> None:
+    """必需检查不得删减、新增未定义项或从其他门禁挪用。"""
+    config, output, _ = _gate_fixture(tmp_path)
+    gates = yaml.safe_load(config.read_text(encoding="utf-8"))
+    required = gates["gates"][0]["requiredChecks"]
+    if mutation == "REMOVE":
+        required.pop()
+    elif mutation == "ADD_UNKNOWN":
+        required.append("approval.untracked")
+    else:
+        required[-1] = gates["gates"][1]["requiredChecks"][0]
+    _write_yaml(config, gates)
+
+    with pytest.raises(GateEvidenceError, match="必需检查集合不完整"):
+        evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
 
 
 def test_g0_rejects_non_decomposition_evidence_for_split_approval(tmp_path: Path) -> None:

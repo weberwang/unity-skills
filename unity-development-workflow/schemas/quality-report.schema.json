@@ -52,7 +52,17 @@
   "allOf": [
     {
       "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
-      "then": {"properties": {"evidence": {"minItems": 1}}}
+      "then": {
+        "properties": {
+          "evidence": {"minItems": 1},
+          "checks": {
+            "items": {
+              "properties": {"status": {"const": "PASS"}},
+              "required": ["status"]
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -12,7 +12,7 @@ S00、每个场景冻结、全局回归和 Windows 交付前读取。
 
 ## 执行步骤
 
-1. 先判定生命周期门：G0 范围、用户确认的模块/场景拆分与全局视觉；G1 S00 与端到端垂直切片；G2 全场景、正式资源和全局回归；G3 候选包、合规和用户放行。
+1. 先按严格执行策略和版本化通道决策判定是否进入生命周期门：G0 范围、用户确认的模块/场景拆分与全局视觉；G1 S00 与端到端垂直切片；G2 全场景、正式资源和全局回归；G3 候选包、合规和用户放行。进入任一门后必须执行其完整标准 `requiredChecks`，不得删减、增补、错配或标记为不适用。
 2. 依次验证 Schema、静态检查、脚本校验、编译和 Console 增量。
 3. 激活 `testing` 后分别以 `run_tests` 启动 EditMode/PlayMode 异步任务，并通过测试任务查询取得最终结果、用例数和失败详情。
 4. 对目标场景运行启动、输入设备、主路径、暂停恢复、窗口/分辨率变化、重开与退出冒烟。
@@ -20,8 +20,8 @@ S00、每个场景冻结、全局回归和 Windows 交付前读取。
 6. 先读取 `mcpforunity://rendering/stats` 获取渲染快照；激活 `profiling` 后用 `manage_profiler` 或明确记录的等价方法采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理和加载数据。
 7. 使用 `manage_build` 执行 Windows 构建，并对候选包进行干净启动与长时间运行检查。
 8. 核对正式资源唯一登记、授权、导入验证、占位清零和当前版本一致性。
-9. 每项只报告实际运行结果；环境或工具缺失时标记 `BLOCKED`，未运行标记 `NOT_RUN`，不得标记通过。
-10. 填充每个 requiredCheck 的实际结果与证据后，运行 `workflow.py gate evaluate --config <quality-gates> --gate <G0-G3> --project-root <项目> --project-id <ID> --source-revision <修订> --build-version <版本> --output <结果>`。质量门根部的 `activeDecomposition` 是当前唯一拆分指针；G0 的 `decomposition.approved` 必须直接包含状态为 `APPROVED` 的同一拆分契约；G1 的 S00 报告和 G2 的场景清单必须绑定相同 ID、版本、`sourceRevision` 与 `projectStateVersion`。求值器校验文件存在性、Schema、状态、身份、版本与 SHA-256，并原子输出；任一必需门禁失败时停止状态推进，P0/P1 必须修复或获得用户明确豁免。
+9. 每项只报告实际运行结果；环境或工具缺失时标记 `BLOCKED`，未运行标记 `NOT_RUN`，不得标记通过。任一必需项为 `FAIL`、`BLOCKED`、`NOT_RUN`、未知、证据缺失或版本不符时，质量门整体失败并阻塞下游。
+10. 填充每个 requiredCheck 的实际结果与证据后，运行 `workflow.py gate evaluate --config <quality-gates> --gate <G0-G3> --project-root <项目> --project-id <ID> --source-revision <修订> --build-version <版本> --output <结果>`。质量门根部的 `activeDecomposition` 是当前唯一拆分指针；G0 的 `decomposition.approved` 必须直接包含状态为 `APPROVED` 的同一拆分契约；G1 的 S00 报告和 G2 的场景清单必须绑定相同 ID、版本、`sourceRevision` 与 `projectStateVersion`。求值器校验文件存在性、Schema、状态、身份、版本与 SHA-256，并原子输出；任一必需门禁失败时停止状态推进并修复，不得以豁免、口头确认或代理判断跳过。
 
 ## 子代理角色与并行边界
 
@@ -44,9 +44,11 @@ S00、每个场景冻结、全局回归和 Windows 交付前读取。
 - 对应 G0 至 G3 的收敛条件已满足，所有必需检查状态为实际 `PASS`，无未解释的新增 Console 错误。
 - 视觉、性能和 Windows 构建证据关联到当前版本。
 - 报告明确区分 `PASS`、`FAIL`、`BLOCKED` 与 `NOT_RUN`。
+- 每个用户批准和代理审查都绑定当前对象 ID、版本、SHA-256、`sourceRevision`、上游证据与结论范围；代理审查、口头确认和旧批准均未代替当前用户门禁。
 
 ## 失败与恢复出口
 
 - `FAIL` 返回责任模块修复，并重跑受影响门禁及其下游门禁。
 - `BLOCKED` 记录缺失环境、工具或权限，补齐后从该门禁继续。
 - 证据版本不匹配时作废该结果并重新执行，不得复用旧通过记录。
+- 任一上游对象变化时递归作废受影响质量门及其下游结果，从最早受影响检查重跑。

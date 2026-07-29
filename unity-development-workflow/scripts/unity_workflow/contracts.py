@@ -717,6 +717,12 @@ def _runtime_visual_approval_issues(payload: Mapping[str, Any]) -> list[Validati
         expected_version=payload.get("buildVersion"),
         path="$.reviews",
     )
+    reviewer_items = [
+        item
+        for item in payload.get("reviews", [])
+        if isinstance(item, Mapping) and item.get("authority") == "INDEPENDENT_REVIEWER"
+    ]
+    issues.extend(_unique_three_reviewer_issues(reviewer_items, "$.reviews", "实机视觉"))
     issues.extend(
         _subject_binding_issues(
             payload.get("userApprovals"),

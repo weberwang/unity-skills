@@ -29,13 +29,42 @@ def test_main_path_enforces_evidence_and_roles(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="证据"):
         state.transition("task", "APPROVED", actor_role="reviewer")
     state.transition("task", "APPROVED", actor_role="reviewer", evidence=["Artifacts/review.json"])
-    state.transition("task", "INTEGRATED", actor_role="orchestrator")
-    state.transition("task", "VERIFIED", actor_role="orchestrator")
+    state.transition("task", "INTEGRATED", actor_role="orchestrator", evidence=["Artifacts/integration.json"])
+    state.transition("task", "VERIFIED", actor_role="orchestrator", evidence=["Artifacts/verification.json"])
     with pytest.raises(ValueError, match="orchestrator"):
-        state.transition("task", "DONE", actor_role="worker")
-    result = state.transition("task", "DONE", actor_role="orchestrator")
+        state.transition("task", "DONE", actor_role="worker", evidence=["Artifacts/done.json"])
+    result = state.transition("task", "DONE", actor_role="orchestrator", evidence=["Artifacts/done.json"])
     assert result.status == "DONE"
-    assert result.evidence == ("Artifacts/self.json", "Artifacts/review.json")
+    assert result.evidence == (
+        "Artifacts/self.json",
+        "Artifacts/review.json",
+        "Artifacts/integration.json",
+        "Artifacts/verification.json",
+        "Artifacts/done.json",
+    )
+
+
+def test_quality_progress_requires_new_stage_evidence(tmp_path: Path) -> None:
+    """质量推进不得缺少本阶段证据或只复用历史路径。"""
+    state = WorkflowState.load(tmp_path / "state.json")
+    advance_to_running(state)
+    state.transition("task", "SELF_VERIFIED", actor_role="worker", evidence=["Artifacts/self.json"])
+
+    stages = (
+        ("REVIEWING", "worker", "Artifacts/reviewing.json"),
+        ("APPROVED", "reviewer", "Artifacts/approval.json"),
+        ("INTEGRATED", "orchestrator", "Artifacts/integration.json"),
+        ("VERIFIED", "orchestrator", "Artifacts/verification.json"),
+        ("DONE", "orchestrator", "Artifacts/done.json"),
+    )
+    historical = "Artifacts/self.json"
+    for next_state, actor, new_evidence in stages:
+        with pytest.raises(ValueError, match="本阶段新证据"):
+            state.transition("task", next_state, actor_role=actor)
+        with pytest.raises(ValueError, match="本阶段新证据"):
+            state.transition("task", next_state, actor_role=actor, evidence=[historical])
+        state.transition("task", next_state, actor_role=actor, evidence=[new_evidence])
+        historical = new_evidence
 
 
 def test_illegal_jump_and_direct_done_are_rejected(tmp_path: Path) -> None:

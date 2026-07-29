@@ -24,6 +24,15 @@ MAIN_TRANSITIONS: dict[str, frozenset[str]] = {
 }
 TERMINAL_STATES = frozenset({"DONE", "REJECTED", "CONFLICTED", "CANCELLED"})
 KNOWN_STATES = frozenset(MAIN_TRANSITIONS) | TERMINAL_STATES
+EVIDENCE_ADVANCING_TRANSITIONS = frozenset(
+    {
+        ("SELF_VERIFIED", "REVIEWING"),
+        ("REVIEWING", "APPROVED"),
+        ("APPROVED", "INTEGRATED"),
+        ("INTEGRATED", "VERIFIED"),
+        ("VERIFIED", "DONE"),
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,13 +116,13 @@ class WorkflowState:
         if next_state not in allowed:
             raise ValueError(f"非法状态迁移：{current_status} → {next_state}")
 
-        if current_status == "SELF_VERIFIED" and next_state == "REVIEWING" and not (previous_evidence or evidence):
-            raise ValueError("SELF_VERIFIED → REVIEWING 至少需要一个证据路径")
+        if (current_status, next_state) in EVIDENCE_ADVANCING_TRANSITIONS:
+            # 质量状态必须由本阶段新证据推进，不允许只重放历史路径跳过审查。
+            if not any(item not in previous_evidence for item in evidence):
+                raise ValueError(f"{current_status} → {next_state} 至少需要一个本阶段新证据路径")
         if current_status == "REVIEWING" and next_state == "APPROVED":
             if actor_role != "reviewer":
                 raise ValueError("REVIEWING → APPROVED 的 actor_role 必须是 reviewer")
-            if not evidence:
-                raise ValueError("REVIEWING → APPROVED 至少需要一个评审证据路径")
         if current_status == "VERIFIED" and next_state == "DONE" and actor_role != "orchestrator":
             raise ValueError("VERIFIED → DONE 的 actor_role 必须是 orchestrator")
         if current_status == "RETRYABLE_FAILED" and next_state == "ASSIGNED":

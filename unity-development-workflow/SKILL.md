@@ -9,7 +9,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 ## 启动与按需读取
 
-1. 每次开始或恢复先读[工作流总览](references/workflow-overview.md)，判断快速、标准或发布通道。
+1. 每次开始或恢复先读[严格执行策略](references/strict-execution-policy.md)与[工作流总览](references/workflow-overview.md)，判断快速、标准或发布通道。所有通道均按失败即阻塞、默认拒绝和无证据不通过执行。
 2. 标准或发布通道的新项目若缺少 `docs/project-profile.yaml`，运行 `scripts/initialize_project_docs.py --project-root <项目根目录> --project-id <项目ID>`。默认不覆盖已有文档；只有用户明确要求时使用 `--force`。
 3. 只读发现阶段读[项目发现](references/project-discovery.md)；需要人工取舍或处理变更时读[决策与变更控制](references/decision-change-control.md)。
 4. 划分模块与场景时读[模块与场景拆分](references/module-planning.md)，完成 13 项拆分前拷问并取得用户对当前版本的确认；未确认不得创建拆分产物或进入 S00/G1/G2。多任务、锁或子代理调度时读[多代理执行](references/multi-agent-execution.md)；只有用户明确要求 Worktree 时才读[Worktree 工作区隔离](references/worktree-integration.md)。
@@ -21,11 +21,13 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 ## 工作通道
 
-- **快速通道**：批准范围内、局部、低风险、可回退的任务。明确验收后直接实现和验证，不强制角色编排、控制面或 G0 至 G3；除非用户明确要求，否则禁止创建 Worktree。
+- **快速通道**：批准范围内、局部、低风险、可回退且不改变 Unity 场景/Prefab、正式资源、共享登记或批准状态的任务。明确验收后直接实现和验证，不产生 G0 至 G3 通过状态；一旦需要上述写入或扩大批准范围，先升级标准通道。除非用户明确要求，否则禁止创建 Worktree。
 - **标准通道**：新模块、跨模块或影响架构、场景、存档、数值、资源、音频、性能的任务。只调度受影响角色，只维护受影响交付物。
 - **发布通道**：影响发行渠道、隐私、商业能力、资源权属、候选包或发布放行的任务。执行完整质量门和发布证据链。
 
 影响扩大时升级通道；影响缩小时停止维护无关交付物，不为流程形式保留重通道。
+
+通道只决定是否进入某个完整生命周期门，不降低门禁强度。开始任务前必须通过版本化通道决策列出适用门禁；任何未判定项默认适用。进入 G0-G3 后必须保留该门的完整标准 `requiredChecks`，不得删减、增补、错配或标记为不适用；`FAIL`、`BLOCKED`、`NOT_RUN`、证据缺失、版本不符或状态未知均禁止推进。
 
 ## 角色路由
 
@@ -65,6 +67,8 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 低保真结构变化会使高保真候选、审阅、资产地图、单项资源和拼装批准失效；高保真候选变化会使审阅、资产地图及其下游批准失效；资产地图变化至少使受影响单项资源和拼装批准失效。总控必须回退到最早受影响关卡，不得沿用旧批准。需要恢复灰盒时，从保留的结构、预览和批准记录等审计证据重建，不得在运行时 Prefab/Scene 中保留低保真资产作为回退副本。
 
+所有用户确认和代理审查必须绑定精确对象 ID、版本、SHA-256、`sourceRevision`、上游证据与结论范围；口头认可、未指明对象的“继续”、旧版本确认和代理判断均不得写成用户批准。任何上游内容、版本、哈希、来源修订或批准范围变化，都必须递归作废受影响下游状态与证据。
+
 ## Unity MCP 与写入约束
 
 - 只面向 Unity 6、URP、UI Toolkit 和 Windows；其他平台必须另行扩展并批准。
@@ -72,6 +76,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 - 仅激活当期需要的工具组：核心默认可用，UI、testing、profiling、animation、vfx、probuilder、scripting_ext 按需通过 `manage_tools` 激活。
 - 3D 任务先发现实际可用 MCP/DCC 能力再选路径，不臆造工具或导出格式。Unity 与 DCC 正式写入均采用单写者：同一模型源、DCC 工程、Mesh、材质、Prefab 或依赖场景不得被两个代理同时修改。
 - 写入前读取 `mcpforunity://editor/state`；编译、导入、域重载、PlayMode、未保存场景、陈旧连接或阻塞对话框存在时不得写入。Unity 正式写入和共享状态写入必须串行；只读分析、候选生成与不重叠的非 Unity 制品可并行。
+- 每次 MCP 写入前还必须校验当前门禁、上游版本/批准、目标基线和独占锁并保存写前证据；写入后等待 Editor 稳定，重新读取目标对象、场景、Console 与登记，运行最小验证并保存当前版本证据。任一后置检查失败时阻塞，不得以 MCP 调用成功代替验证。
 - 截图和高保真效果图只允许说明内容、构图和信息层级，不能成为色彩、材质、光照、字体、图标、笔触或成品像素的来源。正式资源必须依据已批准 Visual Bible 和资产地图逐项独立生成或重绘，再经过逐项审查和 Unity 导入/运行验证；禁止裁切截图或效果图充当资源，禁止整张效果图铺底冒充结构化场景或 UI。
 - Git 只用于普通版本控制，不属于质量门。除非用户明确要求，否则禁止创建 Worktree；即使已获授权，也不得自动合并、删除 Worktree、删除分支、签名、上传或覆盖稳定制品。
 

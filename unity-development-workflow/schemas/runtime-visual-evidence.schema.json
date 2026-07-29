@@ -65,14 +65,12 @@
       "then": {
         "properties": {
           "reviews": {
-            "minItems": 1,
-            "contains": {
-              "properties": {
-                "approvalType": {"const": "RUNTIME_VISUAL"},
-                "authority": {"const": "INDEPENDENT_REVIEWER"}
-              },
-              "required": ["approvalType", "authority"]
-            }
+            "minItems": 3,
+            "allOf": [
+              {"contains": {"properties": {"reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["reviewDiscipline"]}},
+              {"contains": {"properties": {"reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["reviewDiscipline"]}},
+              {"contains": {"properties": {"reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["reviewDiscipline"]}}
+            ]
           },
           "userApprovals": {
             "minItems": 1,

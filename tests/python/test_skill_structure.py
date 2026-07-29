@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SKILL_DIR = ROOT / "unity-development-workflow"
 SKILL_PATH = SKILL_DIR / "SKILL.md"
 REFERENCE_NAMES = (
+    "strict-execution-policy.md",
     "workflow-overview.md",
     "project-discovery.md",
     "decision-change-control.md",
@@ -146,6 +147,28 @@ def test_required_workflow_concepts_are_documented():
 
     for term in required_terms:
         assert term in corpus, f"文档缺少核心概念：{term}"
+
+
+def test_strict_policy_is_mandatory_and_fail_closed():
+    """严格策略必须从总控直达，并明确禁止无证据、跳关和代理代批。"""
+    orchestrator = read_text(SKILL_PATH)
+    policy = read_text(SKILL_DIR / "references" / "strict-execution-policy.md")
+    agent = yaml.safe_load(read_text(SKILL_DIR / "agents" / "openai.yaml"))
+
+    assert "[严格执行策略](references/strict-execution-policy.md)" in orchestrator
+    for term in (
+        "默认拒绝",
+        "失败即阻塞",
+        "不得跳关",
+        "代理不得代批",
+        "无证据不通过",
+        "场景小循环不可跨越",
+        "写前证据",
+        "写入后",
+    ):
+        assert term in policy, f"严格策略缺少不可放宽规则：{term}"
+    assert "$unity-development-workflow" in agent["interface"]["default_prompt"]
+    assert "默认拒绝" in agent["interface"]["default_prompt"]
 
 
 def test_skill_has_no_readme_or_placeholders():

@@ -858,6 +858,7 @@ def test_runtime_visual_rejects_approval_for_different_build_version() -> None:
     issues = validate_contract("runtime-visual-evidence", payload)
 
     assert any(issue.path.endswith(".subjectVersion") for issue in issues)
+    assert any("三类独立视觉审查" in issue.message for issue in issues)
 
 
 def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
@@ -948,12 +949,10 @@ def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
     runtime["status"] = "APPROVED"
     runtime["reviews"] = [
         _approval(
-            "RUNTIME_VISUAL",
-            "INDEPENDENT_REVIEWER",
-            runtime["sceneId"],
-            runtime["buildVersion"],
-            reviewer="runtime-reviewer",
+            "RUNTIME_VISUAL", "INDEPENDENT_REVIEWER", runtime["sceneId"], runtime["buildVersion"],
+            reviewer=f"runtime-reviewer-{index}", discipline=discipline,
         )
+        for index, discipline in enumerate(("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"))
     ]
     runtime["userApprovals"] = [
         _approval(

@@ -18,6 +18,7 @@ from unity_workflow.file_mutex import FileMutex
 
 
 CONTRACT_TYPES = {
+    "project-profile",
     "decomposition-plan",
     "module-manifest",
     "quality-report",
@@ -59,13 +60,28 @@ REQUIRED_STATUSES = {
 }
 
 REQUIRED_CHECK_EVIDENCE_TYPES = {
+    "scope.approved": "project-profile",
     "decomposition.approved": "decomposition-plan",
     "visual-bible.approved": "visual-bible",
+    "windows-distribution.approved": "project-profile",
     "s00.verified": "s00-report",
     "vertical-slice.playable": "scene-manifest",
+    "visual.runtime-approved": "runtime-visual-evidence",
+    "build.windows-development": "quality-report",
     "scope.complete": "scene-manifest",
+    "assets.production-ready": "asset-register",
+    "regression.pass": "quality-report",
+    "performance.pass": "quality-report",
+    "defects.p0-p1-resolved": "quality-report",
     "scenes.2d-adaptation-verified": "scene-manifest",
+    "candidate.verified": "delivery-manifest",
+    "licenses.verified": "asset-register",
+    "privacy.verified": "quality-report",
+    "rollback.ready": "delivery-manifest",
+    "user.release-approved": "delivery-manifest",
 }
+
+GATE_ORDER = ("G0", "G1", "G2", "G3")
 
 
 class GateEvidenceError(ValueError):
@@ -114,6 +130,7 @@ def evaluate_gate(
         config["projectStateVersion"],
         config["activeDecomposition"],
     )
+    upstream_failures = _verify_upstream_gates(result["gates"], gate_id, verifier)
     for check_id in gate["requiredChecks"]:
         source = checks_by_id.get(check_id)
         failure = _evaluate_check(check_id, source, verifier)
@@ -123,7 +140,7 @@ def evaluate_gate(
             all_passed = False
             evaluated.append({"id": check_id, "status": "FAIL", "evidence": list(source.get("evidence", [])) if source else [], "failureReason": failure})
 
-    gate_failures: list[str] = []
+    gate_failures: list[str] = list(upstream_failures)
     try:
         verifier.verify_active_decomposition()
     except GateEvidenceError as error:
@@ -154,6 +171,45 @@ def evaluate_gate(
         raise GateEvidenceError(f"求值结果不满足质量门契约：{details}")
     _atomic_dump(output_path, result)
     return {"gate": gate_id, "status": gate["status"], "output": str(output_path)}
+
+
+def _verify_upstream_gates(
+    gates: Sequence[object],
+    gate_id: str,
+    verifier: "_EvidenceVerifier",
+) -> list[str]:
+    """深验所有前置门禁，阻止只修改状态字段后跳关。"""
+    failures: list[str] = []
+    target_index = GATE_ORDER.index(gate_id)
+    gates_by_id = {
+        gate.get("id"): gate
+        for gate in gates
+        if isinstance(gate, Mapping) and isinstance(gate.get("id"), str)
+    }
+    for upstream_id in GATE_ORDER[:target_index]:
+        upstream = gates_by_id.get(upstream_id)
+        if not isinstance(upstream, Mapping) or upstream.get("status") != "PASS":
+            failures.append(f"前置质量门 {upstream_id} 未通过")
+            continue
+        results = {
+            item.get("id"): item
+            for item in upstream.get("checkResults", [])
+            if isinstance(item, Mapping)
+        }
+        for check_id in upstream.get("requiredChecks", []):
+            failure = _evaluate_check(check_id, results.get(check_id), verifier)
+            if failure is not None:
+                failures.append(f"前置质量门 {upstream_id}/{check_id} 失效：{failure}")
+        evidence = upstream.get("evidence")
+        if not isinstance(evidence, Sequence) or isinstance(evidence, (str, bytes)) or not evidence:
+            failures.append(f"前置质量门 {upstream_id} 缺少汇总证据")
+            continue
+        for reference in evidence:
+            try:
+                verifier.verify_reference(reference)
+            except GateEvidenceError as error:
+                failures.append(f"前置质量门 {upstream_id} 证据失效：{error}")
+    return failures
 
 
 def _evaluate_check(
@@ -256,7 +312,22 @@ class _EvidenceVerifier:
         evidence: Sequence[object],
     ) -> None:
         """验证需要全集语义的检查没有用单个场景证据冒充项目范围。"""
-        if check_id != "scenes.2d-adaptation-verified":
+        expected_type = REQUIRED_CHECK_EVIDENCE_TYPES.get(check_id)
+        if expected_type == "quality-report":
+            reports = [
+                self._load_referenced_contract(reference)
+                for reference in evidence
+                if isinstance(reference, Mapping) and reference.get("type") == "quality-report"
+            ]
+            if not any(
+                isinstance(result, Mapping)
+                and result.get("id") == check_id
+                and result.get("status") == "PASS"
+                for report in reports
+                for result in report.get("checks", [])
+            ):
+                raise GateEvidenceError(f"{check_id} 缺少同名 PASS 质量检查")
+        if check_id not in {"scope.complete", "scenes.2d-adaptation-verified"}:
             return
         self.verify_active_decomposition()
         decomposition = self._load_referenced_contract(self.active_decomposition)
@@ -273,7 +344,7 @@ class _EvidenceVerifier:
             if isinstance(scene_id, str):
                 manifest_ids.append(scene_id)
         if len(manifest_ids) != len(set(manifest_ids)):
-            raise GateEvidenceError("2D 适配检查包含重复 scene-manifest")
+            raise GateEvidenceError(f"{check_id} 包含重复 scene-manifest")
         if set(manifest_ids) != approved_scene_ids:
             missing = sorted(approved_scene_ids - set(manifest_ids))
             extra = sorted(set(manifest_ids) - approved_scene_ids)
@@ -282,7 +353,7 @@ class _EvidenceVerifier:
                 details.append(f"缺少已批准场景：{', '.join(missing)}")
             if extra:
                 details.append(f"包含未批准场景：{', '.join(extra)}")
-            raise GateEvidenceError("2D 适配检查必须覆盖当前拆分的场景全集；" + "；".join(details))
+            raise GateEvidenceError(f"{check_id} 必须覆盖当前拆分的场景全集；" + "；".join(details))
 
     def _verify_identity(self, kind: str, payload: Mapping[str, Any], reference: Mapping[str, Any]) -> None:
         """拒绝其他项目、源码、构建或主体版本的旧证据。"""
@@ -296,8 +367,18 @@ class _EvidenceVerifier:
             raise GateEvidenceError(f"{kind} projectStateVersion 不匹配")
         if kind == "delivery-manifest" and payload.get("version") != self.build_version:
             raise GateEvidenceError("delivery-manifest version 不匹配")
+        if kind == "project-profile":
+            workflow = payload.get("workflow")
+            if not isinstance(workflow, Mapping):
+                raise GateEvidenceError("project-profile 缺少 workflow")
+            if workflow.get("sourceRevision") != self.source_revision:
+                raise GateEvidenceError("project-profile sourceRevision 不匹配")
+            if workflow.get("projectStateVersion") != self.project_state_version:
+                raise GateEvidenceError("project-profile projectStateVersion 不匹配")
 
-        if kind == "scene-manifest":
+        if kind == "project-profile":
+            document_id = payload.get("projectId")
+        elif kind == "scene-manifest":
             document_id = payload.get("id")
         elif kind in {"scene-report", "scene-2d-adaptation", "runtime-visual-evidence"}:
             document_id = payload.get("sceneId")
@@ -312,6 +393,11 @@ class _EvidenceVerifier:
                 ),
             )
         document_version = payload.get("subjectVersion", payload.get("sceneVersion", payload.get("version", payload.get("sourceVersion"))))
+        # 契约证据必须显式声明主体与版本，缺省不能被解释为“接受任意当前版本”。
+        if document_id is not None and reference.get("subjectId") is None:
+            raise GateEvidenceError(f"{kind} 引用缺少 subjectId 绑定")
+        if document_version is not None and reference.get("subjectVersion") is None:
+            raise GateEvidenceError(f"{kind} 引用缺少 subjectVersion 绑定")
         if reference.get("subjectId") is not None and reference["subjectId"] != document_id:
             raise GateEvidenceError(f"{kind} subjectId 不匹配")
         if reference.get("subjectVersion") is not None and reference["subjectVersion"] != document_version:
@@ -325,6 +411,19 @@ class _EvidenceVerifier:
 
     def _verify_status(self, kind: str, payload: Mapping[str, Any]) -> None:
         """确保已知契约达到门禁允许消费的最终状态。"""
+        if kind == "project-profile":
+            workflow = payload.get("workflow")
+            if not isinstance(workflow, Mapping) or workflow.get("qualityTargetsStatus") != "APPROVED":
+                raise GateEvidenceError("project-profile 质量目标未批准")
+            decomposition = workflow.get("decomposition")
+            if not isinstance(decomposition, Mapping) or decomposition.get("status") != "APPROVED":
+                raise GateEvidenceError("project-profile 当前拆分未批准")
+            if (
+                decomposition.get("id") != self.active_decomposition.get("subjectId")
+                or decomposition.get("version") != self.active_decomposition.get("subjectVersion")
+            ):
+                raise GateEvidenceError("project-profile 未绑定当前拆分版本")
+            return
         if kind == "asset-register":
             if self.gate_id in {"G2", "G3"} and payload.get("placeholders"):
                 raise GateEvidenceError("G2/G3 资源登记仍包含占位资源")
