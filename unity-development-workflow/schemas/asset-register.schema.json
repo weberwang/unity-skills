@@ -17,7 +17,7 @@
         "required": ["id", "type", "purpose", "source", "sourceVersion", "path", "address", "status", "licenseStatus", "unityValidation", "approvals", "evidence"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
-          "type": {"enum": ["sprite", "texture", "model", "animation", "vfx", "font", "audio", "ui"]},
+          "type": {"enum": ["sprite", "texture", "model", "prefab", "material", "animation", "vfx", "font", "audio", "ui"]},
           "purpose": {"type": "string", "minLength": 1},
           "source": {"type": "string", "minLength": 1},
           "sourceVersion": {"type": "string", "minLength": 1},
@@ -28,24 +28,7 @@
           "guid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
           "importerReportPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "registrationRecordPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "importer": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
-            "properties": {
-              "textureType": {"type": "string", "minLength": 1},
-              "spriteMode": {"type": "string", "minLength": 1},
-              "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
-              "filterMode": {"type": "string", "minLength": 1},
-              "wrapMode": {"type": "string", "minLength": 1},
-              "maxSize": {"type": "integer", "minimum": 32},
-              "compression": {"type": "string", "minLength": 1},
-              "sRgb": {"type": "boolean"},
-              "alphaIsTransparency": {"type": "boolean"},
-              "mipmaps": {"type": "boolean"},
-              "readWriteEnabled": {"type": "boolean"}
-            }
-          },
+          "importer": {},
           "status": {"enum": ["PLANNED", "REVIEWING", "APPROVED", "IMPORTED", "VALIDATED", "SUPERSEDED", "BLOCKED"]},
           "licenseStatus": {"enum": ["PENDING", "APPROVED", "BLOCKED"]},
           "licenseEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
@@ -60,17 +43,24 @@
           },
           {
             "if": {"properties": {"status": {"const": "VALIDATED"}}, "required": ["status"]},
-            "then": {
-              "properties": {
-                "unityValidation": {"const": "PASS"},
-                "evidence": {"minItems": 1}
-              }
-            }
+            "then": {"properties": {"unityValidation": {"const": "PASS"}, "evidence": {"minItems": 1}}}
           },
           {
             "if": {"properties": {"licenseStatus": {"const": "APPROVED"}}, "required": ["licenseStatus"]},
             "then": {"required": ["licenseEvidence"]}
           }
+        ],
+        "oneOf": [
+          {"properties": {"type": {"const": "sprite"}, "importer": {"$ref": "registration-record.schema.json#/$defs/spriteImporter"}}},
+          {"properties": {"type": {"const": "texture"}, "importer": {"$ref": "registration-record.schema.json#/$defs/textureImporter"}}},
+          {"properties": {"type": {"const": "model"}, "importer": {"$ref": "registration-record.schema.json#/$defs/modelImporter"}}},
+          {"properties": {"type": {"const": "prefab"}, "importer": {"$ref": "registration-record.schema.json#/$defs/prefabImporter"}}},
+          {"properties": {"type": {"const": "material"}, "importer": {"$ref": "registration-record.schema.json#/$defs/materialImporter"}}},
+          {"properties": {"type": {"const": "audio"}, "importer": {"$ref": "registration-record.schema.json#/$defs/audioImporter"}}},
+          {"properties": {"type": {"const": "font"}, "importer": {"$ref": "registration-record.schema.json#/$defs/fontImporter"}}},
+          {"properties": {"type": {"const": "animation"}, "importer": {"$ref": "registration-record.schema.json#/$defs/animationImporter"}}},
+          {"properties": {"type": {"const": "vfx"}, "importer": {"$ref": "registration-record.schema.json#/$defs/vfxImporter"}}},
+          {"properties": {"type": {"const": "ui"}, "importer": {"$ref": "registration-record.schema.json#/$defs/uiImporter"}}}
         ]
       }
     },

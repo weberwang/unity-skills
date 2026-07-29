@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL_NAMES = Object.freeze([
   "unity-development-workflow",
+  "unity-game-grilling",
   "unity-game-3d-modeling",
   "unity-game-3d-texturing",
   "unity-game-architecture",
@@ -79,7 +80,7 @@ function rejectSymbolicLink(path, label) {
 }
 
 /**
- * 校验 npm 包中固定的十一个 Skill 完整存在。
+ * 校验 npm 包中固定的十二个 Skill 完整存在。
  *
  * @returns {Array<{ name: string, source: string }>} 已验证的安装源。
  */

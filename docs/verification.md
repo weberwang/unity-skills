@@ -14,19 +14,19 @@
 rtk uv run pytest -q
 ```
 
-结果：`239 passed`。覆盖契约校验、确定性 Job 编译、严格策略入口与默认提示、标准检查全集、前置门禁深验、证据类型与主体版本绑定、阶段新证据状态机、模块/场景 DAG 与当前拆分版本门禁、证据缓存身份复核、跨进程锁、CLI、初始化器、Python/npx 安装器、Windows 实机捕获脚本、三次用户视觉确认与实机三学科审阅、`prefab-structure`、高保真候选与独立审阅、同源同尺寸编号资产地图、P3 节点映射、逐项生成、`prefab-assembly` 层级/Transform/场景实例深验、低保真清理状态与审计证据保护、场景全集与 2D 适配覆盖、3D 模型/贴图角色路由与高风险 MCP 边界、适配数学复算与逐分辨率深验、深度质量门求值、不可变资源登记合并、端到端视觉门禁和 Toolkit 静态结构。
+结果：`394 passed`。覆盖契约校验、确定性 Job 编译、严格策略入口与默认提示、标准检查全集、版本化拷问与候选快照摘要、八阶段拷问绑定、拆分到模块/场景的精确投影、G1 可玩性报告及三项检查同一批准场景/同一 Windows EXE 绑定、G3 逐场景同一 EXE 证据、九项性能原始结构化样本回读、极值重算与预算实算、类型化资源登记与 PBR 闭合引用链、证据类型与主体版本绑定、阶段新证据状态机、模块/场景 DAG、跨进程锁、CLI、初始化器、Python/npx 安装器、Windows 实机捕获脚本、三次用户视觉确认与实机三学科审阅、P0-P5 视觉资源小循环、低保真清理、2D 适配、3D 模型/贴图角色路由、端到端门禁和 Toolkit 静态结构。
 
 ### npx 安装入口
 
-已执行 `node .\scripts\install-project-skills.mjs --help`，确认帮助信息提供 `npx -y github:weberwang/unity-skills` 最短命令。随后执行 `npm pack --dry-run --json`，确认包内包含总控、十个角色 Skill、两个新增 3D Skill 的参考文档和代理配置；安装器测试确认 `.agents/skills/` 下精确生成十一个 Skill，且安装内容逐文件来自当前包而不是再次拉取远端默认分支。
+已执行 `node .\scripts\install-project-skills.mjs --help`，确认帮助信息提供 `npx -y github:weberwang/unity-skills` 最短命令。随后执行 `npm pack --dry-run --json`，确认包内包含总控与十一个角色 Skill 的参考文档和代理配置；安装器测试确认 `.agents/skills/` 下精确生成十二个 Skill，且安装内容逐文件来自当前包而不是再次拉取远端默认分支。
 
 另将双进程竞争同一场景锁的测试连续执行 20 次，结果 `20/20` 通过；此前审查代理修复后也完成过 `30/30` 压力验证。
 
 ### Skill Creator 校验
 
-使用 Skill Creator 的 `quick_validate.py` 分别校验总控和十个角色 Skill；Windows 下设置 `PYTHONUTF8=1`，避免校验器按系统 GBK 默认编码读取 UTF-8 文档。
+使用 Skill Creator 的 `quick_validate.py` 分别校验总控和十一个角色 Skill；Windows 下设置 `PYTHONUTF8=1`，避免校验器按系统 GBK 默认编码读取 UTF-8 文档。
 
-结果：11 个 Skill 全部返回 `Skill is valid!`。
+结果：12 个 Skill 全部返回 `Skill is valid!`。
 
 ### Toolkit 静态校验
 

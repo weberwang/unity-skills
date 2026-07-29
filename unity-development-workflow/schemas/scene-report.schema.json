@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "projectId", "sceneId", "sceneVersion", "sourceRevision", "buildVersion",
+    "schemaVersion", "projectId", "sceneId", "sceneVersion", "reportPurpose", "sourceRevision", "projectStateVersion", "buildVersion",
     "generatedAtUtc", "sceneManifest", "greybox", "gameVisual", "implementation", "uiVisual",
     "runtimeComparison", "tests", "performance", "status"
   ],
@@ -13,8 +13,11 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneVersion": {"type": "string", "minLength": 1},
+    "reportPurpose": {"enum": ["VERTICAL_SLICE", "SCENE_COMPLETION"]},
     "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
     "buildVersion": {"type": "string", "minLength": 1},
+    "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "generatedAtUtc": {"type": "string", "format": "date-time"},
     "sceneManifest": {"$ref": "common.schema.json#/$defs/evidence"},
     "greybox": {"$ref": "common.schema.json#/$defs/checkResult"},
@@ -39,6 +42,37 @@
           "runtimeComparison": {"properties": {"status": {"const": "PASS"}}},
           "tests": {"properties": {"status": {"const": "PASS"}}},
           "performance": {"properties": {"status": {"const": "PASS"}}}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "reportPurpose": {"const": "VERTICAL_SLICE"},
+          "status": {"const": "PASS"}
+        },
+        "required": ["reportPurpose", "status"]
+      },
+      "then": {
+        "required": ["buildArtifactSha256"],
+        "properties": {
+          "tests": {
+            "properties": {
+              "id": {"const": "vertical-slice.playable"},
+              "status": {"const": "PASS"},
+              "evidence": {
+                "minItems": 1,
+                "maxItems": 1,
+                "items": {
+                  "allOf": [
+                    {"$ref": "common.schema.json#/$defs/evidence"},
+                    {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]}
+                  ]
+                }
+              }
+            },
+            "required": ["id", "status", "evidence"]
+          }
         }
       }
     },

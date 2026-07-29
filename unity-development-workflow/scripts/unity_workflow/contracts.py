@@ -19,7 +19,14 @@ from unity_workflow.decomposition_contract import (
     decomposition_plan_issues,
     decomposition_reference_issues,
 )
+from unity_workflow.asset_contracts import asset_register_binding_issues
 from unity_workflow.prefab_contracts import prefab_assembly_issues, prefab_structure_issues
+from unity_workflow.grilling_contract import grilling_record_issues
+from unity_workflow.performance_contract import (
+    performance_measurement_evidence_issues,
+    performance_raw_artifact_issues,
+    performance_report_issues,
+)
 
 from .scene_2d_contract import validate_scene_2d_adaptation, validate_scene_manifest_2d_reference
 
@@ -41,6 +48,8 @@ SCHEMA_FILENAMES = {
     "image-task": "image-task.schema.json",
     "visual-bible": "visual-bible.schema.json",
     "quality-report": "quality-report.schema.json",
+    "performance-measurement-evidence": "performance-measurement-evidence.schema.json",
+    "performance-raw-artifact": "performance-raw-artifact.schema.json",
     "quality-gates": "quality-gates.schema.json",
     "asset-register": "asset-register.schema.json",
     "delivery-manifest": "delivery-manifest.schema.json",
@@ -56,6 +65,8 @@ SCHEMA_FILENAMES = {
     "scene-2d-adaptation": "scene-2d-adaptation.schema.json",
     "prefab-structure": "prefab-structure.schema.json",
     "prefab-assembly": "prefab-assembly.schema.json",
+    "grilling-record": "grilling-record.schema.json",
+    "grilling-subject-snapshot": "grilling-subject-snapshot.schema.json",
 }
 
 
@@ -158,8 +169,14 @@ def validate_contract(
         issues.extend(_runtime_visual_approval_issues(payload))
     if kind == "asset-register":
         issues.extend(_asset_register_issues(payload))
+        issues.extend(asset_register_binding_issues(payload, ValidationIssue))
     if kind == "quality-report":
         issues.extend(_quality_status_issues(payload))
+        issues.extend(performance_report_issues(payload, ValidationIssue))
+    if kind == "performance-measurement-evidence":
+        issues.extend(performance_measurement_evidence_issues(payload, ValidationIssue))
+    if kind == "performance-raw-artifact":
+        issues.extend(performance_raw_artifact_issues(payload, ValidationIssue))
     if kind == "scene-2d-adaptation":
         issues.extend(
             ValidationIssue(path, message)
@@ -169,6 +186,8 @@ def validate_contract(
         issues.extend(prefab_structure_issues(payload, ValidationIssue))
     if kind == "prefab-assembly":
         issues.extend(prefab_assembly_issues(payload, ValidationIssue))
+    if kind == "grilling-record":
+        issues.extend(grilling_record_issues(payload, ValidationIssue))
     return sorted(set(issues), key=lambda issue: (issue.path, issue.message))
 
 

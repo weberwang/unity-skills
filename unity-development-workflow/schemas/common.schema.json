@@ -50,7 +50,7 @@
         "approvalType": {
           "enum": [
             "VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL",
-            "PREFAB_STRUCTURE", "ASSET_MAP", "DECOMPOSITION", "QUALITY_GATE",
+            "PREFAB_STRUCTURE", "ASSET_MAP", "DECOMPOSITION", "GRILLING_DECISION", "QUALITY_GATE",
             "RELEASE", "RISK_WAIVER"
           ]
         },
@@ -81,12 +81,45 @@
         "type": {"type": "string", "minLength": 1},
         "path": {"$ref": "#/$defs/projectRelativePath"},
         "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "projectId": {"$ref": "#/$defs/taskId"},
         "subjectId": {"$ref": "#/$defs/taskId"},
         "subjectVersion": {"type": "string", "minLength": 1},
         "sourceRevision": {"type": "string", "minLength": 1},
         "projectStateVersion": {"type": "string", "minLength": 1},
-        "buildVersion": {"type": "string", "minLength": 1}
-      }
+        "buildVersion": {"type": "string", "minLength": 1},
+        "artifactType": {"const": "WINDOWS_EXECUTABLE"},
+        "platform": {"const": "WINDOWS_STANDALONE"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]},
+          "then": {
+            "required": [
+              "artifactType", "platform", "projectId", "subjectId", "subjectVersion",
+              "sourceRevision", "projectStateVersion", "buildVersion"
+            ],
+            "properties": {"path": {"pattern": "\\.[Ee][Xx][Ee]$"}}
+          }
+        }
+      ]
+    },
+    "grillingEvidence": {
+      "allOf": [
+        {"$ref": "#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "grilling-record"}}
+        }
+      ]
+    },
+    "candidateSnapshot": {
+      "allOf": [
+        {"$ref": "#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "grilling-subject-snapshot"}}
+        }
+      ]
     },
     "checkResult": {
       "type": "object",

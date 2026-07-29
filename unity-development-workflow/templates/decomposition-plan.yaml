@@ -5,6 +5,24 @@ version: decomposition-v1
 sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
 targetGate: G0
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.subject.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  projectId: starfall-arena
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Planning/grilling.starfall-arena.decomposition.v1.yaml
+  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  projectId: starfall-arena
+  subjectId: grilling.starfall-arena.decomposition.v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 interrogation:
   - id: CORE_LOOP
     question: 哪些行为必须在同一可玩闭环内完成，拆开后是否会破坏反馈？

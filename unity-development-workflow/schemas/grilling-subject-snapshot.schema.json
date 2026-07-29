@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/grilling-subject-snapshot.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "projectId", "sourceRevision", "projectStateVersion",
+    "subjectType", "subjectId", "subjectVersion", "candidateDigest"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "subjectType": {
+      "enum": [
+        "PROJECT", "PRODUCT_GOAL", "PLAYER_EXPERIENCE", "FEATURE", "TECHNICAL_APPROACH",
+        "MODULE_BOUNDARY", "SCENE", "VISUAL_DIRECTION", "UI", "MODEL_3D", "PREFAB",
+        "ASSET", "QUALITY", "RELEASE", "DELIVERY", "OTHER"
+      ]
+    },
+    "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "subjectVersion": {"type": "string", "minLength": 1},
+    "candidateDigest": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+  }
+}

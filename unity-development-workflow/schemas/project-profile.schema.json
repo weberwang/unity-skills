@@ -3,10 +3,15 @@
   "$id": "https://codex.local/unity-workflow/schemas/project-profile.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "projectId", "workflow", "unity", "delivery", "capabilities", "paths", "quality"],
+  "required": ["schemaVersion", "projectId", "version", "sourceRevision", "projectStateVersion", "workflow", "unity", "delivery", "capabilities", "paths", "quality"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "workflow": {
       "type": "object",
       "additionalProperties": false,
@@ -73,6 +78,12 @@
     },
     "quality": {"$ref": "#/$defs/qualityBudget"}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"workflow": {"properties": {"qualityTargetsStatus": {"const": "APPROVED"}}, "required": ["qualityTargetsStatus"]}}, "required": ["workflow"]},
+      "then": {"required": ["candidateSnapshot", "grillingEvidence"]}
+    }
+  ],
   "$defs": {
     "qualityBudget": {
       "type": "object",

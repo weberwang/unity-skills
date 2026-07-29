@@ -16,19 +16,19 @@
 2. 以 `image-generation` 的 `GLOBAL_DIRECTION` 模式生成多张相互独立的全局方向图，再制作仅用于比较的联系表。已有截图只能提供内容、构图和信息层级，不得提供色彩、材质、光照、字体、图标、笔触或成品像素。
 3. 把选定方向固化为版本化 Visual Bible：记录设计支柱、世界与资源语言、色彩、材质、光照、构图、镜头、字体、图标、UI 密度、动效、可读性规则、禁用项和截图参考政策。
 4. 由视觉一致性、游戏可实现性、UX/可读性三个审查代理分别评估 Visual Bible；主代理合并为无冲突、可执行且标明优先级的修改清单，按清单生成新修订并重新审查。
-5. 三类审查通过后请求用户确认全局视觉。只有当前 Visual Bible 的最终审查与用户批准均有效，才可把状态设为 `APPROVED`；后续风格变更必须创建新版本并使受影响场景回到待复核。
+5. 三类审查通过后，先用 `$unity-game-grilling` 对当前 Visual Bible 候选逐项确认方向取舍并生成绑定记录，再请求用户确认全局视觉。只有当前 Visual Bible 的最终审查、拷问记录与用户批准均有效，才可把状态设为 `APPROVED`；后续风格变更必须创建新版本并使受影响场景回到待复核。
 6. 每个场景按 P0-P5 严格串行推进，任何阶段不得越级，也不得以口头确认替代绑定版本与 SHA-256 的状态证据：
-   - **P0 结构确认**：以低模 Prefab 层级图、灰盒构图和文字说明表达对象职责、父子关系、镜头、游戏空间、UI 区域及交互边界；状态只允许 `STRUCTURE_DRAFT -> STRUCTURE_AWAITING_USER -> STRUCTURE_APPROVED`。用户确认前不得生成高保真图。
-   - **P1 高保真候选确认**：游戏内画面与 UI 可分别出图，但必须共享同一场景结构版本和 Visual Bible；状态只允许 `HIGH_FIDELITY_DRAFT -> HIGH_FIDELITY_AWAITING_USER -> HIGH_FIDELITY_CONFIRMED`。该确认只表示候选方向可送审，不等于最终视觉批准。
+   - **P0 结构确认**：以低模 Prefab 层级图、灰盒构图和文字说明表达对象职责、父子关系、镜头、游戏空间、UI 区域及交互边界；请求用户确认前先用 `$unity-game-grilling` 冻结当前结构取舍，状态只允许 `STRUCTURE_DRAFT -> STRUCTURE_AWAITING_USER -> STRUCTURE_APPROVED`。用户确认前不得生成高保真图。
+   - **P1 高保真候选确认**：游戏内画面与 UI 可分别出图，但必须共享同一场景结构版本和 Visual Bible；请求用户选择候选前先用 `$unity-game-grilling` 固化取舍，状态只允许 `HIGH_FIDELITY_DRAFT -> HIGH_FIDELITY_AWAITING_USER -> HIGH_FIDELITY_CONFIRMED`。该确认只表示候选方向可送审，不等于最终视觉批准。
    - **P2 独立审查**：视觉一致性、Unity 可实现性、UX/可读性三个代理针对 P1 的精确候选独立审查，状态为 `INDEPENDENT_REVIEWING -> REVIEW_APPROVED | CHANGES_REQUIRED`。出现 `CHANGES_REQUIRED` 必须生成新的 P1 修订、重新请求用户确认并重做全部三类审查。
-   - **P3 完整资产地图确认**：只能在 P2 通过的原图上框选并编号，状态为 `ASSET_MAP_DRAFT -> ASSET_MAP_AWAITING_USER -> ASSET_MAP_APPROVED`。拆分前逐项拷问用途、独立生成必要性、复用边界、轮廓、遮挡补全、尺寸、透明、枢轴/锚点、PPU、九宫格、动画帧、交付形式、性能代价和目标槽位；地图必须覆盖每个可见生产元素及明确排除项，每项只能绑定一个生产通道。拷问结论和用户确认未完成前不得开始正式资源生成。
+   - **P3 完整资产地图确认**：只能在 P2 通过的原图上框选并编号，状态为 `ASSET_MAP_DRAFT -> ASSET_MAP_AWAITING_USER -> ASSET_MAP_APPROVED`。拆分前由 `$unity-game-grilling` 逐项拷问用途、独立生成必要性、复用边界、轮廓、遮挡补全、尺寸、透明、枢轴/锚点、PPU、九宫格、动画帧、交付形式、性能代价和目标槽位；地图必须覆盖每个可见生产元素及明确排除项，每项只能绑定一个生产通道。绑定当前地图的拷问记录和用户确认未完成前不得开始正式资源生成。
    - **P4 逐项生产与验证**：每项独立经历 `PLANNED -> GENERATING -> REVIEWING -> APPROVED -> IMPORTED -> VALIDATED`；聚合状态只有在完整地图的全部生产项均为当前版本 `VALIDATED` 时才可写为 `ALL_ITEMS_VALIDATED`。
    - **P5 结构化装配与清理**：状态只允许 `ASSEMBLY_BLOCKED -> ASSEMBLY_READY -> ASSEMBLY_RUNNING -> ASSEMBLY_VERIFIED`；仅 `ALL_ITEMS_VALIDATED` 可解除阻塞。装配必须按已批准 P0 层级和 P3 槽位构建 Prefab/Scene，不得用整张效果图、联系表或未登记对象替代结构化实现。正式拼装完成后，在 `ASSEMBLY_RUNNING` 内删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，清理所有残留引用；保留已确认结构节点、稳定 ID 以及 `prefab-structure`、预览、批准记录等审计证据。清理验证不是 `PASS` 时不得进入 `ASSEMBLY_VERIFIED`。
 7. P3 的资产分类覆盖 2D、3D 与混合场景。`SPRITE`、`UI_BITMAP`、`NINE_SLICE`、`BACKGROUND`、`ANIMATION_FRAME`、`DECAL`、`BILLBOARD` 和位图 VFX 进入独立图片任务；`MODEL_GEOMETRY` 进入建模；`PBR_TEXTURE_SET`、`MATERIAL` 进入贴图材质；`LIGHT`、`CAMERA`、`POST_PROCESS`、`SHADER`、`UI_TOOLKIT` 和 `CODE` 进入实现任务。混合场景只维护一张完整地图，任何项目不得重复路由或遗漏。
 8. 使用截图时逐张声明用途：只可选择 `CONTENT`、`COMPOSITION`、`INFORMATION_HIERARCHY`。高保真图和 P4 图片的提示词必须明确“依据 Visual Bible 重新设计，不复制截图风格、不裁切截图或效果图成品像素”；框选区域是规格与槽位证据，不是裁切许可。
 9. 使用 Codex ImageGen 生成或编辑位图；每个 P4 图片项生成一张独立、边界完整、可导入的资源图，并保留提示词、参考证据、全局视觉版本、场景视觉版本、资产地图条目、模型、输出版本与用途。生成候选与任何截图参考或效果图裁切结果的 SHA-256 相同即视为直接复用并阻塞。
 10. 简单纯色背景可做透明色键处理；复杂边缘、半透明、毛发或混合背景必须阻塞并请求合适源素材，不得伪造透明结果。UI 效果图只定义视觉目标，交互 UI 必须用 UI Toolkit 实现。
-11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，先读取 `mcpforunity://scene/cameras` 核对固定机位，用官方 `manage_build` 构建，再运行 `scripts/capture_windows_runtime.py` 启动 EXE、捕获实际窗口并生成 `CAPTURED` 实机证据；按三个独立代理审查、修改、重构建、重新捕获和用户最终批准门禁对比 P1 高保真目标。清理验证或最终批准缺失时，场景不得标记 `DONE`。
+11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，先读取 `mcpforunity://scene/cameras` 核对固定机位，用官方 `manage_build` 构建，再从项目根目录运行 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py` 启动 EXE、捕获实际窗口并生成 `CAPTURED` 实机证据；按三个独立代理审查、修改、重构建、重新捕获，对最终候选调用 `$unity-game-grilling` 后请求用户批准。清理验证、当前拷问记录或最终批准缺失时，场景不得标记 `DONE`。
 12. 所有门禁证据必须绑定 Visual Bible 版本、场景结构版本、效果图版本、资产地图版本、资源版本和 SHA-256。P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 要求修改时退回 P1；P3 变化使受影响 P4 项及 P5 失效；任一 P4 项内容、规格、导入 GUID/地址或槽位绑定变化都会清除 `ALL_ITEMS_VALIDATED` 并使 P5 失效；Visual Bible 变化使所有受影响场景从 P1 重新开始。旧批准只能保留为历史，不能继承到新版本；上游回退所需灰盒必须从审计证据重建，禁止在运行时保留低保真 Prefab/Scene 或占位资源。
 
 ## 子代理角色与并行边界

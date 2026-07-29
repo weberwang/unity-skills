@@ -1,0 +1,43 @@
+schemaVersion: "1.0"
+id: grilling.starfall-arena.scope.v1
+projectId: starfall-arena
+version: grilling-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+subject:
+  type: PRODUCT_GOAL
+  id: starfall-arena
+  version: scope-v1
+  evidenceType: grilling-subject-snapshot
+  path: Artifacts/Planning/starfall-arena.scope-v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+triggerReason: 新项目进入设计阶段，必须先消除会改变范围、架构、视觉和交付方案的高影响歧义。
+facts:
+  - 目标平台为 Windows。
+  - 项目使用 Unity 6 和 Unity MCP。
+assumptions:
+  - 首个里程碑只覆盖单机核心循环。
+questions:
+  - id: grilling.scope.mvp
+    question: 首个可交付版本必须包含哪些玩家可感知能力，明确排除哪些能力？
+    impact: 决定模块、场景、美术资源和测试范围，错误假设会导致整体返工。
+    options:
+      - id: option.single-player
+        label: 单机核心循环（推荐）
+        impact: 最早形成可验收闭环，联网和扩展内容明确列为非目标。
+      - id: option.online-foundation
+        label: 同步搭建联网基础
+        impact: 扩大架构、测试和交付范围，并延后首个可玩版本。
+    recommendation: option.single-player
+    rationale: 最小闭环可最早验证玩法价值，并降低架构和资源并行开发的浪费。
+    answer: ""
+    status: UNANSWERED
+decisions: []
+dependencies: []
+rejectedItems: []
+unresolvedItems:
+  - id: unresolved.scope.mvp
+    item: MVP 与明确非目标尚未由用户回答。
+    impact: 无法冻结设计和任务拆分。
+    owner: USER
+status: QUESTIONING

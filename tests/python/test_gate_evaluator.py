@@ -7,10 +7,9 @@ import pytest
 import yaml
 
 from unity_workflow.gate_evaluator import GateEvidenceError, _EvidenceVerifier, evaluate_gate
-
+from unity_workflow.stage_grilling_integrity import candidate_digest
 
 ROOT = Path(__file__).parents[2] / "unity-development-workflow"
-
 
 def _sha256(path: Path) -> str:
     """计算测试证据文件哈希。"""
@@ -103,6 +102,7 @@ def _visual_bible_evidence(project: Path) -> dict[str, object]:
     bible = yaml.safe_load((ROOT / "templates" / "visual-bible.yaml").read_text(encoding="utf-8"))
     bible.update(
         {
+            "sourceRevision": "revision-001",
             "status": "APPROVED",
             "directionCandidates": candidates,
             "selectedDirection": candidates[0],
@@ -111,6 +111,8 @@ def _visual_bible_evidence(project: Path) -> dict[str, object]:
             "approval": user_approval,
         }
     )
+    visual_grilling, visual_snapshot = _grilling_evidence(project, bible, "visual-bible", "VISUAL_DIRECTION", "starfall-arena", "visual-v1", "visual-bible")
+    bible.update({"candidateSnapshot": visual_snapshot, "grillingEvidence": visual_grilling})
     bible_path = project / "Artifacts" / "Visual" / "visual-bible.yaml"
     _write_yaml(bible_path, bible)
     return {
@@ -121,6 +123,37 @@ def _visual_bible_evidence(project: Path) -> dict[str, object]:
         "subjectVersion": "visual-v1",
     }
 
+def _grilling_evidence(
+    project: Path, candidate: dict[str, object], kind: str, subject_type: str = "PRODUCT_GOAL", subject_id: str = "starfall-arena",
+    subject_version: str = "profile-v1", slug: str = "project-profile",
+) -> tuple[dict[str, object], dict[str, object]]:
+    """创建绑定当前源码、项目状态和用户批准原件的拷问记录。"""
+    approval_file = project / "Artifacts" / "Approvals" / f"grilling-{slug}.txt"
+    approval_file.parent.mkdir(parents=True, exist_ok=True)
+    approval_file.write_text("用户确认 grilling-v1 的全部高影响决定\n", encoding="utf-8")
+    subject_file = project / "Artifacts" / "Planning" / f"{slug}-subject.yaml"
+    _write_yaml(subject_file, {"schemaVersion": "1.0", "projectId": "starfall-arena", "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1", "subjectId": subject_id, "subjectVersion": subject_version, "subjectType": subject_type, "candidateDigest": candidate_digest(kind, candidate)})
+    record = yaml.safe_load((ROOT / "templates" / "grilling-record.yaml").read_text(encoding="utf-8"))
+    record.update({"id": f"grilling.{slug}.v1", "sourceRevision": "revision-001", "status": "APPROVED", "unresolvedItems": []})
+    record["subject"].update({"type": subject_type, "id": subject_id, "version": subject_version, "path": f"Artifacts/Planning/{slug}-subject.yaml", "sha256": _sha256(subject_file)})
+    record["questions"][0].update({"answer": "首版只交付单机核心循环，联网为非目标。", "status": "ANSWERED"})
+    record["decisions"] = [{"id": "decision.scope.mvp", "decision": "冻结单机核心循环", "rationale": "先验证最小可玩价值"}]
+    record["userApproval"] = {
+        "approvalType": "GRILLING_DECISION", "authority": "USER", "subjectId": record["id"],
+        "subjectVersion": record["version"], "approvedBy": "scope-owner",
+        "approvedAtUtc": "2026-07-27T12:00:00Z", "evidencePath": f"Artifacts/Approvals/grilling-{slug}.txt",
+        "evidenceSha256": _sha256(approval_file),
+    }
+    path = project / "Artifacts" / "Planning" / f"grilling-{slug}.yaml"
+    _write_yaml(path, record)
+    grilling_reference = {
+        "type": "grilling-record", "path": f"Artifacts/Planning/grilling-{slug}.yaml", "sha256": _sha256(path),
+        "projectId": record["projectId"],
+        "subjectId": record["id"], "subjectVersion": record["version"],
+        "sourceRevision": record["sourceRevision"], "projectStateVersion": record["projectStateVersion"],
+    }
+    snapshot_reference = {"type": "grilling-subject-snapshot", "path": f"Artifacts/Planning/{slug}-subject.yaml", "sha256": _sha256(subject_file), "projectId": "starfall-arena", "subjectId": subject_id, "subjectVersion": subject_version, "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1"}
+    return grilling_reference, snapshot_reference
 
 def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
     """创建包含一份真实质量报告的 G0 求值夹具。"""
@@ -133,6 +166,7 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
         "taskId": "qa.g0",
         "projectId": "starfall-arena",
         "sourceRevision": "revision-001",
+        "projectStateVersion": "project-state-v1",
         "buildVersion": "0.1.0-dev.1",
         "generatedAtUtc": "2026-07-27T12:00:00Z",
         "checks": [{"id": "compile.clean", "category": "compile", "status": "PASS", "message": "编译通过", "evidence": [raw_evidence]}],
@@ -152,10 +186,15 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
     approval_log = project / "Artifacts" / "Approvals" / "decomposition.txt"
     approval_log.parent.mkdir(parents=True)
     approval_log.write_text("用户确认模块与场景拆分 decomposition-v1\n", encoding="utf-8")
-    decomposition = yaml.safe_load(
-        (ROOT / "templates" / "decomposition-plan.yaml").read_text(encoding="utf-8")
-    )
+    profile = yaml.safe_load((ROOT / "templates" / "project-profile.yaml").read_text(encoding="utf-8"))
+    profile.update({"sourceRevision": "revision-001"})
+    profile["workflow"].update({"qualityTargetsStatus": "APPROVED", "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1", "decomposition": {"id": "decomposition.starfall-arena.v1", "version": "decomposition-v1", "status": "APPROVED"}})
+    grilling_evidence, profile_snapshot = _grilling_evidence(project, profile, "project-profile")
+    profile.update({"candidateSnapshot": profile_snapshot, "grillingEvidence": dict(grilling_evidence)})
+    decomposition = yaml.safe_load((ROOT / "templates" / "decomposition-plan.yaml").read_text(encoding="utf-8"))
     decomposition["sourceRevision"] = "revision-001"
+    decomposition_grilling, decomposition_snapshot = _grilling_evidence(project, decomposition, "decomposition-plan", "MODULE_BOUNDARY", decomposition["id"], decomposition["version"], "decomposition")
+    decomposition.update({"candidateSnapshot": decomposition_snapshot, "grillingEvidence": decomposition_grilling})
     decomposition["status"] = "APPROVED"
     decomposition["decision"].update(
         {
@@ -190,19 +229,6 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
     gates["activeDecomposition"]["sourceRevision"] = "revision-001"
     gates["activeDecomposition"]["projectStateVersion"] = decomposition["projectStateVersion"]
     visual_bible_evidence = _visual_bible_evidence(project)
-    profile = yaml.safe_load((ROOT / "templates" / "project-profile.yaml").read_text(encoding="utf-8"))
-    profile["workflow"].update(
-        {
-            "qualityTargetsStatus": "APPROVED",
-            "sourceRevision": "revision-001",
-            "projectStateVersion": decomposition["projectStateVersion"],
-            "decomposition": {
-                "id": decomposition["id"],
-                "version": decomposition["version"],
-                "status": "APPROVED",
-            },
-        }
-    )
     profile_path = project / "Artifacts" / "Planning" / "project-profile.yaml"
     _write_yaml(profile_path, profile)
     profile_evidence = {
@@ -210,6 +236,7 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
         "path": "Artifacts/Planning/project-profile.yaml",
         "sha256": _sha256(profile_path),
         "subjectId": profile["projectId"],
+        "subjectVersion": profile["version"],
     }
     gate = gates["gates"][0]
     gate["status"] = "WAITING_APPROVAL"
@@ -219,7 +246,9 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
             "id": check_id,
             "status": "PASS",
             "evidence": [
-                profile_evidence
+                grilling_evidence
+                if check_id == "grilling.approved"
+                else profile_evidence
                 if check_id in {"scope.approved", "windows-distribution.approved"}
                 else decomposition_evidence
                 if check_id == "decomposition.approved"
@@ -309,16 +338,70 @@ def test_gate_rejects_noncanonical_required_checks(tmp_path: Path, mutation: str
     gates = yaml.safe_load(config.read_text(encoding="utf-8"))
     required = gates["gates"][0]["requiredChecks"]
     if mutation == "REMOVE":
-        required.pop()
+        required.remove("grilling.approved")
     elif mutation == "ADD_UNKNOWN":
         required.append("approval.untracked")
     else:
         required[-1] = gates["gates"][1]["requiredChecks"][0]
     _write_yaml(config, gates)
-
     with pytest.raises(GateEvidenceError, match="必需检查集合不完整"):
         evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
 
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    (("MISSING", "证据文件不存在"), ("FAKE_SUBJECT", "哈希不匹配"), ("UNANSWERED", "每个问题都必须已回答"), ("STALE", "sourceRevision 不匹配"), ("NO_APPROVAL", "userApproval"), ("PENDING_DEPENDENCY", "依赖必须全部 CONFIRMED")),
+)
+def test_g0_rejects_invalid_grilling_record(tmp_path: Path, mutation: str, message: str) -> None:
+    """G0 必须拒绝缺失、未回答、旧版本或没有用户批准的拷问记录。"""
+    config, output, _ = _gate_fixture(tmp_path)
+    gates = yaml.safe_load(config.read_text(encoding="utf-8"))
+    check = next(item for item in gates["gates"][0]["checkResults"] if item["id"] == "grilling.approved")
+    reference = check["evidence"][0]
+    path = tmp_path / reference["path"]
+    if mutation == "MISSING":
+        reference["path"] = "Artifacts/Planning/missing-grilling.yaml"
+    else:
+        record = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if mutation == "UNANSWERED":
+            record["questions"][0].update({"answer": "", "status": "UNANSWERED"})
+        elif mutation == "FAKE_SUBJECT":
+            record["subject"]["sha256"] = "f" * 64
+        elif mutation == "STALE":
+            record["sourceRevision"] = "revision-old"
+        elif mutation == "PENDING_DEPENDENCY":
+            record["dependencies"] = [{"id": "dependency.network", "description": "等待联网方案", "owner": "architecture", "status": "PENDING"}]
+        else:
+            record.pop("userApproval")
+        _write_yaml(path, record)
+        reference["sha256"] = _sha256(path)
+    _write_yaml(config, gates)
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
+    assert result["status"] == "FAIL"
+    evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
+    failure = next(item["failureReason"] for item in evaluated["gates"][0]["checkResults"] if item["id"] == "grilling.approved")
+    assert message in failure
+
+@pytest.mark.parametrize(("mutation", "message"), (("MISSING", "grillingEvidence"), ("WRONG", "subjectVersion 不匹配")))
+def test_decomposition_rejects_missing_or_wrong_grilling_reference(tmp_path: Path, mutation: str, message: str) -> None:
+    """拆分不得缺少拷问记录，也不得引用其他版本的拷问决定。"""
+    config, output, _ = _gate_fixture(tmp_path)
+    gates = yaml.safe_load(config.read_text(encoding="utf-8"))
+    active = gates["activeDecomposition"]
+    path = tmp_path / active["path"]
+    decomposition = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if mutation == "MISSING":
+        decomposition.pop("grillingEvidence")
+    else:
+        decomposition["grillingEvidence"]["subjectVersion"] = "grilling-stale"
+    _write_yaml(path, decomposition)
+    active["sha256"] = _sha256(path)
+    check = next(item for item in gates["gates"][0]["checkResults"] if item["id"] == "decomposition.approved")
+    check["evidence"][0]["sha256"] = active["sha256"]
+    _write_yaml(config, gates)
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
+    assert result["status"] == "FAIL"
+    evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
+    assert message in next(item["failureReason"] for item in evaluated["gates"][0]["checkResults"] if item["id"] == "decomposition.approved")
 
 def test_g0_rejects_non_decomposition_evidence_for_split_approval(tmp_path: Path) -> None:
     """G0 的拆分批准检查不能用普通质量报告冒充用户确认。"""
@@ -331,15 +414,7 @@ def test_g0_rejects_non_decomposition_evidence_for_split_approval(tmp_path: Path
             check["evidence"] = [report_evidence]
     _write_yaml(config, payload)
 
-    result = evaluate_gate(
-        config,
-        "G0",
-        tmp_path,
-        "starfall-arena",
-        "revision-001",
-        "0.1.0-dev.1",
-        output,
-    )
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
 
     assert result["status"] == "FAIL"
     evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
@@ -352,25 +427,11 @@ def test_g0_rejects_non_visual_bible_evidence_for_global_visual_approval(tmp_pat
     config, output, _ = _gate_fixture(tmp_path)
     payload = yaml.safe_load(config.read_text(encoding="utf-8"))
     gate = payload["gates"][0]
-    report_evidence = next(
-        check["evidence"][0]
-        for check in gate["checkResults"]
-        if check["id"] == "scope.approved"
-    )
-    next(
-        check for check in gate["checkResults"] if check["id"] == "visual-bible.approved"
-    )["evidence"] = [report_evidence]
+    report_evidence = next(check["evidence"][0] for check in gate["checkResults"] if check["id"] == "scope.approved")
+    next(check for check in gate["checkResults"] if check["id"] == "visual-bible.approved")["evidence"] = [report_evidence]
     _write_yaml(config, payload)
 
-    result = evaluate_gate(
-        config,
-        "G0",
-        tmp_path,
-        "starfall-arena",
-        "revision-001",
-        "0.1.0-dev.1",
-        output,
-    )
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
 
     assert result["status"] == "FAIL"
     evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))
@@ -398,15 +459,7 @@ def test_gate_rejects_active_decomposition_that_is_waiting_for_user(tmp_path: Pa
     active["sha256"] = _sha256(decomposition_path)
     _write_yaml(config, payload)
 
-    result = evaluate_gate(
-        config,
-        "G0",
-        tmp_path,
-        "starfall-arena",
-        "revision-001",
-        "0.1.0-dev.1",
-        output,
-    )
+    result = evaluate_gate(config, "G0", tmp_path, "starfall-arena", "revision-001", "0.1.0-dev.1", output)
 
     assert result["status"] == "FAIL"
     evaluated = yaml.safe_load(output.read_text(encoding="utf-8"))

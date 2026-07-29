@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "version", "sourceRevision", "projectStateVersion", "targetGate", "interrogation",
+    "schemaVersion", "id", "projectId", "version", "sourceRevision", "projectStateVersion", "targetGate", "grillingEvidence", "interrogation",
     "proposedModules", "proposedScenes", "sharedCapabilities", "rejectedCandidates",
     "decision", "recoveryExit", "status"
   ],
@@ -16,6 +16,16 @@
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
     "targetGate": {"enum": ["G0", "G1", "G2"]},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "grilling-record"}}
+        }
+      ]
+    },
     "interrogation": {
       "type": "array",
       "minItems": 13,
@@ -146,6 +156,7 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
+        "required": ["candidateSnapshot", "grillingEvidence"],
         "properties": {
           "decision": {"required": ["userApproval"], "properties": {"outcome": {"const": "APPROVE_SPLIT"}}},
           "recoveryExit": {"properties": {"resumeAt": {"const": "CONTINUE_TO_S00"}}}

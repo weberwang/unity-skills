@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 决策拷问"
+  short_description: "在 Unity 游戏关键决策前逐项拷问并冻结受影响写入边界"
+  default_prompt: "使用 $unity-game-grilling 逐项拷问当前 Unity 游戏方案，明确批准关键决策后再允许受影响写入。"

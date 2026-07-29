@@ -2,8 +2,11 @@ schemaVersion: "1.0"
 projectId: starfall-arena
 sceneId: scene.arena-intro
 sceneVersion: scene-v1
+reportPurpose: VERTICAL_SLICE
 sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
+buildArtifactSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 generatedAtUtc: "2026-07-27T12:00:00Z"
 sceneManifest:
   type: scene-manifest

@@ -15,7 +15,7 @@ DECOMPOSITION_QUESTIONS = {
 }
 
 EXPECTED_GATE_CHECKS = {
-    "G0": {"scope.approved", "decomposition.approved", "visual-bible.approved", "windows-distribution.approved"},
+    "G0": {"grilling.approved", "scope.approved", "decomposition.approved", "visual-bible.approved", "windows-distribution.approved"},
     "G1": {"s00.verified", "vertical-slice.playable", "visual.runtime-approved", "build.windows-development"},
     "G2": {"scope.complete", "assets.production-ready", "regression.pass", "performance.pass", "defects.p0-p1-resolved", "scenes.2d-adaptation-verified"},
     "G3": {"candidate.verified", "licenses.verified", "privacy.verified", "rollback.ready", "user.release-approved"},
@@ -91,6 +91,25 @@ def decomposition_freshness_issues(
 def decomposition_plan_issues(payload: Mapping[str, Any]) -> list[DecompositionIssue]:
     """校验拆分拷问、模块/场景边界、共享依据和用户决定的一致性。"""
     issues: list[DecompositionIssue] = []
+    snapshot = payload.get("candidateSnapshot")
+    if isinstance(snapshot, Mapping):
+        expected_snapshot = {
+            "projectId": payload.get("projectId"),
+            "subjectId": payload.get("id"),
+            "subjectVersion": payload.get("version"),
+            "sourceRevision": payload.get("sourceRevision"),
+            "projectStateVersion": payload.get("projectStateVersion"),
+        }
+        for field, expected in expected_snapshot.items():
+            if snapshot.get(field) != expected:
+                issues.append(DecompositionIssue(f"$.candidateSnapshot.{field}", "拆分快照必须绑定当前候选的项目、ID、版本和状态"))
+    grilling = payload.get("grillingEvidence")
+    if isinstance(grilling, Mapping):
+        if grilling.get("type") != "grilling-record":
+            issues.append(DecompositionIssue("$.grillingEvidence.type", "拆分必须引用 grilling-record 契约"))
+        for field, label in (("projectId", "项目"), ("sourceRevision", "源码修订"), ("projectStateVersion", "项目状态版本")):
+            if grilling.get(field) != payload.get(field):
+                issues.append(DecompositionIssue(f"$.grillingEvidence.{field}", f"拷问记录{label}必须与当前拆分一致"))
     interrogation = _mapping_items(payload.get("interrogation"))
     question_ids = [item.get("id") for item in interrogation if isinstance(item.get("id"), str)]
     missing = sorted(DECOMPOSITION_QUESTIONS - set(question_ids))
@@ -177,6 +196,9 @@ def decomposition_plan_issues(payload: Mapping[str, Any]) -> list[DecompositionI
             if approval.get("approvalType") != "DECOMPOSITION":
                 issues.append(DecompositionIssue("$.decision.userApproval.approvalType", "拆分决定必须使用 DECOMPOSITION 批准类型"))
     if status == "APPROVED" and isinstance(decision, Mapping):
+        blocked_questions = [item.get("id") for item in interrogation if item.get("conclusion") == "BLOCKED"]
+        if blocked_questions:
+            issues.append(DecompositionIssue("$.interrogation", f"仍有 BLOCKED 拷问时不得批准拆分: {', '.join(blocked_questions)}"))
         expected_modules = {item.get("id") for item in modules if item.get("decision") == "SPLIT"}
         expected_scenes = {item.get("id") for item in scenes if item.get("decision") == "SPLIT"}
         if set(decision.get("approvedModuleIds", [])) != expected_modules:

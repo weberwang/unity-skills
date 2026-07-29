@@ -2,6 +2,26 @@ schemaVersion: "1.0"
 id: imagegen.scene-arena-intro.game-v1
 projectId: starfall-arena
 sceneId: scene.arena-intro
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/imagegen.scene-arena-intro.game-v1.yaml
+  sha256: "4444444444444444444444444444444444444444444444444444444444444444"
+  projectId: starfall-arena
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: scene-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/imagegen.scene-arena-intro.game-v1.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  projectId: starfall-arena
+  subjectId: grilling.imagegen.scene-arena-intro.game-v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 visualType: GAME_VISUAL
 generationMode: SCENE_CONCEPT
 subjectVersion: scene-v1

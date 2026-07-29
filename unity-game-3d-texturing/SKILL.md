@@ -12,6 +12,7 @@ description: 通过 CoplayDev/unity-mcp 与经批准的本地 DCC MCP，为已�
 - 要求 Visual Bible、冻结的模型和 UV 哈希、材质槽、观看距离、纹理预算、透明需求、目标 Shader、许可与唯一 Unity MCP 实例。
 - 建模角色拥有几何、拓扑与 UV；本角色只读校验。发现 UV、法线、材质槽或顶点顺序问题时退回 `$unity-game-3d-modeling`，不静默修改。
 - 负责烘焙、PBR 主通道、URP 打包、TextureImporter、Material、自检与交接；最终 QA 由独立角色执行。
+- 纹理 brief、材质外观、贴图集合/通道、透明方案、外部供应商或 DCC、上传与付费、UV 或顶点顺序变化都必须先交给 `$unity-game-grilling`，生成绑定当前候选的批准记录；未批准时禁止受影响写入或外部调用。
 
 ## MCP 路由
 

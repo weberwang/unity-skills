@@ -1,5 +1,26 @@
 schemaVersion: "1.0"
 projectId: starfall-arena
+version: profile-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/project-profile.profile-v1.yaml
+  sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+  projectId: starfall-arena
+  subjectId: starfall-arena
+  subjectVersion: profile-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/project-profile.profile-v1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  projectId: starfall-arena
+  subjectId: grilling.project-profile.profile-v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 workflow:
   channel: STANDARD
   gate: G0

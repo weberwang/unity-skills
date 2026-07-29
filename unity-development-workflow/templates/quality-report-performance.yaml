@@ -1,0 +1,61 @@
+schemaVersion: "1.0"
+taskId: qa.performance.windows-v1
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+generatedAtUtc: "2026-07-27T12:00:00Z"
+profileEvidence:
+  type: project-profile
+  path: Artifacts/Planning/project-profile.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  projectId: starfall-arena
+  subjectId: starfall-arena
+  subjectVersion: profile-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+checks:
+  - id: performance.pass
+    category: performance
+    status: NOT_RUN
+    message: 等待 Windows Standalone 性能采样并逐项比较已批准质量预算
+    evidence: []
+measurements:
+  - metric: minimumFps
+    unit: fps
+    value: 60
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/minimum-fps.yaml, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, projectId: starfall-arena, subjectId: performance.minimum-fps.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumCpuFrameTimeMs
+    unit: ms
+    value: 16.67
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-cpu-frame-time.yaml, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, projectId: starfall-arena, subjectId: performance.maximum-cpu-frame-time.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumGpuFrameTimeMs
+    unit: ms
+    value: 16.67
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-gpu-frame-time.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc, projectId: starfall-arena, subjectId: performance.maximum-gpu-frame-time.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumMemoryMb
+    unit: MB
+    value: 2048
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-memory.yaml, sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd, projectId: starfall-arena, subjectId: performance.maximum-memory.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumGcAllocKbPerFrame
+    unit: KB/frame
+    value: 1
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-gc-alloc.yaml, sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee, projectId: starfall-arena, subjectId: performance.maximum-gc-alloc.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumDrawCalls
+    unit: count/frame
+    value: 1200
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-draw-calls.yaml, sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff, projectId: starfall-arena, subjectId: performance.maximum-draw-calls.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumTextureMemoryMb
+    unit: MB
+    value: 1024
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-texture-memory.yaml, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, projectId: starfall-arena, subjectId: performance.maximum-texture-memory.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumBuildSizeMb
+    unit: MB
+    value: 4096
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-build-size.yaml, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, projectId: starfall-arena, subjectId: performance.maximum-build-size.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+  - metric: maximumLoadTimeSeconds
+    unit: s
+    value: 8
+    measurementEvidence: {type: performance-measurement-evidence, path: Artifacts/Performance/maximum-load-time.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc, projectId: starfall-arena, subjectId: performance.maximum-load-time.windows-v1, subjectVersion: measurement-v1, sourceRevision: working-tree-snapshot-20260727, projectStateVersion: project-state-v1, buildVersion: 0.1.0-dev.1}
+status: NOT_RUN
+evidence: []

@@ -93,7 +93,7 @@ def _record_to_asset(root: Path, record_path: Path, record: Mapping[str, Any]) -
     asset = _resolve_within(root, Path(str(record["assetPath"])))
     import_report = _resolve_within(root, Path(str(record["importReportPath"])))
     expected_hash = str(record["sourceSha256"])
-    for label, path in (("源图片", source), ("Unity 资产", asset)):
+    for label, path in (("源制品", source), ("Unity 资产", asset)):
         if not path.is_file() or _sha256(path).lower() != expected_hash.lower():
             raise ValueError(f"{label}缺失或哈希不匹配：{path}")
     if not import_report.is_file():
@@ -101,10 +101,10 @@ def _record_to_asset(root: Path, record_path: Path, record: Mapping[str, Any]) -
 
     evidence = [
         _evidence(root, record_path, "registration-record"),
-        _evidence(root, import_report, "image-import-report"),
+        _evidence(root, import_report, "asset-import-report"),
     ]
     for approval_path in record["approvalEvidencePaths"]:
-        evidence.append(_evidence(root, _resolve_within(root, Path(approval_path)), "visual-approval"))
+        evidence.append(_evidence(root, _resolve_within(root, Path(approval_path)), "asset-approval"))
 
     return {
         "id": record["resourceId"],
@@ -119,7 +119,8 @@ def _record_to_asset(root: Path, record_path: Path, record: Mapping[str, Any]) -
         "guid": record["assetGuid"],
         "importerReportPath": record["importReportPath"],
         "registrationRecordPath": record_path.resolve().relative_to(root).as_posix(),
-        "importer": record["importer"],
+        # 复制已经由资产 type 判别校验过的导入设置，避免调用方随后修改原始记录。
+        "importer": dict(record["importer"]),
         "status": "VALIDATED",
         # 技术导入不能推导许可证结论，必须由后续权属审查单独批准。
         "licenseStatus": "PENDING",
@@ -133,7 +134,16 @@ def _assert_idempotent(current: Mapping[str, Any], candidate: Mapping[str, Any])
     """允许完全相同记录重复合并，拒绝同一资源 ID 指向不同事实。"""
     conflicts = [
         field
-        for field in ("sourceSha256", "path", "guid")
+        for field in (
+            "type",
+            "sourceVersion",
+            "visualVersion",
+            "sourceSha256",
+            "path",
+            "address",
+            "guid",
+            "importer",
+        )
         if current.get(field) != candidate.get(field)
     ]
     if conflicts:

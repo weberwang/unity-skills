@@ -11,6 +11,7 @@ description: 通过 CoplayDev/unity-mcp 的 asset_gen、ProBuilder 与模型导�
 
 - 要求已有 Visual Bible、用途、观看距离、单位、轴向、Pivot、拓扑/面数预算、材质槽、LOD、碰撞、导出格式、许可与目标 Unity 项目。
 - 缺少模型规格、唯一 Unity MCP 实例或修改授权时，可先输出带假设标记的只读规格建议，但写入状态保持 `BLOCKED`，不得把建议视为批准。
+- 模型 brief、外部供应商或 DCC 选择、付费与上传、轮廓/交互边界、UV 重建和顶点顺序变化都必须先交给 `$unity-game-grilling`，生成绑定当前模型候选的批准记录；未批准时禁止受影响写入或外部调用。
 - 只负责几何、拓扑、法线、UV 版本冻结、LOD、Collider、模型导入和 Prefab 自检；PBR 纹理交给 `$unity-game-3d-texturing`，最终验证交给 `$unity-game-qa-performance`。
 - 绑定、动画与 VFX 不因“3D”自动进入本角色。
 
@@ -42,4 +43,4 @@ description: 通过 CoplayDev/unity-mcp 的 asset_gen、ProBuilder 与模型导�
 
 ## 交付
 
-交付版本化源文件、运行时模型、Prefab、模型配方、SHA-256、许可、UV 哈希、导入设置、LOD/Collider 指标和 Unity 证据。若当前项目登记契约只有 TextureImporter/Sprite 字段，将模型登记标记为 `BLOCKED` 并请求类型化契约，禁止伪填图片字段。
+交付版本化源文件、运行时模型、Prefab、模型配方、SHA-256、许可、UV 哈希、导入设置、LOD/Collider 指标和 Unity 证据。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。

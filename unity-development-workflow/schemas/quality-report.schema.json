@@ -3,13 +3,72 @@
   "$id": "https://codex.local/unity-workflow/schemas/quality-report.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "taskId", "projectId", "sourceRevision", "buildVersion", "generatedAtUtc", "checks", "status", "evidence"],
+  "required": ["schemaVersion", "taskId", "projectId", "sourceRevision", "projectStateVersion", "buildVersion", "generatedAtUtc", "checks", "status", "evidence"],
           "properties": {
     "schemaVersion": {"const": "1.0"},
     "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
     "buildVersion": {"type": "string", "minLength": 1},
+    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "buildArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "platform", "path", "sha256"],
+      "properties": {
+        "artifactType": {"const": "WINDOWS_EXECUTABLE"},
+        "platform": {"const": "WINDOWS_STANDALONE"},
+        "path": {
+          "allOf": [
+            {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+            {"pattern": "\\.[Ee][Xx][Ee]$"}
+          ]
+        },
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "profileEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "project-profile"}}
+        }
+      ]
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "unit", "value", "measurementEvidence"],
+        "properties": {
+          "metric": {
+            "enum": [
+              "minimumFps", "maximumCpuFrameTimeMs", "maximumGpuFrameTimeMs",
+              "maximumMemoryMb", "maximumGcAllocKbPerFrame", "maximumDrawCalls",
+              "maximumTextureMemoryMb", "maximumBuildSizeMb", "maximumLoadTimeSeconds"
+            ]
+          },
+          "unit": {"enum": ["fps", "ms", "MB", "KB/frame", "count/frame", "s"]},
+          "value": {"type": "number"},
+          "measurementEvidence": {
+            "allOf": [
+              {"$ref": "common.schema.json#/$defs/evidence"},
+              {
+                "required": [
+                  "projectId", "subjectId", "subjectVersion", "sourceRevision",
+                  "projectStateVersion", "buildVersion"
+                ],
+                "properties": {"type": {"const": "performance-measurement-evidence"}}
+              }
+            ]
+          }
+        }
+      }
+    },
     "generatedAtUtc": {
       "type": "string",
       "format": "date-time",
@@ -50,6 +109,55 @@
     "evidence": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/evidence"}}
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "build.windows-development"},
+                "status": {"const": "PASS"}
+              },
+              "required": ["id", "status"]
+            }
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "required": ["projectStateVersion", "sceneId", "buildArtifactSha256", "buildArtifact"],
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "build.windows-development"},
+                "category": {"const": "build"},
+                "status": {"const": "PASS"},
+                "evidence": {
+                  "contains": {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]},
+                  "minContains": 1,
+                  "maxContains": 1
+                }
+              },
+              "required": ["id", "category", "status", "evidence"]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {"properties": {"id": {"const": "performance.pass"}}, "required": ["id"]}
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {"required": ["projectStateVersion", "profileEvidence", "measurements"]}
+    },
     {
       "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
       "then": {

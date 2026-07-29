@@ -2,6 +2,7 @@ schemaVersion: "1.0"
 taskId: qa.scene-arena-intro
 projectId: starfall-arena
 sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
 generatedAtUtc: "2026-07-27T12:00:00Z"
 checks:

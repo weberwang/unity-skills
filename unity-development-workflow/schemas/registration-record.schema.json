@@ -15,7 +15,7 @@
     "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
     "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
     "module": {"type": "string", "minLength": 1},
-    "type": {"enum": ["sprite", "texture", "model", "animation", "vfx", "font", "audio", "ui"]},
+    "type": {"enum": ["sprite", "texture", "model", "prefab", "material", "animation", "vfx", "font", "audio", "ui"]},
     "purpose": {"type": "string", "minLength": 1},
     "sourceVersion": {"type": "string", "minLength": 1},
     "visualVersion": {"type": "string", "minLength": 1},
@@ -24,24 +24,7 @@
     "assetPath": {"allOf": [{"$ref": "common.schema.json#/$defs/projectRelativePath"}, {"pattern": "^Assets/Art/Runtime(?:/|$)"}]},
     "address": {"type": "string", "minLength": 1},
     "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
-    "importer": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
-      "properties": {
-        "textureType": {"type": "string", "minLength": 1},
-        "spriteMode": {"type": "string", "minLength": 1},
-        "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
-        "filterMode": {"type": "string", "minLength": 1},
-        "wrapMode": {"type": "string", "minLength": 1},
-        "maxSize": {"type": "integer", "minimum": 32},
-        "compression": {"type": "string", "minLength": 1},
-        "sRgb": {"type": "boolean"},
-        "alphaIsTransparency": {"type": "boolean"},
-        "mipmaps": {"type": "boolean"},
-        "readWriteEnabled": {"type": "boolean"}
-      }
-    },
+    "importer": {},
     "approvalEvidencePaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "approvals": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
     "importReportPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
@@ -49,5 +32,207 @@
     "licenseStatus": {"const": "PENDING"},
     "unityValidation": {"const": "PASS"},
     "generatedAtUtc": {"type": "string", "format": "date-time"}
+  },
+  "oneOf": [
+    {"properties": {"type": {"const": "sprite"}, "importer": {"$ref": "#/$defs/spriteImporter"}}},
+    {"properties": {"type": {"const": "texture"}, "importer": {"$ref": "#/$defs/textureImporter"}}},
+    {"properties": {"type": {"const": "model"}, "importer": {"$ref": "#/$defs/modelImporter"}}},
+    {"properties": {"type": {"const": "prefab"}, "importer": {"$ref": "#/$defs/prefabImporter"}}},
+    {"properties": {"type": {"const": "material"}, "importer": {"$ref": "#/$defs/materialImporter"}}},
+    {"properties": {"type": {"const": "audio"}, "importer": {"$ref": "#/$defs/audioImporter"}}},
+    {"properties": {"type": {"const": "font"}, "importer": {"$ref": "#/$defs/fontImporter"}}},
+    {"properties": {"type": {"const": "animation"}, "importer": {"$ref": "#/$defs/animationImporter"}}},
+    {"properties": {"type": {"const": "vfx"}, "importer": {"$ref": "#/$defs/vfxImporter"}}},
+    {"properties": {"type": {"const": "ui"}, "importer": {"$ref": "#/$defs/uiImporter"}}}
+  ],
+  "$defs": {
+    "textureBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["textureType", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+      "properties": {
+        "textureType": {"enum": ["Default", "NormalMap", "EditorGUI", "Cursor", "Cookie", "Lightmap", "SingleChannel"]},
+        "filterMode": {"enum": ["Point", "Bilinear", "Trilinear"]},
+        "wrapMode": {"enum": ["Repeat", "Clamp", "Mirror", "MirrorOnce"]},
+        "maxSize": {"type": "integer", "minimum": 32, "maximum": 16384},
+        "compression": {"enum": ["Uncompressed", "LowQuality", "NormalQuality", "HighQuality"]},
+        "sRgb": {"type": "boolean"},
+        "alphaIsTransparency": {"type": "boolean"},
+        "mipmaps": {"type": "boolean"},
+        "readWriteEnabled": {"type": "boolean"}
+      }
+    },
+    "textureImporter": {"$ref": "#/$defs/textureBase"},
+    "spriteImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+      "properties": {
+        "textureType": {"const": "Sprite"},
+        "spriteMode": {"enum": ["Single", "Multiple", "Polygon"]},
+        "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+        "filterMode": {"enum": ["Point", "Bilinear", "Trilinear"]},
+        "wrapMode": {"enum": ["Repeat", "Clamp", "Mirror", "MirrorOnce"]},
+        "maxSize": {"type": "integer", "minimum": 32, "maximum": 16384},
+        "compression": {"enum": ["Uncompressed", "LowQuality", "NormalQuality", "HighQuality"]},
+        "sRgb": {"type": "boolean"},
+        "alphaIsTransparency": {"type": "boolean"},
+        "mipmaps": {"type": "boolean"},
+        "readWriteEnabled": {"type": "boolean"}
+      }
+    },
+    "modelImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["globalScale", "meshCompression", "readWriteEnabled", "optimizeMeshPolygons", "optimizeMeshVertices", "importBlendShapes", "importCameras", "importLights", "generateColliders", "importMaterials", "importAnimation"],
+      "properties": {
+        "globalScale": {"type": "number", "exclusiveMinimum": 0},
+        "meshCompression": {"enum": ["Off", "Low", "Medium", "High"]},
+        "readWriteEnabled": {"type": "boolean"},
+        "optimizeMeshPolygons": {"type": "boolean"},
+        "optimizeMeshVertices": {"type": "boolean"},
+        "importBlendShapes": {"type": "boolean"},
+        "importCameras": {"type": "boolean"},
+        "importLights": {"type": "boolean"},
+        "generateColliders": {"type": "boolean"},
+        "importMaterials": {"type": "boolean"},
+        "importAnimation": {"type": "boolean"}
+      }
+    },
+    "prefabImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rootObjectName", "prefabKind", "unpackMode", "missingScriptCount", "autoSave"],
+      "properties": {
+        "rootObjectName": {"type": "string", "minLength": 1},
+        "prefabKind": {"enum": ["Regular", "Variant"]},
+        "unpackMode": {"enum": ["PreserveLinks", "FullyUnpacked"]},
+        "missingScriptCount": {"const": 0},
+        "autoSave": {"type": "boolean"}
+      }
+    },
+    "materialImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shader", "renderPipeline", "materialMode", "textureBindings", "enableInstancing", "doubleSidedGI", "renderQueue"],
+      "properties": {
+        "shader": {"type": "string", "minLength": 1},
+        "renderPipeline": {"const": "URP"},
+        "materialMode": {"enum": ["PBR_TEXTURED", "UNLIT", "PROCEDURAL"]},
+        "workflowMode": {"enum": ["Metallic", "Specular"]},
+        "textureBindings": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "baseColor": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "BASE_COLOR"}}}]},
+            "normal": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "NORMAL"}}}]},
+            "metallicSmoothness": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "METALLIC_SMOOTHNESS"}}}]},
+            "ambientOcclusion": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "AMBIENT_OCCLUSION"}}}]},
+            "emission": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "EMISSION"}}}]}
+          }
+        },
+        "enableInstancing": {"type": "boolean"},
+        "doubleSidedGI": {"type": "boolean"},
+        "renderQueue": {"type": "integer", "minimum": -1, "maximum": 5000}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"materialMode": {"const": "PBR_TEXTURED"}}, "required": ["materialMode"]},
+          "then": {
+            "required": ["workflowMode"],
+            "properties": {"textureBindings": {"required": ["baseColor", "normal", "metallicSmoothness", "ambientOcclusion"]}}
+          }
+        },
+        {
+          "if": {"properties": {"materialMode": {"const": "UNLIT"}}, "required": ["materialMode"]},
+          "then": {
+            "not": {"required": ["workflowMode"]},
+            "properties": {"textureBindings": {"propertyNames": {"enum": ["baseColor", "emission"]}}}
+          }
+        },
+        {
+          "if": {"properties": {"materialMode": {"const": "PROCEDURAL"}}, "required": ["materialMode"]},
+          "then": {
+            "not": {"required": ["workflowMode"]},
+            "properties": {"textureBindings": {"maxProperties": 0}}
+          }
+        }
+      ]
+    },
+    "pbrTextureBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceId", "address", "semantic"],
+      "properties": {
+        "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "address": {"type": "string", "minLength": 1},
+        "semantic": {"enum": ["BASE_COLOR", "NORMAL", "METALLIC_SMOOTHNESS", "AMBIENT_OCCLUSION", "EMISSION"]}
+      }
+    },
+    "audioImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["loadType", "compressionFormat", "quality", "sampleRateSetting", "forceToMono", "normalize", "preloadAudioData", "loadInBackground", "ambisonic"],
+      "properties": {
+        "loadType": {"enum": ["DecompressOnLoad", "CompressedInMemory", "Streaming"]},
+        "compressionFormat": {"enum": ["PCM", "Vorbis", "ADPCM", "MP3"]},
+        "quality": {"type": "number", "minimum": 0, "maximum": 1},
+        "sampleRateSetting": {"enum": ["PreserveSampleRate", "OptimizeSampleRate", "OverrideSampleRate"]},
+        "forceToMono": {"type": "boolean"},
+        "normalize": {"type": "boolean"},
+        "preloadAudioData": {"type": "boolean"},
+        "loadInBackground": {"type": "boolean"},
+        "ambisonic": {"type": "boolean"}
+      }
+    },
+    "fontImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fontType", "characterSet", "includeFontData", "fontSize", "renderMode"],
+      "properties": {
+        "fontType": {"enum": ["Dynamic", "Bitmap", "Custom"]},
+        "characterSet": {"type": "string", "minLength": 1},
+        "includeFontData": {"type": "boolean"},
+        "fontSize": {"type": "integer", "minimum": 1},
+        "renderMode": {"enum": ["Smooth", "Raster", "HintedSmooth", "HintedRaster"]}
+      }
+    },
+    "animationImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clipName", "loopTime", "loopPose", "cycleOffset", "rootMotion", "legacy"],
+      "properties": {
+        "clipName": {"type": "string", "minLength": 1},
+        "loopTime": {"type": "boolean"},
+        "loopPose": {"type": "boolean"},
+        "cycleOffset": {"type": "number", "minimum": 0, "maximum": 1},
+        "rootMotion": {"type": "boolean"},
+        "legacy": {"type": "boolean"}
+      }
+    },
+    "vfxImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rendererType", "simulationSpace", "maxParticles", "prewarm", "playOnAwake"],
+      "properties": {
+        "rendererType": {"enum": ["ParticleSystem", "VFXGraph", "Flipbook"]},
+        "simulationSpace": {"enum": ["Local", "World", "Custom"]},
+        "maxParticles": {"type": "integer", "minimum": 1},
+        "prewarm": {"type": "boolean"},
+        "playOnAwake": {"type": "boolean"}
+      }
+    },
+    "uiImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetKind", "referencePixelsPerUnit", "raycastTarget", "preserveAspect", "addressable"],
+      "properties": {
+        "assetKind": {"enum": ["Sprite", "Prefab", "UIDocument"]},
+        "referencePixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
+        "raycastTarget": {"type": "boolean"},
+        "preserveAspect": {"type": "boolean"},
+        "addressable": {"type": "boolean"}
+      }
+    }
   }
 }

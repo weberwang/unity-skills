@@ -15,13 +15,18 @@ import yaml
 
 from unity_workflow.contracts import load_yaml, validate_contract, validate_decomposition_freshness
 from unity_workflow.file_mutex import FileMutex
-
+from unity_workflow.g1_integrity import g1_vertical_slice_failure
+from unity_workflow.gate_integrity import delivery_runtime_failure, manifest_projection_failure
+from unity_workflow.stage_grilling_integrity import g0_grilling_profile_failure, stage_grilling_failure
+from unity_workflow.performance_contract import performance_gate_failure
 
 CONTRACT_TYPES = {
     "project-profile",
     "decomposition-plan",
     "module-manifest",
     "quality-report",
+    "performance-measurement-evidence",
+    "performance-raw-artifact",
     "runtime-visual-evidence",
     "scene-manifest",
     "scene-report",
@@ -37,12 +42,16 @@ CONTRACT_TYPES = {
     "scene-2d-adaptation",
     "prefab-structure",
     "prefab-assembly",
+    "grilling-record",
+    "grilling-subject-snapshot",
 }
 
 REQUIRED_STATUSES = {
     "decomposition-plan": {"APPROVED"},
     "module-manifest": {"APPROVED"},
     "quality-report": {"PASS"},
+    "performance-measurement-evidence": {"VERIFIED"},
+    "performance-raw-artifact": {"VERIFIED"},
     "runtime-visual-evidence": {"APPROVED"},
     "scene-manifest": {"DONE"},
     "scene-report": {"PASS"},
@@ -57,9 +66,11 @@ REQUIRED_STATUSES = {
     "scene-2d-adaptation": {"VERIFIED"},
     "prefab-structure": {"APPROVED"},
     "prefab-assembly": {"VERIFIED"},
+    "grilling-record": {"APPROVED"},
 }
 
 REQUIRED_CHECK_EVIDENCE_TYPES = {
+    "grilling.approved": "grilling-record",
     "scope.approved": "project-profile",
     "decomposition.approved": "decomposition-plan",
     "visual-bible.approved": "visual-bible",
@@ -141,6 +152,15 @@ def evaluate_gate(
             evaluated.append({"id": check_id, "status": "FAIL", "evidence": list(source.get("evidence", [])) if source else [], "failureReason": failure})
 
     gate_failures: list[str] = list(upstream_failures)
+    if gate_id == "G0":
+        try:
+            binding_failure = g0_grilling_profile_failure(verifier, checks_by_id)
+        except GateEvidenceError as error:
+            binding_failure = str(error)
+        if binding_failure:
+            gate_failures.append(binding_failure)
+    if gate_id == "G1" and (binding_failure := g1_vertical_slice_failure(verifier, checks_by_id)):
+        gate_failures.append(binding_failure)
     try:
         verifier.verify_active_decomposition()
     except GateEvidenceError as error:
@@ -200,6 +220,8 @@ def _verify_upstream_gates(
             failure = _evaluate_check(check_id, results.get(check_id), verifier)
             if failure is not None:
                 failures.append(f"前置质量门 {upstream_id}/{check_id} 失效：{failure}")
+        if upstream_id == "G1" and (binding_failure := g1_vertical_slice_failure(verifier, results)):
+            failures.append(f"前置质量门 G1 组合绑定失效：{binding_failure}")
         evidence = upstream.get("evidence")
         if not isinstance(evidence, Sequence) or isinstance(evidence, (str, bytes)) or not evidence:
             failures.append(f"前置质量门 {upstream_id} 缺少汇总证据")
@@ -327,7 +349,7 @@ class _EvidenceVerifier:
                 for result in report.get("checks", [])
             ):
                 raise GateEvidenceError(f"{check_id} 缺少同名 PASS 质量检查")
-        if check_id not in {"scope.complete", "scenes.2d-adaptation-verified"}:
+        if check_id not in {"vertical-slice.playable", "scope.complete", "scenes.2d-adaptation-verified"}:
             return
         self.verify_active_decomposition()
         decomposition = self._load_referenced_contract(self.active_decomposition)
@@ -343,6 +365,11 @@ class _EvidenceVerifier:
             scene_id = manifest.get("id")
             if isinstance(scene_id, str):
                 manifest_ids.append(scene_id)
+        if check_id == "vertical-slice.playable":
+            invalid = sorted(set(manifest_ids) - approved_scene_ids)
+            if not manifest_ids or invalid:
+                raise GateEvidenceError("vertical-slice.playable 的 sceneId 必须属于 approvedSceneIds")
+            return
         if len(manifest_ids) != len(set(manifest_ids)):
             raise GateEvidenceError(f"{check_id} 包含重复 scene-manifest")
         if set(manifest_ids) != approved_scene_ids:
@@ -359,6 +386,8 @@ class _EvidenceVerifier:
         """拒绝其他项目、源码、构建或主体版本的旧证据。"""
         if "projectId" in payload and payload["projectId"] != self.project_id:
             raise GateEvidenceError(f"{kind} projectId 不匹配")
+        if reference.get("projectId") is not None and reference["projectId"] != self.project_id:
+            raise GateEvidenceError(f"{kind} 引用的 projectId 不匹配")
         if "sourceRevision" in payload and payload["sourceRevision"] != self.source_revision:
             raise GateEvidenceError(f"{kind} sourceRevision 不匹配")
         if "buildVersion" in payload and payload["buildVersion"] != self.build_version:
@@ -442,6 +471,9 @@ class _EvidenceVerifier:
     def _verify_nested(self, kind: str, payload: Mapping[str, Any]) -> None:
         """沿正式契约中的证据引用继续校验，避免顶层文件掩盖伪造路径。"""
         references: list[object] = []
+        grilling_failure = stage_grilling_failure(self, kind, payload)
+        if grilling_failure:
+            raise GateEvidenceError(grilling_failure)
         if kind in {"module-manifest", "scene-manifest", "s00-report"}:
             freshness_issues = validate_decomposition_freshness(
                 {
@@ -453,7 +485,12 @@ class _EvidenceVerifier:
             if freshness_issues:
                 details = "；".join(f"{item.path}: {item.message}" for item in freshness_issues)
                 raise GateEvidenceError(f"{kind} 拆分版本已失效：{details}")
+        if kind in {"module-manifest", "scene-manifest"}:
+            self._verify_manifest_projection(kind, payload)
         if kind == "quality-report":
+            performance_failure = performance_gate_failure(self, payload)
+            if performance_failure:
+                raise GateEvidenceError(performance_failure)
             references.extend(payload.get("evidence", []))
             for check in payload.get("checks", []):
                 references.extend(check.get("evidence", []))
@@ -512,10 +549,19 @@ class _EvidenceVerifier:
             references.extend(_approval_references(payload.get("reviews", [])))
             references.extend(_approval_references([payload.get("userApproval")]))
         elif kind == "decomposition-plan":
+            self._verify_decomposition_grilling_binding(payload)
             decision = payload.get("decision", {})
+            references.append(payload.get("grillingEvidence"))
             references.extend(_approval_references([decision.get("userApproval")]))
             for item in payload.get("interrogation", []):
                 references.extend(item.get("evidence", []))
+        elif kind == "grilling-record":
+            # 被拷问对象与用户批准都必须回读原件，不能信任记录内的摘要或状态。
+            subject = payload.get("subject", {})
+            references.append(
+                {"type": subject.get("evidenceType"), "path": subject.get("path"), "sha256": subject.get("sha256"), "projectId": payload.get("projectId"), "subjectId": subject.get("id"), "subjectVersion": subject.get("version"), "sourceRevision": payload.get("sourceRevision"), "projectStateVersion": payload.get("projectStateVersion")}
+            )
+            references.extend(_approval_references([payload.get("userApproval")]))
         elif kind == "module-manifest":
             references.append(payload.get("decompositionPlan"))
         elif kind == "image-generation":
@@ -542,6 +588,8 @@ class _EvidenceVerifier:
                 if asset.get("sourceSha256"):
                     references.append({"type": "unity-asset", "path": asset.get("path"), "sha256": asset.get("sourceSha256")})
         elif kind == "delivery-manifest":
+            if self.gate_id == "G3":
+                self._verify_delivery_runtime_coverage(payload)
             references.extend(payload.get("evidence", []))
             references.extend(payload.get("qualityReports", []))
             references.extend(payload.get("runtimeVisualEvidence", []))
@@ -580,6 +628,29 @@ class _EvidenceVerifier:
         for reference in references:
             if reference is not None:
                 self.verify_reference(reference)
+
+    def _verify_manifest_projection(self, kind: str, payload: Mapping[str, Any]) -> None:
+        """深验模块或场景清单是当前批准拆分的精确投影。"""
+        failure = manifest_projection_failure(self, kind, payload)
+        if failure:
+            raise GateEvidenceError(failure)
+
+    def _verify_delivery_runtime_coverage(self, payload: Mapping[str, Any]) -> None:
+        """深验 G3 的逐场景实机证据全集及 Windows 可执行文件绑定。"""
+        failure = delivery_runtime_failure(self, payload)
+        if failure:
+            raise GateEvidenceError(failure)
+
+    def _verify_decomposition_grilling_binding(self, payload: Mapping[str, Any]) -> None:
+        """确认拆分消费的拷问记录与拆分自身属于同一项目状态快照。"""
+        reference = payload.get("grillingEvidence")
+        if not isinstance(reference, Mapping):
+            raise GateEvidenceError("decomposition-plan 缺少 grillingEvidence")
+        self.verify_reference(reference)
+        record = self._load_referenced_contract(reference)
+        for field in ("projectId", "sourceRevision", "projectStateVersion"):
+            if record.get(field) != payload.get(field):
+                raise GateEvidenceError(f"decomposition-plan 与 grilling-record 的 {field} 不一致")
 
     def _verify_split_plan_source(self, payload: Mapping[str, Any]) -> None:
         """确认 P3 资产地图严格绑定 P1 已确认候选与 P2 独立审阅。"""

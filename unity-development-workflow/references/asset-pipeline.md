@@ -20,7 +20,7 @@
 6. **逐项 Unity 导入**：只有当前条目为 `APPROVED` 才能进入 `IMPORTED`，并显式设置纹理类型、sRGB、Alpha、Max Size、压缩、Filter、Wrap、MipMap、Read/Write、PPU、Pivot、Border 与 Sprite Mesh；按用途建立 SpriteAtlas、Addressables 或直接引用，避免重复纹理和隐式 Resources 膨胀。
 7. **逐项运行验证**：在目标分辨率、缩放、摄像机、URP、UI Toolkit、目标槽位与实际材质下验证寻址、色彩、采样、九宫格、动画、透明排序和内存；记录 Profiler/Frame Debugger 或等价证据，通过后标记 `VALIDATED`。框选条目尚未绑定目标槽位时不得通过。
 8. **聚合验证**：枚举 P3 地图全部生产项，解析图片、模型、贴图材质与实现通道的当前验证证据；只有无漏项、无重复路由、无旧版本、无占位且全部为 `VALIDATED` 时，才产生 `ALL_ITEMS_VALIDATED`。未达到该状态，P5 始终保持 `ASSEMBLY_BLOCKED`。
-9. **更新登记**：`uwt_import_image` 成功后只新增 `Artifacts/AssetRegistry/records/*.json` 不可变登记事实，禁止并发改总表。集成代理取得总表独占锁后运行 `workflow.py asset merge-records --project-root <项目> --records Artifacts/AssetRegistry/records --register docs/asset-register.yaml`，按资源 ID、源哈希、路径和 GUID 查重，把 Importer、导入报告、批准证据写入总登记；冲突即停止，许可证保持 PENDING，必须另行审查批准。
+9. **更新登记**：导入成功后只新增 `Artifacts/AssetRegistry/records/*.json` 不可变登记事实，禁止并发改总表；2D 图片可由 `uwt_import_image` 产生记录，模型、Prefab、PBR 材质、音频、字体、动画、VFX 和 UI 则必须使用与资产 `type` 匹配的严格 Importer 分支，不得伪填 TextureImporter/Sprite 字段。PBR 材质同时登记各贴图槽位的资源 ID、地址与通道语义。集成代理取得总表独占锁后运行 `workflow.py asset merge-records --project-root <项目> --records Artifacts/AssetRegistry/records --register docs/asset-register.yaml`，按资源 ID、源哈希、路径和 GUID 查重，把类型化 Importer、导入报告、批准证据写入总登记；冲突即停止，许可证保持 PENDING，必须另行审查批准。
 10. **移交结构化装配与清理要求**：仅把 `ALL_ITEMS_VALIDATED` 与逐条“资源 ID -> Prefab/Scene 槽位”绑定交给 P5 单写集成代理。不得移交整张效果图、联系表、资产地图标注图、未验证资源或临时占位。正式结构化拼装完成后，P5 必须删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，清理残留引用，并在保留已确认结构节点、稳定 ID、`prefab-structure`、预览和批准记录等审计证据的前提下取得清理验证 `PASS`；否则不得标记 `ASSEMBLY_VERIFIED` 或 `DONE`。
 
 截图、效果图、概念图、联系表和资产地图标注图都不是运行时资源。每个正式图片条目必须依据已批准 Visual Bible 独立重新生成；P3 框选不是裁切许可。

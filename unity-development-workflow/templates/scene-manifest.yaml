@@ -27,8 +27,7 @@ entryConditions:
   - 玩家档案已加载
 exitConditions:
   - 玩家到达竞技场中心
-dependencies:
-  - gameplay.player-controller
+dependencies: []
 moduleDependencies:
   - Foundation.Core
   - Gameplay.Player

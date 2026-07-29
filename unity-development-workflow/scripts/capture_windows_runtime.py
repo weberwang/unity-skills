@@ -150,6 +150,7 @@ def build_evidence(
         "sceneId": args.scene_id,
         "buildVersion": args.build_version,
         "sourceRevision": args.source_revision,
+        "projectStateVersion": args.project_state_version,
         "buildArtifactSha256": executable_hash,
         "captureSource": "WINDOWS_STANDALONE",
         "screenshot": {
@@ -247,6 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--scene-id", required=True)
     parser.add_argument("--build-version", required=True)
     parser.add_argument("--source-revision", required=True)
+    parser.add_argument("--project-state-version", required=True)
     parser.add_argument("--screenshot", required=True, help="Artifacts/Visual/Runtime 下的 PNG 路径")
     parser.add_argument("--evidence", required=True, help="Artifacts/Visual/Runtime 下的 JSON 路径")
     parser.add_argument("--window-title", default="", help="可选窗口标题片段")

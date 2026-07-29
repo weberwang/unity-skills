@@ -14,6 +14,7 @@ gates:
   - id: G0
     status: WAITING_APPROVAL
     requiredChecks:
+      - grilling.approved
       - scope.approved
       - decomposition.approved
       - visual-bible.approved

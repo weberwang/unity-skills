@@ -14,15 +14,15 @@ S00 通过后，为每个场景进行需求、实现、视觉、测试、审批�
 ## 执行步骤
 
 1. 先应用严格执行策略，校验场景 manifest 与 `decompositionPlan` 引用，确认场景 ID、版本、生命周期、模块依赖、共享能力和拥有路径仍在用户批准范围；不一致、未知或缺证时返回拆分拷问，不得进入 G1/G2 实现。
-2. 执行 **P0 结构确认**：创建低模 Prefab 层级、灰盒构图和文字说明，验证最小交互路径，并冻结本场景资源依赖、UI 信息架构、镜头与验收测试。状态必须依次为 `STRUCTURE_DRAFT -> STRUCTURE_AWAITING_USER -> STRUCTURE_APPROVED`；用户确认前不得进入高保真视觉。
+2. 执行 **P0 结构确认**：创建低模 Prefab 层级、灰盒构图和文字说明，验证最小交互路径，并冻结本场景资源依赖、UI 信息架构、镜头与验收测试；请求确认前由 `$unity-game-grilling` 对当前结构候选逐项拷问并绑定批准记录。状态必须依次为 `STRUCTURE_DRAFT -> STRUCTURE_AWAITING_USER -> STRUCTURE_APPROVED`；用户确认前不得进入高保真视觉。
 3. 若为 2D 场景，按总控已加载的 2D 场景屏幕适配规则建立契约：竖屏固定高度且 UI Toolkit `match=1`，横屏固定宽度且 `match=0`；产生的左右或上下边带必须由无交互纯视觉背景覆盖。
 4. 若为 3D 场景，按总控已加载的 3D 资产规则冻结模型/材质任务：`$unity-game-3d-modeling` 负责 Blockout、几何、LOD、Collider 与模型 Prefab，拓扑/UV 边界冻结后 `$unity-game-3d-texturing` 负责 UV、PBR 贴图、URP 材质和变体；复杂有机或工具无法可靠完成的资产转 DCC 移交。
-5. 执行 **P1 高保真候选确认**：基于 P0 和已批准 Visual Bible 分别生成游戏画面与 UI 候选，状态依次为 `HIGH_FIDELITY_DRAFT -> HIGH_FIDELITY_AWAITING_USER -> HIGH_FIDELITY_CONFIRMED`。用户确认的是送审候选，不是最终交付批准。
+5. 执行 **P1 高保真候选确认**：基于 P0 和已批准 Visual Bible 分别生成游戏画面与 UI 候选；请求用户选择前由 `$unity-game-grilling` 固化当前候选取舍，状态依次为 `HIGH_FIDELITY_DRAFT -> HIGH_FIDELITY_AWAITING_USER -> HIGH_FIDELITY_CONFIRMED`。用户确认的是送审候选，不是最终交付批准。
 6. 执行 **P2 独立审查**：视觉一致性、Unity 可实现性、UX/可读性代理针对 P1 精确版本独立审查，状态为 `INDEPENDENT_REVIEWING -> REVIEW_APPROVED | CHANGES_REQUIRED`。需要修改时合并意见并返回 P1 生成新版本，重新取得用户确认和三份审查。
-7. 执行 **P3 完整资产地图确认**：在 P2 通过的游戏/UI 原图上框选所有可见生产元素，赋予唯一条目 ID；拆分前逐项拷问用途、独立生成必要性、复用边界、轮廓、遮挡补全、尺寸、透明、枢轴/锚点、PPU、九宫格、动画帧、交付形式、性能代价和目标槽位，并绑定唯一生产通道及列出无需生产的排除项。状态依次为 `ASSET_MAP_DRAFT -> ASSET_MAP_AWAITING_USER -> ASSET_MAP_APPROVED`；地图和拷问结论未获用户确认不得生产正式资源。
+7. 执行 **P3 完整资产地图确认**：在 P2 通过的游戏/UI 原图上框选所有可见生产元素，赋予唯一条目 ID；拆分前由 `$unity-game-grilling` 逐项拷问用途、独立生成必要性、复用边界、轮廓、遮挡补全、尺寸、透明、枢轴/锚点、PPU、九宫格、动画帧、交付形式、性能代价和目标槽位，并绑定唯一生产通道及列出无需生产的排除项。状态依次为 `ASSET_MAP_DRAFT -> ASSET_MAP_AWAITING_USER -> ASSET_MAP_APPROVED`；地图、绑定当前版本的拷问记录和用户确认未完成时不得生产正式资源。
 8. 执行 **P4 逐项生产与验证**：2D/位图项逐张依据 Visual Bible 独立生成，模型项走建模，PBR/材质项走贴图材质，灯光、相机、后处理、Shader、UI Toolkit 和代码项走实现；每项依次为 `PLANNED -> GENERATING -> REVIEWING -> APPROVED -> IMPORTED -> VALIDATED`，其中实现类的 `IMPORTED` 表示已写入并可由 Unity 加载。只有地图全部生产项处于当前版本 `VALIDATED`，聚合状态才可设为 `ALL_ITEMS_VALIDATED`。
 9. 执行 **P5 结构化装配与清理**：初始状态为 `ASSEMBLY_BLOCKED`，仅 `ALL_ITEMS_VALIDATED` 可转为 `ASSEMBLY_READY`，再由单写 Unity 集成代理进入 `ASSEMBLY_RUNNING`。严格按 P0 层级与 P3 槽位装配 Prefab/Scene；不得把效果图、整张背景合成图、联系表、占位图或未登记对象当作正式实现。玩法、内容与 UI Toolkit 交互接线在该结构中串行完成。正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，并清理序列化、场景、Prefab、地址和登记引用；保留已确认结构节点及稳定 ID，并保留 `prefab-structure`、预览和批准记录等审计证据。只有清理验证为 `PASS` 后，才可从 `ASSEMBLY_RUNNING` 进入 `ASSEMBLY_VERIFIED`。
-10. 使用官方 `manage_build` 生成 Windows Standalone，再运行 `python scripts/capture_windows_runtime.py --project-root <项目> --executable <Artifacts/Builds 下 EXE> --project-id <ID> --scene-id <场景> --build-version <版本> --source-revision <修订> --screenshot <Artifacts/Visual/Runtime 下 PNG> --evidence <Artifacts/Visual/Runtime 下 JSON>` 捕获真实游戏窗口。脚本只产出 `CAPTURED` 证据，随后必须与 P1 目标对比，交由三个独立审查子代理，修复并重新构建、捕获，直到用户最终批准。
+10. 使用官方 `manage_build` 生成 Windows Standalone，再从项目根目录运行 `uv run .agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py --project-root <项目> --executable <Artifacts/Builds 下 EXE> --project-id <ID> --scene-id <场景> --build-version <版本> --source-revision <修订> --project-state-version <项目状态版本> --screenshot <Artifacts/Visual/Runtime 下 PNG> --evidence <Artifacts/Visual/Runtime 下 JSON>` 捕获真实游戏窗口。脚本只产出 `CAPTURED` 证据，随后必须与 P1 目标对比，交由三个独立审查子代理；修复并重新构建、捕获，对当前最终候选执行 `$unity-game-grilling` 后才能请求用户批准。
 11. 执行场景测试、冒烟、可访问性、视觉与性能门禁；2D 场景还必须验证参考、边带、裁切三类分辨率。P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 退回时重做 P1；P3 变化使受影响 P4 和 P5 失效；P4 任一资源内容、规格、GUID/地址、导入设置或槽位变化都会清除 `ALL_ITEMS_VALIDATED` 并使 P5 失效；Visual Bible 变化使受影响场景从 P1 重启。上游需要回退时，从结构、预览、批准记录等审计证据重建灰盒，不在运行时保留低保真资产。所有证据重建、清理验证 `PASS` 且用户最终批准后才能冻结场景或标记 `DONE`。
 12. 可提前只读准备下一场景，但禁止提前写其正式共享状态；当前场景冻结后再切换主场景。
 

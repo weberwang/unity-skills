@@ -1,6 +1,6 @@
 ---
 name: unity-development-workflow
-description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp 的游戏全周期总控。需要从立项、全局视觉、拆分前拷问和用户确认、模块/场景边界、技术骨架、垂直切片、逐场景制作、低保真结构、高保真效果图、编号资产地图、2D 单图生成与结构化拼装、3D 建模与贴图、测试性能推进到可交付 Windows 候选包，或需要协调制作、架构、玩法、数值、美术、3D、音频、测试与发布角色时使用。
+description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp 的游戏全周期总控。需要从立项、强制决策拷问、全局视觉、模块/场景边界、技术骨架、垂直切片、逐场景制作、低保真结构、高保真效果图、编号资产地图、2D 单图生成与结构化拼装、3D 建模与贴图、测试性能推进到可交付 Windows 候选包，或需要协调拷问、制作、架构、玩法、数值、美术、3D、音频、测试与发布角色时使用。
 ---
 
 # Unity 游戏开发总控
@@ -11,8 +11,8 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 1. 每次开始或恢复先读[严格执行策略](references/strict-execution-policy.md)与[工作流总览](references/workflow-overview.md)，判断快速、标准或发布通道。所有通道均按失败即阻塞、默认拒绝和无证据不通过执行。
 2. 标准或发布通道的新项目若缺少 `docs/project-profile.yaml`，运行 `scripts/initialize_project_docs.py --project-root <项目根目录> --project-id <项目ID>`。默认不覆盖已有文档；只有用户明确要求时使用 `--force`。
-3. 只读发现阶段读[项目发现](references/project-discovery.md)；需要人工取舍或处理变更时读[决策与变更控制](references/decision-change-control.md)。
-4. 划分模块与场景时读[模块与场景拆分](references/module-planning.md)，完成 13 项拆分前拷问并取得用户对当前版本的确认；未确认不得创建拆分产物或进入 S00/G1/G2。多任务、锁或子代理调度时读[多代理执行](references/multi-agent-execution.md)；只有用户明确要求 Worktree 时才读[Worktree 工作区隔离](references/worktree-integration.md)。
+3. 只读发现阶段读[项目发现](references/project-discovery.md)；出现无法由证据确定的产品、体验、技术、模块、视觉资源、质量或发布取舍，模块首次实现或边界变化，或用户要求“拷问/grill/压力测试”时，必须调用 `$unity-game-grilling` 并按[决策与变更控制](references/decision-change-control.md)记录当前版本 `grilling-record`。
+4. 划分模块与场景时读[模块与场景拆分](references/module-planning.md)，由 `$unity-game-grilling` 完成 13 项拆分前拷问并取得用户对当前版本的确认；未确认不得创建拆分产物或进入 S00/G1/G2。多任务、锁或子代理调度时读[多代理执行](references/multi-agent-execution.md)；只有用户明确要求 Worktree 时才读[Worktree 工作区隔离](references/worktree-integration.md)。
 5. 建立全局骨架和首个垂直切片时分别读[S00 基础工作流](references/foundation-workflow.md)与[游戏实现闭环](references/game-implementation.md)。
 6. 每个场景读[场景小循环](references/scene-loop.md)；2D 场景同时读[2D 场景屏幕适配](references/scene-2d-adaptation.md)，3D 场景或模型/材质任务同时读[3D 资产工作流](references/3d-asset-workflow.md)。开始任何场景效果图或正式美术资源前，先按[视觉工作流](references/visual-workflow.md)执行“全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 逐项独立生成/审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 清理运行时灰盒与占位 → Unity 验证”；2D 单图重新生成、正式导入和登记读[资源流水线](references/asset-pipeline.md)。
 7. 进入质量门、全局回归或候选包验证时读[质量门禁](references/quality-gates.md)；准备 Windows 制品时读[交付](references/delivery.md)；创建或维护项目文档时读[项目交付物](references/project-artifacts.md)。
@@ -33,6 +33,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 采用子代理优先：将可独立任务交给子代理，主代理保留编排、证据链、冲突处理、质量门和用户沟通：
 
+- `$unity-game-grilling`：逐项澄清关键取舍，形成用户批准的版本化 `grilling-record`；不替用户作答。
 - `$unity-game-production`：范围、GDD、验收与变更影响。
 - `$unity-game-architecture`：Unity 模块、生命周期、存档、构建与平台边界。
 - `$unity-gameplay-development`：可测试的玩法、场景、交互和状态。
@@ -50,7 +51,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 | 阶段 | 核心结果 | 收敛条件 |
 | --- | --- | --- |
-| G0 立项 | 最小范围、核心循环、模块/场景拆分、首发 Windows 发行方式、技术与视觉方向 | 用户批准范围、当前版本 `decomposition-plan` 和全局 Visual Bible；可选能力默认关闭 |
+| G0 立项 | 最小范围、核心循环、模块/场景拆分、首发 Windows 发行方式、技术与视觉方向 | 当前版本 `grilling-record`、用户批准范围、`decomposition-plan` 和全局 Visual Bible 全部通过；可选能力默认关闭 |
 | G1 垂直切片 | S00 后完成一个端到端可玩场景 | 干净环境可编译构建；正式资源可追溯；游戏/UI/实机视觉均通过独立审查和用户批准 |
 | G2 制作 | 按场景小循环完成并冻结全部批准范围 | 无未批准占位资源；全局回归、性能与 P0/P1 处置有证据 |
 | G3 交付 | 生成与证据一一对应的 Windows 候选包 | 制品、许可、说明、风险和回滚齐备，并获得用户放行 |
@@ -86,6 +87,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 ```powershell
 uv run scripts/workflow.py validate --kind project-profile --source templates/project-profile.yaml
+uv run scripts/workflow.py validate --kind grilling-record --source templates/grilling-record.yaml
 uv run scripts/workflow.py validate --kind decomposition-plan --source templates/decomposition-plan.yaml
 uv run scripts/workflow.py compile --project-root D:/Projects/my-game --kind scene-manifest --source D:/Projects/my-game/Artifacts/scene.yaml --output D:/Projects/my-game/Artifacts/scene.json
 uv run scripts/workflow.py ready --tasks artifacts/tasks.yaml --state artifacts/state.json

@@ -10,7 +10,7 @@
 
 ## 安装 Skills
 
-需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控与十个角色 Skill 复制到项目的 `.agents/skills/`：
+需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控与十一个角色 Skill 复制到项目的 `.agents/skills/`：
 
 ```powershell
 npx -y github:weberwang/unity-skills
@@ -22,7 +22,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器直接复制本次 npx 下载包内的全部十一个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
+安装器直接复制本次 npx 下载包内的全部十二个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
 
 ```powershell
 npx -y skills@1.5.19 add weberwang/unity-skills -l --full-depth
@@ -65,6 +65,7 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 ## 角色 Skills
 
 - `$unity-development-workflow`：总控、路由、质量门和用户批准。
+- `$unity-game-grilling`：在产品、模块/场景、体验、技术、视觉资源、质量或发布存在关键取舍时逐项拷问并冻结决策。
 - `$unity-game-production`：制作策划、范围、验收和变更控制。
 - `$unity-game-architecture`：模块、生命周期、存档、构建和 S00 骨架。
 - `$unity-gameplay-development`：玩法、场景、交互与状态实现。
@@ -76,13 +77,19 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 - `$unity-game-qa-performance`：EditMode/PlayMode、场景、Profiler 和候选验证。
 - `$unity-game-release`：Windows 构建、许可、发行资料和交付放行。
 
+### 严格拷问门禁
+
+`$unity-game-grilling` 不是普通需求访谈，而是受影响写入前的强制门禁。它先以只读证据消除事实问题，再按影响逐项询问；高影响或相互依赖的问题一次只问一个，每题给出二至三个互斥选项、影响、推荐项和理由。模块/场景首次实现或边界变化，以及 Visual Bible、P0、P1、P3、3D brief/外部工具、质量阈值、最终实机和发布授权，均必须触发拷问。
+
+用户明确批准版本化决策摘要前，禁止受影响的 Unity MCP、代码、Scene、Prefab、正式资源或发布写入。批准结果写入 `grilling-record`，绑定真实主体文件、项目、来源修订、项目状态版本和 SHA-256，并由使用该决定的权威契约反向引用；任一绑定变化都会使下游批准失效。代理审查、含糊的“继续”或口头确认不能代替该记录与用户批准。
+
 ## 主流程
 
 工作流采用严格默认拒绝策略：失败、阻塞、未运行、未知、缺少当前版本证据或批准时一律停止推进。所有用户确认和代理审查绑定对象 ID、版本、SHA-256、来源修订与结论范围；口头确认和代理结论不能代替用户批准。上游变化会递归作废下游，任何场景必须完成自己的 P0-P5、实机验证和最终批准小循环后才能切换主场景。Unity MCP 每次写入都执行实例、Editor、门禁、版本、锁和目标基线的写前校验，以及稳定状态、目标对象、Console、登记和最小验证的写后校验。
 
-1. G0 明确最小范围、核心循环和 Windows 发行方式；先生成并由用户确认全局 Visual Bible。
-2. 项目只读发现并绑定唯一 Unity MCP 实例。
-3. 在创建模块、场景、目录或程序集前完成拆分拷问，向用户展示模块、场景、共享能力及恢复方案，并等待逐项确认后再生成所有权和任务 DAG。
+1. 先完成项目只读发现、事实核验和证据收集，并绑定唯一 Unity MCP 实例；可从现有文件或工具结果确定的事实不得转问用户。
+2. G0 由 `$unity-game-grilling` 逐项确认最小范围、核心循环、模块/场景、关键风险和 Windows 发行方式，生成当前版本 `grilling-record`；再生成并由用户确认全局 Visual Bible。
+3. 在创建模块、场景、目录或程序集前，用 `$unity-game-grilling` 完成拆分拷问，向用户展示模块、场景、共享能力及恢复方案，并等待逐项确认后再生成所有权和任务 DAG。
 4. 在 S00 实现全局骨架代码和可启动 Windows 空壳构建。
 5. 选择一个代表性场景完成 G1 垂直切片。
 6. G2 按场景执行小循环：全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真游戏/UI 效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 按编号逐项独立生成与审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 删除运行时灰盒/占位并清理引用 → 清理验证 `PASS` → Unity 验证；3D 场景按条件执行“模型与 UV 冻结 → PBR 纹理与烘焙 → Unity 串行接入”，随后完成音频、测试性能和冻结。
@@ -99,7 +106,7 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 Windows 构建完成后，可从项目根目录运行实机视觉入口；脚本只生成 `CAPTURED` 证据，不会伪造审查或用户批准：
 
 ```powershell
-uv run .\.agents\skills\unity-development-workflow\scripts\capture_windows_runtime.py --project-root . --executable Artifacts/Builds/0.1.0/Game.exe --project-id my-game --scene-id scene.main --build-version 0.1.0 --source-revision a1b2c3d4 --screenshot Artifacts/Visual/Runtime/scene.main/0.1.0.png --evidence Artifacts/Visual/Runtime/scene.main/0.1.0.json
+uv run .\.agents\skills\unity-development-workflow\scripts\capture_windows_runtime.py --project-root . --executable Artifacts/Builds/0.1.0/Game.exe --project-id my-game --scene-id scene.main --build-version 0.1.0 --source-revision a1b2c3d4 --project-state-version project-state-v1 --screenshot Artifacts/Visual/Runtime/scene.main/0.1.0.png --evidence Artifacts/Visual/Runtime/scene.main/0.1.0.json
 ```
 
 ## 初始化项目交付物

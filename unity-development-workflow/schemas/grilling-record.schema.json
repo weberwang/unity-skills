@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/grilling-record.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "projectId", "version", "sourceRevision", "projectStateVersion",
+    "subject", "triggerReason", "facts", "assumptions", "questions", "decisions",
+    "dependencies", "rejectedItems", "unresolvedItems", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "version", "evidenceType", "path", "sha256"],
+      "properties": {
+        "type": {
+          "enum": [
+            "PROJECT", "PRODUCT_GOAL", "PLAYER_EXPERIENCE", "FEATURE", "TECHNICAL_APPROACH",
+            "MODULE_BOUNDARY", "SCENE", "VISUAL_DIRECTION", "UI", "MODEL_3D", "PREFAB",
+            "ASSET", "QUALITY", "RELEASE", "DELIVERY", "OTHER"
+          ]
+        },
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "version": {"type": "string", "minLength": 1},
+        "evidenceType": {"const": "grilling-subject-snapshot"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "triggerReason": {"type": "string", "minLength": 1},
+    "facts": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "assumptions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "impact", "options", "recommendation", "rationale", "answer", "status"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "question": {"type": "string", "minLength": 1},
+          "impact": {"type": "string", "minLength": 1},
+          "options": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "label", "impact"],
+              "properties": {
+                "id": {"$ref": "common.schema.json#/$defs/taskId"},
+                "label": {"type": "string", "minLength": 1},
+                "impact": {"type": "string", "minLength": 1}
+              }
+            }
+          },
+          "recommendation": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1},
+          "answer": {"type": "string"},
+          "status": {"enum": ["UNANSWERED", "ANSWERED", "BLOCKED"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "ANSWERED"}}, "required": ["status"]},
+            "then": {"properties": {"answer": {"minLength": 1}}}
+          }
+        ]
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "decision", "rationale"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "decision": {"type": "string", "minLength": 1},
+          "rationale": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "owner", "status"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "description": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1},
+          "status": {"enum": ["CONFIRMED", "PENDING", "BLOCKED"]}
+        }
+      }
+    },
+    "rejectedItems": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "item", "reason"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "item": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "unresolvedItems": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "item", "impact", "owner"],
+        "properties": {
+          "id": {"$ref": "common.schema.json#/$defs/taskId"},
+          "item": {"type": "string", "minLength": 1},
+          "impact": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "status": {"enum": ["DRAFT", "QUESTIONING", "AWAITING_USER", "APPROVED", "REJECTED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {
+        "required": ["userApproval"],
+        "properties": {
+          "decisions": {"minItems": 1},
+          "unresolvedItems": {"maxItems": 0},
+          "userApproval": {
+            "properties": {
+              "approvalType": {"const": "GRILLING_DECISION"},
+              "authority": {"const": "USER"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
+      "then": {"required": ["blockedReason"]}
+    }
+  ]
+}

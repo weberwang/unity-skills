@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sceneId", "visualType", "generationMode", "subjectVersion",
+    "schemaVersion", "id", "projectId", "sceneId", "sourceRevision", "projectStateVersion", "visualType", "generationMode", "subjectVersion",
     "visualBibleVersion", "styleAuthority", "referencePolicy", "prompt", "references", "output", "candidates", "status"
   ],
   "properties": {
@@ -12,6 +12,10 @@
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL", "ASSET_SOURCE"]},
     "generationMode": {"enum": ["GLOBAL_DIRECTION", "SCENE_CONCEPT", "RUNTIME_ASSET_ITEM"]},
     "subjectVersion": {"type": "string", "minLength": 1},
@@ -154,7 +158,7 @@
     {
       "if": {"properties": {"status": {"const": "USER_CONFIRMED"}}, "required": ["status"]},
       "then": {
-        "required": ["selectedCandidate", "userApproval"],
+        "required": ["candidateSnapshot", "grillingEvidence", "selectedCandidate", "userApproval"],
         "properties": {
           "generationMode": {"const": "SCENE_CONCEPT"},
           "visualType": {"enum": ["GAME_VISUAL", "UI_VISUAL"]},

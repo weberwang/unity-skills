@@ -12,6 +12,7 @@
   "files": [
     "scripts/install-project-skills.mjs",
     "unity-development-workflow",
+    "unity-game-grilling",
     "unity-game-3d-modeling",
     "unity-game-3d-texturing",
     "unity-game-architecture",
@@ -21,7 +22,9 @@
     "unity-game-qa-performance",
     "unity-game-release",
     "unity-game-visual-assets",
-    "unity-gameplay-development"
+    "unity-gameplay-development",
+    "!**/__pycache__/**",
+    "!**/*.py[cod]"
   ],
   "repository": {
     "type": "git",

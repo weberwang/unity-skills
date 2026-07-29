@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/performance-measurement-evidence.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "version", "projectId", "sourceRevision",
+    "projectStateVersion", "buildVersion", "metric", "unit", "value",
+    "capturedAtUtc", "captureEnvironment", "rawArtifact", "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "id": {"$ref": "common.schema.json#/$defs/taskId"},
+    "version": {"type": "string", "minLength": 1},
+    "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "buildVersion": {"type": "string", "minLength": 1},
+    "metric": {
+      "enum": [
+        "minimumFps", "maximumCpuFrameTimeMs", "maximumGpuFrameTimeMs",
+        "maximumMemoryMb", "maximumGcAllocKbPerFrame", "maximumDrawCalls",
+        "maximumTextureMemoryMb", "maximumBuildSizeMb", "maximumLoadTimeSeconds"
+      ]
+    },
+    "unit": {"enum": ["fps", "ms", "MB", "KB/frame", "count/frame", "s"]},
+    "value": {"type": "number"},
+    "capturedAtUtc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(?:[Zz]|[+]00:00)$"
+    },
+    "captureEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform", "buildConfiguration", "unityVersion", "operatingSystem",
+        "cpu", "gpu", "memoryMb", "sampleCount", "warmupSeconds", "durationSeconds"
+      ],
+      "properties": {
+        "platform": {"const": "WINDOWS_STANDALONE"},
+        "buildConfiguration": {"enum": ["DEVELOPMENT", "RELEASE"]},
+        "unityVersion": {"type": "string", "minLength": 1},
+        "operatingSystem": {"type": "string", "minLength": 1},
+        "cpu": {"type": "string", "minLength": 1},
+        "gpu": {"type": "string", "minLength": 1},
+        "memoryMb": {"type": "integer", "minimum": 1},
+        "sampleCount": {"type": "integer", "minimum": 1},
+        "warmupSeconds": {"type": "number", "minimum": 0},
+        "durationSeconds": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "rawArtifact": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": [
+            "projectId", "subjectId", "subjectVersion", "sourceRevision",
+            "projectStateVersion", "buildVersion"
+          ],
+          "properties": {"type": {"const": "performance-raw-artifact"}}
+        }
+      ]
+    },
+    "status": {"const": "VERIFIED"}
+  }
+}

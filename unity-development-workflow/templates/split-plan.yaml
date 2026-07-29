@@ -2,6 +2,26 @@ schemaVersion: "1.0"
 id: split.scene-arena-intro.game-v1
 projectId: starfall-arena
 sceneId: scene.arena-intro
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/split.scene-arena-intro.game-v1.yaml
+  sha256: "5555555555555555555555555555555555555555555555555555555555555555"
+  projectId: starfall-arena
+  subjectId: split.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/split.scene-arena-intro.game-v1.yaml
+  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+  projectId: starfall-arena
+  subjectId: grilling.split.scene-arena-intro.game-v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 sourceVersion: game-v1
 visualBibleVersion: visual-v1
 sourceOrigin: HIGH_FIDELITY_CONFIRMED

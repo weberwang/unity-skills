@@ -31,6 +31,7 @@ def make_args(project_root: Path) -> argparse.Namespace:
         scene_id="scene.arena-intro",
         build_version="0.1.0-dev.1",
         source_revision="a1b2c3d4e5f6",
+        project_state_version="project-state-v1",
         screenshot="Artifacts/Visual/Runtime/scene.arena-intro/frame.png",
         evidence="Artifacts/Visual/Runtime/scene.arena-intro/evidence.json",
         window_title="",

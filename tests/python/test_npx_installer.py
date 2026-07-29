@@ -12,6 +12,7 @@ PACKAGE_PATH = ROOT / "package.json"
 INSTALLER_PATH = ROOT / "scripts" / "install-project-skills.mjs"
 EXPECTED_SKILL_NAMES = (
     "unity-development-workflow",
+    "unity-game-grilling",
     "unity-game-3d-modeling",
     "unity-game-3d-texturing",
     "unity-game-architecture",
@@ -23,6 +24,7 @@ EXPECTED_SKILL_NAMES = (
     "unity-game-visual-assets",
     "unity-gameplay-development",
 )
+PACKAGE_EXCLUDES = ("!**/__pycache__/**", "!**/*.py[cod]")
 
 
 def test_package_exposes_single_npx_entry() -> None:
@@ -33,7 +35,11 @@ def test_package_exposes_single_npx_entry() -> None:
     assert package["type"] == "module"
     assert package["bin"] == {"unity-skills": "./scripts/install-project-skills.mjs"}
     assert package["engines"]["node"] == ">=22.20.0"
-    assert package["files"] == ["scripts/install-project-skills.mjs", *EXPECTED_SKILL_NAMES]
+    assert package["files"] == [
+        "scripts/install-project-skills.mjs",
+        *EXPECTED_SKILL_NAMES,
+        *PACKAGE_EXCLUDES,
+    ]
 
 
 def test_npx_installer_bundles_fixed_skill_allowlist() -> None:

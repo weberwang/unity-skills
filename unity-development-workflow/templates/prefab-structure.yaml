@@ -3,6 +3,26 @@ id: prefab-structure.scene-arena-intro.v1
 projectId: starfall-arena
 sceneId: scene.arena-intro
 version: prefab-structure-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/prefab-structure.scene-arena-intro.v1.yaml
+  sha256: "3333333333333333333333333333333333333333333333333333333333333333"
+  projectId: starfall-arena
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/prefab-structure.scene-arena-intro.v1.yaml
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  projectId: starfall-arena
+  subjectId: grilling.prefab-structure.scene-arena-intro.v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 visualBibleVersion: visual-v1
 visualBibleEvidence:
   type: visual-bible

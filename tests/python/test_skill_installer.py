@@ -8,6 +8,7 @@ ROOT = Path(__file__).parents[2]
 SCRIPT_PATH = ROOT / "scripts" / "install_project_skills.py"
 EXPECTED_SKILL_NAMES = {
     "unity-development-workflow",
+    "unity-game-grilling",
     "unity-game-3d-modeling",
     "unity-game-3d-texturing",
     "unity-game-architecture",

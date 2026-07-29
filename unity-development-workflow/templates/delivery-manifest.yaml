@@ -4,6 +4,25 @@ projectId: starfall-arena
 status: DRAFT
 version: "0.1.0-rc.1"
 sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/delivery.windows-rc1.yaml
+  sha256: "7777777777777777777777777777777777777777777777777777777777777777"
+  projectId: starfall-arena
+  subjectId: delivery.windows-rc1
+  subjectVersion: "0.1.0-rc.1"
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/delivery.windows-rc1.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  projectId: starfall-arena
+  subjectId: grilling.delivery.windows-rc1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 buildProfile: Assets/Settings/BuildProfiles/Windows.asset
 platform: Windows
 distributionChannel: 本地交付

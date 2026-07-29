@@ -19,6 +19,7 @@ TEMPLATE_CONTRACTS = (
     ("project-profile", "project-profile.yaml"),
     ("module-manifest", "module-manifest.yaml"),
     ("decomposition-plan", "decomposition-plan.yaml"),
+    ("grilling-record", "grilling-record.yaml"),
     ("task-contract", "task-contract.yaml"),
     ("scene-manifest", "scene-manifest.yaml"),
     ("prefab-structure", "prefab-structure.yaml"),
@@ -38,6 +39,7 @@ TEMPLATE_CONTRACTS = (
     ("image-generation", "image-generation.yaml"),
     ("image-generation", "image-generation-item.yaml"),
     ("quality-report", "quality-report.yaml"),
+    ("quality-report", "quality-report-windows-development.yaml"),
     ("registration-record", "registration-record.json"),
     ("scene-2d-adaptation", "scene-2d-adaptation.yaml"),
 )
@@ -420,6 +422,7 @@ def test_quality_report_accepts_lowercase_rfc3339_utc_suffix() -> None:
         "taskId": "qa.smoke-test",
         "projectId": "starfall-arena",
         "sourceRevision": "working-tree-snapshot-20260727",
+        "projectStateVersion": "project-state-v1",
         "buildVersion": "0.1.0-dev.1",
         "generatedAtUtc": "2026-07-12T12:00:00z",
         "checks": [
@@ -685,7 +688,7 @@ def test_release_approved_delivery_requires_user_authorization() -> None:
             "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
             "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
             "artifacts": [
-                {"path": "Artifacts/Delivery/game.zip", "sha256": "c" * 64, "sizeBytes": 1}
+                {"artifactType": "WINDOWS_EXECUTABLE", "path": "Artifacts/Delivery/game.exe", "sha256": "c" * 64, "sizeBytes": 1}
             ],
             "qualityReportPaths": ["Artifacts/Quality/global.json"],
             "evidence": [_evidence("Artifacts/Delivery/summary.json")],
@@ -969,7 +972,7 @@ def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
             "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
             "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
             "artifacts": [
-                {"path": "Artifacts/Delivery/game.zip", "sha256": "c" * 64, "sizeBytes": 1}
+                {"artifactType": "WINDOWS_EXECUTABLE", "path": "Artifacts/Delivery/game.exe", "sha256": "c" * 64, "sizeBytes": 1}
             ],
             "qualityReportPaths": ["Artifacts/Quality/global.json"],
             "qualityReports": [_evidence("Artifacts/Quality/global.json")],

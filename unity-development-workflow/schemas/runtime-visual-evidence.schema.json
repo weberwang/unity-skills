@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision",
+    "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision", "projectStateVersion",
     "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
   ],
   "properties": {
@@ -13,6 +13,9 @@
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "buildVersion": {"type": "string", "minLength": 1},
     "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "captureSource": {"const": "WINDOWS_STANDALONE"},
     "screenshot": {
@@ -63,6 +66,7 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
+        "required": ["candidateSnapshot", "grillingEvidence"],
         "properties": {
           "reviews": {
             "minItems": 3,

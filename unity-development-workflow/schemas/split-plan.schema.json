@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sceneId", "sourceVersion", "visualBibleVersion",
+    "schemaVersion", "id", "projectId", "sceneId", "sourceRevision", "projectStateVersion", "sourceVersion", "visualBibleVersion",
     "sourceOrigin", "visualBibleEvidence", "prefabStructureEvidence", "highFidelityGenerationEvidence",
     "highFidelityReviewEvidence", "sourceImage", "sourceDimensions", "annotatedPreview", "coverageDeclaration",
     "splitQuestions", "items", "reviews", "status"
@@ -14,6 +14,10 @@
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "sourceVersion": {"type": "string", "minLength": 1},
     "visualBibleVersion": {"type": "string", "minLength": 1},
     "sourceOrigin": {"const": "HIGH_FIDELITY_CONFIRMED"},
@@ -197,7 +201,7 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["userApproval"],
+        "required": ["candidateSnapshot", "grillingEvidence", "userApproval"],
         "properties": {
           "coverageDeclaration": {"properties": {"allRequiredVisualElementsMapped": {"const": true}}},
           "userApproval": {

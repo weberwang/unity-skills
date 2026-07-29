@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sceneId", "version", "visualBibleVersion",
+    "schemaVersion", "id", "projectId", "sceneId", "version", "sourceRevision", "projectStateVersion", "visualBibleVersion",
     "visualBibleEvidence", "prefabs", "sceneInstances", "lowFidelityPreview", "status"
   ],
   "properties": {
@@ -13,6 +13,10 @@
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "version": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "visualBibleVersion": {"type": "string", "minLength": 1},
     "visualBibleEvidence": {
       "allOf": [
@@ -71,7 +75,7 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["userApproval"],
+        "required": ["candidateSnapshot", "grillingEvidence", "userApproval"],
         "properties": {
           "userApproval": {
             "properties": {

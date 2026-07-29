@@ -31,6 +31,7 @@ REFERENCE_NAMES = (
     "project-artifacts.md",
 )
 ROLE_SKILLS = (
+    "unity-game-grilling",
     "unity-game-production",
     "unity-game-architecture",
     "unity-game-3d-modeling",

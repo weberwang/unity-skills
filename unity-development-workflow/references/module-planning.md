@@ -33,16 +33,17 @@
 
 ## 执行步骤
 
-1. 先创建 `decomposition-plan`，完整记录 13 项拷问及其答案、结论和可选证据。
-2. 为每个候选模块记录单一职责、责任角色、唯一拥有路径、公共接口、依赖和消费场景；归入 Foundation、Shared、Gameplay、Presentation、Content、QA 或 Delivery。
-3. 为每个候选场景记录玩家目的、生命周期、进入/退出条件、拥有路径、场景依赖、模块依赖和拆分理由。
-4. 生成模块和场景 DAG，拒绝未知依赖、依赖环、路径父子重叠、未声明跨模块访问及运行时引用 Editor 实现。
-5. 对每个共享能力列出实际消费场景；少于两个场景时保持局部，禁止为了“以后可能复用”上移。
-6. 将不成立的候选写入 `rejectedCandidates`，指定保留边界、合并回父级、返回拷问或请求裁决的恢复动作。
-7. 向用户展示最终模块表、场景表、依赖图、共享能力表、拒绝项、性能/交付影响与恢复方案，请求逐项确认。
-8. 一旦提出新拆分版本，先递增 `projectStateVersion`，把项目配置和质量门的活动拆分指针切到新 ID/版本并标记 `AWAITING_USER`；此时旧模块、场景和 S00 引用立即失效，不得继续消费旧批准。
-9. 仅在用户确认记录绑定当前拆分 ID、版本、`sourceRevision` 和 `projectStateVersion`，且 `status=APPROVED`、批准集合与 `SPLIT` 候选完全一致后，生成最终 `module-manifest` 和 `scene-manifest`。
-10. 将已批准 `decomposition-plan` 的路径、SHA-256、主体 ID、主体版本、源码修订和项目状态版本写入模块、场景与 S00 报告；任何改变边界的修改都创建新版本并使下游待复核。
+1. 先形成待裁决 `decomposition-plan` 候选；其中 `interrogation` 固定保存 13 项边界事实、回答和结论，模块、场景、共享能力、拒绝项共同构成完整候选内容。按规范 JSON 计算 `candidateDigest`，写入独立 `grilling-subject-snapshot`，主体必须是当前拆分 `id/version` 且 `subjectType=MODULE_BOUNDARY`。
+2. 调用 `$unity-game-grilling`，创建当前模块/场景边界的 `grilling-record`。其 `subject` 必须逐字段绑定上述快照的类型、路径和 SHA-256；记录问题的影响、选项、推荐、理由和用户回答。`GRILLING_DECISION` 用户批准表示“已审阅这份冻结候选并完成拷问”，不能代替最终拆分裁决。
+3. 为每个候选模块记录单一职责、责任角色、唯一拥有路径、公共接口、依赖和消费场景；归入 Foundation、Shared、Gameplay、Presentation、Content、QA 或 Delivery。
+4. 为每个候选场景记录玩家目的、生命周期、进入/退出条件、拥有路径、场景依赖、模块依赖和拆分理由。
+5. 生成模块和场景 DAG，拒绝未知依赖、依赖环、路径父子重叠、未声明跨模块访问及运行时引用 Editor 实现。
+6. 对每个共享能力列出实际消费场景；少于两个场景时保持局部，禁止为了“以后可能复用”上移。
+7. 将不成立的候选写入 `rejectedCandidates`，指定保留边界、合并回父级、返回拷问或请求裁决的恢复动作。
+8. 向用户展示最终模块表、场景表、依赖图、共享能力表、拒绝项、性能/交付影响与恢复方案，请求逐项确认。此处 `DECOMPOSITION` 用户批准是第二道独立批准，必须绑定当前拆分 `id/version`；它负责批准最终 `SPLIT` 集合，不能由 `GRILLING_DECISION` 复用或替代。
+9. 一旦提出新拆分版本，先递增 `projectStateVersion`，把项目配置和质量门的活动拆分指针切到新 ID/版本并标记 `AWAITING_USER`；此时旧模块、场景和 S00 引用立即失效，不得继续消费旧批准。
+10. 仅在两道用户批准、快照、拷问记录均绑定当前拆分 ID、版本、`sourceRevision` 和 `projectStateVersion`，且 `status=APPROVED`、批准集合与 `SPLIT` 候选完全一致后，生成最终 `module-manifest` 和 `scene-manifest`。
+11. 将已批准 `decomposition-plan` 的路径、SHA-256、主体 ID、主体版本、源码修订和项目状态版本写入模块、场景与 S00 报告；任何候选内容改变都创建新版本、新快照和新拷问记录，使旧批准及下游引用失效。
 
 ## 子代理角色与并行边界
 
@@ -59,17 +60,20 @@
 
 ## 机器可读输出
 
-- `decomposition-plan.yaml`：拷问、候选模块/场景、共享能力、拒绝项、用户决定与恢复出口。
+- `decomposition-plan.yaml`：13 项 `interrogation`、候选模块/场景、共享能力、拒绝项、最终 `DECOMPOSITION` 用户决定与恢复出口。
+- `grilling-subject-snapshot.yaml`：批准前完整候选的不可变身份与 `candidateDigest`；摘要覆盖 13 项拷问及所有候选边界，明确排除之后才产生的批准、状态和恢复控制字段。
+- `grilling-record.yaml`：以 `MODULE_BOUNDARY` 主体绑定上述快照，保存拷问过程、决定、未决项与 `GRILLING_DECISION` 用户批准，是最终拆分批准的强制前置。
 - `module-manifest.yaml`：已确认的职责、所有者、路径、接口、依赖和消费场景。
 - 每场景一份 `scene-manifest.yaml`：已确认的生命周期、模块依赖、共享能力、资产所有权与验收证据。
 - `project-profile.yaml` 与 `quality-gates.yaml`：分别保存当前拆分状态和 `activeDecomposition` 标准指针；两者携带相同 `sourceRevision` 与 `projectStateVersion`。
 - 可选 `module-dag.json` 与 `scene-dag.json`：供并行调度和冲突检测消费。
 
-先运行 `workflow.py validate --kind decomposition-plan`。G0 的 `decomposition.approved` 必须引用状态为 `APPROVED` 的真实拆分契约；S00 报告、模块清单和场景清单继续引用同一决策版本。
+从项目根目录先运行 `uv run .agents/skills/unity-development-workflow/scripts/workflow.py validate --kind decomposition-plan --source <decomposition-plan.yaml>`。G0 的 `decomposition.approved` 必须引用状态为 `APPROVED` 的真实拆分契约；S00 报告、模块清单和场景清单继续引用同一决策版本。
 
 ## 通过条件
 
-- 13 项拷问完整且用户确认绑定当前拆分版本、源码修订与项目状态版本。
+- `grilling-subject-snapshot` 的 `candidateDigest` 与当前完整候选重算一致，且 `grilling-record.subject` 以 `MODULE_BOUNDARY`、当前拆分 ID/版本和同一文件哈希绑定该快照。
+- 13 项 `interrogation` ID 完整唯一、答案非空且无 `BLOCKED` 结论；`GRILLING_DECISION` 批准冻结候选的拷问结论，随后独立的 `DECOMPOSITION` 批准当前拆分集合，两者均不可跨版本复用。
 - 模块与场景 ID 唯一、依赖无环；模块之间、场景之间以及模块与场景之间的路径所有权均不重叠；公共接口最小。
 - 每个共享上移至少有两个已确认场景消费者；场景进入、退出和恢复边界可验证。
 - 拒绝项、合并方案和恢复到可构建状态的出口明确。

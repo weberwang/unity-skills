@@ -1,0 +1,33 @@
+schemaVersion: "1.0"
+id: performance.minimum-fps.windows-v1
+version: measurement-v1
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+metric: minimumFps
+unit: fps
+value: 60
+capturedAtUtc: "2026-07-27T12:00:00Z"
+captureEnvironment:
+  platform: WINDOWS_STANDALONE
+  buildConfiguration: DEVELOPMENT
+  unityVersion: 6000.1.0f1
+  operatingSystem: Windows 11 24H2
+  cpu: AMD Ryzen 9 7950X
+  gpu: NVIDIA GeForce RTX 4080
+  memoryMb: 32768
+  sampleCount: 1800
+  warmupSeconds: 10
+  durationSeconds: 30
+rawArtifact:
+  type: performance-raw-artifact
+  path: Artifacts/Performance/raw/minimum-fps.yaml
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  projectId: starfall-arena
+  subjectId: performance.raw.minimum-fps.windows-v1
+  subjectVersion: raw-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+  buildVersion: 0.1.0-dev.1
+status: VERIFIED
