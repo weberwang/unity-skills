@@ -24,10 +24,10 @@ grillingEvidence:
   sourceRevision: working-tree-snapshot-20260727
   projectStateVersion: project-state-v1
 buildProfile: Assets/Settings/BuildProfiles/Windows.asset
-platform: Windows
+platform: WINDOWS
 distributionChannel: 本地交付
 generatedAtUtc: "2026-07-27T10:00:00Z"
-manageBuildResult:
+buildResult:
   status: NOT_RUN
 artifacts: []
 launchCheck:

@@ -56,7 +56,10 @@ class _Reader:
                 "metric": metric,
                 "unit": measurement["unit"],
                 "captureSource": CAPTURE_SOURCES[metric],
-                "captureMetadata": {"sampleCount": 1},
+                "captureMetadata": {
+                    "platform": self.report["platformId"],
+                    "sampleCount": 1,
+                },
                 "samples": [measurement["value"]],
             }
         measurement = next(
@@ -71,6 +74,7 @@ class _Reader:
             "metric": measurement["metric"],
             "unit": measurement["unit"],
             "value": measurement["value"],
+            "captureEnvironment": {"platform": self.report["platformId"]},
             "rawArtifact": {
                 "type": "performance-raw-artifact",
                 "path": f"Artifacts/Performance/raw/{measurement['metric']}.yaml",
@@ -92,6 +96,22 @@ def test_performance_template_and_equal_budget_boundary_pass() -> None:
     report, profile = _fixtures()
     assert validate_contract("quality-report", report) == []
     assert performance_gate_failure(_Reader(profile, report), report) is None
+
+
+def test_performance_gate_uses_selected_platform_budget() -> None:
+    """Android 性能报告必须使用 Android 预算，而不是 Windows 预算。"""
+    report, profile = _fixtures()
+    report["platformId"] = "ANDROID"
+    android_quality = profile["delivery"]["targets"][1]["quality"]
+    for measurement in report["measurements"]:
+        measurement["value"] = android_quality[measurement["metric"]]
+    assert performance_gate_failure(_Reader(profile, report), report) is None
+
+    next(
+        item for item in report["measurements"]
+        if item["metric"] == "maximumMemoryMb"
+    )["value"] = android_quality["maximumMemoryMb"] + 1
+    assert "超出预算" in (performance_gate_failure(_Reader(profile, report), report) or "")
 
 
 @pytest.mark.parametrize(

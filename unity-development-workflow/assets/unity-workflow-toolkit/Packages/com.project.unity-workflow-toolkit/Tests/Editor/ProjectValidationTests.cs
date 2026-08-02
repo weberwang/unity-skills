@@ -14,7 +14,7 @@ namespace Project.UnityWorkflow.Tests.Editor
     public sealed class ProjectValidationTests
     {
         /// <summary>
-        /// 验证满足 Unity 6、URP、Windows 和项目完整性要求时报告通过。
+        /// 验证满足 Unity 6、URP、主开发平台和项目完整性要求时报告通过。
         /// </summary>
         [Test]
         public void Evaluate_ValidSnapshot_ReturnsPass()
@@ -28,7 +28,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(report.ProjectId, Is.EqualTo("test-project"));
             Assert.That(report.SourceRevision, Is.EqualTo("UNBOUND"));
             Assert.That(report.BuildVersion, Is.EqualTo(PlayerSettings.bundleVersion));
-            Assert.That(report.Checks, Has.Count.EqualTo(7));
+            Assert.That(report.Checks, Has.Count.EqualTo(8));
             Assert.That(report.Checks.All(check => check.Status == "PASS"), Is.True);
         }
 
@@ -41,7 +41,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             ProjectValidationSnapshot snapshot = CreatePassingSnapshot();
             snapshot.UnityVersion = "2022.3.0f1";
             snapshot.IsUrp = false;
-            snapshot.IsWindowsTarget = false;
+            snapshot.ActivePlatformId = "ANDROID";
             snapshot.EnabledBuildScenes = Array.Empty<string>();
 
             QualityReportDto report = new ProjectValidationService().Evaluate(CreateProfile(), snapshot);
@@ -91,11 +91,28 @@ namespace Project.UnityWorkflow.Tests.Editor
         }
 
         /// <summary>
+        /// 验证 iPadOS 主平台可以使用 Unity 共用的 iOS BuildTarget。
+        /// </summary>
+        [Test]
+        public void Evaluate_IpadPrimaryWithIosBuildTarget_Passes()
+        {
+            const string json = "{\"schemaVersion\":\"1.0\",\"projectId\":\"test-project\",\"unity\":{\"version\":\"6\",\"renderPipeline\":\"URP\"},\"delivery\":{\"platformSelectionStatus\":\"APPROVED\",\"primaryDevelopmentPlatform\":\"IPADOS\",\"targets\":[{\"platformId\":\"IPADOS\"}]}}";
+            ProjectProfileDto profile = JsonUtility.FromJson<ProjectProfileDto>(json);
+            ProjectValidationSnapshot snapshot = CreatePassingSnapshot();
+            snapshot.ActivePlatformId = "IOS";
+
+            QualityReportDto report = new ProjectValidationService().Evaluate(profile, snapshot);
+
+            AssertCheckStatus(report, "platform-selection", "PASS");
+            AssertCheckStatus(report, "build-target", "PASS");
+        }
+
+        /// <summary>
         /// 创建与项目契约相同字段命名的测试配置，避免测试依赖 DTO 内部嵌套类型名。
         /// </summary>
         private static ProjectProfileDto CreateProfile()
         {
-            const string json = "{\"schemaVersion\":\"1.0\",\"projectId\":\"test-project\",\"unity\":{\"version\":\"6\",\"renderPipeline\":\"URP\"},\"delivery\":{\"platform\":\"Windows\",\"distributionChannel\":\"local\"}}";
+            const string json = "{\"schemaVersion\":\"1.0\",\"projectId\":\"test-project\",\"unity\":{\"version\":\"6\",\"renderPipeline\":\"URP\"},\"delivery\":{\"platformSelectionStatus\":\"APPROVED\",\"primaryDevelopmentPlatform\":\"WINDOWS\",\"targets\":[{\"platformId\":\"WINDOWS\"}]}}";
             return JsonUtility.FromJson<ProjectProfileDto>(json);
         }
 
@@ -108,7 +125,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             {
                 UnityVersion = "6000.0.50f1",
                 IsUrp = true,
-                IsWindowsTarget = true,
+                ActivePlatformId = "WINDOWS",
                 EnabledBuildScenes = new[] { "Assets/Scenes/Main.unity" },
                 MissingBuildScenes = Array.Empty<string>(),
                 MissingAssetReferences = Array.Empty<string>(),

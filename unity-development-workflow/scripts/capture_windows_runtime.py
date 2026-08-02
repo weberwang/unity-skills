@@ -151,6 +151,7 @@ def build_evidence(
         "buildVersion": args.build_version,
         "sourceRevision": args.source_revision,
         "projectStateVersion": args.project_state_version,
+        "platformId": "WINDOWS",
         "buildArtifactSha256": executable_hash,
         "captureSource": "WINDOWS_STANDALONE",
         "screenshot": {

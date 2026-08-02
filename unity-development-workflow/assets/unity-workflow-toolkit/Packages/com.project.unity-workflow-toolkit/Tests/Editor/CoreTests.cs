@@ -76,7 +76,7 @@ namespace Project.UnityWorkflow.Core.Tests
             Assert.AreEqual("project-profile", job.Kind);
             Assert.AreEqual("core-test", job.Payload.ProjectId);
             Assert.AreEqual("6", job.Payload.Unity.Version);
-            Assert.AreEqual("Windows", job.Payload.Delivery.Platform);
+            Assert.AreEqual("WINDOWS", job.Payload.Delivery.PrimaryDevelopmentPlatform);
         }
 
         /// <summary>
@@ -297,7 +297,7 @@ namespace Project.UnityWorkflow.Core.Tests
             const string sourceRelativePath = TestRoot + "/project-profile.yaml";
             var sourceBytes = Encoding.UTF8.GetBytes("schemaVersion: '1.0'\nprojectId: core-test\n");
             File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(sourceRelativePath), sourceBytes);
-            const string payload = "{\"delivery\":{\"platform\":\"Windows\"}," +
+            const string payload = "{\"delivery\":{\"primaryDevelopmentPlatform\":\"WINDOWS\"}," +
                                    "\"projectId\":\"core-test\",\"schemaVersion\":\"1.0\"," +
                                    "\"unity\":{\"renderPipeline\":\"URP\",\"version\":\"6\"}}";
             var json = "{\"schemaVersion\":\"1.0\",\"kind\":\"project-profile\"," +

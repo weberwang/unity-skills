@@ -1,4 +1,4 @@
-"""覆盖拆分投影与 G3 Windows 实机证据的严格完整性门禁。"""
+"""覆盖拆分投影与 G3 平台实机证据的严格完整性门禁。"""
 
 from copy import deepcopy
 from pathlib import Path
@@ -115,6 +115,7 @@ def _delivery_fixture() -> tuple[dict[str, object], dict[str, dict[str, object]]
     """创建两个批准场景各一份且绑定同一可执行文件的交付证据。"""
     executable_hash = "a" * 64
     delivery = {
+        "platform": "WINDOWS",
         "artifacts": [
             {"artifactType": "WINDOWS_EXECUTABLE", "path": "Build/Game.exe", "sha256": executable_hash, "sizeBytes": 1}
         ],
@@ -125,8 +126,14 @@ def _delivery_fixture() -> tuple[dict[str, object], dict[str, dict[str, object]]
     }
     contracts = {
         "decomposition.yaml": _approved_decomposition(),
-        "runtime-intro.yaml": {"sceneId": "scene.arena-intro", "buildArtifactSha256": executable_hash},
-        "runtime-battle.yaml": {"sceneId": "scene.arena-battle", "buildArtifactSha256": executable_hash},
+        "runtime-intro.yaml": {
+            "sceneId": "scene.arena-intro", "platformId": "WINDOWS",
+            "buildArtifactSha256": executable_hash,
+        },
+        "runtime-battle.yaml": {
+            "sceneId": "scene.arena-battle", "platformId": "WINDOWS",
+            "buildArtifactSha256": executable_hash,
+        },
     }
     return delivery, contracts
 
@@ -143,20 +150,27 @@ def test_g3_delivery_accepts_exact_runtime_scene_coverage(monkeypatch: pytest.Mo
 
 @pytest.mark.parametrize(
     ("mutation", "message"),
-    (("MISSING", "缺少场景"), ("DUPLICATE", "重复场景"), ("WRONG_HASH", "buildArtifactSha256")),
+    (
+        ("MISSING", "缺少场景"),
+        ("DUPLICATE", "重复场景"),
+        ("WRONG_HASH", "buildArtifactSha256"),
+        ("WRONG_PLATFORM", "platformId"),
+    ),
 )
 def test_g3_delivery_rejects_incomplete_or_wrong_runtime_coverage(
     monkeypatch: pytest.MonkeyPatch, mutation: str, message: str
 ) -> None:
-    """G3 必须无重复覆盖全部批准场景，并绑定同一 Windows 可执行文件。"""
+    """G3 必须无重复覆盖全部批准场景，并绑定同一平台主制品。"""
     verifier = _verifier("G3")
     delivery, contracts = _delivery_fixture()
     if mutation == "MISSING":
         delivery["runtimeVisualEvidence"].pop()
     elif mutation == "DUPLICATE":
         contracts["runtime-battle.yaml"]["sceneId"] = "scene.arena-intro"
-    else:
+    elif mutation == "WRONG_HASH":
         contracts["runtime-battle.yaml"]["buildArtifactSha256"] = "b" * 64
+    else:
+        contracts["runtime-battle.yaml"]["platformId"] = "ANDROID"
     monkeypatch.setattr(verifier, "verify_active_decomposition", lambda: None)
     monkeypatch.setattr(verifier, "verify_reference", lambda reference: None)
     monkeypatch.setattr(verifier, "_load_referenced_contract", lambda reference: contracts[reference["path"]])
@@ -165,8 +179,8 @@ def test_g3_delivery_rejects_incomplete_or_wrong_runtime_coverage(
         verifier._verify_delivery_runtime_coverage(delivery)
 
 
-def test_delivery_artifact_requires_unique_executable_machine_role() -> None:
-    """交付 artifact 必须以机器字段标识唯一的 Windows 可执行文件。"""
+def test_delivery_artifact_requires_unique_primary_machine_role() -> None:
+    """交付 artifact 必须以机器字段标识唯一的平台主制品。"""
     payload = yaml.safe_load((TEMPLATES / "delivery-manifest.yaml").read_text(encoding="utf-8"))
     payload["artifacts"] = [{"path": "Build/Game.exe", "sha256": "a" * 64, "sizeBytes": 1}]
     assert any(issue.path == "$.artifacts[0].artifactType" for issue in validate_contract("delivery-manifest", payload))

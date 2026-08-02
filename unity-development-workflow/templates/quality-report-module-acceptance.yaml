@@ -1,0 +1,22 @@
+schemaVersion: "1.0"
+taskId: qa.module.foundation-core
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+moduleId: Foundation.Core
+generatedAtUtc: "2026-07-27T12:00:00Z"
+checks:
+  - id: modules.acceptance-complete
+    category: test
+    status: PASS
+    message: 模块公开契约、状态所有权、失败边界与自动化测试全部通过
+    evidence:
+      - type: module-acceptance-test-report
+        path: Artifacts/Quality/Modules/Foundation.Core.xml
+        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+status: PASS
+evidence:
+  - type: module-acceptance-test-report
+    path: Artifacts/Quality/Modules/Foundation.Core.xml
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

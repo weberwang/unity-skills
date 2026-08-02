@@ -189,6 +189,13 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
     profile = yaml.safe_load((ROOT / "templates" / "project-profile.yaml").read_text(encoding="utf-8"))
     profile.update({"sourceRevision": "revision-001"})
     profile["workflow"].update({"qualityTargetsStatus": "APPROVED", "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1", "decomposition": {"id": "decomposition.starfall-arena.v1", "version": "decomposition-v1", "status": "APPROVED"}})
+    profile["delivery"].update(
+        {
+            "platformSelectionStatus": "APPROVED",
+            "primaryDevelopmentPlatform": "WINDOWS",
+            "targets": [profile["delivery"]["targets"][0]],
+        }
+    )
     grilling_evidence, profile_snapshot = _grilling_evidence(project, profile, "project-profile")
     profile.update({"candidateSnapshot": profile_snapshot, "grillingEvidence": dict(grilling_evidence)})
     decomposition = yaml.safe_load((ROOT / "templates" / "decomposition-plan.yaml").read_text(encoding="utf-8"))
@@ -238,6 +245,11 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
         "subjectId": profile["projectId"],
         "subjectVersion": profile["version"],
     }
+    gates["activeProjectProfile"] = {
+        **profile_evidence,
+        "sourceRevision": "revision-001",
+        "projectStateVersion": "project-state-v1",
+    }
     gate = gates["gates"][0]
     gate["status"] = "WAITING_APPROVAL"
     gate["evidence"] = [report_evidence]
@@ -249,7 +261,7 @@ def _gate_fixture(project: Path) -> tuple[Path, Path, Path]:
                 grilling_evidence
                 if check_id == "grilling.approved"
                 else profile_evidence
-                if check_id in {"scope.approved", "windows-distribution.approved"}
+                if check_id in {"scope.approved", "platforms.approved"}
                 else decomposition_evidence
                 if check_id == "decomposition.approved"
                 else visual_bible_evidence
@@ -961,7 +973,7 @@ def test_scene_manifest_identity_uses_manifest_id() -> None:
 
 
 def test_2d_gate_check_requires_every_approved_scene_manifest(tmp_path: Path) -> None:
-    """G2 的 2D 检查不能用单个 3D 场景掩盖未提供的批准场景。"""
+    """G3 的 2D 最终检查不能用单个 3D 场景掩盖未提供的批准场景。"""
     config, _, _ = _gate_fixture(tmp_path)
     gate_config = yaml.safe_load(config.read_text(encoding="utf-8"))
     verifier = _EvidenceVerifier(
@@ -969,7 +981,7 @@ def test_2d_gate_check_requires_every_approved_scene_manifest(tmp_path: Path) ->
         "starfall-arena",
         "revision-001",
         "0.1.0-dev.1",
-        "G2",
+        "G3",
         gate_config["projectStateVersion"],
         gate_config["activeDecomposition"],
     )

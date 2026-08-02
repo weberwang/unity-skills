@@ -4,10 +4,10 @@ sceneId: scene.arena-intro
 buildVersion: "0.1.0-dev.1"
 sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
-platformId: WINDOWS
+platformId: ANDROID
 candidateSnapshot:
   type: grilling-subject-snapshot
-  path: Artifacts/Candidates/runtime.scene-arena-intro.0.1.0-dev.1.yaml
+  path: Artifacts/Candidates/runtime.android.scene-arena-intro.0.1.0-dev.1.yaml
   sha256: "6666666666666666666666666666666666666666666666666666666666666666"
   projectId: starfall-arena
   subjectId: scene.arena-intro
@@ -16,21 +16,21 @@ candidateSnapshot:
   projectStateVersion: project-state-v1
 grillingEvidence:
   type: grilling-record
-  path: Artifacts/Grilling/runtime.scene-arena-intro.0.1.0-dev.1.yaml
+  path: Artifacts/Grilling/runtime.android.scene-arena-intro.0.1.0-dev.1.yaml
   sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
   projectId: starfall-arena
-  subjectId: grilling.runtime.scene-arena-intro.0.1.0-dev.1
+  subjectId: grilling.runtime.android.scene-arena-intro.0.1.0-dev.1
   subjectVersion: grilling-v1
   sourceRevision: working-tree-snapshot-20260727
   projectStateVersion: project-state-v1
-buildArtifactSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-captureSource: WINDOWS_STANDALONE
+buildArtifactSha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+captureSource: ANDROID_PLAYER
 screenshot:
-  path: Artifacts/Visual/Runtime/scene.arena-intro/0.1.0-dev.1.png
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-  width: 1920
-  height: 1080
-  capturedAtUtc: "2026-07-27T12:00:00Z"
+  path: Artifacts/Visual/Runtime/Android/scene.arena-intro/0.1.0-dev.1.png
+  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  width: 1080
+  height: 2400
+  capturedAtUtc: "2026-08-02T12:00:00Z"
 status: REVIEWING
 reviews: []
 userApprovals: []

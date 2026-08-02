@@ -6,7 +6,7 @@
 
 ## 输入
 
-- 已通过的项目发现、用户确认且状态为 `APPROVED` 的 `decomposition-plan`、module-manifest、场景 DAG 和 Visual Bible。
+- 已通过的项目发现、用户确认且状态为 `APPROVED` 的 `project-profile` 与 `decomposition-plan`、module-manifest、场景 DAG 和 Visual Bible。
 - 全部场景 manifest 草案与共同能力清单。
 - 已显式选定的 `unity-mcp` 实例。
 
@@ -19,7 +19,7 @@
 5. 可并行准备不写 Unity 的契约、测试清单和资源说明。
 6. 串行执行 asmdef、场景、资源和共享状态的 Unity 正式写入。
 7. 运行 Schema、静态、编译、Console、EditMode 与 PlayMode 基线。
-8. 使用 `manage_build` 的 Windows 目标生成可启动空壳构建，记录 Build Profile、场景列表、脚本后端、选项和任务结果。
+8. 使用 `manage_build` 为 `primaryDevelopmentPlatform` 生成可启动空壳构建，记录平台、Build Profile、场景列表、脚本后端、选项和任务结果；该构建只证明主开发平台基线，不代表其他目标平台已适配。
 9. 独立审查 S00 证据，通过后选择代表性场景进入 G1 垂直切片；不得把空壳骨架本身视为垂直切片完成。
 
 ## 子代理角色与并行边界
@@ -36,12 +36,12 @@
 
 ## 机器可读输出
 
-以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、空壳 Windows 构建、独立审查和状态。S00 进入 PASS 前必须校验该契约，并由 `gate evaluate` 深验引用文件及哈希。
+以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、主开发平台空壳构建、独立审查和状态。S00 进入 PASS 前必须校验该契约，并由 `gate evaluate` 深验引用文件及哈希。
 
 ## 通过条件
 
 - 最小骨架可编译、可运行且 Console 无新增错误。
-- EditMode、PlayMode 基线和空壳 Windows 构建实际通过。
+- EditMode、PlayMode 基线和主开发平台空壳构建实际通过。
 - 拆分决策仍为当前批准版本，模块清单与场景草案未越过用户确认边界。
 - 共享能力均有至少两个场景的需求证据，独立审查已批准。
 

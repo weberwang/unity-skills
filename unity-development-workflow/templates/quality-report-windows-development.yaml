@@ -5,22 +5,23 @@ sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
 sceneId: scene.arena-intro
+platformId: WINDOWS
 buildArtifactSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 buildArtifact:
   artifactType: WINDOWS_EXECUTABLE
-  platform: WINDOWS_STANDALONE
+  platform: WINDOWS
   path: Artifacts/Builds/Windows/StarfallArena.exe
   sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 generatedAtUtc: "2026-07-27T12:00:00Z"
 checks:
-  - id: build.windows-development
+  - id: build.platform-development
     category: build
     status: PASS
     message: Windows 开发构建已由代表性场景启动并通过冒烟
     evidence:
-      - type: windows-executable
+      - type: platform-build-artifact
         artifactType: WINDOWS_EXECUTABLE
-        platform: WINDOWS_STANDALONE
+        platform: WINDOWS
         path: Artifacts/Builds/Windows/StarfallArena.exe
         sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         projectId: starfall-arena
@@ -31,9 +32,9 @@ checks:
         buildVersion: 0.1.0-dev.1
 status: PASS
 evidence:
-  - type: windows-executable
+  - type: platform-build-artifact
     artifactType: WINDOWS_EXECUTABLE
-    platform: WINDOWS_STANDALONE
+    platform: WINDOWS
     path: Artifacts/Builds/Windows/StarfallArena.exe
     sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     projectId: starfall-arena

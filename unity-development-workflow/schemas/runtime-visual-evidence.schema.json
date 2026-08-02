@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision", "projectStateVersion",
-    "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
+    "platformId", "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -14,10 +14,11 @@
     "buildVersion": {"type": "string", "minLength": 1},
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
+    "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-    "captureSource": {"const": "WINDOWS_STANDALONE"},
+    "captureSource": {"enum": ["WINDOWS_STANDALONE", "ANDROID_PLAYER", "IOS_PLAYER", "IPADOS_PLAYER"]},
     "screenshot": {
       "type": "object",
       "additionalProperties": false,
@@ -63,6 +64,22 @@
     "blockedReason": {"type": "string", "minLength": 1}
   },
   "allOf": [
+    {
+      "if": {"properties": {"platformId": {"const": "WINDOWS"}}, "required": ["platformId"]},
+      "then": {"properties": {"captureSource": {"const": "WINDOWS_STANDALONE"}}}
+    },
+    {
+      "if": {"properties": {"platformId": {"const": "ANDROID"}}, "required": ["platformId"]},
+      "then": {"properties": {"captureSource": {"const": "ANDROID_PLAYER"}}}
+    },
+    {
+      "if": {"properties": {"platformId": {"const": "IOS"}}, "required": ["platformId"]},
+      "then": {"properties": {"captureSource": {"const": "IOS_PLAYER"}}}
+    },
+    {
+      "if": {"properties": {"platformId": {"const": "IPADOS"}}, "required": ["platformId"]},
+      "then": {"properties": {"captureSource": {"const": "IPADOS_PLAYER"}}}
+    },
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {

@@ -3,7 +3,7 @@
   "$id": "https://codex.local/unity-workflow/schemas/project-profile.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "projectId", "version", "sourceRevision", "projectStateVersion", "workflow", "unity", "delivery", "capabilities", "paths", "quality"],
+  "required": ["schemaVersion", "projectId", "version", "sourceRevision", "projectStateVersion", "workflow", "unity", "delivery", "capabilities", "paths"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -46,10 +46,15 @@
     "delivery": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["platform", "distributionChannel"],
+      "required": ["platformSelectionStatus", "primaryDevelopmentPlatform", "targets"],
       "properties": {
-        "platform": {"const": "Windows"},
-        "distributionChannel": {"type": "string", "minLength": 1}
+        "platformSelectionStatus": {"enum": ["PROPOSED", "AWAITING_USER", "APPROVED"]},
+        "primaryDevelopmentPlatform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/platformTarget"}
+        }
       }
     },
     "capabilities": {
@@ -75,16 +80,123 @@
         "runtimeArtRoot": {"const": "Assets/Art/Runtime"},
         "artifactRoot": {"$ref": "common.schema.json#/$defs/projectRelativePath"}
       }
-    },
-    "quality": {"$ref": "#/$defs/qualityBudget"}
+    }
   },
   "allOf": [
+    {
+      "if": {"properties": {"delivery": {"properties": {"platformSelectionStatus": {"const": "APPROVED"}}, "required": ["platformSelectionStatus"]}}, "required": ["delivery"]},
+      "then": {"required": ["candidateSnapshot", "grillingEvidence"]}
+    },
     {
       "if": {"properties": {"workflow": {"properties": {"qualityTargetsStatus": {"const": "APPROVED"}}, "required": ["qualityTargetsStatus"]}}, "required": ["workflow"]},
       "then": {"required": ["candidateSnapshot", "grillingEvidence"]}
     }
   ],
   "$defs": {
+    "platformTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platformId", "adaptationFamily", "buildTarget", "distributionChannel",
+        "deviceClasses", "orientations", "inputModes", "safeAreaRequired",
+        "adaptiveLayoutRequired", "referenceResolutions", "quality"
+      ],
+      "properties": {
+        "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+        "adaptationFamily": {"enum": ["WINDOWS", "MOBILE"]},
+        "buildTarget": {"enum": ["WINDOWS_STANDALONE", "ANDROID", "IOS"]},
+        "distributionChannel": {"type": "string", "minLength": 1},
+        "deviceClasses": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["DESKTOP", "PHONE", "TABLET"]}
+        },
+        "orientations": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["LANDSCAPE", "PORTRAIT"]}
+        },
+        "inputModes": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["KEYBOARD_MOUSE", "GAMEPAD", "TOUCH"]}
+        },
+        "safeAreaRequired": {"type": "boolean"},
+        "adaptiveLayoutRequired": {"const": true},
+        "windowModes": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["WINDOWED", "FULLSCREEN_WINDOW"]}
+        },
+        "autorotation": {"type": "boolean"},
+        "quality": {"$ref": "#/$defs/qualityBudget"},
+        "referenceResolutions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["width", "height", "orientation"],
+            "properties": {
+              "width": {"type": "integer", "minimum": 1},
+              "height": {"type": "integer", "minimum": 1},
+              "orientation": {"enum": ["LANDSCAPE", "PORTRAIT"]}
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"adaptationFamily": {"const": "WINDOWS"}}, "required": ["adaptationFamily"]},
+          "then": {
+            "required": ["windowModes"],
+            "properties": {
+              "platformId": {"const": "WINDOWS"},
+              "buildTarget": {"const": "WINDOWS_STANDALONE"},
+              "deviceClasses": {"const": ["DESKTOP"]},
+              "safeAreaRequired": {"const": false}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"adaptationFamily": {"const": "MOBILE"}}, "required": ["adaptationFamily"]},
+          "then": {
+            "required": ["autorotation"],
+            "properties": {
+              "platformId": {"enum": ["ANDROID", "IOS", "IPADOS"]},
+              "buildTarget": {"enum": ["ANDROID", "IOS"]},
+              "deviceClasses": {"items": {"enum": ["PHONE", "TABLET"]}},
+              "inputModes": {"contains": {"const": "TOUCH"}},
+              "safeAreaRequired": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"platformId": {"const": "ANDROID"}}, "required": ["platformId"]},
+          "then": {
+            "properties": {
+              "buildTarget": {"const": "ANDROID"},
+              "deviceClasses": {"items": {"enum": ["PHONE", "TABLET"]}}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"platformId": {"const": "IOS"}}, "required": ["platformId"]},
+          "then": {
+            "properties": {
+              "buildTarget": {"const": "IOS"},
+              "deviceClasses": {"const": ["PHONE"]}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"platformId": {"const": "IPADOS"}}, "required": ["platformId"]},
+          "then": {
+            "properties": {
+              "buildTarget": {"const": "IOS"},
+              "deviceClasses": {"const": ["TABLET"]}
+            }
+          }
+        }
+      ]
+    },
     "qualityBudget": {
       "type": "object",
       "additionalProperties": false,

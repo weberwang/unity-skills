@@ -39,7 +39,7 @@ materials:
   - 半透明蓝色全息玻璃
 camera: 第三人称中距离跟随，水平视野保持主要目标可读
 uiLanguage: 紧凑无衬线文字、方角面板和琥珀色关键反馈
-typography: 窄体无衬线用于标题，中性无衬线用于正文，最小字号服从 Windows 可读性测试
+typography: 窄体无衬线用于标题，中性无衬线用于正文，最小字号服从全部批准平台的可读性测试
 iconography: 两级线宽的几何图标，以轮廓和负形区分类别，不依赖颜色单独传义
 motionLanguage: 短促线性入场配合轻微缩放，重要状态使用单次节奏脉冲，禁止持续干扰动画
 readabilityRules:

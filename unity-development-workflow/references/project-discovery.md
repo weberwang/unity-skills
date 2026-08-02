@@ -6,13 +6,13 @@
 
 ## 输入
 
-- Unity 项目绝对路径与预期 Windows 构建目标。
+- Unity 项目绝对路径、活动 BuildTarget，以及用户需求中待确认或已批准的平台集合。
 - 可用 MCP 服务、`unity-mcp` 实例清单和工具组。
 - 项目文件、包清单、目录树与当前 Editor 状态。
 
 ## 执行步骤
 
-1. 读取 `mcpforunity://project/info` 与磁盘项目配置，只读确认 Unity 6、URP 和 Windows 构建目标。
+1. 读取 `mcpforunity://project/info` 与磁盘项目配置，只读确认 Unity 6、URP、活动 BuildTarget 和现有平台配置；只记录事实，不从当前开发机或 BuildTarget 推断最终交付平台。
 2. 检查包清单、Assets 目录、场景目录、测试目录、UI Toolkit 资源，以及现有模型/贴图/材质/Prefab 目录、模型导入约定、ProBuilder/渲染相关包和 DCC 源索引。
 3. 读取 `mcpforunity://editor/state` 并记录 Console 基线，确认编译、导入、域重载、PlayMode、连接陈旧状态是否正在运行或失败。
 4. 检查未保存场景、脏资源和可能阻塞自动化的对话框。
@@ -40,7 +40,7 @@
 
 ## 通过条件
 
-- Unity 6、URP、Windows、包与目录检查全部有实际证据。
+- Unity 6、URP、活动 BuildTarget、已批准目标平台、包与目录检查全部有实际证据。
 - Console、编译、导入、PlayMode 和未保存状态均已记录。
 - `unity-mcp` 实例唯一、项目匹配且可被显式绑定。
 

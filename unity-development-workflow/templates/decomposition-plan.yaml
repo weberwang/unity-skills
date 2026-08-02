@@ -66,7 +66,7 @@ interrogation:
     conclusion: SPLIT
   - id: TEST_BOUNDARY
     question: 每个模块与场景是否有独立入口、可观察结果和失败注入点？
-    answer: 玩法规则可 EditMode 验证，竞技场主路径可 PlayMode 与 Windows 冒烟验证。
+    answer: 玩法规则可 EditMode 验证，竞技场主路径可 PlayMode 与主开发平台 Player 冒烟验证。
     conclusion: SPLIT
   - id: DELIVERY_IMPACT
     question: 拆分是否改变 Build Profile、场景列表、许可或发行边界？

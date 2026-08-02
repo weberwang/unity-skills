@@ -1,11 +1,11 @@
 ---
 name: unity-development-workflow
-description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp 的游戏全周期总控。需要从立项、强制决策拷问、全局视觉、模块/场景边界、技术骨架、垂直切片、逐场景制作、低保真结构、高保真效果图、编号资产地图、2D 单图生成与结构化拼装、3D 建模与贴图、测试性能推进到可交付 Windows 候选包，或需要协调拷问、制作、架构、玩法、数值、美术、3D、音频、测试与发布角色时使用。
+description: 面向 Unity 6、URP、UI Toolkit、Windows、Android、iOS/iPadOS 与 CoplayDev/unity-mcp 的游戏全周期总控。需要根据用户需求选择目标平台，分别执行 Windows 与移动端适配，并从立项、强制决策拷问、全局视觉、模块/场景边界、技术骨架、垂直切片、逐场景制作、低保真结构、高保真效果图、编号资产地图、2D 单图生成与结构化拼装、3D 建模与贴图、测试性能推进到多平台候选包时使用。
 ---
 
 # Unity 游戏开发总控
 
-把角色交付物收敛为可玩、可构建、可测试、可审计的 Windows 游戏。用户始终决定范围、视觉方向、风险、指标与发布放行；代理不得把未知项视为批准。
+把角色交付物收敛为可玩、可构建、可测试、可审计的 Unity 游戏。用户始终决定目标平台、范围、视觉方向、风险、指标与发布放行；代理不得把模板或当前开发机平台视为用户选择。
 
 ## 启动与按需读取
 
@@ -13,9 +13,9 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 2. 标准或发布通道的新项目若缺少 `docs/project-profile.yaml`，运行 `scripts/initialize_project_docs.py --project-root <项目根目录> --project-id <项目ID>`。默认不覆盖已有文档；只有用户明确要求时使用 `--force`。
 3. 只读发现阶段读[项目发现](references/project-discovery.md)；出现无法由证据确定的产品、体验、技术、模块、视觉资源、质量或发布取舍，模块首次实现或边界变化，或用户要求“拷问/grill/压力测试”时，必须调用 `$unity-game-grilling` 并按[决策与变更控制](references/decision-change-control.md)记录当前版本 `grilling-record`。
 4. 划分模块与场景时读[模块与场景拆分](references/module-planning.md)，由 `$unity-game-grilling` 完成 13 项拆分前拷问并取得用户对当前版本的确认；未确认不得创建拆分产物或进入 S00/G1/G2。多任务、锁或子代理调度时读[多代理执行](references/multi-agent-execution.md)；只有用户明确要求 Worktree 时才读[Worktree 工作区隔离](references/worktree-integration.md)。
-5. 建立全局骨架和首个垂直切片时分别读[S00 基础工作流](references/foundation-workflow.md)与[游戏实现闭环](references/game-implementation.md)。
+5. G0 平台选择、S00/G1 主开发平台构建、G2 平台适配或 G3 多平台交付时读[平台选择与适配](references/platform-adaptation.md)；建立全局骨架和首个垂直切片时分别读[S00 基础工作流](references/foundation-workflow.md)与[游戏实现闭环](references/game-implementation.md)。
 6. 每个场景读[场景小循环](references/scene-loop.md)；2D 场景同时读[2D 场景屏幕适配](references/scene-2d-adaptation.md)，3D 场景或模型/材质任务同时读[3D 资产工作流](references/3d-asset-workflow.md)。开始任何场景效果图或正式美术资源前，先按[视觉工作流](references/visual-workflow.md)执行“全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 逐项独立生成/审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 清理运行时灰盒与占位 → Unity 验证”；2D 单图重新生成、正式导入和登记读[资源流水线](references/asset-pipeline.md)。
-7. 进入质量门、全局回归或候选包验证时读[质量门禁](references/quality-gates.md)；准备 Windows 制品时读[交付](references/delivery.md)；创建或维护项目文档时读[项目交付物](references/project-artifacts.md)。
+7. 进入质量门、全局回归或候选包验证时读[质量门禁](references/quality-gates.md)；准备任一批准平台的制品时读[交付](references/delivery.md)；创建或维护项目文档时读[项目交付物](references/project-artifacts.md)。
 
 不要一次读取全部参考。快速通道优先读任务直接相关的代码、配置、资源和测试。
 
@@ -43,7 +43,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 - `$unity-game-3d-texturing`：通过 MCP 制作或接入 UV、PBR 贴图、URP 材质与材质变体，并验证渲染和纹理预算。
 - `$unity-game-audio`：音乐、音效、混音、授权与接入。
 - `$unity-game-qa-performance`：测试、设备、Profiler、缺陷和候选验证。
-- `$unity-game-release`：Windows 构建、发行资料、合规与交付。
+- `$unity-game-release`：Windows 与移动端构建、发行资料、合规与交付。
 
 标准、发布通道只调度受影响角色。开发者不能批准自己的输出；视觉一致性、Unity 可实现性、UX/可读性审查与用户批准必须分离。
 
@@ -51,10 +51,10 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 | 阶段 | 核心结果 | 收敛条件 |
 | --- | --- | --- |
-| G0 立项 | 最小范围、核心循环、模块/场景拆分、首发 Windows 发行方式、技术与视觉方向 | 当前版本 `grilling-record`、用户批准范围、`decomposition-plan` 和全局 Visual Bible 全部通过；可选能力默认关闭 |
-| G1 垂直切片 | S00 后完成一个端到端可玩场景 | 干净环境可编译构建；正式资源可追溯；游戏/UI/实机视觉均通过独立审查和用户批准 |
-| G2 制作 | 按场景小循环完成并冻结全部批准范围 | 无未批准占位资源；全局回归、性能与 P0/P1 处置有证据 |
-| G3 交付 | 生成与证据一一对应的 Windows 候选包 | 制品、许可、说明、风险和回滚齐备，并获得用户放行 |
+| G0 立项 | 最小范围、核心循环、模块/场景拆分、用户目标平台、发行方式、技术与视觉方向 | 当前版本 `grilling-record`、用户批准的平台集合与逐平台适配字段、范围、`decomposition-plan` 和 Visual Bible 全部通过 |
+| G1 垂直切片 | S00 后在用户批准的主开发平台完成一个端到端可玩场景 | 主平台干净构建；正式资源可追溯；游戏/UI/实机视觉均通过独立审查和用户批准 |
+| G2 制作 | 按场景小循环完成全部批准模块、场景和平台适配 | 每个批准模块与平台都有独立 `PASS` 验收报告；全部场景冻结，且正式资源、全局回归、性能与 P0/P1 处置有证据 |
+| G3 交付 | 在 G2 通过后为每个批准平台生成候选包并执行最终设备验收 | 候选包覆盖“批准平台 × 对应设备档位 × 全部批准场景”；2D 适配复验、制品、许可、说明、风险、回滚和用户放行全部通过 |
 
 快速通道不要求通过 G0 至 G3。批准后若变更影响已通过门禁，将该门标记为待复核，只重跑受影响项及其下游。
 
@@ -72,7 +72,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows 与 CoplayDev/unity-mcp
 
 ## Unity MCP 与写入约束
 
-- 只面向 Unity 6、URP、UI Toolkit 和 Windows；其他平台必须另行扩展并批准。
+- 只面向 Unity 6、URP、UI Toolkit，以及用户在 G0 明确批准的 Windows、Android、iOS/iPadOS 平台；未选择的平台禁止自动加入交付范围。
 - 写入前读取 `mcpforunity://instances`，按项目路径选择唯一 `Name@hash`，调用 `set_active_instance` 显式绑定；多实例不猜测。
 - 仅激活当期需要的工具组：核心默认可用，UI、testing、profiling、animation、vfx、probuilder、scripting_ext 按需通过 `manage_tools` 激活。
 - 3D 任务先发现实际可用 MCP/DCC 能力再选路径，不臆造工具或导出格式。Unity 与 DCC 正式写入均采用单写者：同一模型源、DCC 工程、Mesh、材质、Prefab 或依赖场景不得被两个代理同时修改。

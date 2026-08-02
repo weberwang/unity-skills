@@ -1,4 +1,4 @@
-"""校验 Windows 交付包与逐场景实机视觉证据的一致性。"""
+"""校验各目标平台交付包与逐场景实机视觉证据的一致性。"""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
+
+from unity_workflow.platform_contract import delivery_primary_artifact
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,17 +23,14 @@ def delivery_runtime_issues(
     decomposition: Mapping[str, Any],
     runtime_contracts: Sequence[Mapping[str, Any]],
 ) -> list[DeliveryIntegrityIssue]:
-    """要求每个批准场景恰有一份来自当前 Windows 可执行文件的实机证据。"""
+    """要求每个批准场景恰有一份来自当前平台主制品的实机证据。"""
     issues: list[DeliveryIntegrityIssue] = []
-    executables = [
-        item
-        for item in delivery.get("artifacts", [])
-        if isinstance(item, Mapping) and item.get("artifactType") == "WINDOWS_EXECUTABLE"
-    ]
-    if len(executables) != 1:
-        issues.append(DeliveryIntegrityIssue("$.artifacts", "交付必须且只能包含一个 WINDOWS_EXECUTABLE"))
+    artifact = delivery_primary_artifact(delivery)
+    if artifact is None:
+        issues.append(DeliveryIntegrityIssue("$.artifacts", "交付必须且只能包含一个与目标平台匹配的主制品"))
         return issues
-    executable_hash = executables[0].get("sha256")
+    artifact_hash = artifact.get("sha256")
+    platform = delivery.get("platform")
     decision = decomposition.get("decision")
     approved = set(
         decision.get("approvedSceneIds", []) if isinstance(decision, Mapping) else []
@@ -51,11 +50,18 @@ def delivery_runtime_issues(
             details.append(f"重复场景：{', '.join(duplicates)}")
         issues.append(DeliveryIntegrityIssue("$.runtimeVisualEvidence", "实机视觉证据必须无重复覆盖 approvedSceneIds 全集；" + "；".join(details)))
     for index, runtime in enumerate(runtime_contracts):
-        if runtime.get("buildArtifactSha256") != executable_hash:
+        if runtime.get("platformId") != platform:
             issues.append(
                 DeliveryIntegrityIssue(
                     f"$.runtimeVisualEvidence[{index}]",
-                    "实机视觉证据的 buildArtifactSha256 与 Windows 可执行文件不一致",
+                    "实机视觉证据的 platformId 与交付平台不一致",
+                )
+            )
+        if runtime.get("buildArtifactSha256") != artifact_hash:
+            issues.append(
+                DeliveryIntegrityIssue(
+                    f"$.runtimeVisualEvidence[{index}]",
+                    "实机视觉证据的 buildArtifactSha256 与当前平台主制品不一致",
                 )
             )
     return issues

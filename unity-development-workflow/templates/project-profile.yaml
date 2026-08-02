@@ -35,8 +35,55 @@ unity:
   version: "6"
   renderPipeline: URP
 delivery:
-  platform: Windows
-  distributionChannel: 本地交付
+  platformSelectionStatus: AWAITING_USER
+  primaryDevelopmentPlatform: WINDOWS
+  targets:
+    - platformId: WINDOWS
+      adaptationFamily: WINDOWS
+      buildTarget: WINDOWS_STANDALONE
+      distributionChannel: 本地交付
+      deviceClasses: [DESKTOP]
+      orientations: [LANDSCAPE]
+      inputModes: [KEYBOARD_MOUSE, GAMEPAD]
+      safeAreaRequired: false
+      adaptiveLayoutRequired: true
+      windowModes: [WINDOWED, FULLSCREEN_WINDOW]
+      referenceResolutions:
+        - {width: 1280, height: 720, orientation: LANDSCAPE}
+        - {width: 1920, height: 1080, orientation: LANDSCAPE}
+      quality:
+        minimumFps: 60
+        maximumCpuFrameTimeMs: 16.67
+        maximumGpuFrameTimeMs: 16.67
+        maximumMemoryMb: 2048
+        maximumGcAllocKbPerFrame: 1
+        maximumDrawCalls: 1200
+        maximumTextureMemoryMb: 1024
+        maximumBuildSizeMb: 4096
+        maximumLoadTimeSeconds: 8
+    - platformId: ANDROID
+      adaptationFamily: MOBILE
+      buildTarget: ANDROID
+      distributionChannel: Google Play
+      deviceClasses: [PHONE, TABLET]
+      orientations: [PORTRAIT, LANDSCAPE]
+      inputModes: [TOUCH]
+      safeAreaRequired: true
+      adaptiveLayoutRequired: true
+      autorotation: true
+      referenceResolutions:
+        - {width: 1080, height: 2400, orientation: PORTRAIT}
+        - {width: 2560, height: 1600, orientation: LANDSCAPE}
+      quality:
+        minimumFps: 30
+        maximumCpuFrameTimeMs: 33.34
+        maximumGpuFrameTimeMs: 33.34
+        maximumMemoryMb: 1536
+        maximumGcAllocKbPerFrame: 1
+        maximumDrawCalls: 800
+        maximumTextureMemoryMb: 768
+        maximumBuildSizeMb: 2048
+        maximumLoadTimeSeconds: 10
 capabilities:
   login: false
   cloudSave: false
@@ -48,14 +95,4 @@ capabilities:
 paths:
   generatedSourceRoot: Assets/Generated
   runtimeArtRoot: Assets/Art/Runtime
-  artifactRoot: Artifacts/Windows
-quality:
-  minimumFps: 60
-  maximumCpuFrameTimeMs: 16.67
-  maximumGpuFrameTimeMs: 16.67
-  maximumMemoryMb: 2048
-  maximumGcAllocKbPerFrame: 1
-  maximumDrawCalls: 1200
-  maximumTextureMemoryMb: 1024
-  maximumBuildSizeMb: 4096
-  maximumLoadTimeSeconds: 8
+  artifactRoot: Artifacts/Builds

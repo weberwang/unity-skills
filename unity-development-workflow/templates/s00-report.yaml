@@ -37,12 +37,21 @@ console:
   id: console.clean
   status: NOT_RUN
   evidence: []
-emptyWindowsBuild:
+emptyPlatformBuild:
   status: NOT_RUN
+  platformId: WINDOWS
   buildVersion: 0.1.0-dev.0
   artifact:
-    type: windows-build
+    type: platform-build-artifact
+    artifactType: WINDOWS_EXECUTABLE
+    platform: WINDOWS
     path: Artifacts/Builds/Windows/0.1.0-dev.0/starfall-arena.exe
     sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    projectId: starfall-arena
+    subjectId: foundation.core
+    subjectVersion: 0.1.0-dev.0
+    sourceRevision: working-tree-snapshot-20260727
+    projectStateVersion: project-state-v1
+    buildVersion: 0.1.0-dev.0
 reviews: []
 status: NOT_RUN

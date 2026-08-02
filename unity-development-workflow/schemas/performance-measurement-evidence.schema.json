@@ -38,7 +38,7 @@
         "cpu", "gpu", "memoryMb", "sampleCount", "warmupSeconds", "durationSeconds"
       ],
       "properties": {
-        "platform": {"const": "WINDOWS_STANDALONE"},
+        "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
         "buildConfiguration": {"enum": ["DEVELOPMENT", "RELEASE"]},
         "unityVersion": {"type": "string", "minLength": 1},
         "operatingSystem": {"type": "string", "minLength": 1},

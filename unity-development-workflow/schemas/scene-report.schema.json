@@ -66,7 +66,7 @@
                 "items": {
                   "allOf": [
                     {"$ref": "common.schema.json#/$defs/evidence"},
-                    {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]}
+                    {"properties": {"type": {"const": "platform-build-artifact"}}, "required": ["type"]}
                   ]
                 }
               }

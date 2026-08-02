@@ -6,7 +6,7 @@
   "required": [
     "schemaVersion", "projectId", "foundationVersion", "sourceRevision", "projectStateVersion", "generatedAtUtc",
     "decompositionPlan", "moduleManifest", "scope", "sharedCapabilities", "changedPaths", "qualityReports", "console",
-    "emptyWindowsBuild", "reviews", "status"
+    "emptyPlatformBuild", "reviews", "status"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -43,12 +43,13 @@
     "changedPaths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "qualityReports": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
     "console": {"$ref": "common.schema.json#/$defs/checkResult"},
-    "emptyWindowsBuild": {
+    "emptyPlatformBuild": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "buildVersion", "artifact"],
+      "required": ["status", "platformId", "buildVersion", "artifact"],
       "properties": {
         "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+        "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
         "buildVersion": {"type": "string", "minLength": 1},
         "artifact": {"$ref": "common.schema.json#/$defs/evidence"},
         "failureReason": {"type": "string", "minLength": 1}
@@ -64,7 +65,7 @@
       "then": {
         "properties": {
           "console": {"properties": {"status": {"const": "PASS"}}},
-          "emptyWindowsBuild": {"properties": {"status": {"const": "PASS"}}},
+          "emptyPlatformBuild": {"properties": {"status": {"const": "PASS"}}},
           "reviews": {"minItems": 1, "contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}}, "required": ["authority"]}}
         }
       }

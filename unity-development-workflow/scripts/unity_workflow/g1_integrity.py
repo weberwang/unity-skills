@@ -1,15 +1,17 @@
-"""校验 G1 垂直切片三项检查共享同一场景与 Windows 开发构建。"""
+"""校验 G1 垂直切片三项检查共享同一场景与主平台开发构建。"""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
 
+from unity_workflow.platform_contract import artifact_reference_failure, primary_platform_id
+
 
 G1_CHECK_TYPES = {
     "vertical-slice.playable": ("scene-manifest", "scene-report"),
     "visual.runtime-approved": ("runtime-visual-evidence",),
-    "build.windows-development": ("quality-report",),
+    "build.platform-development": ("quality-report",),
 }
 IDENTITY_FIELDS = (
     "projectId",
@@ -29,12 +31,16 @@ class G1EvidenceReader(Protocol):
     project_state_version: str
     build_version: str
     active_decomposition: Mapping[str, Any]
+    active_project_profile: Mapping[str, Any]
 
     def verify_reference(self, reference: object) -> None:
         """验证证据引用及其文件哈希。"""
 
     def verify_active_decomposition(self) -> None:
         """验证当前批准拆分。"""
+
+    def verify_active_project_profile(self) -> None:
+        """验证当前项目平台配置。"""
 
     def _load_referenced_contract(self, reference: Mapping[str, Any]) -> dict[str, Any]:
         """加载已经验证的契约。"""
@@ -44,16 +50,17 @@ def g1_vertical_slice_failure(
     reader: G1EvidenceReader,
     checks: Mapping[object, object],
 ) -> str | None:
-    """要求 G1 三项检查唯一绑定同一批准场景和同一实际 Windows EXE。"""
+    """要求 G1 三项检查唯一绑定同一批准场景和同一主平台制品。"""
     contracts: dict[str, Mapping[str, Any]] = {}
     primary_references: dict[str, Mapping[str, Any]] = {}
-    executable_references: dict[str, Mapping[str, Any]] = {}
+    artifact_references: dict[str, Mapping[str, Any]] = {}
+    primary_platform = primary_platform_id(reader)
     for check_id, expected_types in G1_CHECK_TYPES.items():
         check = checks.get(check_id)
         if not isinstance(check, Mapping) or check.get("status") != "PASS":
             return f"G1/{check_id} 缺少 PASS 检查"
         evidence = _mappings(check.get("evidence"))
-        executables = [item for item in evidence if item.get("type") == "windows-executable"]
+        artifacts = [item for item in evidence if item.get("type") == "platform-build-artifact"]
         for expected_type in expected_types:
             primary = [item for item in evidence if item.get("type") == expected_type]
             if len(primary) != 1:
@@ -61,19 +68,19 @@ def g1_vertical_slice_failure(
             reader.verify_reference(primary[0])
             contracts[expected_type] = reader._load_referenced_contract(primary[0])
             primary_references[expected_type] = primary[0]
-        if len(executables) != 1:
-            return f"G1/{check_id} 必须且只能包含一个 windows-executable"
-        executable_issue = _executable_reference_issue(executables[0])
-        if executable_issue:
-            return f"G1/{check_id} 的 Windows EXE {executable_issue}"
-        reader.verify_reference(executables[0])
-        executable_references[check_id] = executables[0]
+        if len(artifacts) != 1:
+            return f"G1/{check_id} 必须且只能包含一个 platform-build-artifact"
+        artifact_issue = artifact_reference_failure(artifacts[0], primary_platform)
+        if artifact_issue:
+            return f"G1/{check_id} 的主平台制品 {artifact_issue}"
+        reader.verify_reference(artifacts[0])
+        artifact_references[check_id] = artifacts[0]
 
-    reference_keys = {_reference_key(item) for item in executable_references.values()}
+    reference_keys = {_reference_key(item) for item in artifact_references.values()}
     if len(reference_keys) != 1:
-        return "G1 三项检查绑定的 Windows EXE 引用不一致"
-    executable = next(iter(executable_references.values()))
-    current_issue = _current_identity_issue(reader, executable)
+        return "G1 三项检查绑定的平台构建制品引用不一致"
+    artifact = next(iter(artifact_references.values()))
+    current_issue = _current_identity_issue(reader, artifact)
     if current_issue:
         return current_issue
 
@@ -81,9 +88,9 @@ def g1_vertical_slice_failure(
     playability = contracts["scene-report"]
     runtime = contracts["runtime-visual-evidence"]
     report = contracts["quality-report"]
-    scene_id = executable.get("subjectId")
+    scene_id = artifact.get("subjectId")
     contract_issue = _contract_binding_issue(
-        reader, scene_id, executable, manifest, playability, runtime, report
+        reader, scene_id, artifact, manifest, playability, runtime, report
     )
     if contract_issue:
         return contract_issue
@@ -102,10 +109,10 @@ def g1_vertical_slice_failure(
         manifest_reference
     ) != _contract_reference_key(primary_references["scene-manifest"]):
         return "G1 可玩性报告未绑定 vertical-slice.playable 的同一 scene-manifest"
-    tests_failure = _nested_executable_failure(
+    tests_failure = _nested_artifact_failure(
         "G1 可玩性报告 tests",
         playability.get("tests"),
-        executable,
+        artifact,
         expected_id="vertical-slice.playable",
     )
     if tests_failure:
@@ -114,25 +121,25 @@ def g1_vertical_slice_failure(
     report_checks = [
         item
         for item in _mappings(report.get("checks"))
-        if item.get("id") == "build.windows-development" and item.get("status") == "PASS"
+        if item.get("id") == "build.platform-development" and item.get("status") == "PASS"
     ]
     if len(report_checks) != 1:
-        return "G1 构建报告必须且只能包含一个 PASS build.windows-development"
-    return _nested_executable_failure(
-        "G1 构建报告", report_checks[0], executable, expected_id="build.windows-development"
+        return "G1 构建报告必须且只能包含一个 PASS build.platform-development"
+    return _nested_artifact_failure(
+        "G1 构建报告", report_checks[0], artifact, expected_id="build.platform-development"
     )
 
 
 def _contract_binding_issue(
     reader: G1EvidenceReader,
     scene_id: object,
-    executable: Mapping[str, Any],
+    artifact: Mapping[str, Any],
     manifest: Mapping[str, Any],
     playability: Mapping[str, Any],
     runtime: Mapping[str, Any],
     report: Mapping[str, Any],
 ) -> str | None:
-    """逐字段比较三个主契约与当前 EXE 绑定。"""
+    """逐字段比较三个主契约与当前平台构建制品绑定。"""
     contracts = (
         ("场景清单", manifest),
         ("可玩性报告", playability),
@@ -158,30 +165,30 @@ def _contract_binding_issue(
     for label, contract in (("可玩性报告", playability), ("实机视觉", runtime), ("构建报告", report)):
         if contract.get("buildVersion") != reader.build_version:
             return f"G1 {label} buildVersion 与当前构建不一致"
-        if contract.get("buildArtifactSha256") != executable.get("sha256"):
-            return f"G1 {label}未绑定共享 Windows EXE SHA-256"
+        if contract.get("buildArtifactSha256") != artifact.get("sha256"):
+            return f"G1 {label}未绑定共享平台制品 SHA-256"
+    if runtime.get("platformId") != artifact.get("platform") or report.get("platformId") != artifact.get("platform"):
+        return "G1 实机视觉与构建报告未绑定主开发平台"
     build_artifact = report.get("buildArtifact")
     if not isinstance(build_artifact, Mapping):
         return "G1 构建报告缺少显式 buildArtifact"
     expected_artifact = {
-        "artifactType": "WINDOWS_EXECUTABLE",
-        "platform": "WINDOWS_STANDALONE",
-        "path": executable.get("path"),
-        "sha256": executable.get("sha256"),
+        field: artifact.get(field)
+        for field in ("artifactType", "platform", "path", "sha256")
     }
     if any(build_artifact.get(field) != value for field, value in expected_artifact.items()):
-        return "G1 构建报告 buildArtifact 与共享 Windows EXE 不一致"
+        return "G1 构建报告 buildArtifact 与共享平台制品不一致"
     return None
 
 
-def _nested_executable_failure(
+def _nested_artifact_failure(
     label: str,
     check: object,
-    executable: Mapping[str, Any],
+    artifact: Mapping[str, Any],
     *,
     expected_id: str,
 ) -> str | None:
-    """要求场景测试或构建检查唯一引用共享 EXE。"""
+    """要求场景测试或构建检查唯一引用共享平台制品。"""
     if not isinstance(check, Mapping):
         return f"{label} 缺少检查结果"
     if check.get("id") != expected_id:
@@ -191,12 +198,12 @@ def _nested_executable_failure(
     nested = [
         item
         for item in _mappings(check.get("evidence"))
-        if item.get("type") == "windows-executable"
+        if item.get("type") == "platform-build-artifact"
     ]
     if len(nested) != 1:
-        return f"{label} 必须且只能包含一个 windows-executable"
-    if _reference_key(nested[0]) != _reference_key(executable):
-        return f"{label} 未绑定 G1 共享 Windows EXE"
+        return f"{label} 必须且只能包含一个 platform-build-artifact"
+    if _reference_key(nested[0]) != _reference_key(artifact):
+        return f"{label} 未绑定 G1 共享平台制品"
     return None
 
 
@@ -204,7 +211,7 @@ def _current_identity_issue(
     reader: G1EvidenceReader,
     reference: Mapping[str, Any],
 ) -> str | None:
-    """拒绝旧项目、旧源码、旧状态或旧构建的 EXE 引用。"""
+    """拒绝旧项目、旧源码、旧状态或旧构建的平台制品引用。"""
     expected = {
         "projectId": reader.project_id,
         "sourceRevision": reader.source_revision,
@@ -213,29 +220,14 @@ def _current_identity_issue(
     }
     mismatches = [field for field, value in expected.items() if reference.get(field) != value]
     if mismatches:
-        return f"G1 Windows EXE 使用旧身份：{', '.join(mismatches)}"
+        return f"G1 平台制品使用旧身份：{', '.join(mismatches)}"
     if reference.get("subjectVersion") != reader.build_version:
-        return "G1 Windows EXE subjectVersion 必须等于当前 buildVersion"
-    return None
-
-
-def _executable_reference_issue(reference: Mapping[str, Any]) -> str | None:
-    """检查 EXE 引用具有完整身份、哈希和 Windows 扩展名。"""
-    required = ("artifactType", "platform", "path", "sha256", *IDENTITY_FIELDS)
-    missing = [field for field in required if not isinstance(reference.get(field), str) or not reference.get(field)]
-    if missing:
-        return f"缺少字段：{', '.join(missing)}"
-    if reference.get("artifactType") != "WINDOWS_EXECUTABLE":
-        return "artifactType 必须为 WINDOWS_EXECUTABLE"
-    if reference.get("platform") != "WINDOWS_STANDALONE":
-        return "platform 必须为 WINDOWS_STANDALONE"
-    if not str(reference["path"]).lower().endswith(".exe"):
-        return "path 必须指向 .exe"
+        return "G1 平台制品 subjectVersion 必须等于当前 buildVersion"
     return None
 
 
 def _reference_key(reference: Mapping[str, Any]) -> tuple[object, ...]:
-    """构造包含文件和全部身份字段的稳定 EXE 引用键。"""
+    """构造包含文件和全部身份字段的稳定平台制品引用键。"""
     fields = ("type", "artifactType", "platform", "path", "sha256", *IDENTITY_FIELDS)
     return tuple(reference.get(field) for field in fields)
 

@@ -12,23 +12,12 @@
     "projectStateVersion": {"type": "string", "minLength": 1},
     "buildVersion": {"type": "string", "minLength": 1},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "moduleId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9.]{0,95}$"},
+    "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
     "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-    "buildArtifact": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["artifactType", "platform", "path", "sha256"],
-      "properties": {
-        "artifactType": {"const": "WINDOWS_EXECUTABLE"},
-        "platform": {"const": "WINDOWS_STANDALONE"},
-        "path": {
-          "allOf": [
-            {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-            {"pattern": "\\.[Ee][Xx][Ee]$"}
-          ]
-        },
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
-      }
-    },
+    "buildArtifact": {"$ref": "#/$defs/buildArtifact"},
+    "platformAdaptation": {"$ref": "#/$defs/platformAdaptation"},
+    "deviceAcceptance": {"$ref": "#/$defs/deviceAcceptance"},
     "profileEvidence": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
@@ -78,10 +67,10 @@
       "type": "array",
       "minItems": 1,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "category", "status", "message", "evidence"],
-        "properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category", "status", "message", "evidence"],
+      "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "category": {"enum": ["schema", "static", "compile", "console", "test", "gameplay", "visual", "accessibility", "asset", "audio", "performance", "build", "security", "compliance"]},
           "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
@@ -108,14 +97,256 @@
     "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
     "evidence": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/evidence"}}
   },
+  "$defs": {
+    "platformAdaptation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deviceProfileIds", "checks", "platformSpecificChecks"],
+      "properties": {
+        "deviceProfileIds": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"$ref": "common.schema.json#/$defs/taskId"}
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["build", "installation", "adaptiveLayout", "input", "lifecycle", "performance"],
+          "properties": {
+            "build": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "installation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "adaptiveLayout": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "input": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "lifecycle": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "performance": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
+          }
+        },
+        "platformSpecificChecks": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "buildArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "platform", "path", "sha256"],
+      "properties": {
+        "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA"]},
+        "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"artifactType": {"const": "WINDOWS_EXECUTABLE"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "WINDOWS"}, "path": {"pattern": "\\.[Ee][Xx][Ee]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "ANDROID_APK"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "ANDROID"}, "path": {"pattern": "\\.[Aa][Pp][Kk]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "ANDROID_APP_BUNDLE"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "ANDROID"}, "path": {"pattern": "\\.[Aa][Aa][Bb]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "IOS_IPA"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"enum": ["IOS", "IPADOS"]}, "path": {"pattern": "\\.[Ii][Pp][Aa]$"}}}
+        }
+      ]
+    },
+    "deviceAcceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acceptedPlatformIds", "acceptedModuleIds", "acceptedSceneIds", "buildArtifacts", "deviceProfiles", "matrix"],
+      "properties": {
+        "acceptedPlatformIds": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]}
+        },
+        "acceptedModuleIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9.]{0,95}$"}
+        },
+        "acceptedSceneIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "common.schema.json#/$defs/taskId"}
+        },
+        "buildArtifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/buildArtifact"}
+        },
+        "deviceProfiles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "platformId", "formFactor", "tier", "operatingSystem", "cpu", "gpu", "memoryMb"],
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/taskId"},
+              "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+              "formFactor": {"enum": ["DESKTOP", "PHONE", "TABLET"]},
+              "tier": {"enum": ["MINIMUM", "RECOMMENDED", "REFERENCE"]},
+              "operatingSystem": {"type": "string", "minLength": 1},
+              "cpu": {"type": "string", "minLength": 1},
+              "gpu": {"type": "string", "minLength": 1},
+              "memoryMb": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        "matrix": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id", "deviceProfileId", "sceneId", "artifactSha256", "width", "height",
+              "windowMode", "inputMode", "checks", "status", "evidence"
+            ],
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/taskId"},
+              "deviceProfileId": {"$ref": "common.schema.json#/$defs/taskId"},
+              "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+              "artifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+              "width": {"type": "integer", "minimum": 1},
+              "height": {"type": "integer", "minimum": 1},
+              "windowMode": {"enum": ["WINDOWED", "FULLSCREEN_WINDOW", "FULLSCREEN"]},
+              "inputMode": {"enum": ["KEYBOARD_MOUSE", "GAMEPAD", "TOUCH"]},
+              "checks": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["launch", "coreLoop", "input", "screenAdaptation", "audio", "stability"],
+                "properties": {
+                  "launch": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "coreLoop": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "input": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "screenAdaptation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "audio": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "stability": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
+                }
+              },
+              "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+              "evidence": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {"$ref": "common.schema.json#/$defs/evidence"}
+              }
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
+                "then": {
+                  "properties": {
+                    "checks": {
+                      "properties": {
+                        "launch": {"const": "PASS"},
+                        "coreLoop": {"const": "PASS"},
+                        "input": {"const": "PASS"},
+                        "screenAdaptation": {"const": "PASS"},
+                        "audio": {"const": "PASS"},
+                        "stability": {"const": "PASS"}
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {"properties": {"id": {"const": "platforms.adaptation-complete"}}, "required": ["id"]}
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {"required": ["platformId", "platformAdaptation"]}
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {"id": {"const": "platforms.adaptation-complete"}, "status": {"const": "PASS"}},
+              "required": ["id", "status"]
+            }
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "platforms.adaptation-complete"},
+                "category": {"const": "test"},
+                "status": {"const": "PASS"},
+                "evidence": {
+                  "contains": {
+                    "properties": {"type": {"const": "platform-adaptation-test-report"}},
+                    "required": ["type"]
+                  },
+                  "minContains": 1,
+                  "maxContains": 1
+                }
+              },
+              "required": ["id", "category", "status", "evidence"]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          },
+          "platformAdaptation": {
+            "properties": {
+              "checks": {
+                "properties": {
+                  "build": {"const": "PASS"},
+                  "installation": {"const": "PASS"},
+                  "adaptiveLayout": {"const": "PASS"},
+                  "input": {"const": "PASS"},
+                  "lifecycle": {"const": "PASS"},
+                  "performance": {"const": "PASS"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {"properties": {"id": {"const": "modules.acceptance-complete"}}, "required": ["id"]}
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "required": ["moduleId"]
+      }
+    },
     {
       "if": {
         "properties": {
           "checks": {
             "contains": {
               "properties": {
-                "id": {"const": "build.windows-development"},
+                "id": {"const": "modules.acceptance-complete"},
                 "status": {"const": "PASS"}
               },
               "required": ["id", "status"]
@@ -125,16 +356,103 @@
         "required": ["checks"]
       },
       "then": {
-        "required": ["projectStateVersion", "sceneId", "buildArtifactSha256", "buildArtifact"],
         "properties": {
           "checks": {
             "contains": {
               "properties": {
-                "id": {"const": "build.windows-development"},
+                "id": {"const": "modules.acceptance-complete"},
+                "category": {"const": "test"},
+                "status": {"const": "PASS"}
+              },
+              "required": ["id", "category", "status"]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {"properties": {"id": {"const": "devices.acceptance-verified"}}, "required": ["id"]}
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "required": ["deviceAcceptance"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "devices.acceptance-verified"},
+                "status": {"const": "PASS"}
+              },
+              "required": ["id", "status"]
+            }
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "devices.acceptance-verified"},
+                "category": {"const": "test"},
+                "status": {"const": "PASS"},
+                "evidence": {
+                  "contains": {"properties": {"type": {"const": "platform-build-artifact"}}, "required": ["type"]},
+                  "minContains": 1,
+                  "maxContains": 4
+                }
+              },
+              "required": ["id", "category", "status", "evidence"]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          },
+          "deviceAcceptance": {
+            "properties": {
+              "matrix": {"items": {"properties": {"status": {"const": "PASS"}}}}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "build.platform-development"},
+                "status": {"const": "PASS"}
+              },
+              "required": ["id", "status"]
+            }
+          }
+        },
+        "required": ["checks"]
+      },
+      "then": {
+        "required": ["projectStateVersion", "sceneId", "platformId", "buildArtifactSha256", "buildArtifact"],
+        "properties": {
+          "checks": {
+            "contains": {
+              "properties": {
+                "id": {"const": "build.platform-development"},
                 "category": {"const": "build"},
                 "status": {"const": "PASS"},
                 "evidence": {
-                  "contains": {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]},
+                  "contains": {"properties": {"type": {"const": "platform-build-artifact"}}, "required": ["type"]},
                   "minContains": 1,
                   "maxContains": 1
                 }
@@ -156,7 +474,7 @@
         },
         "required": ["checks"]
       },
-      "then": {"required": ["projectStateVersion", "profileEvidence", "measurements"]}
+      "then": {"required": ["projectStateVersion", "platformId", "profileEvidence", "measurements"]}
     },
     {
       "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},

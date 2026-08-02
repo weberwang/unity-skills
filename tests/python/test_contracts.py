@@ -119,10 +119,10 @@ def test_delivery_rejects_invalid_project_relative_path(invalid_path: str) -> No
         "version": "1.0.0",
         "sourceRevision": "abc123",
         "buildProfile": "Assets/Settings/Windows.asset",
-        "platform": "Windows",
+        "platform": "WINDOWS",
         "distributionChannel": "本地交付",
         "generatedAtUtc": "2026-07-12T12:00:00Z",
-        "manageBuildResult": {
+        "buildResult": {
             "status": "PASS",
             "evidencePath": "Artifacts/build.json",
         },
@@ -672,7 +672,7 @@ def test_delivery_candidate_requires_successful_build_launch_and_evidence() -> N
     issues = validate_contract("delivery-manifest", payload)
 
     paths = {issue.path for issue in issues}
-    assert "$.manageBuildResult.status" in paths
+    assert "$.buildResult.status" in paths
     assert "$.launchCheck.status" in paths
     assert "$.artifacts" in paths
     assert "$.qualityReportPaths" in paths
@@ -685,7 +685,7 @@ def test_release_approved_delivery_requires_user_authorization() -> None:
     payload.update(
         {
             "status": "RELEASE_APPROVED",
-            "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
+            "buildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
             "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
             "artifacts": [
                 {"artifactType": "WINDOWS_EXECUTABLE", "path": "Artifacts/Delivery/game.exe", "sha256": "c" * 64, "sizeBytes": 1}
@@ -825,7 +825,7 @@ def test_delivery_preflight_rejects_bare_artifacts_directory() -> None:
 
 
 def test_approved_runtime_visual_requires_review_and_user_approval() -> None:
-    """Windows 实机证据没有独立审查和用户确认时不得进入 APPROVED。"""
+    """平台实机证据没有独立审查和用户确认时不得进入 APPROVED。"""
     payload = load_yaml(TEMPLATES / "runtime-visual-evidence.yaml")
     payload["status"] = "APPROVED"
 
@@ -969,7 +969,7 @@ def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
         {
             "projectId": "starfall-arena",
             "status": "RELEASE_APPROVED",
-            "manageBuildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
+            "buildResult": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/build.json")},
             "launchCheck": {"status": "PASS", "evidence": _evidence("Artifacts/Delivery/launch.json")},
             "artifacts": [
                 {"artifactType": "WINDOWS_EXECUTABLE", "path": "Artifacts/Delivery/game.exe", "sha256": "c" * 64, "sizeBytes": 1}

@@ -140,9 +140,15 @@ def performance_gate_failure(
         if profile.get(field) != payload.get(field):
             return f"performance.pass 的 project-profile {field} 与报告不一致"
     measurements = {item.get("metric"): item for item in _mappings(payload.get("measurements"))}
-    quality = profile.get("quality")
+    platform = payload.get("platformId")
+    delivery = profile.get("delivery")
+    targets = _mappings(delivery.get("targets")) if isinstance(delivery, Mapping) else []
+    matching_targets = [item for item in targets if item.get("platformId") == platform]
+    if len(matching_targets) != 1:
+        return f"performance.pass 平台 {platform} 未唯一绑定 project-profile 目标"
+    quality = matching_targets[0].get("quality")
     if not isinstance(quality, Mapping):
-        return "performance.pass 的 project-profile 缺少质量预算"
+        return f"performance.pass 的平台 {platform} 缺少质量预算"
     for metric, (_, direction) in METRIC_RULES.items():
         measurement = measurements.get(metric)
         if not isinstance(measurement, Mapping):
@@ -154,7 +160,7 @@ def performance_gate_failure(
             return f"performance.pass 的 {metric} 证据类型错误"
         reader.verify_reference(evidence_reference)
         measurement_evidence = reader._load_referenced_contract(evidence_reference)
-        raw_failure, raw_value = _raw_measurement_value(reader, measurement_evidence)
+        raw_failure, raw_value = _raw_measurement_value(reader, measurement_evidence, str(platform))
         if raw_failure:
             return f"performance.pass 的 {metric} {raw_failure}"
         mismatch = _measurement_evidence_mismatch(payload, measurement, measurement_evidence)
@@ -174,6 +180,7 @@ def performance_gate_failure(
 def _raw_measurement_value(
     reader: PerformanceEvidenceReader,
     evidence: Mapping[str, Any],
+    expected_platform: str,
 ) -> tuple[str | None, int | float | None]:
     """回读原始样本契约，并按固定极值规则实算唯一测量值。"""
     reference = evidence.get("rawArtifact")
@@ -209,6 +216,8 @@ def _raw_measurement_value(
     metadata = raw.get("captureMetadata")
     if not isinstance(metadata, Mapping) or metadata.get("sampleCount") != len(samples):
         return "原始样本 captureMetadata.sampleCount 与 samples 长度不一致", None
+    if metadata.get("platform") != expected_platform:
+        return "原始样本平台与性能报告不一致", None
     # 不做隐式舍入：FPS 取最小原样值，其余预算取最大原样值，避免显示精度掩盖越界。
     value = min(samples) if METRIC_RULES[metric][1] == "minimum" else max(samples)
     if evidence.get("value") != value:
@@ -234,6 +243,9 @@ def _measurement_evidence_mismatch(
     for field, expected_value in expected.items():
         if evidence.get(field) != expected_value:
             return f"测量证据 {field} 与报告不一致"
+    environment = evidence.get("captureEnvironment")
+    if not isinstance(environment, Mapping) or environment.get("platform") != report.get("platformId"):
+        return "测量证据平台与报告不一致"
     return None
 
 

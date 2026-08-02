@@ -1,0 +1,45 @@
+schemaVersion: "1.0"
+taskId: qa.g1.arena-intro.android-development
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+sceneId: scene.arena-intro
+platformId: ANDROID
+buildArtifactSha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+buildArtifact:
+  artifactType: ANDROID_APK
+  platform: ANDROID
+  path: Artifacts/Builds/Android/StarfallArena.apk
+  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+generatedAtUtc: "2026-08-02T12:00:00Z"
+checks:
+  - id: build.platform-development
+    category: build
+    status: PASS
+    message: Android 主开发平台构建已在目标设备安装、启动并通过代表性场景冒烟
+    evidence:
+      - type: platform-build-artifact
+        artifactType: ANDROID_APK
+        platform: ANDROID
+        path: Artifacts/Builds/Android/StarfallArena.apk
+        sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        projectId: starfall-arena
+        subjectId: scene.arena-intro
+        subjectVersion: 0.1.0-dev.1
+        sourceRevision: working-tree-snapshot-20260727
+        projectStateVersion: project-state-v1
+        buildVersion: 0.1.0-dev.1
+status: PASS
+evidence:
+  - type: platform-build-artifact
+    artifactType: ANDROID_APK
+    platform: ANDROID
+    path: Artifacts/Builds/Android/StarfallArena.apk
+    sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    projectId: starfall-arena
+    subjectId: scene.arena-intro
+    subjectVersion: 0.1.0-dev.1
+    sourceRevision: working-tree-snapshot-20260727
+    projectStateVersion: project-state-v1
+    buildVersion: 0.1.0-dev.1

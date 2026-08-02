@@ -28,7 +28,7 @@
 8. 使用截图时逐张声明用途：只可选择 `CONTENT`、`COMPOSITION`、`INFORMATION_HIERARCHY`。高保真图和 P4 图片的提示词必须明确“依据 Visual Bible 重新设计，不复制截图风格、不裁切截图或效果图成品像素”；框选区域是规格与槽位证据，不是裁切许可。
 9. 使用 Codex ImageGen 生成或编辑位图；每个 P4 图片项生成一张独立、边界完整、可导入的资源图，并保留提示词、参考证据、全局视觉版本、场景视觉版本、资产地图条目、模型、输出版本与用途。生成候选与任何截图参考或效果图裁切结果的 SHA-256 相同即视为直接复用并阻塞。
 10. 简单纯色背景可做透明色键处理；复杂边缘、半透明、毛发或混合背景必须阻塞并请求合适源素材，不得伪造透明结果。UI 效果图只定义视觉目标，交互 UI 必须用 UI Toolkit 实现。
-11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，先读取 `mcpforunity://scene/cameras` 核对固定机位，用官方 `manage_build` 构建，再从项目根目录运行 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py` 启动 EXE、捕获实际窗口并生成 `CAPTURED` 实机证据；按三个独立代理审查、修改、重构建、重新捕获，对最终候选调用 `$unity-game-grilling` 后请求用户批准。清理验证、当前拷问记录或最终批准缺失时，场景不得标记 `DONE`。
+11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，先读取 `mcpforunity://scene/cameras` 核对固定机位，用官方 `manage_build` 生成主开发平台参考构建。Windows 主平台使用 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py`，移动主平台从安装后的对应 Player 捕获实机画面；生成带 `platformId` 的 `CAPTURED` 证据后，按三个独立代理审查、修改、重构建、重新捕获，对最终候选调用 `$unity-game-grilling` 后请求用户批准。清理验证、当前拷问记录或最终批准缺失时，场景不得标记 `DONE`。
 12. 所有门禁证据必须绑定 Visual Bible 版本、场景结构版本、效果图版本、资产地图版本、资源版本和 SHA-256。P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 要求修改时退回 P1；P3 变化使受影响 P4 项及 P5 失效；任一 P4 项内容、规格、导入 GUID/地址或槽位绑定变化都会清除 `ALL_ITEMS_VALIDATED` 并使 P5 失效；Visual Bible 变化使所有受影响场景从 P1 重新开始。旧批准只能保留为历史，不能继承到新版本；上游回退所需灰盒必须从审计证据重建，禁止在运行时保留低保真 Prefab/Scene 或占位资源。
 
 ## 子代理角色与并行边界
@@ -46,7 +46,7 @@
 
 ## 机器可读输出
 
-输出 `visual-bible.yaml`、P0 `prefab-structure.yaml`、P1 `image-generation.yaml`、P2 `visual-review.yaml`、P3 带框选编号的 `split-plan.yaml` 完整资产地图、逐资源/实现项任务、P4 聚合验证、P5 `prefab-assembly.yaml` 与清理验证、Editor 固定机位 `visual-capture.yaml` 和 Windows 构建 `runtime-visual-evidence.yaml`。每份输出记录状态、上游证据 ID/版本/SHA-256、失效原因和取代关系；`ALL_ITEMS_VALIDATED` 必须能枚举并解析 P3 的全部当前条目，`prefab-assembly` 必须逐项记录资产到 Prefab/Scene 槽位的绑定、已删除低保真对象/占位资源及引用检查结果，并继续引用 P0 结构、预览和批准证据。
+输出 `visual-bible.yaml`、P0 `prefab-structure.yaml`、P1 `image-generation.yaml`、P2 `visual-review.yaml`、P3 带框选编号的 `split-plan.yaml` 完整资产地图、逐资源/实现项任务、P4 聚合验证、P5 `prefab-assembly.yaml` 与清理验证、Editor 固定机位 `visual-capture.yaml` 和带平台身份的 `runtime-visual-evidence.yaml`。每份输出记录状态、上游证据 ID/版本/SHA-256、失效原因和取代关系；`ALL_ITEMS_VALIDATED` 必须能枚举并解析 P3 的全部当前条目，`prefab-assembly` 必须逐项记录资产到 Prefab/Scene 槽位的绑定、已删除低保真对象/占位资源及引用检查结果，并继续引用 P0 结构、预览和批准证据。
 
 ## 通过条件
 

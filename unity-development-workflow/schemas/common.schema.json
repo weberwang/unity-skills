@@ -87,19 +87,43 @@
         "sourceRevision": {"type": "string", "minLength": 1},
         "projectStateVersion": {"type": "string", "minLength": 1},
         "buildVersion": {"type": "string", "minLength": 1},
-        "artifactType": {"const": "WINDOWS_EXECUTABLE"},
-        "platform": {"const": "WINDOWS_STANDALONE"}
+        "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA"]},
+        "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]}
       },
       "allOf": [
         {
-          "if": {"properties": {"type": {"const": "windows-executable"}}, "required": ["type"]},
+          "if": {"properties": {"type": {"const": "platform-build-artifact"}}, "required": ["type"]},
           "then": {
             "required": [
               "artifactType", "platform", "projectId", "subjectId", "subjectVersion",
               "sourceRevision", "projectStateVersion", "buildVersion"
-            ],
-            "properties": {"path": {"pattern": "\\.[Ee][Xx][Ee]$"}}
+            ]
           }
+        },
+        {
+          "if": {"properties": {"type": {"const": "platform-adaptation-test-report"}}, "required": ["type"]},
+          "then": {
+            "required": [
+              "platform", "projectId", "subjectId", "subjectVersion",
+              "sourceRevision", "projectStateVersion", "buildVersion"
+            ]
+          }
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "WINDOWS_EXECUTABLE"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "WINDOWS"}, "path": {"pattern": "\\.[Ee][Xx][Ee]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "ANDROID_APK"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "ANDROID"}, "path": {"pattern": "\\.[Aa][Pp][Kk]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "ANDROID_APP_BUNDLE"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"const": "ANDROID"}, "path": {"pattern": "\\.[Aa][Aa][Bb]$"}}}
+        },
+        {
+          "if": {"properties": {"artifactType": {"const": "IOS_IPA"}}, "required": ["artifactType"]},
+          "then": {"properties": {"platform": {"enum": ["IOS", "IPADOS"]}, "path": {"pattern": "\\.[Ii][Pp][Aa]$"}}}
         }
       ]
     },

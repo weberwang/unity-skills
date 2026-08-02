@@ -14,11 +14,17 @@ from typing import Any
 import yaml
 
 from unity_workflow.contracts import load_yaml, validate_contract, validate_decomposition_freshness
+from unity_workflow.acceptance_integrity import check_coverage_failure
 from unity_workflow.file_mutex import FileMutex
 from unity_workflow.g1_integrity import g1_vertical_slice_failure
 from unity_workflow.gate_integrity import delivery_runtime_failure, manifest_projection_failure
 from unity_workflow.stage_grilling_integrity import g0_grilling_profile_failure, stage_grilling_failure
 from unity_workflow.performance_contract import performance_gate_failure
+from unity_workflow.platform_contract import (
+    g3_candidate_device_failure,
+    profile_platform_failure,
+    s00_platform_failure,
+)
 
 CONTRACT_TYPES = {
     "project-profile",
@@ -74,21 +80,24 @@ REQUIRED_CHECK_EVIDENCE_TYPES = {
     "scope.approved": "project-profile",
     "decomposition.approved": "decomposition-plan",
     "visual-bible.approved": "visual-bible",
-    "windows-distribution.approved": "project-profile",
+    "platforms.approved": "project-profile",
     "s00.verified": "s00-report",
     "vertical-slice.playable": "scene-manifest",
     "visual.runtime-approved": "runtime-visual-evidence",
-    "build.windows-development": "quality-report",
+    "build.platform-development": "quality-report",
     "scope.complete": "scene-manifest",
+    "modules.acceptance-complete": "quality-report",
+    "platforms.adaptation-complete": "quality-report",
     "assets.production-ready": "asset-register",
     "regression.pass": "quality-report",
     "performance.pass": "quality-report",
     "defects.p0-p1-resolved": "quality-report",
-    "scenes.2d-adaptation-verified": "scene-manifest",
     "candidate.verified": "delivery-manifest",
     "licenses.verified": "asset-register",
     "privacy.verified": "quality-report",
     "rollback.ready": "delivery-manifest",
+    "devices.acceptance-verified": "quality-report",
+    "scenes.2d-adaptation-verified": "scene-manifest",
     "user.release-approved": "delivery-manifest",
 }
 
@@ -140,6 +149,7 @@ def evaluate_gate(
         gate_id,
         config["projectStateVersion"],
         config["activeDecomposition"],
+        config["activeProjectProfile"],
     )
     upstream_failures = _verify_upstream_gates(result["gates"], gate_id, verifier)
     for check_id in gate["requiredChecks"]:
@@ -161,8 +171,14 @@ def evaluate_gate(
             gate_failures.append(binding_failure)
     if gate_id == "G1" and (binding_failure := g1_vertical_slice_failure(verifier, checks_by_id)):
         gate_failures.append(binding_failure)
+    if gate_id == "G3" and (platform_failure := g3_candidate_device_failure(verifier, checks_by_id)):
+        gate_failures.append(platform_failure)
     try:
         verifier.verify_active_decomposition()
+    except GateEvidenceError as error:
+        gate_failures.append(str(error))
+    try:
+        verifier.verify_active_project_profile()
     except GateEvidenceError as error:
         gate_failures.append(str(error))
     if not gate.get("evidence"):
@@ -274,6 +290,7 @@ class _EvidenceVerifier:
         gate_id: str,
         project_state_version: str,
         active_decomposition: Mapping[str, Any],
+        active_project_profile: Mapping[str, Any] | None = None,
     ) -> None:
         """保存当前门禁必须绑定的项目身份与版本。"""
         self.root = root
@@ -283,6 +300,7 @@ class _EvidenceVerifier:
         self.gate_id = gate_id
         self.project_state_version = project_state_version
         self.active_decomposition = dict(active_decomposition)
+        self.active_project_profile = dict(active_project_profile or {})
         self._verified: set[tuple[str, str]] = set()
 
     def verify_active_decomposition(self) -> None:
@@ -292,6 +310,14 @@ class _EvidenceVerifier:
         if self.active_decomposition.get("projectStateVersion") != self.project_state_version:
             raise GateEvidenceError("当前拆分指针 projectStateVersion 不匹配")
         self.verify_reference(self.active_decomposition)
+
+    def verify_active_project_profile(self) -> None:
+        """深验用户批准的平台目标与当前项目配置指针。"""
+        if self.active_project_profile.get("sourceRevision") != self.source_revision:
+            raise GateEvidenceError("当前项目配置指针 sourceRevision 不匹配")
+        if self.active_project_profile.get("projectStateVersion") != self.project_state_version:
+            raise GateEvidenceError("当前项目配置指针 projectStateVersion 不匹配")
+        self.verify_reference(self.active_project_profile)
 
     def verify_reference(self, reference: object) -> None:
         """验证一条 evidence 引用，并按 type 对已知契约执行深度校验。"""
@@ -335,52 +361,9 @@ class _EvidenceVerifier:
     ) -> None:
         """验证需要全集语义的检查没有用单个场景证据冒充项目范围。"""
         expected_type = REQUIRED_CHECK_EVIDENCE_TYPES.get(check_id)
-        if expected_type == "quality-report":
-            reports = [
-                self._load_referenced_contract(reference)
-                for reference in evidence
-                if isinstance(reference, Mapping) and reference.get("type") == "quality-report"
-            ]
-            if not any(
-                isinstance(result, Mapping)
-                and result.get("id") == check_id
-                and result.get("status") == "PASS"
-                for report in reports
-                for result in report.get("checks", [])
-            ):
-                raise GateEvidenceError(f"{check_id} 缺少同名 PASS 质量检查")
-        if check_id not in {"vertical-slice.playable", "scope.complete", "scenes.2d-adaptation-verified"}:
-            return
-        self.verify_active_decomposition()
-        decomposition = self._load_referenced_contract(self.active_decomposition)
-        decision = decomposition.get("decision")
-        approved_scene_ids = set(
-            decision.get("approvedSceneIds", []) if isinstance(decision, Mapping) else []
-        )
-        manifest_ids: list[str] = []
-        for reference in evidence:
-            if not isinstance(reference, Mapping) or reference.get("type") != "scene-manifest":
-                continue
-            manifest = self._load_referenced_contract(reference)
-            scene_id = manifest.get("id")
-            if isinstance(scene_id, str):
-                manifest_ids.append(scene_id)
-        if check_id == "vertical-slice.playable":
-            invalid = sorted(set(manifest_ids) - approved_scene_ids)
-            if not manifest_ids or invalid:
-                raise GateEvidenceError("vertical-slice.playable 的 sceneId 必须属于 approvedSceneIds")
-            return
-        if len(manifest_ids) != len(set(manifest_ids)):
-            raise GateEvidenceError(f"{check_id} 包含重复 scene-manifest")
-        if set(manifest_ids) != approved_scene_ids:
-            missing = sorted(approved_scene_ids - set(manifest_ids))
-            extra = sorted(set(manifest_ids) - approved_scene_ids)
-            details = []
-            if missing:
-                details.append(f"缺少已批准场景：{', '.join(missing)}")
-            if extra:
-                details.append(f"包含未批准场景：{', '.join(extra)}")
-            raise GateEvidenceError(f"{check_id} 必须覆盖当前拆分的场景全集；" + "；".join(details))
+        failure = check_coverage_failure(self, check_id, evidence, expected_type)
+        if failure:
+            raise GateEvidenceError(failure)
 
     def _verify_identity(self, kind: str, payload: Mapping[str, Any], reference: Mapping[str, Any]) -> None:
         """拒绝其他项目、源码、构建或主体版本的旧证据。"""
@@ -452,6 +435,8 @@ class _EvidenceVerifier:
                 or decomposition.get("version") != self.active_decomposition.get("subjectVersion")
             ):
                 raise GateEvidenceError("project-profile 未绑定当前拆分版本")
+            if platform_failure := profile_platform_failure(payload):
+                raise GateEvidenceError(platform_failure)
             return
         if kind == "asset-register":
             if self.gate_id in {"G2", "G3"} and payload.get("placeholders"):
@@ -519,10 +504,12 @@ class _EvidenceVerifier:
             for field in ("greybox", "gameVisual", "implementation", "uiVisual", "runtimeComparison", "tests", "performance"):
                 references.extend(payload.get(field, {}).get("evidence", []))
         elif kind == "s00-report":
+            if platform_failure := s00_platform_failure(self, payload):
+                raise GateEvidenceError(platform_failure)
             references.extend((payload.get("decompositionPlan"), payload.get("moduleManifest")))
             references.extend(payload.get("qualityReports", []))
             references.extend(payload.get("console", {}).get("evidence", []))
-            references.append(payload.get("emptyWindowsBuild", {}).get("artifact"))
+            references.append(payload.get("emptyPlatformBuild", {}).get("artifact"))
             references.extend(_approval_references(payload.get("reviews", [])))
         elif kind == "visual-review":
             references.append(payload.get("generationEvidence"))
@@ -593,7 +580,7 @@ class _EvidenceVerifier:
             references.extend(payload.get("evidence", []))
             references.extend(payload.get("qualityReports", []))
             references.extend(payload.get("runtimeVisualEvidence", []))
-            references.extend((payload.get("manageBuildResult", {}).get("evidence"), payload.get("launchCheck", {}).get("evidence")))
+            references.extend((payload.get("buildResult", {}).get("evidence"), payload.get("launchCheck", {}).get("evidence")))
             references.extend({"type": "build-artifact", "path": item.get("path"), "sha256": item.get("sha256")} for item in payload.get("artifacts", []))
             references.extend(_approval_references([payload.get("authorization", {}).get("approval")]))
         elif kind == "registration-record":
@@ -636,7 +623,7 @@ class _EvidenceVerifier:
             raise GateEvidenceError(failure)
 
     def _verify_delivery_runtime_coverage(self, payload: Mapping[str, Any]) -> None:
-        """深验 G3 的逐场景实机证据全集及 Windows 可执行文件绑定。"""
+        """深验 G3 的逐场景实机证据全集及所属平台主制品绑定。"""
         failure = delivery_runtime_failure(self, payload)
         if failure:
             raise GateEvidenceError(failure)

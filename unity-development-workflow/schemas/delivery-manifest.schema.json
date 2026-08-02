@@ -3,7 +3,7 @@
   "$id": "https://codex.local/unity-workflow/schemas/delivery-manifest.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "id", "projectId", "status", "version", "sourceRevision", "projectStateVersion", "buildProfile", "platform", "distributionChannel", "generatedAtUtc", "manageBuildResult", "artifacts", "launchCheck", "qualityReportPaths", "qualityReports", "runtimeVisualEvidence", "licensesPath", "privacyReviewPath", "releaseNotesPath", "knownIssues", "rollback", "evidence"],
+  "required": ["schemaVersion", "id", "projectId", "status", "version", "sourceRevision", "projectStateVersion", "buildProfile", "platform", "distributionChannel", "generatedAtUtc", "buildResult", "artifacts", "launchCheck", "qualityReportPaths", "qualityReports", "runtimeVisualEvidence", "licensesPath", "privacyReviewPath", "releaseNotesPath", "knownIssues", "rollback", "evidence"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -15,10 +15,10 @@
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "buildProfile": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-    "platform": {"const": "Windows"},
+    "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
     "distributionChannel": {"type": "string", "minLength": 1},
     "generatedAtUtc": {"type": "string", "format": "date-time"},
-    "manageBuildResult": {"$ref": "#/$defs/checkResult"},
+    "buildResult": {"$ref": "#/$defs/checkResult"},
     "artifacts": {
       "type": "array",
       "uniqueItems": true,
@@ -27,7 +27,7 @@
         "additionalProperties": false,
         "required": ["artifactType", "path", "sha256", "sizeBytes"],
         "properties": {
-          "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "UNITY_DATA", "MANAGED_ASSEMBLY", "DEBUG_SYMBOLS", "SUPPORT_FILE"]},
+          "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA", "UNITY_DATA", "MANAGED_ASSEMBLY", "DEBUG_SYMBOLS", "SUPPORT_FILE"]},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "sizeBytes": {"type": "integer", "minimum": 0}
@@ -36,6 +36,18 @@
           {
             "if": {"properties": {"artifactType": {"const": "WINDOWS_EXECUTABLE"}}, "required": ["artifactType"]},
             "then": {"properties": {"path": {"pattern": "\\.[Ee][Xx][Ee]$"}}}
+          },
+          {
+            "if": {"properties": {"artifactType": {"const": "ANDROID_APK"}}, "required": ["artifactType"]},
+            "then": {"properties": {"path": {"pattern": "\\.[Aa][Pp][Kk]$"}}}
+          },
+          {
+            "if": {"properties": {"artifactType": {"const": "ANDROID_APP_BUNDLE"}}, "required": ["artifactType"]},
+            "then": {"properties": {"path": {"pattern": "\\.[Aa][Aa][Bb]$"}}}
+          },
+          {
+            "if": {"properties": {"artifactType": {"const": "IOS_IPA"}}, "required": ["artifactType"]},
+            "then": {"properties": {"path": {"pattern": "\\.[Ii][Pp][Aa]$"}}}
           }
         ]
       }
@@ -76,16 +88,55 @@
   },
   "allOf": [
     {
+      "if": {"properties": {"platform": {"const": "WINDOWS"}}, "required": ["platform"]},
+      "then": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "properties": {
+                "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "UNITY_DATA", "MANAGED_ASSEMBLY", "DEBUG_SYMBOLS", "SUPPORT_FILE"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"platform": {"const": "ANDROID"}}, "required": ["platform"]},
+      "then": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "properties": {
+                "artifactType": {"enum": ["ANDROID_APK", "ANDROID_APP_BUNDLE", "DEBUG_SYMBOLS", "SUPPORT_FILE"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"platform": {"enum": ["IOS", "IPADOS"]}}, "required": ["platform"]},
+      "then": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "properties": {
+                "artifactType": {"enum": ["IOS_IPA", "DEBUG_SYMBOLS", "SUPPORT_FILE"]}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {"properties": {"status": {"enum": ["CANDIDATE", "RELEASE_APPROVED"]}}, "required": ["status"]},
       "then": {
         "properties": {
-          "manageBuildResult": {"properties": {"status": {"const": "PASS"}}},
+          "buildResult": {"properties": {"status": {"const": "PASS"}}},
           "launchCheck": {"properties": {"status": {"const": "PASS"}}},
           "artifacts": {
-            "minItems": 1,
-            "contains": {"properties": {"artifactType": {"const": "WINDOWS_EXECUTABLE"}}, "required": ["artifactType"]},
-            "minContains": 1,
-            "maxContains": 1
+            "minItems": 1
           },
           "qualityReportPaths": {"minItems": 1},
           "qualityReports": {"minItems": 1},
@@ -93,6 +144,36 @@
           "evidence": {"minItems": 1}
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["CANDIDATE", "RELEASE_APPROVED"]},
+          "platform": {"const": "WINDOWS"}
+        },
+        "required": ["status", "platform"]
+      },
+      "then": {"properties": {"artifacts": {"contains": {"properties": {"artifactType": {"const": "WINDOWS_EXECUTABLE"}}, "required": ["artifactType"]}, "minContains": 1, "maxContains": 1}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["CANDIDATE", "RELEASE_APPROVED"]},
+          "platform": {"const": "ANDROID"}
+        },
+        "required": ["status", "platform"]
+      },
+      "then": {"properties": {"artifacts": {"contains": {"properties": {"artifactType": {"enum": ["ANDROID_APK", "ANDROID_APP_BUNDLE"]}}, "required": ["artifactType"]}, "minContains": 1, "maxContains": 1}}}
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["CANDIDATE", "RELEASE_APPROVED"]},
+          "platform": {"enum": ["IOS", "IPADOS"]}
+        },
+        "required": ["status", "platform"]
+      },
+      "then": {"properties": {"artifacts": {"contains": {"properties": {"artifactType": {"const": "IOS_IPA"}}, "required": ["artifactType"]}, "minContains": 1, "maxContains": 1}}}
     },
     {
       "if": {"properties": {"status": {"const": "RELEASE_APPROVED"}}, "required": ["status"]},

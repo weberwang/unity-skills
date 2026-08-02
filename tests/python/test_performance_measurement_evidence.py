@@ -76,6 +76,7 @@ def _fixtures() -> tuple[dict[str, object], dict[str, object], dict[str, dict[st
             "metric": measurement["metric"],
             "unit": measurement["unit"],
             "value": measurement["value"],
+            "captureEnvironment": {"platform": report["platformId"]},
             "rawArtifact": {
                 "type": "performance-raw-artifact",
                 "path": raw_path,
@@ -90,7 +91,10 @@ def _fixtures() -> tuple[dict[str, object], dict[str, object], dict[str, dict[st
             "metric": measurement["metric"],
             "unit": measurement["unit"],
             "captureSource": CAPTURE_SOURCES[measurement["metric"]],
-            "captureMetadata": {"sampleCount": 1},
+            "captureMetadata": {
+                "platform": report["platformId"],
+                "sampleCount": 1,
+            },
             "samples": [measurement["value"]],
         }
     return report, profile, evidence_by_path
@@ -144,6 +148,16 @@ def test_gate_rejects_measurement_evidence_with_wrong_metric() -> None:
     )
     failure = performance_gate_failure(_EvidenceReader(profile, evidence_by_path), report)
     assert failure is not None and "metric 与报告不一致" in failure
+
+
+def test_gate_rejects_measurement_evidence_from_other_platform() -> None:
+    """其他平台采集环境不能冒充当前性能报告的样本。"""
+    report, profile, evidence_by_path = _fixtures()
+    evidence_by_path = deepcopy(evidence_by_path)
+    first = report["measurements"][0]["measurementEvidence"]["path"]
+    evidence_by_path[first]["captureEnvironment"]["platform"] = "ANDROID"
+    failure = performance_gate_failure(_EvidenceReader(profile, evidence_by_path), report)
+    assert failure is not None and "测量证据平台" in failure
 
 
 def test_real_gate_reads_measurement_contracts_and_raw_artifacts(tmp_path: Path) -> None:

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Project.UnityWorkflow.Core.Models
@@ -16,7 +17,6 @@ namespace Project.UnityWorkflow.Core.Models
         [SerializeField] private DeliveryProfileDto delivery = new DeliveryProfileDto();
         [SerializeField] private CapabilityProfileDto capabilities = new CapabilityProfileDto();
         [SerializeField] private ProjectPathProfileDto paths = new ProjectPathProfileDto();
-        [SerializeField] private QualityBudgetDto quality = new QualityBudgetDto();
 
         /// <summary>获取或设置 Schema 版本。</summary>
         public string SchemaVersion { get => schemaVersion; set => schemaVersion = value; }
@@ -39,8 +39,6 @@ namespace Project.UnityWorkflow.Core.Models
         /// <summary>获取或设置工作流约定路径。</summary>
         public ProjectPathProfileDto Paths { get => paths; set => paths = value ?? new ProjectPathProfileDto(); }
 
-        /// <summary>获取或设置质量预算。</summary>
-        public QualityBudgetDto Quality { get => quality; set => quality = value ?? new QualityBudgetDto(); }
     }
 
     /// <summary>
@@ -85,14 +83,102 @@ namespace Project.UnityWorkflow.Core.Models
     [Serializable]
     public sealed class DeliveryProfileDto
     {
-        [SerializeField] private string platform;
-        [SerializeField] private string distributionChannel;
+        [SerializeField] private string platformSelectionStatus;
+        [SerializeField] private string primaryDevelopmentPlatform;
+        [SerializeField] private List<PlatformTargetDto> targets = new List<PlatformTargetDto>();
 
-        /// <summary>获取或设置交付平台。</summary>
-        public string Platform { get => platform; set => platform = value; }
+        /// <summary>获取或设置平台选择批准状态。</summary>
+        public string PlatformSelectionStatus { get => platformSelectionStatus; set => platformSelectionStatus = value; }
+
+        /// <summary>获取或设置主开发平台。</summary>
+        public string PrimaryDevelopmentPlatform { get => primaryDevelopmentPlatform; set => primaryDevelopmentPlatform = value; }
+
+        /// <summary>获取或设置用户选定的平台适配方案。</summary>
+        public List<PlatformTargetDto> Targets { get => targets; set => targets = value ?? new List<PlatformTargetDto>(); }
+    }
+
+    /// <summary>
+    /// 表示单个目标平台及其独立适配边界。
+    /// </summary>
+    [Serializable]
+    public sealed class PlatformTargetDto
+    {
+        [SerializeField] private string platformId;
+        [SerializeField] private string adaptationFamily;
+        [SerializeField] private string buildTarget;
+        [SerializeField] private string distributionChannel;
+        [SerializeField] private List<string> deviceClasses = new List<string>();
+        [SerializeField] private List<string> orientations = new List<string>();
+        [SerializeField] private List<string> inputModes = new List<string>();
+        [SerializeField] private bool safeAreaRequired;
+        [SerializeField] private bool adaptiveLayoutRequired;
+        [SerializeField] private List<string> windowModes = new List<string>();
+        [SerializeField] private bool autorotation;
+        [SerializeField] private List<ReferenceResolutionDto> referenceResolutions = new List<ReferenceResolutionDto>();
+        [SerializeField] private QualityBudgetDto quality = new QualityBudgetDto();
+
+        /// <summary>获取或设置稳定平台 ID。</summary>
+        public string PlatformId { get => platformId; set => platformId = value; }
+
+        /// <summary>获取或设置 Windows 或移动端适配族。</summary>
+        public string AdaptationFamily { get => adaptationFamily; set => adaptationFamily = value; }
+
+        /// <summary>获取或设置 Unity 构建目标。</summary>
+        public string BuildTarget { get => buildTarget; set => buildTarget = value; }
 
         /// <summary>获取或设置分发渠道。</summary>
         public string DistributionChannel { get => distributionChannel; set => distributionChannel = value; }
+
+        /// <summary>获取或设置该平台批准的设备形态。</summary>
+        public List<string> DeviceClasses { get => deviceClasses; set => deviceClasses = value ?? new List<string>(); }
+
+        /// <summary>获取或设置该平台批准的屏幕方向。</summary>
+        public List<string> Orientations { get => orientations; set => orientations = value ?? new List<string>(); }
+
+        /// <summary>获取或设置该平台批准的输入模式。</summary>
+        public List<string> InputModes { get => inputModes; set => inputModes = value ?? new List<string>(); }
+
+        /// <summary>获取或设置该平台是否必须处理安全区。</summary>
+        public bool SafeAreaRequired { get => safeAreaRequired; set => safeAreaRequired = value; }
+
+        /// <summary>获取或设置该平台是否必须使用适应式布局。</summary>
+        public bool AdaptiveLayoutRequired { get => adaptiveLayoutRequired; set => adaptiveLayoutRequired = value; }
+
+        /// <summary>获取或设置 Windows 平台批准的窗口模式。</summary>
+        public List<string> WindowModes { get => windowModes; set => windowModes = value ?? new List<string>(); }
+
+        /// <summary>获取或设置移动端是否启用自动旋转。</summary>
+        public bool Autorotation { get => autorotation; set => autorotation = value; }
+
+        /// <summary>获取或设置该平台需要验证的参考分辨率。</summary>
+        public List<ReferenceResolutionDto> ReferenceResolutions
+        {
+            get => referenceResolutions;
+            set => referenceResolutions = value ?? new List<ReferenceResolutionDto>();
+        }
+
+        /// <summary>获取或设置该平台独立的性能与包体质量预算。</summary>
+        public QualityBudgetDto Quality { get => quality; set => quality = value ?? new QualityBudgetDto(); }
+    }
+
+    /// <summary>
+    /// 表示目标平台的一项参考分辨率及其方向。
+    /// </summary>
+    [Serializable]
+    public sealed class ReferenceResolutionDto
+    {
+        [SerializeField] private int width;
+        [SerializeField] private int height;
+        [SerializeField] private string orientation;
+
+        /// <summary>获取或设置参考宽度。</summary>
+        public int Width { get => width; set => width = value; }
+
+        /// <summary>获取或设置参考高度。</summary>
+        public int Height { get => height; set => height = value; }
+
+        /// <summary>获取或设置横屏或竖屏方向。</summary>
+        public string Orientation { get => orientation; set => orientation = value; }
     }
 
     /// <summary>
@@ -152,7 +238,7 @@ namespace Project.UnityWorkflow.Core.Models
     }
 
     /// <summary>
-    /// 表示项目级帧率、耗时、内存、渲染与包体预算。
+    /// 表示单个平台的帧率、耗时、内存、渲染与包体预算。
     /// </summary>
     [Serializable]
     public sealed class QualityBudgetDto

@@ -177,7 +177,7 @@ def handle_asset_merge_records(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     """构建包含全部工作流子命令的参数解析器。"""
-    parser = argparse.ArgumentParser(description="编排 Unity 6 URP 项目的场景开发与 Windows 交付工作流。")
+    parser = argparse.ArgumentParser(description="编排 Unity 6 URP 项目的场景开发与用户批准平台交付工作流。")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     validate_parser = subparsers.add_parser("validate", help="校验项目契约")

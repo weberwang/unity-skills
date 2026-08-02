@@ -81,6 +81,7 @@ def _fixtures() -> tuple[
             "metric": metric,
             "unit": measurement["unit"],
             "value": measurement["value"],
+            "captureEnvironment": {"platform": report["platformId"]},
             "rawArtifact": raw_reference,
         }
         raw = {
@@ -91,7 +92,10 @@ def _fixtures() -> tuple[
             "metric": metric,
             "unit": measurement["unit"],
             "captureSource": CAPTURE_SOURCES[metric],
-            "captureMetadata": {"sampleCount": 2},
+            "captureMetadata": {
+                "platform": report["platformId"],
+                "sampleCount": 2,
+            },
             "samples": [measurement["value"], measurement["value"]],
         }
         contracts[measurement_reference["path"]] = evidence
@@ -146,6 +150,14 @@ def test_gate_recalculates_samples_and_rejects_declared_measurement_value() -> N
     raw_by_metric["minimumFps"]["samples"] = [60, 59.999]
     failure = performance_gate_failure(_RawEvidenceReader(profile, contracts), report)
     assert failure is not None and "value 与原始 samples 实算值不一致" in failure
+
+
+def test_gate_rejects_raw_samples_from_other_platform() -> None:
+    """原始样本的平台必须与当前性能报告一致。"""
+    report, profile, contracts, raw_by_metric = _fixtures()
+    raw_by_metric["minimumFps"]["captureMetadata"]["platform"] = "ANDROID"
+    failure = performance_gate_failure(_RawEvidenceReader(profile, contracts), report)
+    assert failure is not None and "原始样本平台" in failure
 
 
 def test_raw_contract_rejects_sample_count_mismatch() -> None:

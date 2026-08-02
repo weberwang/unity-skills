@@ -4,10 +4,10 @@
 
 - Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
-- ProjectValidation：Unity 6、URP、Windows、构建场景、资源引用、asmdef 循环与 Console 基线检查。
+- ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供竖屏高度适配、横屏宽度适配、UI Toolkit match 配置和无交互装饰边带布局。
-- VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代 Windows Standalone 实机视觉证据。
-- BuildPipeline：在官方构建前检查 Windows、版本、场景、质量报告、视觉批准与输出保护。
+- VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代任一目标平台 Player 实机视觉证据。
+- BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
 - McpTools：把四项业务服务作为 unity-mcp 短同步自定义工具暴露。
 - EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
 
@@ -34,7 +34,7 @@
 
 ## 交付边界
 
-`uwt_delivery_preflight` 的 `PASS` 只表示技术构建前置检查通过，不包含许可、隐私、签名、上传、发行或用户 G3 放行。正式 Windows 构建仍由 unity-mcp 官方 `manage_build` 执行。
+`uwt_delivery_preflight` 只适用于 Windows；其 `PASS` 仅表示技术构建前置检查通过，不包含许可、隐私、签名、上传、发行或用户 G3 放行。正式 Windows 构建仍由 unity-mcp 官方 `manage_build` 执行，Android、iOS 和 iPadOS 不得复用该结论。
 
 ## 测试
 

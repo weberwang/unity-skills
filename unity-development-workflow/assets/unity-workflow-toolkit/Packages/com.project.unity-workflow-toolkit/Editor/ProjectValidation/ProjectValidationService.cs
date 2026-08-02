@@ -20,7 +20,7 @@ namespace Project.UnityWorkflow.ProjectValidation
     {
         public string UnityVersion = string.Empty;
         public bool IsUrp;
-        public bool IsWindowsTarget;
+        public string ActivePlatformId = string.Empty;
         public string[] EnabledBuildScenes = Array.Empty<string>();
         public string[] MissingBuildScenes = Array.Empty<string>();
         public string[] MissingAssetReferences = Array.Empty<string>();
@@ -74,7 +74,17 @@ namespace Project.UnityWorkflow.ProjectValidation
             string[] assemblyDependencyCycles = snapshot.AssemblyDependencyCycles ?? Array.Empty<string>();
             string expectedUnityVersion = profile.Unity == null ? string.Empty : profile.Unity.Version;
             string expectedPipeline = profile.Unity == null ? string.Empty : profile.Unity.RenderPipeline;
-            string expectedPlatform = profile.Delivery == null ? string.Empty : profile.Delivery.Platform;
+            string expectedPlatform = profile.Delivery == null ? string.Empty : profile.Delivery.PrimaryDevelopmentPlatform;
+            List<PlatformTargetDto> targets = profile.Delivery?.Targets ?? new List<PlatformTargetDto>();
+            string[] targetIds = targets
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.PlatformId))
+                .Select(item => item.PlatformId)
+                .ToArray();
+            bool platformSelectionValid = profile.Delivery != null &&
+                string.Equals(profile.Delivery.PlatformSelectionStatus, "APPROVED", StringComparison.OrdinalIgnoreCase) &&
+                targetIds.Length > 0 &&
+                targetIds.Distinct(StringComparer.OrdinalIgnoreCase).Count() == targetIds.Length &&
+                targetIds.Contains(expectedPlatform, StringComparer.OrdinalIgnoreCase);
 
             AddCheck(report, "unity-version", "static",
                 IsUnityVersionCompatible(expectedUnityVersion, snapshot.UnityVersion) ? "PASS" : "FAIL",
@@ -84,11 +94,16 @@ namespace Project.UnityWorkflow.ProjectValidation
                     ? "PASS"
                     : "FAIL",
                 snapshot.IsUrp ? "当前渲染管线为 URP。" : "当前项目未启用 URP。" );
+            AddCheck(report, "platform-selection", "static",
+                platformSelectionValid ? "PASS" : "FAIL",
+                platformSelectionValid
+                    ? $"用户已批准 {targetIds.Length} 个目标平台，主开发平台为 {expectedPlatform}。"
+                    : "平台集合必须获用户批准、不得重复，且必须包含主开发平台。" );
             AddCheck(report, "build-target", "build",
-                string.Equals(expectedPlatform, "Windows", StringComparison.OrdinalIgnoreCase) && snapshot.IsWindowsTarget
+                IsBuildTargetCompatible(expectedPlatform, snapshot.ActivePlatformId)
                     ? "PASS"
                     : "FAIL",
-                snapshot.IsWindowsTarget ? "当前构建目标为 Windows。" : "当前构建目标不是 Windows。" );
+                $"期望主开发平台 {expectedPlatform}，当前构建目标为 {snapshot.ActivePlatformId}。" );
             AddCheck(report, "build-scenes", "static",
                 enabledBuildScenes.Length > 0 && missingBuildScenes.Length == 0
                     ? "PASS"
@@ -151,8 +166,7 @@ namespace Project.UnityWorkflow.ProjectValidation
                 UnityVersion = Application.unityVersion,
                 IsUrp = !string.IsNullOrEmpty(renderPipelineType) &&
                         renderPipelineType.IndexOf("UniversalRenderPipeline", StringComparison.OrdinalIgnoreCase) >= 0,
-                IsWindowsTarget = EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64 ||
-                                  EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows,
+                ActivePlatformId = GetPlatformId(EditorUserBuildSettings.activeBuildTarget),
                 EnabledBuildScenes = enabledScenes.ToArray(),
                 MissingBuildScenes = missingScenes.ToArray(),
                 MissingAssetReferences = FindMissingAssetReferences(enabledScenes),
@@ -161,6 +175,43 @@ namespace Project.UnityWorkflow.ProjectValidation
                 ConsoleErrorBaseline = 0,
                 ConsoleCountAvailable = consoleCountAvailable
             };
+        }
+
+        /// <summary>
+        /// 将 Unity 构建目标映射为工作流稳定平台 ID；未知目标保持为空并使校验失败。
+        /// </summary>
+        private static string GetPlatformId(BuildTarget target)
+        {
+            if (target == BuildTarget.StandaloneWindows64 || target == BuildTarget.StandaloneWindows)
+            {
+                return "WINDOWS";
+            }
+
+            if (target == BuildTarget.Android)
+            {
+                return "ANDROID";
+            }
+
+            if (target == BuildTarget.iOS)
+            {
+                // Unity 的 iOS 构建目标同时服务 iPhone 与 iPad，最终设备区分由批准的目标配置决定。
+                return "IOS";
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// 判断活动 Unity BuildTarget 是否能服务批准的主开发平台；iPhone 与 iPad 共用 iOS BuildTarget。
+        /// </summary>
+        private static bool IsBuildTargetCompatible(string expectedPlatform, string activePlatform)
+        {
+            if (string.Equals(expectedPlatform, "IPADOS", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Equals(activePlatform, "IOS", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return string.Equals(expectedPlatform, activePlatform, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

@@ -1,0 +1,29 @@
+schemaVersion: "1.0"
+id: delivery.android
+projectId: starfall-arena
+status: DRAFT
+version: 0.1.0-dev.1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildProfile: ProjectSettings/BuildProfiles/Android.asset
+platform: ANDROID
+distributionChannel: Google Play
+generatedAtUtc: "2026-08-02T12:00:00Z"
+buildResult:
+  status: NOT_RUN
+artifacts:
+  - artifactType: ANDROID_APP_BUNDLE
+    path: Artifacts/Builds/Android/StarfallArena.aab
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    sizeBytes: 0
+launchCheck:
+  status: NOT_RUN
+qualityReportPaths: []
+qualityReports: []
+runtimeVisualEvidence: []
+licensesPath: docs/third-party-notices.md
+privacyReviewPath: docs/privacy-review.md
+releaseNotesPath: docs/release-notes.md
+knownIssues: []
+rollback: 保留上一批准版本 AAB，并在商店控制台执行受控回滚
+evidence: []

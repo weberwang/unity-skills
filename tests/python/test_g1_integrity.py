@@ -1,4 +1,4 @@
-"""验证 G1 三项必需检查只能消费同一场景与同一 Windows EXE。"""
+"""验证 G1 三项必需检查只能消费同一场景与同一主平台制品。"""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ class _Reader:
     project_state_version = "project-state-v1"
     build_version = "0.1.0-dev.1"
     active_decomposition = {"type": "decomposition-plan", "path": "decomposition.yaml", "sha256": "d" * 64}
+    active_project_profile = {"type": "project-profile", "path": "profile.yaml", "sha256": "e" * 64}
 
     def __init__(self, contracts: dict[str, dict[str, object]]) -> None:
         """保存按项目相对路径索引的契约。"""
@@ -36,17 +37,20 @@ class _Reader:
     def verify_active_decomposition(self) -> None:
         """夹具中的拆分始终代表已验真活动指针。"""
 
+    def verify_active_project_profile(self) -> None:
+        """夹具中的项目配置始终代表已验真活动指针。"""
+
     def _load_referenced_contract(self, reference: dict[str, object]) -> dict[str, object]:
         """回读主契约或当前拆分。"""
         return self.contracts[str(reference["path"])]
 
 
 def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[str, object]]]:
-    """构造三项检查共享同一 EXE 的最小有效闭环。"""
+    """构造三项检查共享同一主平台制品的最小有效闭环。"""
     executable = {
-        "type": "windows-executable",
+        "type": "platform-build-artifact",
         "artifactType": "WINDOWS_EXECUTABLE",
-        "platform": "WINDOWS_STANDALONE",
+        "platform": "WINDOWS",
         "path": "Artifacts/Builds/Windows/StarfallArena.exe",
         "sha256": "a" * 64,
         "projectId": "starfall-arena",
@@ -70,7 +74,7 @@ def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[s
     }
     references = {
         "visual.runtime-approved": {"type": "runtime-visual-evidence", "path": "runtime.yaml", "sha256": "2" * 64},
-        "build.windows-development": {"type": "quality-report", "path": "build.yaml", "sha256": "3" * 64},
+        "build.platform-development": {"type": "quality-report", "path": "build.yaml", "sha256": "3" * 64},
     }
     contracts: dict[str, dict[str, object]] = {
         "scene.yaml": {
@@ -94,19 +98,28 @@ def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[s
         "runtime.yaml": {
             "projectId": "starfall-arena", "sceneId": "scene.arena-intro",
             "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1",
-            "buildVersion": "0.1.0-dev.1", "buildArtifactSha256": "a" * 64,
+            "buildVersion": "0.1.0-dev.1", "platformId": "WINDOWS",
+            "buildArtifactSha256": "a" * 64,
         },
         "build.yaml": {
             "projectId": "starfall-arena", "sceneId": "scene.arena-intro",
             "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1",
-            "buildVersion": "0.1.0-dev.1", "buildArtifactSha256": "a" * 64,
+            "buildVersion": "0.1.0-dev.1", "platformId": "WINDOWS",
+            "buildArtifactSha256": "a" * 64,
             "buildArtifact": {
-                "artifactType": "WINDOWS_EXECUTABLE", "platform": "WINDOWS_STANDALONE",
+                "artifactType": "WINDOWS_EXECUTABLE", "platform": "WINDOWS",
                 "path": executable["path"], "sha256": executable["sha256"],
             },
-            "checks": [{"id": "build.windows-development", "status": "PASS", "evidence": [deepcopy(executable)]}],
+            "checks": [{"id": "build.platform-development", "status": "PASS", "evidence": [deepcopy(executable)]}],
         },
         "decomposition.yaml": {"decision": {"approvedSceneIds": ["scene.arena-intro"]}},
+        "profile.yaml": {
+            "delivery": {
+                "platformSelectionStatus": "APPROVED",
+                "primaryDevelopmentPlatform": "WINDOWS",
+                "targets": [{"platformId": "WINDOWS"}],
+            }
+        },
     }
     checks: dict[str, dict[str, object]] = {
         "vertical-slice.playable": {
@@ -122,11 +135,11 @@ def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[s
 
 
 def _executable(check: dict[str, object]) -> dict[str, object]:
-    """取得检查中唯一 Windows EXE 引用。"""
+    """取得检查中唯一主平台制品引用。"""
     return next(
         item
         for item in check["evidence"]
-        if isinstance(item, dict) and item.get("type") == "windows-executable"
+        if isinstance(item, dict) and item.get("type") == "platform-build-artifact"
     )
 
 
@@ -171,10 +184,17 @@ def test_g1_uses_production_verifier_to_backread_real_files(
     verifier = _EvidenceVerifier(
         tmp_path, reader.project_id, reader.source_revision, reader.build_version,
         "G1", reader.project_state_version, reader.active_decomposition,
+        reader.active_project_profile,
     )
     # 本用例聚焦生产读取路径；完整 Schema、状态和 SHA 校验由 Gate 定向测试覆盖。
     monkeypatch.setattr(verifier, "verify_reference", lambda reference: None)
     monkeypatch.setattr(verifier, "verify_active_decomposition", lambda: None)
+    monkeypatch.setattr(verifier, "verify_active_project_profile", lambda: None)
+    monkeypatch.setattr(
+        verifier,
+        "_load_referenced_contract",
+        lambda reference: reader.contracts[str(reference["path"])],
+    )
     assert g1_vertical_slice_failure(verifier, checks) is None
 
 
@@ -208,7 +228,7 @@ def test_g1_rejects_contract_bound_to_different_executable(target: str) -> None:
     """实机视觉或构建报告的制品哈希不得脱离共享 EXE。"""
     reader, checks, contracts = _fixtures()
     contracts[target]["buildArtifactSha256"] = "b" * 64
-    assert "EXE SHA-256" in (g1_vertical_slice_failure(reader, checks) or "")
+    assert "平台制品 SHA-256" in (g1_vertical_slice_failure(reader, checks) or "")
 
 
 def test_g1_rejects_missing_executable_hash() -> None:
@@ -222,7 +242,7 @@ def test_g1_rejects_different_executable_reference() -> None:
     """三个检查不能各自引用不同 EXE。"""
     reader, checks, _ = _fixtures()
     _executable(checks["visual.runtime-approved"])["sha256"] = "b" * 64
-    assert "EXE 引用不一致" in (g1_vertical_slice_failure(reader, checks) or "")
+    assert "平台构建制品引用不一致" in (g1_vertical_slice_failure(reader, checks) or "")
 
 
 @pytest.mark.parametrize(
@@ -231,7 +251,7 @@ def test_g1_rejects_different_executable_reference() -> None:
         ("sceneId", "scene.arena-battle", "同一 sceneId"),
         ("projectStateVersion", "old-state", "projectStateVersion"),
         ("buildVersion", "old-build", "buildVersion"),
-        ("buildArtifactSha256", "b" * 64, "EXE SHA-256"),
+        ("buildArtifactSha256", "b" * 64, "平台制品 SHA-256"),
     ),
 )
 def test_g1_rejects_stale_or_mismatched_playability_report(
@@ -266,7 +286,7 @@ def test_g1_rejects_duplicate_primary_evidence() -> None:
     (
         ("NOT_PASS", "状态不是 PASS"),
         ("WRONG_ID", "id 必须为 vertical-slice.playable"),
-        ("DUPLICATE_EXE", "必须且只能包含一个 windows-executable"),
+        ("DUPLICATE_EXE", "必须且只能包含一个 platform-build-artifact"),
     ),
 )
 def test_g1_rejects_invalid_playability_tests(mutation: str, message: str) -> None:
@@ -294,7 +314,7 @@ def test_g1_rejects_non_executable_path() -> None:
     reader, checks, _ = _fixtures()
     for check in checks.values():
         _executable(check)["path"] = "Artifacts/Builds/Windows/readme.txt"
-    assert "path 必须指向 .exe" in (g1_vertical_slice_failure(reader, checks) or "")
+    assert "path 扩展名与 WINDOWS_EXECUTABLE 不匹配" in (g1_vertical_slice_failure(reader, checks) or "")
 
 
 @pytest.mark.parametrize(

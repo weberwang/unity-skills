@@ -1,0 +1,50 @@
+schemaVersion: "1.0"
+taskId: qa.platform.android
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+platformId: ANDROID
+platformAdaptation:
+  deviceProfileIds: [android-phone-reference, android-tablet-reference]
+  checks:
+    build: PASS
+    installation: PASS
+    adaptiveLayout: PASS
+    input: PASS
+    lifecycle: PASS
+    performance: PASS
+  platformSpecificChecks:
+    - 安全区与刘海挖孔
+    - 横竖屏与自动旋转
+    - 触控、系统返回键与软键盘
+    - 前后台、权限拒绝、低内存与热状态
+generatedAtUtc: "2026-08-02T12:00:00Z"
+checks:
+  - id: platforms.adaptation-complete
+    category: test
+    status: PASS
+    message: Android 构建、触控、安全区、横竖屏、后台恢复与平台性能检查全部通过
+    evidence:
+      - type: platform-adaptation-test-report
+        path: Artifacts/Quality/Platforms/android.json
+        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        platform: ANDROID
+        projectId: starfall-arena
+        subjectId: qa.platform.android
+        subjectVersion: 0.1.0-dev.1
+        sourceRevision: working-tree-snapshot-20260727
+        projectStateVersion: project-state-v1
+        buildVersion: 0.1.0-dev.1
+status: PASS
+evidence:
+  - type: platform-adaptation-test-report
+    path: Artifacts/Quality/Platforms/android.json
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    platform: ANDROID
+    projectId: starfall-arena
+    subjectId: qa.platform.android
+    subjectVersion: 0.1.0-dev.1
+    sourceRevision: working-tree-snapshot-20260727
+    projectStateVersion: project-state-v1
+    buildVersion: 0.1.0-dev.1

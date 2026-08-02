@@ -2,7 +2,7 @@
 
 ## 本次验证范围
 
-本记录对应 2026-07-29 的工作流重构，覆盖总控与角色 Skills、严格默认拒绝策略、不可跳关质量门、阶段新证据状态机、拆分前拷问、模块/场景契约、全局视觉、P0 低保真 Prefab/Scene 结构、P1 高保真候选确认、P2 独立审阅、P3 编号资产地图、逐项资源生成、结构化拼装及最终低保真清理、2D 多比例适配、基于 MCP 的 3D 模型与 PBR 纹理流程、YAML/JSON Schema 契约、Python 编译/调度工具、项目文档初始化、Python 与 npx Skill 安装器、Unity Workflow Toolkit 源码与最小测试宿主。
+本记录对应 2026-08-02 的工作流重构，覆盖总控与角色 Skills、严格默认拒绝策略、不可跳关质量门、阶段新证据状态机、拆分前拷问、用户驱动的平台选择、Windows/Android/iOS/iPadOS 独立适配、主开发平台 S00/G1、G2 逐模块与逐平台验收、G3 多平台候选制品及最终设备矩阵、全局视觉、P0 低保真 Prefab/Scene 结构、P1 高保真候选确认、P2 独立审阅、P3 编号资产地图、逐项资源生成、结构化拼装及最终低保真清理、2D 多比例与移动安全区适配、基于 MCP 的 3D 模型与 PBR 纹理流程、YAML/JSON Schema 契约、Python 编译/调度工具、项目文档初始化、Python 与 npx Skill 安装器、Unity Workflow Toolkit 源码与最小测试宿主。
 
 ## 已实际通过
 
@@ -11,10 +11,10 @@
 命令：
 
 ```powershell
-rtk uv run pytest -q
+rtk proxy uv run pytest -q
 ```
 
-结果：`394 passed`。覆盖契约校验、确定性 Job 编译、严格策略入口与默认提示、标准检查全集、版本化拷问与候选快照摘要、八阶段拷问绑定、拆分到模块/场景的精确投影、G1 可玩性报告及三项检查同一批准场景/同一 Windows EXE 绑定、G3 逐场景同一 EXE 证据、九项性能原始结构化样本回读、极值重算与预算实算、类型化资源登记与 PBR 闭合引用链、证据类型与主体版本绑定、阶段新证据状态机、模块/场景 DAG、跨进程锁、CLI、初始化器、Python/npx 安装器、Windows 实机捕获脚本、三次用户视觉确认与实机三学科审阅、P0-P5 视觉资源小循环、低保真清理、2D 适配、3D 模型/贴图角色路由、端到端门禁和 Toolkit 静态结构。
+结果：`427 passed`。覆盖契约校验、确定性 Job 编译、严格策略入口与默认提示、标准检查全集、版本化拷问与候选快照摘要、拆分到模块/场景的精确投影、G0 平台批准与主开发平台约束、Windows/Android/iPhone/iPad 独立设备形态、S00/G1 主平台制品绑定、G2 批准模块/平台/性能报告全集、G3 各平台候选清单与设备档位/批准场景笛卡尔积、逐用例平台制品哈希、平台实机视觉来源、九项分平台性能原始样本回读、极值重算与预算实算、类型化资源登记与 PBR 闭合引用链、阶段新证据状态机、模块/场景 DAG、跨进程锁、CLI、初始化器、Python/npx 安装器、Windows 实机捕获脚本、三次用户视觉确认与实机三学科审阅、P0-P5 视觉资源小循环、低保真清理、2D/安全区适配、3D 模型/贴图角色路由、端到端门禁和 Toolkit 静态结构。
 
 ### npx 安装入口
 
@@ -33,7 +33,7 @@ rtk uv run pytest -q
 命令：
 
 ```powershell
-rtk uv run pytest tests\python\test_toolkit_structure.py -q
+rtk proxy uv run pytest tests\python\test_toolkit_structure.py -q
 ```
 
 结果：`6 passed`。已确认模块/测试文件齐备、asmdef 可解析且名称唯一、UnityHost 固定 unity-mcp v10.1.0、四个自定义工具名称准确、2D 适配 Runtime/Editor/EditMode 测试结构齐备、C# 文件均小于 1000 行且类型/方法具备中文 XML 摘要，并覆盖新增 Toolkit 安全约束的静态结构。
@@ -46,7 +46,8 @@ rtk uv run pytest tests\python\test_toolkit_structure.py -q
 
 - `UNITY_PATH` 未设置。
 - 常见 Unity Hub/Editor 安装目录未发现 Unity 可执行文件。
-- 当前环境没有可绑定的 Unity Editor，因此没有实际执行 Toolkit 编译、EditMode 测试、自定义工具发现、图片导入、固定机位截图、Profiler 或 Windows 构建。
+- 当前环境没有可绑定的 Unity Editor，因此没有实际执行 Toolkit 编译、EditMode 测试、自定义工具发现、图片导入、固定机位截图、Profiler 或任何目标平台 Player 构建。
+- 当前环境没有执行 Android 安装测试，也没有验证 iOS/iPadOS 所需的 macOS、Xcode、证书、IPA 与真机链路；这些平台只能保持 `BLOCKED`，不能由静态测试推断为通过。
 - 验证前检查了现有 Unity 进程，没有可复用实例，因此未启动新的 Editor 或服务。
 
 上述项目状态为 `BLOCKED`，不能由 Python 或静态检查推断为 `PASS`。
@@ -65,4 +66,5 @@ rtk uv run pytest tests\python\test_toolkit_structure.py -q
 2. 读取 `mcpforunity://custom-tools`，确认四个 `uwt_*` 工具唯一注册。
 3. 逐一编译并调用 project-profile、image-task、visual-capture、delivery-preflight Job。
 4. 核对失败结果不泄露绝对路径、不覆盖资源或截图，图片导入回滚不删除源文件。
-5. 使用官方 `manage_build` 生成 Windows 开发构建并执行启动检查。
+5. 按用户批准的平台集合分别验证 Build Profile；Windows/Android 使用可用的官方 `manage_build`，iOS/iPadOS 在 macOS/Xcode 与签名条件具备时导出并安装 IPA。
+6. 为每个平台执行其设备档位与批准场景矩阵，核对平台主制品、实机视觉和性能原始样本哈希。

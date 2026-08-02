@@ -1,6 +1,6 @@
 ---
 name: unity-game-qa-performance
-description: Unity 游戏的测试与性能角色。需要建立或执行 EditMode、PlayMode、场景冒烟、回归、输入、2D 多比例适配、3D 模型/PBR/Prefab 独立验收、稳定性、Profiler、内存、渲染和 Windows 候选验证并给出可复现证据时使用。
+description: Unity 游戏的测试与性能角色。需要建立或执行 EditMode、PlayMode、场景冒烟、回归、输入、2D 多比例适配、3D 模型/PBR/Prefab 独立验收、稳定性、Profiler、内存、渲染，以及用户选择的 Windows、Android、iOS/iPadOS 候选验证时使用。
 ---
 
 # Unity 测试与性能
@@ -13,14 +13,14 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 
 ## 执行与交接
 
-1. 在 QA 计划覆盖 EditMode、PlayMode、场景主路径、输入设备、窗口/分辨率、暂停恢复、资源失败、存档、长时间运行与 Windows 环境。
+1. 在 QA 计划中预先定义 EditMode、PlayMode、场景主路径、模块边界和用户批准的目标平台。Windows 方案覆盖窗口/DPI/键鼠/手柄；移动方案覆盖触控、安全区、横竖屏/旋转、前后台、权限、低内存、热状态和手机/平板档位。计划可提前准备，但最终设备验收不得在 G2 全部模块、场景和平台适配验收前执行或判定。
 2. 激活 `testing` 工具组后运行测试并查询异步任务到终态；记录版本、用例数、失败详情与原始日志。
 3. 激活 `profiling` 后记录环境与采集方式，采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体；必要时使用内存快照与 Frame Debugger。
 4. 缺陷记录版本、场景、设备、复现步骤、预期/实际、证据、P0-P3、所有者和回归状态。
-5. 2D 场景至少覆盖参考比例、装饰边带比例和外围裁切比例，复算摄像机与 UI match，检查无黑边、纯视觉边带、无 Collider/交互组件及交互安全区不越界。
+5. 2D 场景小循环至少以参考环境覆盖参考比例、装饰边带比例和外围裁切比例，复算摄像机与 UI match，检查无黑边、纯视觉边带、无 Collider/交互组件及交互安全区不越界；全部通过后适配契约才可进入 `VERIFIED`。该状态只证明场景技术实现，G3 仍须用最终设备矩阵重新验收同一候选包。
 6. 对 `$unity-game-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、蒙皮/骨骼/BlendShape、Collider、挂点、Prefab 引用和架构预算；模型生产代理的自检不能替代 QA。
 7. 对 `$unity-game-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
-8. 建立 3D 验收矩阵，至少覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形、目标场景光照和 Windows 实机转台；记录无粉色 Shader、缺图、UV 缝、法线翻转、烘焙伪影、材质槽错配、闪烁和预算超限。
-9. G2/G3 汇总阻断、用户豁免、未测风险和候选包对应关系；没有结构化模型、贴图、Unity 接入和实机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
+8. 建立 3D 验收矩阵，至少覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形、目标场景光照和批准平台实机转台；记录无粉色 Shader、缺图、UV 缝、法线翻转、烘焙伪影、材质槽错配、闪烁和预算超限。
+9. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。

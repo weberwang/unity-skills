@@ -135,7 +135,7 @@ def test_g0_grilling_check_must_match_profile_embedded_record() -> None:
     checks = {
         "grilling.approved": {"evidence": [direct]},
         "scope.approved": {"evidence": [profile_ref]},
-        "windows-distribution.approved": {"evidence": [profile_ref]},
+        "platforms.approved": {"evidence": [profile_ref]},
     }
     assert "必须与 project-profile" in (g0_grilling_profile_failure(reader, checks) or "")
 

@@ -10,7 +10,7 @@ unit: fps
 captureSource: UNITY_PROFILER
 capturedAtUtc: "2026-07-27T12:00:00Z"
 captureMetadata:
-  platform: WINDOWS_STANDALONE
+  platform: WINDOWS
   buildConfiguration: DEVELOPMENT
   unityVersion: 6000.1.0f1
   operatingSystem: Windows 11 24H2

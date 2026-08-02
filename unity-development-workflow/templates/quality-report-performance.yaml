@@ -4,6 +4,7 @@ projectId: starfall-arena
 sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
+platformId: WINDOWS
 generatedAtUtc: "2026-07-27T12:00:00Z"
 profileEvidence:
   type: project-profile
@@ -18,7 +19,7 @@ checks:
   - id: performance.pass
     category: performance
     status: NOT_RUN
-    message: 等待 Windows Standalone 性能采样并逐项比较已批准质量预算
+    message: 等待目标平台 Player 性能采样并逐项比较已批准质量预算
     evidence: []
 measurements:
   - metric: minimumFps

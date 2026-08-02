@@ -3,7 +3,7 @@
   "$id": "https://codex.local/unity-workflow/schemas/quality-gates.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "activeDecomposition", "gates"],
+  "required": ["schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "activeDecomposition", "activeProjectProfile", "gates"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -15,6 +15,15 @@
         {
           "required": ["subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
           "properties": {"type": {"const": "decomposition-plan"}}
+        }
+      ]
+    },
+    "activeProjectProfile": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {"type": {"const": "project-profile"}}
         }
       ]
     },

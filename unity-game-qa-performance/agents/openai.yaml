@@ -1,4 +1,4 @@
 interface:
   display_name: "Unity 测试与性能"
-  short_description: "验证功能、2D 多比例、Profiler 与 Windows 候选包"
+  short_description: "验证功能、2D 多比例、Profiler 与多平台候选包"
   default_prompt: "使用 $unity-game-qa-performance 对 Unity 游戏与 2D 适配矩阵执行可复现验证。"

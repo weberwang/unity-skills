@@ -138,7 +138,7 @@ def g0_grilling_profile_failure(
     grilling_references = _typed_references(checks.get("grilling.approved"), "grilling-record")
     profile_references = [
         reference
-        for check_id in ("scope.approved", "windows-distribution.approved")
+        for check_id in ("scope.approved", "platforms.approved")
         for reference in _typed_references(checks.get(check_id), "project-profile")
     ]
     if len(grilling_references) != 1 or not profile_references:
