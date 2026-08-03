@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:unity-skills:star-blogger-rebuild-player-character:player-character-project-baseline:1.0",
+  "$id": "urn:unity-skills:unity-game-star-blogger-rebuild-player-character:player-character-project-baseline:1.0",
   "title": "P3-002 玩家角色项目基线",
   "type": "object",
   "additionalProperties": false,

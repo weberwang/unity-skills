@@ -11,7 +11,7 @@
   },
   "files": [
     "scripts/install-project-skills.mjs",
-    "star-blogger-rebuild-player-character",
+    "unity-game-star-blogger-rebuild-player-character",
     "unity-development-workflow",
     "unity-game-grilling",
     "unity-game-3d-modeling",

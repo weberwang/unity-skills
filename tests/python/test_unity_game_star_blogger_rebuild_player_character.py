@@ -9,7 +9,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 
 ROOT = Path(__file__).parents[2]
-SKILL_DIR = ROOT / "star-blogger-rebuild-player-character"
+SKILL_DIR = ROOT / "unity-game-star-blogger-rebuild-player-character"
 SKILL_PATH = SKILL_DIR / "SKILL.md"
 AGENT_PATH = SKILL_DIR / "agents" / "openai.yaml"
 CONTRACT_PATH = SKILL_DIR / "references" / "player-character-contract.md"
@@ -92,7 +92,7 @@ def test_skill_metadata_and_direct_reference_are_valid() -> None:
     frontmatter = parse_frontmatter(text)
 
     assert set(frontmatter) == {"name", "description"}
-    assert frontmatter["name"] == "star-blogger-rebuild-player-character"
+    assert frontmatter["name"] == "unity-game-star-blogger-rebuild-player-character"
     assert "P3-002" in frontmatter["description"]
     assert "references/player-character-contract.md" in text
     assert "references/player-character-project-baseline.md" in text
@@ -109,7 +109,7 @@ def test_agent_interface_invokes_exact_skill_name() -> None:
 
     assert payload["interface"]["display_name"] == "Star Blogger 玩家角色重制"
     assert 25 <= len(payload["interface"]["short_description"]) <= 64
-    assert "$star-blogger-rebuild-player-character" in payload["interface"]["default_prompt"]
+    assert "$unity-game-star-blogger-rebuild-player-character" in payload["interface"]["default_prompt"]
 
 
 def test_audit_script_keeps_visual_judgment_outside_automation(tmp_path: Path) -> None:

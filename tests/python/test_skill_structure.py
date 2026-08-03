@@ -112,6 +112,19 @@ def test_role_skills_are_installable_and_routed_from_orchestrator():
         assert f"${skill_name}" in orchestrator
 
 
+def test_all_installable_skills_use_unity_namespace() -> None:
+    """仓库根目录中的全部可安装 Skill 必须统一使用 unity- 命名空间。"""
+    skill_directories = [
+        path
+        for path in ROOT.iterdir()
+        if path.is_dir() and (path / "SKILL.md").is_file()
+    ]
+
+    assert skill_directories
+    for path in skill_directories:
+        assert path.name.startswith("unity-"), f"Skill 缺少 unity- 命名空间：{path.name}"
+
+
 def test_each_reference_has_the_common_contract():
     """每份参考都必须给执行代理相同的输入、权限、输出和恢复契约。"""
     for name in REFERENCE_NAMES:
