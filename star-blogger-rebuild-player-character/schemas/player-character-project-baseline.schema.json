@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/star-blogger-player-character/project-comparison.schema.json",
-  "title": "P3-002 当前项目对照记录",
+  "$id": "urn:unity-skills:star-blogger-rebuild-player-character:player-character-project-baseline:1.0",
+  "title": "P3-002 玩家角色项目基线",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,7 +9,7 @@
     "recordType",
     "projectId",
     "characterId",
-    "comparisonVersion",
+    "baselineVersion",
     "sourceRevision",
     "projectStateVersion",
     "generatedAtUtc",
@@ -24,14 +24,14 @@
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
-    "recordType": {"const": "CHARACTER_PROJECT_COMPARISON"},
+    "recordType": {"const": "PLAYER_CHARACTER_PROJECT_BASELINE"},
     "projectId": {"const": "star-blogger"},
     "characterId": {"const": "P3-002"},
-    "comparisonVersion": {"type": "string", "minLength": 1},
+    "baselineVersion": {"type": "string", "minLength": 1},
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
     "generatedAtUtc": {"type": "string", "format": "date-time"},
-    "status": {"enum": ["BASELINE_AUDITED", "BLOCKED"]},
+    "status": {"enum": ["PLAYER_CHARACTER_BASELINE_AUDITED", "PLAYER_CHARACTER_BASELINE_BLOCKED"]},
     "projectMarkers": {
       "type": "object",
       "additionalProperties": false,

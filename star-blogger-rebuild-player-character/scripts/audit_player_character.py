@@ -3,7 +3,7 @@
 # requires-python = ">=3.10"
 # dependencies = ["jsonschema>=4.25,<5", "PyYAML>=6.0,<7"]
 # ///
-"""审计 P3-002 人物完整候选的技术文件和逐项证据门禁。"""
+"""审计 P3-002 玩家角色完整候选的技术文件和逐层证据门禁。"""
 
 from __future__ import annotations
 
@@ -43,14 +43,14 @@ EXPECTED_LAYERS = (
     ("Accessory/Earrings", "simple-hoops-v2", "accessory-earrings-simple-hoops-v2.png"),
 )
 EXPECTED_LAYER_FILES = tuple(layer[2] for layer in EXPECTED_LAYERS)
-REQUIRED_EVIDENCE_KEYS = (
+REQUIRED_LAYER_EVIDENCE_KEYS = (
     "layerPreview",
     "fullComposite",
     "threeBackgrounds",
     "targetDetailComparison",
     "occlusionLeak",
 )
-EXPECTED_COMPARISON_CHECK_IDS = (
+EXPECTED_PROJECT_BASELINE_CHECK_IDS = (
     "authority.target-binding",
     "authority.approval-binding",
     "project.unity-root",
@@ -89,7 +89,9 @@ EXPECTED_RUNTIME_ASSET_PATHS = {
     "playerPrefab": "Assets/Prefabs/Characters/Player/PlayerCharacter.prefab",
     "performancePrefab": "Assets/Prefabs/Characters/Performance/DualCharacterPerformance.prefab",
 }
-COMPARISON_SCHEMA_PATH = Path(__file__).parents[1] / "schemas" / "project-comparison.schema.json"
+PROJECT_BASELINE_SCHEMA_PATH = (
+    Path(__file__).parents[1] / "schemas" / "player-character-project-baseline.schema.json"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -237,7 +239,7 @@ def validate_project_baseline(
         return None
     try:
         payload = read_yaml_mapping(baseline_path)
-        schema = json.loads(COMPARISON_SCHEMA_PATH.read_text(encoding="utf-8"))
+        schema = json.loads(PROJECT_BASELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError, yaml.YAMLError, ValueError) as exc:
         errors.append(f"无法读取项目基线或 Schema：{exc}")
         return None
@@ -283,7 +285,7 @@ def validate_project_baseline(
         errors.append("项目基线包含重复 Unity GUID")
 
     validate_expected_ids(
-        payload["checks"], "checkId", EXPECTED_COMPARISON_CHECK_IDS, "项目检查 ID", errors
+        payload["checks"], "checkId", EXPECTED_PROJECT_BASELINE_CHECK_IDS, "项目基线检查 ID", errors
     )
     validate_expected_ids(
         payload["visualComparison"]["regions"],
@@ -308,13 +310,13 @@ def validate_project_baseline(
     statuses = {item["status"] for item in comparison_items}
     if statuses & {"MISSING", "UNREADABLE"}:
         expected_result = "BLOCKED"
-        expected_status = "BLOCKED"
+        expected_status = "PLAYER_CHARACTER_BASELINE_BLOCKED"
     elif "DIFFERENT" in statuses:
         expected_result = "DIFFERENCES_FOUND"
-        expected_status = "BASELINE_AUDITED"
+        expected_status = "PLAYER_CHARACTER_BASELINE_AUDITED"
     else:
         expected_result = "MATCHED"
-        expected_status = "BASELINE_AUDITED"
+        expected_status = "PLAYER_CHARACTER_BASELINE_AUDITED"
     if payload["summary"]["result"] != expected_result or payload["status"] != expected_status:
         errors.append("项目基线汇总结论与逐项状态不一致")
     if expected_result == "BLOCKED" and not payload["summary"]["blockingReasons"]:
@@ -368,7 +370,10 @@ def validate_binding(
     return path
 
 
-def collect_review_records(review_root: Path, errors: list[str]) -> list[tuple[Path, dict[str, Any]]]:
+def collect_layer_review_records(
+    review_root: Path,
+    errors: list[str],
+) -> list[tuple[Path, dict[str, Any]]]:
     """收集显式标记为人物逐项审查的 YAML 记录。"""
     records: list[tuple[Path, dict[str, Any]]] = []
     if not review_root.is_dir():
@@ -380,12 +385,12 @@ def collect_review_records(review_root: Path, errors: list[str]) -> list[tuple[P
         except (OSError, UnicodeError, yaml.YAMLError, ValueError) as exc:
             errors.append(f"无法读取逐项记录 {path}: {exc}")
             continue
-        if payload.get("recordType") == "CHARACTER_LAYER_ITEM_REVIEW":
+        if payload.get("recordType") == "PLAYER_CHARACTER_LAYER_REVIEW":
             records.append((path, payload))
     return records
 
 
-def validate_review_record(
+def validate_layer_review_record(
     workspace: Path,
     record_path: Path,
     payload: dict[str, Any],
@@ -393,8 +398,8 @@ def validate_review_record(
 ) -> str | None:
     """验证一份逐项记录并返回其输出文件名。"""
     prefix = record_path.as_posix()
-    if payload.get("status") != "ITEM_VISUAL_TECHNICAL_PASS":
-        errors.append(f"{prefix} 状态不是 ITEM_VISUAL_TECHNICAL_PASS")
+    if payload.get("status") != "PLAYER_CHARACTER_LAYER_VISUAL_TECHNICAL_PASS":
+        errors.append(f"{prefix} 状态不是 PLAYER_CHARACTER_LAYER_VISUAL_TECHNICAL_PASS")
 
     validate_binding(workspace, payload.get("master"), f"{prefix} master", errors)
     output_path = validate_binding(workspace, payload.get("output"), f"{prefix} output", errors)
@@ -403,7 +408,7 @@ def validate_review_record(
     if not isinstance(evidence, dict):
         errors.append(f"{prefix} 缺少 evidence 映射")
     else:
-        for key in REQUIRED_EVIDENCE_KEYS:
+        for key in REQUIRED_LAYER_EVIDENCE_KEYS:
             path_value = extract_path(evidence.get(key))
             if path_value is None:
                 errors.append(f"{prefix} 缺少证据 {key}")
@@ -459,32 +464,32 @@ def audit(args: argparse.Namespace) -> dict[str, Any]:
             result: dict[str, Any] = {"filename": filename, "path": path.as_posix()}
             if not path.is_file():
                 errors.append(f"缺少生产图层：{filename}")
-                result["status"] = "MISSING"
+                result["status"] = "PLAYER_CHARACTER_LAYER_FILE_MISSING"
                 layer_results.append(result)
                 continue
             try:
                 png = inspect_png(path)
             except (OSError, ValueError, struct.error) as exc:
                 errors.append(f"PNG 无效 {filename}: {exc}")
-                result["status"] = "INVALID"
+                result["status"] = "PLAYER_CHARACTER_LAYER_FILE_INVALID"
                 layer_results.append(result)
                 continue
             result.update(png)
             result["sha256"] = sha256(path)
-            result["status"] = "PASS"
+            result["status"] = "PLAYER_CHARACTER_LAYER_FILE_TECHNICAL_PASS"
             if (png["width"], png["height"]) != (2048, 2048):
                 errors.append(f"画布不是 2048x2048：{filename}")
-                result["status"] = "FAIL"
+                result["status"] = "PLAYER_CHARACTER_LAYER_FILE_TECHNICAL_FAIL"
             if png["bitDepth"] != 8 or png["colorType"] != 6:
                 errors.append(f"PNG 不是 8-bit RGBA：{filename}")
-                result["status"] = "FAIL"
+                result["status"] = "PLAYER_CHARACTER_LAYER_FILE_TECHNICAL_FAIL"
             layer_results.append(result)
 
     review_root = resolve_inside(workspace, args.reviews)
-    records = collect_review_records(review_root, errors)
+    records = collect_layer_review_records(review_root, errors)
     reviewed_outputs: list[str] = []
     for record_path, payload in records:
-        output_name = validate_review_record(workspace, record_path, payload, errors)
+        output_name = validate_layer_review_record(workspace, record_path, payload, errors)
         if output_name is not None:
             reviewed_outputs.append(output_name)
 
@@ -500,7 +505,11 @@ def audit(args: argparse.Namespace) -> dict[str, Any]:
 
     return {
         "schemaVersion": "1.0",
-        "status": "FAIL" if errors else "EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_STILL_REQUIRED",
+        "status": (
+            "PLAYER_CHARACTER_AUDIT_FAILED"
+            if errors
+            else "PLAYER_CHARACTER_EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_REQUIRED"
+        ),
         "workspace": workspace.as_posix(),
         "projectBaseline": baseline_path.as_posix(),
         "projectBaselineResult": baseline.get("summary", {}).get("result") if baseline else None,
@@ -518,13 +527,17 @@ def main() -> None:
     try:
         result = audit(args)
     except (OSError, ValueError) as exc:
-        result = {"schemaVersion": "1.0", "status": "FAIL", "errors": [str(exc)]}
+        result = {
+            "schemaVersion": "1.0",
+            "status": "PLAYER_CHARACTER_AUDIT_FAILED",
+            "errors": [str(exc)],
+        }
     serialized = json.dumps(result, ensure_ascii=False, indent=2)
     if args.report is not None:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(serialized + "\n", encoding="utf-8")
     print(serialized)
-    if result["status"] == "FAIL":
+    if result["status"] == "PLAYER_CHARACTER_AUDIT_FAILED":
         raise SystemExit(2)
 
 

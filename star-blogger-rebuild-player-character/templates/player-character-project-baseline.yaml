@@ -1,12 +1,12 @@
 schemaVersion: "1.0"
-recordType: CHARACTER_PROJECT_COMPARISON
+recordType: PLAYER_CHARACTER_PROJECT_BASELINE
 projectId: star-blogger
 characterId: P3-002
-comparisonVersion: baseline-v1
+baselineVersion: baseline-v1
 sourceRevision: working-tree-snapshot-20260803
 projectStateVersion: project-state-v1
 generatedAtUtc: "2026-08-03T00:00:00Z"
-status: BASELINE_AUDITED
+status: PLAYER_CHARACTER_BASELINE_AUDITED
 projectMarkers:
   packagesManifest: {path: Packages/manifest.json, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
   projectVersion: {path: ProjectSettings/ProjectVersion.txt, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}

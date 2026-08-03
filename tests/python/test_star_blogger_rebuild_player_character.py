@@ -9,14 +9,20 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 
 ROOT = Path(__file__).parents[2]
-SKILL_DIR = ROOT / "star-blogger-player-character"
+SKILL_DIR = ROOT / "star-blogger-rebuild-player-character"
 SKILL_PATH = SKILL_DIR / "SKILL.md"
 AGENT_PATH = SKILL_DIR / "agents" / "openai.yaml"
-CONTRACT_PATH = SKILL_DIR / "references" / "character-contract.md"
-COMPARISON_REFERENCE_PATH = SKILL_DIR / "references" / "project-comparison.md"
-COMPARISON_SCHEMA_PATH = SKILL_DIR / "schemas" / "project-comparison.schema.json"
-COMPARISON_TEMPLATE_PATH = SKILL_DIR / "templates" / "project-comparison.yaml"
-AUDIT_PATH = SKILL_DIR / "scripts" / "audit_character_gate.py"
+CONTRACT_PATH = SKILL_DIR / "references" / "player-character-contract.md"
+PROJECT_BASELINE_REFERENCE_PATH = (
+    SKILL_DIR / "references" / "player-character-project-baseline.md"
+)
+PROJECT_BASELINE_SCHEMA_PATH = (
+    SKILL_DIR / "schemas" / "player-character-project-baseline.schema.json"
+)
+PROJECT_BASELINE_TEMPLATE_PATH = (
+    SKILL_DIR / "templates" / "player-character-project-baseline.yaml"
+)
+AUDIT_PATH = SKILL_DIR / "scripts" / "audit_player_character.py"
 
 
 def read_text(path: Path) -> str:
@@ -35,14 +41,17 @@ def parse_frontmatter(text: str) -> dict[str, object]:
 
 def load_audit_module():
     """从真实 Skill 路径加载审计脚本。"""
-    spec = importlib.util.spec_from_file_location("audit_character_gate", AUDIT_PATH)
+    spec = importlib.util.spec_from_file_location("audit_player_character", AUDIT_PATH)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-def materialize_comparison_bindings(root: Path, payload: dict[str, object]) -> dict[str, bytes]:
+def materialize_project_baseline_bindings(
+    root: Path,
+    payload: dict[str, object],
+) -> dict[str, bytes]:
     """为模板中的全部绑定创建可复算文件，并让重复路径共享同一内容。"""
     bindings: dict[str, list[dict[str, str]]] = {}
 
@@ -83,14 +92,14 @@ def test_skill_metadata_and_direct_reference_are_valid() -> None:
     frontmatter = parse_frontmatter(text)
 
     assert set(frontmatter) == {"name", "description"}
-    assert frontmatter["name"] == "star-blogger-player-character"
+    assert frontmatter["name"] == "star-blogger-rebuild-player-character"
     assert "P3-002" in frontmatter["description"]
-    assert "references/character-contract.md" in text
-    assert "references/project-comparison.md" in text
+    assert "references/player-character-contract.md" in text
+    assert "references/player-character-project-baseline.md" in text
     assert CONTRACT_PATH.is_file()
-    assert COMPARISON_REFERENCE_PATH.is_file()
-    assert COMPARISON_SCHEMA_PATH.is_file()
-    assert COMPARISON_TEMPLATE_PATH.is_file()
+    assert PROJECT_BASELINE_REFERENCE_PATH.is_file()
+    assert PROJECT_BASELINE_SCHEMA_PATH.is_file()
+    assert PROJECT_BASELINE_TEMPLATE_PATH.is_file()
     assert len(text.splitlines()) < 500
 
 
@@ -98,9 +107,9 @@ def test_agent_interface_invokes_exact_skill_name() -> None:
     """界面默认提示必须显式调用当前人物 Skill。"""
     payload = yaml.safe_load(read_text(AGENT_PATH))
 
-    assert payload["interface"]["display_name"] == "Star Blogger 玩家角色"
+    assert payload["interface"]["display_name"] == "Star Blogger 玩家角色重制"
     assert 25 <= len(payload["interface"]["short_description"]) <= 64
-    assert "$star-blogger-player-character" in payload["interface"]["default_prompt"]
+    assert "$star-blogger-rebuild-player-character" in payload["interface"]["default_prompt"]
 
 
 def test_audit_script_keeps_visual_judgment_outside_automation(tmp_path: Path) -> None:
@@ -125,18 +134,20 @@ def test_audit_script_keeps_visual_judgment_outside_automation(tmp_path: Path) -
         "colorType": 6,
     }
     source = read_text(AUDIT_PATH)
-    assert "EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_STILL_REQUIRED" in source
+    assert "PLAYER_CHARACTER_EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_REQUIRED" in source
     assert '"UNITY_VISUAL_PASS"' not in source
     assert 'parser.add_argument("--baseline", required=True' in source
 
 
-def test_project_comparison_template_matches_strict_schema() -> None:
+def test_player_character_project_baseline_template_matches_strict_schema() -> None:
     """当前项目对照模板必须可直接校验，并固定完整项目、区域和状态矩阵。"""
-    schema = json.loads(read_text(COMPARISON_SCHEMA_PATH))
-    payload = yaml.safe_load(read_text(COMPARISON_TEMPLATE_PATH))
+    schema = json.loads(read_text(PROJECT_BASELINE_SCHEMA_PATH))
+    payload = yaml.safe_load(read_text(PROJECT_BASELINE_TEMPLATE_PATH))
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
 
     assert list(validator.iter_errors(payload)) == []
+    assert payload["recordType"] == "PLAYER_CHARACTER_PROJECT_BASELINE"
+    assert payload["status"] == "PLAYER_CHARACTER_BASELINE_AUDITED"
     assert [item["checkId"] for item in payload["checks"]] == [
         "authority.target-binding",
         "authority.approval-binding",
@@ -169,9 +180,9 @@ def test_project_comparison_template_matches_strict_schema() -> None:
     assert len(payload["layerMappings"]) == 17
 
 
-def test_project_comparison_reference_has_standard_execution_contract() -> None:
+def test_player_character_project_baseline_reference_has_standard_contract() -> None:
     """专项参考必须沿用当前项目的输入、权限、输出和恢复结构。"""
-    text = read_text(COMPARISON_REFERENCE_PATH)
+    text = read_text(PROJECT_BASELINE_REFERENCE_PATH)
     for heading in (
         "## 何时读取",
         "## 输入",
@@ -185,13 +196,33 @@ def test_project_comparison_reference_has_standard_execution_contract() -> None:
         assert heading in text
 
 
+def test_skill_resource_names_are_scoped_and_consistent() -> None:
+    """专项资源名必须显式包含玩家角色语义，并保持 kebab-case 或 snake_case。"""
+    assert {path.name for path in (SKILL_DIR / "references").iterdir()} == {
+        "player-character-contract.md",
+        "player-character-project-baseline.md",
+    }
+    assert {path.name for path in (SKILL_DIR / "schemas").iterdir()} == {
+        "player-character-project-baseline.schema.json"
+    }
+    assert {path.name for path in (SKILL_DIR / "templates").iterdir()} == {
+        "player-character-project-baseline.yaml"
+    }
+    assert {path.name for path in (SKILL_DIR / "scripts").iterdir() if path.suffix == ".py"} == {
+        "audit_player_character.py"
+    }
+
+
 def test_project_baseline_audit_rehashes_every_bound_file(tmp_path: Path) -> None:
     """基线审计必须接受完整当前项目快照，并在任一绑定漂移后失败。"""
     module = load_audit_module()
-    payload = yaml.safe_load(read_text(COMPARISON_TEMPLATE_PATH))
-    materialize_comparison_bindings(tmp_path, payload)
+    payload = yaml.safe_load(read_text(PROJECT_BASELINE_TEMPLATE_PATH))
+    materialize_project_baseline_bindings(tmp_path, payload)
     module.TARGET_SHA256 = payload["authorityBindings"]["target"]["sha256"]
-    baseline_path = tmp_path / "Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/baseline.yaml"
+    baseline_path = (
+        tmp_path
+        / "Artifacts/Visual/P4/g1-v0.6/p3-002/v5/project-baselines/player-character-baseline.yaml"
+    )
     baseline_path.parent.mkdir(parents=True, exist_ok=True)
     baseline_path.write_text(yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8")
 

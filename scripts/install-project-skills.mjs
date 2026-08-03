@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SKILL_NAMES = Object.freeze([
-  "star-blogger-player-character",
+  "star-blogger-rebuild-player-character",
   "unity-development-workflow",
   "unity-game-grilling",
   "unity-game-3d-modeling",

@@ -1,4 +1,4 @@
-# P3-002 人物合同
+# P3-002 玩家角色合同
 
 本文件固定 Star Blogger 玩家人物的当前权威、文件边界、17 项映射和已知失败特征。执行代理必须从项目工作区读取实际文件并重新计算哈希，不得把本文件当作资源副本。
 
@@ -106,7 +106,7 @@
 
 每个生产单元至少记录：
 
-- `recordType: CHARACTER_LAYER_ITEM_REVIEW`。
+- `recordType: PLAYER_CHARACTER_LAYER_REVIEW`。
 - 项目、资源、类别、标签和修订号。
 - 生产母版路径与哈希。
 - 生成或重绘提示、引用图、模型或工具、原始输出和处理步骤。
@@ -120,8 +120,8 @@
 确定性审计要求逐项记录至少包含以下机器可读结构：
 
 ```yaml
-recordType: CHARACTER_LAYER_ITEM_REVIEW
-status: ITEM_VISUAL_TECHNICAL_PASS
+recordType: PLAYER_CHARACTER_LAYER_REVIEW
+status: PLAYER_CHARACTER_LAYER_VISUAL_TECHNICAL_PASS
 category: Hair/Back
 label: curls-dark-back-v2
 master: {path: path/to/master.png, sha256: 64位小写十六进制}

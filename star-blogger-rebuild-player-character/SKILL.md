@@ -1,5 +1,5 @@
 ---
-name: star-blogger-player-character
+name: star-blogger-rebuild-player-character
 description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、当前项目规范化对照、分层生产、审查和接入专用 Skill。需要修正或重做该人物的身份、脸型、五官、卷发、身体比例、服装、鞋、配饰、表情、遮挡蒙版、17 张 Sprite、SpriteLibrary、SpriteAtlas 或 PlayerCharacter Prefab，或准备 P3-002 项目基线、视觉批准、GUID 保留导入和 Unity 对照验收时使用；禁止用 PSD/PSB、目标图裁片或互不共享人物几何的独立生成结果替代统一生产母版。
 ---
 
@@ -9,7 +9,7 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 
 ## 权威输入
 
-开始任何判断、生成或写入前，完整读取 [人物合同](references/character-contract.md)和[当前项目对照规范](references/project-comparison.md)。再从当前 Star Blogger 工作区读取合同列出的目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
+开始任何判断、生成或写入前，完整读取 [玩家角色合同](references/player-character-contract.md)和[玩家角色项目基线规范](references/player-character-project-baseline.md)。再从当前 Star Blogger 工作区读取合同列出的目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
 
 遵循以下权威顺序：
 
@@ -39,12 +39,12 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 
 ### 1. 建立基线
 
-- 先用 `templates/project-comparison.yaml` 建立当前项目对照记录，并用 `schemas/project-comparison.schema.json` 校验；未得到 `BASELINE_AUDITED` 前禁止生产。
+- 先用 `templates/player-character-project-baseline.yaml` 建立玩家角色项目基线，并用 `schemas/player-character-project-baseline.schema.json` 校验；未得到 `PLAYER_CHARACTER_BASELINE_AUDITED` 前禁止生产。
 - 对照必须绑定 Unity 项目根标记、来源修订、项目状态版本、当前目标板、批准记录、Visual Bible、生产计划、17 项运行时 PNG/.meta/GUID、SpriteLibrary、Atlas、两个 Prefab 和历史证据。
 - 按固定检查 ID、七个视觉区域和八个状态逐项写入 `MATCH`、`DIFFERENT`、`MISSING` 或 `UNREADABLE`；不得使用自由文本 PASS 代替差异矩阵。
 - 把当前问题分类为 `SOURCE_ART`、`LAYER_CONTRACT`、`UNITY_INTEGRATION` 或 `EVIDENCE_GATE`；允许多选。
 - 把已有 v5 视觉 PASS 视为历史结论重新审计，不得直接继承。
-- 输出基线报告，明确保留项、作废项、待重做项和禁止触碰项；任一 `MISSING` 或 `UNREADABLE` 都使基线保持 `BLOCKED`。
+- 输出基线报告，明确保留项、作废项、待重做项和禁止触碰项；任一 `MISSING` 或 `UNREADABLE` 都使基线保持 `PLAYER_CHARACTER_BASELINE_BLOCKED`。
 
 ### 2. 冻结生产母版
 
@@ -66,13 +66,13 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 4. 生成该单元的单图预览、组合预览、浅色/深色/棋盘背景和责任区域放大图。
 5. 检查身份、轮廓、遮挡、边缘、色板、线宽、状态兼容和移动端可读性。
 6. 写入逐项记录，绑定输入、输出、生成或重绘方法、哈希、审查结论和所有修订。
-7. 只有当前项为 `ITEM_VISUAL_TECHNICAL_PASS` 时才进入下一项。
+7. 只有当前项为 `PLAYER_CHARACTER_LAYER_VISUAL_TECHNICAL_PASS` 时才进入下一项。
 
 单图失败时只重做责任单图；若失败源于共享几何、母版身份或遮挡合同，则回退生产母版，失效所有受影响下游项。
 
 ### 4. 执行硬视觉门禁
 
-出现以下任一问题都必须判定 `VISUAL_FAIL`，不得降为非阻断备注：
+出现以下任一问题都必须判定 `PLAYER_CHARACTER_VISUAL_FAIL`，不得降为非阻断备注：
 
 - 脸型、额头、下颌、五官比例或肤色导致人物身份变化。
 - 前后发轮廓、偏分方向、卷束体积或发丝密度明显偏离目标。
@@ -110,10 +110,10 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 在提交完整候选前运行：
 
 ```powershell
-uv run scripts/audit_character_gate.py --workspace . --baseline Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/p3-002-project-baseline.yaml --layers Artifacts/Visual/P4/g1-v0.6/p3-002/v5/layers --reviews Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/items --report Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/character-gate.json
+uv run scripts/audit_player_character.py --workspace . --baseline Artifacts/Visual/P4/g1-v0.6/p3-002/v5/project-baselines/p3-002-player-character-project-baseline.yaml --layers Artifacts/Visual/P4/g1-v0.6/p3-002/v5/layers --reviews Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/layers --report Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/player-character-audit.json
 ```
 
-脚本检查项目基线未漂移、目标绑定、17 张 PNG、逐项记录、哈希和必需证据是否齐备。它最多只能输出 `EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_STILL_REQUIRED`，不得把脚本成功解释成视觉通过。
+脚本检查项目基线未漂移、目标绑定、17 张 PNG、逐项记录、哈希和必需证据是否齐备。它最多只能输出 `PLAYER_CHARACTER_EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_REQUIRED`，不得把脚本成功解释成视觉通过。
 
 ### 6. 请求用户批准
 
@@ -134,7 +134,7 @@ uv run scripts/audit_character_gate.py --workspace . --baseline Artifacts/Visual
 - 验证 Sprite 导入设置、12 类/17 标签、Atlas 引用、排序、互斥状态和 Prefab 外部引用。
 - Unity 捕获必须来自固定机位原生 SpriteRenderer，并重新生成带目标、标签和局部放大的 Unity 验收板。
 
-Unity 只证明接入结果时使用 `UNITY_TECHNICAL_PASS`。只有 Unity 捕获再次通过目标 A/B 视觉审查后才能使用 `UNITY_VISUAL_PASS`。
+Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`。只有 Unity 捕获再次通过目标 A/B 视觉审查后才能使用 `PLAYER_CHARACTER_UNITY_VISUAL_PASS`。
 
 ### 8. 交接
 
@@ -147,15 +147,16 @@ Unity 只证明接入结果时使用 `UNITY_TECHNICAL_PASS`。只有 Unity 捕�
 
 只使用不会混淆技术与视觉的状态：
 
-- `BASELINE_AUDITED`
-- `MASTER_AWAITING_USER_APPROVAL`
-- `MASTER_USER_APPROVED`
-- `ITEM_VISUAL_TECHNICAL_PASS`
-- `FULL_SET_VISUAL_FAIL`
-- `FULL_SET_AWAITING_USER_APPROVAL`
-- `FULL_SET_USER_APPROVED`
-- `UNITY_TECHNICAL_PASS_VISUAL_PENDING`
-- `UNITY_VISUAL_PASS`
+- `PLAYER_CHARACTER_BASELINE_AUDITED`
+- `PLAYER_CHARACTER_MASTER_AWAITING_USER_APPROVAL`
+- `PLAYER_CHARACTER_MASTER_USER_APPROVED`
+- `PLAYER_CHARACTER_LAYER_VISUAL_TECHNICAL_PASS`
+- `PLAYER_CHARACTER_FULL_SET_VISUAL_FAIL`
+- `PLAYER_CHARACTER_VISUAL_FAIL`
+- `PLAYER_CHARACTER_FULL_SET_AWAITING_USER_APPROVAL`
+- `PLAYER_CHARACTER_FULL_SET_USER_APPROVED`
+- `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`
+- `PLAYER_CHARACTER_UNITY_VISUAL_PASS`
 
 禁止使用未注明范围的裸 `PASS`。
 

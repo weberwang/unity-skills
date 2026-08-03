@@ -1,0 +1,4 @@
+interface:
+  display_name: "Star Blogger 玩家角色重制"
+  short_description: "建立玩家角色项目基线，重制分层单图并验证 Unity 还原"
+  default_prompt: "使用 $star-blogger-rebuild-player-character 先建立 P3-002 玩家角色项目基线，再按统一生产母版重制并验证 17 张独立 PNG。"
