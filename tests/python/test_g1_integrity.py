@@ -1,4 +1,4 @@
-"""验证 G1 三项必需检查只能消费同一场景与同一主平台制品。"""
+"""验证 G1 开发检查只能消费同一场景与同一主平台制品。"""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ class _Reader:
 
 
 def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[str, object]]]:
-    """构造三项检查共享同一主平台制品的最小有效闭环。"""
+    """构造开发检查共享同一主平台制品的最小有效闭环。"""
     executable = {
         "type": "platform-build-artifact",
         "artifactType": "WINDOWS_EXECUTABLE",
@@ -73,7 +73,6 @@ def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[s
         "projectStateVersion": "project-state-v1", "buildVersion": "0.1.0-dev.1",
     }
     references = {
-        "visual.runtime-approved": {"type": "runtime-visual-evidence", "path": "runtime.yaml", "sha256": "2" * 64},
         "build.platform-development": {"type": "quality-report", "path": "build.yaml", "sha256": "3" * 64},
     }
     contracts: dict[str, dict[str, object]] = {
@@ -94,12 +93,6 @@ def _fixtures() -> tuple[_Reader, dict[str, dict[str, object]], dict[str, dict[s
                 "evidence": [deepcopy(executable)],
             },
             "status": "PASS",
-        },
-        "runtime.yaml": {
-            "projectId": "starfall-arena", "sceneId": "scene.arena-intro",
-            "sourceRevision": "revision-001", "projectStateVersion": "project-state-v1",
-            "buildVersion": "0.1.0-dev.1", "platformId": "WINDOWS",
-            "buildArtifactSha256": "a" * 64,
         },
         "build.yaml": {
             "projectId": "starfall-arena", "sceneId": "scene.arena-intro",
@@ -152,7 +145,7 @@ def _pass_scene_report() -> dict[str, object]:
     raw = {"type": "test-log", "path": "Artifacts/Quality/check.txt", "sha256": "b" * 64}
     for field in (
         "greybox", "gameVisual", "implementation", "uiVisual",
-        "runtimeComparison", "tests", "performance",
+        "editorComparison", "tests", "performance",
     ):
         report[field]["status"] = "PASS"
         report[field]["evidence"] = [deepcopy(raw)]
@@ -163,8 +156,8 @@ def _pass_scene_report() -> dict[str, object]:
     return report
 
 
-def test_g1_three_checks_share_approved_scene_and_executable() -> None:
-    """同场景、同版本和同 EXE 的完整绑定可以通过。"""
+def test_g1_development_checks_share_approved_scene_and_executable() -> None:
+    """同场景、同版本和同 EXE 的开发期绑定可以通过。"""
     reader, checks, _ = _fixtures()
     assert g1_vertical_slice_failure(reader, checks) is None
 
@@ -198,13 +191,6 @@ def test_g1_uses_production_verifier_to_backread_real_files(
     assert g1_vertical_slice_failure(verifier, checks) is None
 
 
-def test_g1_rejects_runtime_from_different_scene() -> None:
-    """实机视觉不得来自另一个已存在场景。"""
-    reader, checks, contracts = _fixtures()
-    contracts["runtime.yaml"]["sceneId"] = "scene.arena-battle"
-    assert "同一 sceneId" in (g1_vertical_slice_failure(reader, checks) or "")
-
-
 def test_g1_rejects_missing_scene_report() -> None:
     """仅有 DONE 场景清单不能证明垂直切片可玩。"""
     reader, checks, _ = _fixtures()
@@ -223,11 +209,10 @@ def test_g1_rejects_done_manifest_without_pass_playability() -> None:
     assert "可玩性报告状态不是 PASS" in (g1_vertical_slice_failure(reader, checks) or "")
 
 
-@pytest.mark.parametrize("target", ("runtime.yaml", "build.yaml"))
-def test_g1_rejects_contract_bound_to_different_executable(target: str) -> None:
-    """实机视觉或构建报告的制品哈希不得脱离共享 EXE。"""
+def test_g1_rejects_build_report_bound_to_different_executable() -> None:
+    """构建报告的制品哈希不得脱离共享 EXE。"""
     reader, checks, contracts = _fixtures()
-    contracts[target]["buildArtifactSha256"] = "b" * 64
+    contracts["build.yaml"]["buildArtifactSha256"] = "b" * 64
     assert "平台制品 SHA-256" in (g1_vertical_slice_failure(reader, checks) or "")
 
 
@@ -239,9 +224,9 @@ def test_g1_rejects_missing_executable_hash() -> None:
 
 
 def test_g1_rejects_different_executable_reference() -> None:
-    """三个检查不能各自引用不同 EXE。"""
+    """开发检查不能各自引用不同 EXE。"""
     reader, checks, _ = _fixtures()
-    _executable(checks["visual.runtime-approved"])["sha256"] = "b" * 64
+    _executable(checks["build.platform-development"])["sha256"] = "b" * 64
     assert "平台构建制品引用不一致" in (g1_vertical_slice_failure(reader, checks) or "")
 
 

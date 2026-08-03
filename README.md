@@ -10,7 +10,7 @@
 
 ## 安装 Skills
 
-需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控与十一个角色 Skill 复制到项目的 `.agents/skills/`：
+需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控、十一个角色与一个 Star Blogger 项目专项 Skill 复制到项目的 `.agents/skills/`：
 
 ```powershell
 npx -y github:weberwang/unity-skills
@@ -22,7 +22,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器直接复制本次 npx 下载包内的全部十二个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
+安装器直接复制本次 npx 下载包内的全部十三个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
 
 ```powershell
 npx -y skills@1.5.19 add weberwang/unity-skills -l --full-depth
@@ -77,6 +77,10 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 - `$unity-game-qa-performance`：EditMode/PlayMode、场景、Profiler 和候选验证。
 - `$unity-game-release`：Windows 与移动端构建、许可、发行资料和交付放行。
 
+## 项目专项 Skill
+
+- `$star-blogger-player-character`：为 Star Blogger 的 P3-002 建立当前项目规范化基线，按统一生产母版制作 17 张角色单图，并完成目标 A/B、GUID 保留和 Unity 接入验收。该 Skill 只在任务明确涉及 Star Blogger P3-002 时触发，不属于通用角色路由。
+
 ### 严格拷问门禁
 
 `$unity-game-grilling` 不是普通需求访谈，而是受影响写入前的强制门禁。它先以只读证据消除事实问题，再按影响逐项询问；高影响或相互依赖的问题一次只问一个，每题给出二至三个互斥选项、影响、推荐项和理由。模块/场景首次实现或边界变化，以及 Visual Bible、P0、P1、P3、3D brief/外部工具、质量阈值、最终实机和发布授权，均必须触发拷问。
@@ -85,28 +89,28 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 
 ## 主流程
 
-工作流采用严格默认拒绝策略：失败、阻塞、未运行、未知、缺少当前版本证据或批准时一律停止推进。所有用户确认和代理审查绑定对象 ID、版本、SHA-256、来源修订与结论范围；口头确认和代理结论不能代替用户批准。上游变化会递归作废下游，任何场景必须完成自己的 P0-P5、参考环境实机视觉验证和最终批准小循环后才能切换主场景。Unity MCP 每次写入都执行实例、Editor、门禁、版本、锁和目标基线的写前校验，以及稳定状态、目标对象、Console、登记和最小验证的写后校验。
+工作流采用严格默认拒绝策略：失败、阻塞、未运行、未知、缺少当前版本证据或批准时一律停止推进。所有用户确认和代理审查绑定对象 ID、版本、SHA-256、来源修订与结论范围；口头确认和代理结论不能代替用户批准。上游变化会递归作废下游，任何场景必须完成自己的 P0-P5、Editor 固定机位视觉验证和最终批准小循环后才能切换主场景。G2 `PASS` 是研发完成的唯一机器标志；此前禁止安装、启动或验证 Standalone/Player、真机或等价设备。Unity MCP 每次写入都执行实例、Editor、门禁、版本、锁和目标基线的写前校验，以及稳定状态、目标对象、Console、登记和最小验证的写后校验。
 
 1. 先完成项目只读发现、事实核验和证据收集，并绑定唯一 Unity MCP 实例；可从现有文件或工具结果确定的事实不得转问用户。
 2. G0 由 `$unity-game-grilling` 逐项确认最小范围、核心循环、模块/场景、关键风险、目标平台集合、主开发平台和各平台发行方式，生成当前版本 `grilling-record`；再生成并由用户确认全局 Visual Bible。Windows、Android、iPhone/iOS 与 iPad/iPadOS 必须分别询问并记录，未被用户批准的平台不得进入交付范围。
 3. 在创建模块、场景、目录或程序集前，用 `$unity-game-grilling` 完成拆分拷问，向用户展示模块、场景、共享能力及恢复方案，并等待逐项确认后再生成所有权和任务 DAG。
 4. 在 S00 实现全局骨架代码，并为用户批准的主开发平台生成可启动空壳构建。
 5. 选择一个代表性场景完成 G1 垂直切片。
-6. G2 按场景执行小循环：全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真游戏/UI 效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 按编号逐项独立生成与审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 删除运行时灰盒/占位并清理引用 → 清理验证 `PASS` → 参考环境 Unity 验证；3D 场景按条件执行“模型与 UV 冻结 → PBR 纹理与烘焙 → Unity 串行接入”，随后完成音频、测试性能和冻结。每个批准模块必须另有唯一 PASS 验收报告。
+6. G2 按场景执行小循环：全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真游戏/UI 效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 按编号逐项独立生成与审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 删除运行时灰盒/占位并清理引用 → 清理验证 `PASS` → Unity Editor/Game View 验证；3D 场景按条件执行“模型与 UV 冻结 → PBR 纹理与烘焙 → Unity 串行接入”，随后完成音频、自动测试、静态预算和冻结。G2 前不得产生目标设备性能或实机结论。
 7. G2 还必须为每个批准平台提交唯一平台适配报告。全部模块、场景、平台适配与全局回归通过后，G3 才能为每个批准平台生成一个与证据一一对应的候选主制品，并执行“各平台设备档位 × 全部批准场景”最终验收矩阵；每个用例绑定所属平台制品哈希，随后才可请求发布放行。
 
 全局 Visual Bible 批准后，每个场景必须先提交低保真灰盒、层级树和 Prefab/Scene 结构说明，明确节点、父子层级、渲染顺序、交互状态、Anchor、Pivot、安全区、遮罩和资源占位 ID；UI Toolkit 同时说明 UXML/USS 与 UIDocument。用户确认结构后才能生成高保真效果图，用户确认效果图送审候选后再进行视觉一致性、Unity 可实现性、UX/可读性三类独立审阅。
 
 审阅要求修改时，必须生成新的高保真版本并重新取得用户送审确认和三类审阅；三类审阅均通过后，才可在该同版本效果图上用稳定编号完整框选全部待生成单图，并将所有可见元素分类为独立图片、批准复用资源、文本、Unity 图元/程序绘制、UXML/USS/矢量、材质/VFX 或 3D 对象。编号、分类、结构节点映射、状态变体和导入规格组成资产地图；存在漏标、未分类或无节点映射时不得请求用户确认。用户确认资产地图后，才可按编号逐项独立生成或重绘并分别审查。
 
-截图和高保真效果图只能参考内容、构图和信息层级，不能照搬色彩、材质、光照、字体、图标、笔触或成品像素。禁止裁切截图或效果图充当 Sprite、纹理或 UI 单图，禁止轻微修饰裁片后冒充独立生成资源，禁止把整张效果图作为游戏或 UI 铺底。只有已批准的原始独立资源或具有可验证独立图层身份的源文件可以复用或导出。所有单图批准后，按已确认结构拼装正式 Prefab、Scene 或 UXML/USS；正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象并清理引用，同时保留已确认结构节点、稳定 ID 以及 `prefab-structure`、预览、批准记录等审计证据。清理验证为 `PASS` 后才能进入 `ASSEMBLY_VERIFIED` 或 `DONE`，再在 Unity 中验证资源与节点双向映射、层级、Anchor、Pivot、遮罩、状态、黑边和目标分辨率矩阵。上游需要回退时从审计证据重建，不在运行时保留低保真资产。开发代理不能批准自己的输出，用户视觉批准与最终发布放行不可由代理替代。
+截图和高保真效果图只能参考内容、构图和信息层级，不能照搬色彩、材质、光照、字体、图标、笔触或成品像素。禁止裁切截图或效果图充当 Sprite、纹理或 UI 单图，禁止轻微修饰裁片后冒充独立生成资源，禁止把整张效果图作为游戏或 UI 铺底。开发阶段禁止 PSD、PSB、PSDT、Photoshop 分层文档和分层导出方案；只允许批准的独立成品复用，或使用独立扁平图片、独立遮罩与 Unity 原生结构重新生产。所有单图批准后，按已确认结构拼装正式 Prefab、Scene 或 UXML/USS；正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象并清理引用，同时保留已确认结构节点、稳定 ID 以及 `prefab-structure`、预览、批准记录等审计证据。清理验证为 `PASS` 后才能进入 `ASSEMBLY_VERIFIED` 或 `DONE`，再在 Unity Editor 中验证资源与节点双向映射、层级、Anchor、Pivot、遮罩、状态、黑边和目标分辨率矩阵。上游需要回退时从审计证据重建，不在运行时保留低保真资产。开发代理不能批准自己的输出，用户视觉批准与最终发布放行不可由代理替代。
 
 2D 场景采用确定性适配：竖屏固定设计高度，横屏固定设计宽度；多出的左右或上下区域使用依据全局视觉生成的纯视觉背景填充。背景必须位于交互内容后方，不含 Collider、按钮、玩法信息或其他交互组件，目标分辨率矩阵不得出现黑边。移动端还必须处理安全区、刘海/挖孔、系统栏、旋转、触控、前后台与低内存；Windows 则独立处理窗口模式、DPI、键鼠/手柄和焦点变化。
 
 当 Windows 是批准平台时，可从项目根目录运行 Windows 实机视觉入口；脚本只生成 `CAPTURED` 证据，不会伪造审查或用户批准。Android、iOS 与 iPadOS 必须从所属平台的已安装构建和真实设备/已批准等价设备采集证据，不能复用此脚本推断通过：
 
 ```powershell
-uv run .\.agents\skills\unity-development-workflow\scripts\capture_windows_runtime.py --project-root . --executable Artifacts/Builds/0.1.0/Game.exe --project-id my-game --scene-id scene.main --build-version 0.1.0 --source-revision a1b2c3d4 --project-state-version project-state-v1 --screenshot Artifacts/Visual/Runtime/scene.main/0.1.0.png --evidence Artifacts/Visual/Runtime/scene.main/0.1.0.json
+uv run .\.agents\skills\unity-development-workflow\scripts\capture_windows_runtime.py --project-root . --g2-result Artifacts/Quality/quality-gates.g2.yaml --executable Artifacts/Builds/0.1.0/Game.exe --project-id my-game --scene-id scene.main --build-version 0.1.0 --source-revision a1b2c3d4 --project-state-version project-state-v1 --screenshot Artifacts/Visual/Runtime/scene.main/0.1.0.png --evidence Artifacts/Visual/Runtime/scene.main/0.1.0.json
 ```
 
 ## 初始化项目交付物

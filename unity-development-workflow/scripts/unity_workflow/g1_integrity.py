@@ -1,4 +1,4 @@
-"""校验 G1 垂直切片三项检查共享同一场景与主平台开发构建。"""
+"""校验 G1 垂直切片检查共享同一场景与主平台开发构建。"""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from unity_workflow.platform_contract import artifact_reference_failure, primary
 
 G1_CHECK_TYPES = {
     "vertical-slice.playable": ("scene-manifest", "scene-report"),
-    "visual.runtime-approved": ("runtime-visual-evidence",),
     "build.platform-development": ("quality-report",),
 }
 IDENTITY_FIELDS = (
@@ -50,7 +49,7 @@ def g1_vertical_slice_failure(
     reader: G1EvidenceReader,
     checks: Mapping[object, object],
 ) -> str | None:
-    """要求 G1 三项检查唯一绑定同一批准场景和同一主平台制品。"""
+    """要求 G1 开发检查唯一绑定同一批准场景和同一主平台制品。"""
     contracts: dict[str, Mapping[str, Any]] = {}
     primary_references: dict[str, Mapping[str, Any]] = {}
     artifact_references: dict[str, Mapping[str, Any]] = {}
@@ -78,7 +77,7 @@ def g1_vertical_slice_failure(
 
     reference_keys = {_reference_key(item) for item in artifact_references.values()}
     if len(reference_keys) != 1:
-        return "G1 三项检查绑定的平台构建制品引用不一致"
+        return "G1 开发检查绑定的平台构建制品引用不一致"
     artifact = next(iter(artifact_references.values()))
     current_issue = _current_identity_issue(reader, artifact)
     if current_issue:
@@ -86,11 +85,10 @@ def g1_vertical_slice_failure(
 
     manifest = contracts["scene-manifest"]
     playability = contracts["scene-report"]
-    runtime = contracts["runtime-visual-evidence"]
     report = contracts["quality-report"]
     scene_id = artifact.get("subjectId")
     contract_issue = _contract_binding_issue(
-        reader, scene_id, artifact, manifest, playability, runtime, report
+        reader, scene_id, artifact, manifest, playability, report
     )
     if contract_issue:
         return contract_issue
@@ -136,14 +134,12 @@ def _contract_binding_issue(
     artifact: Mapping[str, Any],
     manifest: Mapping[str, Any],
     playability: Mapping[str, Any],
-    runtime: Mapping[str, Any],
     report: Mapping[str, Any],
 ) -> str | None:
-    """逐字段比较三个主契约与当前平台构建制品绑定。"""
+    """逐字段比较开发期主契约与当前平台构建制品绑定。"""
     contracts = (
         ("场景清单", manifest),
         ("可玩性报告", playability),
-        ("实机视觉", runtime),
         ("构建报告", report),
     )
     for label, contract in contracts:
@@ -153,7 +149,7 @@ def _contract_binding_issue(
             return f"G1 {label} sourceRevision 与当前源码不一致"
         if contract.get("projectStateVersion") != reader.project_state_version:
             return f"G1 {label} projectStateVersion 与当前状态不一致"
-    scene_ids = (manifest.get("id"), playability.get("sceneId"), runtime.get("sceneId"), report.get("sceneId"))
+    scene_ids = (manifest.get("id"), playability.get("sceneId"), report.get("sceneId"))
     if any(item != scene_id for item in scene_ids):
         return "G1 可玩性、视觉与构建证据未绑定同一 sceneId"
     if playability.get("sceneVersion") != manifest.get("version"):
@@ -162,13 +158,13 @@ def _contract_binding_issue(
         return "G1 可玩性报告 reportPurpose 必须为 VERTICAL_SLICE"
     if playability.get("status") != "PASS":
         return "G1 可玩性报告状态不是 PASS"
-    for label, contract in (("可玩性报告", playability), ("实机视觉", runtime), ("构建报告", report)):
+    for label, contract in (("可玩性报告", playability), ("构建报告", report)):
         if contract.get("buildVersion") != reader.build_version:
             return f"G1 {label} buildVersion 与当前构建不一致"
         if contract.get("buildArtifactSha256") != artifact.get("sha256"):
             return f"G1 {label}未绑定共享平台制品 SHA-256"
-    if runtime.get("platformId") != artifact.get("platform") or report.get("platformId") != artifact.get("platform"):
-        return "G1 实机视觉与构建报告未绑定主开发平台"
+    if report.get("platformId") != artifact.get("platform"):
+        return "G1 构建报告未绑定主开发平台"
     build_artifact = report.get("buildArtifact")
     if not isinstance(build_artifact, Mapping):
         return "G1 构建报告缺少显式 buildArtifact"

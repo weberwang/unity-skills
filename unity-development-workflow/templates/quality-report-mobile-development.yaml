@@ -17,7 +17,7 @@ checks:
   - id: build.platform-development
     category: build
     status: PASS
-    message: Android 主开发平台构建已在目标设备安装、启动并通过代表性场景冒烟
+    message: Android 主开发平台构建已生成并通过构建日志与包结构校验；研发阶段未安装或启动目标设备
     evidence:
       - type: platform-build-artifact
         artifactType: ANDROID_APK

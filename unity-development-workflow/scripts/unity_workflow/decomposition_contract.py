@@ -16,9 +16,9 @@ DECOMPOSITION_QUESTIONS = {
 
 EXPECTED_GATE_CHECKS = {
     "G0": {"grilling.approved", "scope.approved", "decomposition.approved", "visual-bible.approved", "platforms.approved"},
-    "G1": {"s00.verified", "vertical-slice.playable", "visual.runtime-approved", "build.platform-development"},
-    "G2": {"scope.complete", "modules.acceptance-complete", "platforms.adaptation-complete", "assets.production-ready", "regression.pass", "performance.pass", "defects.p0-p1-resolved"},
-    "G3": {"candidate.verified", "licenses.verified", "privacy.verified", "rollback.ready", "devices.acceptance-verified", "scenes.2d-adaptation-verified", "user.release-approved"},
+    "G1": {"s00.verified", "vertical-slice.playable", "build.platform-development"},
+    "G2": {"scope.complete", "modules.acceptance-complete", "platforms.adaptation-complete", "assets.production-ready", "regression.pass", "defects.p0-p1-resolved"},
+    "G3": {"candidate.verified", "licenses.verified", "privacy.verified", "rollback.ready", "devices.acceptance-verified", "performance.pass", "scenes.2d-adaptation-verified", "user.release-approved"},
 }
 
 

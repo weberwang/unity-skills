@@ -153,14 +153,8 @@
           "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
           "border": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "integer", "minimum": 0}},
           "delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE", "NOT_APPLICABLE"]},
-          "action": {"enum": ["REUSE", "GENERATE", "REDRAW", "EXPORT_LAYER", "PROGRAMMATIC", "MODEL_3D", "MATERIAL", "VFX", "CODE", "BLOCKED"]},
+          "action": {"enum": ["REUSE", "GENERATE", "REDRAW", "PROGRAMMATIC", "MODEL_3D", "MATERIAL", "VFX", "CODE", "BLOCKED"]},
           "existingAssetId": {"$ref": "common.schema.json#/$defs/taskId"},
-          "layerSourceEvidence": {
-            "allOf": [
-              {"$ref": "common.schema.json#/$defs/evidence"},
-              {"properties": {"type": {"const": "independent-layer-source"}}, "required": ["type", "subjectId", "subjectVersion"]}
-            ]
-          },
           "notes": {"type": "string"}
         },
         "allOf": [
@@ -170,15 +164,11 @@
             "else": {"required": ["targetSize", "alphaRequired", "pivot", "pixelsPerUnit"]}
           },
           {
-            "if": {"properties": {"action": {"const": "EXPORT_LAYER"}}, "required": ["action"]},
-            "then": {"properties": {"notes": {"type": "string", "minLength": 1}}, "required": ["notes", "layerSourceEvidence"]}
-          },
-          {
             "if": {"properties": {"action": {"enum": ["MODEL_3D", "MATERIAL", "VFX", "CODE", "PROGRAMMATIC"]}}, "required": ["action"]},
             "then": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}}
           },
           {
-            "if": {"properties": {"action": {"enum": ["GENERATE", "REDRAW", "EXPORT_LAYER"]}}, "required": ["action"]},
+            "if": {"properties": {"action": {"enum": ["GENERATE", "REDRAW"]}}, "required": ["action"]},
             "then": {"properties": {"delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE"]}}}
           },
           {

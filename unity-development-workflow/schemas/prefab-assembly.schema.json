@@ -35,7 +35,7 @@
         "properties": {
           "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
           "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
-          "productionType": {"enum": ["IMAGE_TASK", "MODEL_3D", "MATERIAL", "VFX", "CODE", "REUSED_ASSET", "PROGRAMMATIC", "EXPORTED_LAYER"]},
+          "productionType": {"enum": ["IMAGE_TASK", "MODEL_3D", "MATERIAL", "VFX", "CODE", "REUSED_ASSET", "PROGRAMMATIC"]},
           "productionEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
           "assetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"}

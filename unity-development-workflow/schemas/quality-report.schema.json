@@ -18,6 +18,18 @@
     "buildArtifact": {"$ref": "#/$defs/buildArtifact"},
     "platformAdaptation": {"$ref": "#/$defs/platformAdaptation"},
     "deviceAcceptance": {"$ref": "#/$defs/deviceAcceptance"},
+    "developmentCompletionEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {
+            "type": {"const": "quality-gates"},
+            "subjectId": {"const": "g2.development-complete"}
+          }
+        }
+      ]
+    },
     "profileEvidence": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
@@ -101,23 +113,22 @@
     "platformAdaptation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["deviceProfileIds", "checks", "platformSpecificChecks"],
+      "required": ["referenceConfigurationIds", "checks", "platformSpecificChecks"],
       "properties": {
-        "deviceProfileIds": {
+        "referenceConfigurationIds": {
           "type": "array", "minItems": 1, "uniqueItems": true,
           "items": {"$ref": "common.schema.json#/$defs/taskId"}
         },
         "checks": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["build", "installation", "adaptiveLayout", "input", "lifecycle", "performance"],
+          "required": ["compile", "adaptiveLayout", "inputMapping", "lifecycleSimulation", "staticBudget"],
           "properties": {
-            "build": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
-            "installation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "compile": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
             "adaptiveLayout": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
-            "input": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
-            "lifecycle": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
-            "performance": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
+            "inputMapping": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "lifecycleSimulation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+            "staticBudget": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
           }
         },
         "platformSpecificChecks": {
@@ -222,13 +233,17 @@
               "checks": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["launch", "coreLoop", "input", "screenAdaptation", "audio", "stability"],
+                "required": ["installation", "launch", "coreLoop", "input", "lifecycle", "screenAdaptation", "visual", "audio", "performance", "stability"],
                 "properties": {
+                  "installation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "launch": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "coreLoop": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "input": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "lifecycle": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "screenAdaptation": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "visual": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "audio": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+                  "performance": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
                   "stability": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
                 }
               },
@@ -247,11 +262,15 @@
                   "properties": {
                     "checks": {
                       "properties": {
+                        "installation": {"const": "PASS"},
                         "launch": {"const": "PASS"},
                         "coreLoop": {"const": "PASS"},
                         "input": {"const": "PASS"},
+                        "lifecycle": {"const": "PASS"},
                         "screenAdaptation": {"const": "PASS"},
+                        "visual": {"const": "PASS"},
                         "audio": {"const": "PASS"},
+                        "performance": {"const": "PASS"},
                         "stability": {"const": "PASS"}
                       }
                     }
@@ -314,12 +333,11 @@
             "properties": {
               "checks": {
                 "properties": {
-                  "build": {"const": "PASS"},
-                  "installation": {"const": "PASS"},
+                  "compile": {"const": "PASS"},
                   "adaptiveLayout": {"const": "PASS"},
-                  "input": {"const": "PASS"},
-                  "lifecycle": {"const": "PASS"},
-                  "performance": {"const": "PASS"}
+                  "inputMapping": {"const": "PASS"},
+                  "lifecycleSimulation": {"const": "PASS"},
+                  "staticBudget": {"const": "PASS"}
                 }
               }
             }
@@ -382,7 +400,7 @@
         "required": ["checks"]
       },
       "then": {
-        "required": ["deviceAcceptance"]
+        "required": ["deviceAcceptance", "developmentCompletionEvidence"]
       }
     },
     {
@@ -474,7 +492,7 @@
         },
         "required": ["checks"]
       },
-      "then": {"required": ["projectStateVersion", "platformId", "profileEvidence", "measurements"]}
+      "then": {"required": ["projectStateVersion", "platformId", "profileEvidence", "developmentCompletionEvidence", "measurements"]}
     },
     {
       "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},

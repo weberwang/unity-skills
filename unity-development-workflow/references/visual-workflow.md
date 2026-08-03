@@ -28,7 +28,7 @@
 8. 使用截图时逐张声明用途：只可选择 `CONTENT`、`COMPOSITION`、`INFORMATION_HIERARCHY`。高保真图和 P4 图片的提示词必须明确“依据 Visual Bible 重新设计，不复制截图风格、不裁切截图或效果图成品像素”；框选区域是规格与槽位证据，不是裁切许可。
 9. 使用 Codex ImageGen 生成或编辑位图；每个 P4 图片项生成一张独立、边界完整、可导入的资源图，并保留提示词、参考证据、全局视觉版本、场景视觉版本、资产地图条目、模型、输出版本与用途。生成候选与任何截图参考或效果图裁切结果的 SHA-256 相同即视为直接复用并阻塞。
 10. 简单纯色背景可做透明色键处理；复杂边缘、半透明、毛发或混合背景必须阻塞并请求合适源素材，不得伪造透明结果。UI 效果图只定义视觉目标，交互 UI 必须用 UI Toolkit 实现。
-11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，先读取 `mcpforunity://scene/cameras` 核对固定机位，用官方 `manage_build` 生成主开发平台参考构建。Windows 主平台使用 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py`，移动主平台从安装后的对应 Player 捕获实机画面；生成带 `platformId` 的 `CAPTURED` 证据后，按三个独立代理审查、修改、重构建、重新捕获，对最终候选调用 `$unity-game-grilling` 后请求用户批准。清理验证、当前拷问记录或最终批准缺失时，场景不得标记 `DONE`。
+11. P5 的清理验证 `PASS` 并进入 `ASSEMBLY_VERIFIED` 后，读取 `mcpforunity://scene/cameras` 核对固定机位，只在 Unity Editor/Game View 的批准参考分辨率与状态下生成 Editor 视觉证据；按三个独立代理审查、修改、重新捕获，对最终实现候选调用 `$unity-game-grilling` 后请求用户批准。研发阶段禁止安装或启动 Standalone/Player、真机或等价设备；G2 `PASS` 后才由 G3 生成候选包、捕获 `runtime-visual-evidence` 并执行设备视觉审查。
 12. 所有门禁证据必须绑定 Visual Bible 版本、场景结构版本、效果图版本、资产地图版本、资源版本和 SHA-256。P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 要求修改时退回 P1；P3 变化使受影响 P4 项及 P5 失效；任一 P4 项内容、规格、导入 GUID/地址或槽位绑定变化都会清除 `ALL_ITEMS_VALIDATED` 并使 P5 失效；Visual Bible 变化使所有受影响场景从 P1 重新开始。旧批准只能保留为历史，不能继承到新版本；上游回退所需灰盒必须从审计证据重建，禁止在运行时保留低保真 Prefab/Scene 或占位资源。
 
 ## 子代理角色与并行边界
@@ -41,12 +41,12 @@
 ## 所需锁与 Unity 权限
 
 - 图片生成只锁定各自输出路径，不需要 Unity 写权限。
-- 导入已批准素材或捕获实机效果前，显式绑定 `unity-mcp` 实例并取得目标资源锁。
+- 导入已批准素材或捕获 Editor 效果前，显式绑定 `unity-mcp` 实例并取得目标资源锁；实机捕获还必须先验证 G2 `PASS`。
 - 用户视觉批准是外部门禁，任何代理均无权代替。
 
 ## 机器可读输出
 
-输出 `visual-bible.yaml`、P0 `prefab-structure.yaml`、P1 `image-generation.yaml`、P2 `visual-review.yaml`、P3 带框选编号的 `split-plan.yaml` 完整资产地图、逐资源/实现项任务、P4 聚合验证、P5 `prefab-assembly.yaml` 与清理验证、Editor 固定机位 `visual-capture.yaml` 和带平台身份的 `runtime-visual-evidence.yaml`。每份输出记录状态、上游证据 ID/版本/SHA-256、失效原因和取代关系；`ALL_ITEMS_VALIDATED` 必须能枚举并解析 P3 的全部当前条目，`prefab-assembly` 必须逐项记录资产到 Prefab/Scene 槽位的绑定、已删除低保真对象/占位资源及引用检查结果，并继续引用 P0 结构、预览和批准证据。
+研发阶段输出 `visual-bible.yaml`、P0 `prefab-structure.yaml`、P1 `image-generation.yaml`、P2 `visual-review.yaml`、P3 `split-plan.yaml`、P4 聚合验证、P5 `prefab-assembly.yaml`、清理验证与 Editor 固定机位 `visual-capture.yaml`。带平台身份的 `runtime-visual-evidence.yaml` 只能在 G2 `PASS` 后由 G3 输出，并必须引用当前 `g2.development-complete`。
 
 ## 通过条件
 
@@ -55,7 +55,7 @@
 - P3 地图完整覆盖 2D、3D 或混合场景的可见生产元素和排除项；每项分类唯一、生产通道唯一、槽位明确。
 - 正式图片资源依据全局视觉逐项独立生成，而非裁切截图或效果图；全部生产项达到 `VALIDATED` 后才进行结构化装配。
 - 运行时 Prefab/Scene 不含灰盒组件、占位 Mesh/Sprite/Material 或临时低保真对象及其残留引用；已确认结构节点、稳定 ID 和审计证据保持完整。
-- 游戏效果图、UI 效果图和实机效果完成规定的独立审查及用户门禁；复杂透明素材未被自动降级，交互 UI 最终由 UI Toolkit 实现。
+- 游戏效果图、UI 效果图和 Editor 实现效果完成规定的独立审查及用户门禁；G3 另行审查设备实机效果。复杂透明素材未被自动降级，交互 UI 最终由 UI Toolkit 实现。
 
 ## 失败与恢复出口
 
@@ -64,4 +64,4 @@
 - 资产地图有漏项、重叠路由、未分类项或无法绑定装配槽位时停在 P3；任何条目未达到当前版本 `VALIDATED` 时保持 `ASSEMBLY_BLOCKED`。
 - 清理发现灰盒、占位、临时低保真对象或残留引用时保持 `ASSEMBLY_RUNNING` 并修复；不得跳过清理验证标记 `ASSEMBLY_VERIFIED` 或 `DONE`。
 - 无法证明截图只作允许用途、无法证明资源由批准基线逐项重新生成，或参考图授权不明时，将任务标为 `BLOCKED`，不得降级为人工目测通过。
-- 复杂透明处理阻塞时请求分层源文件、遮罩或干净背景素材。
+- 复杂透明处理阻塞时请求独立遮罩、干净背景、补绘或重新生成；禁止引入 Photoshop 分层文档。

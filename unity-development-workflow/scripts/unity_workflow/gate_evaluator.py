@@ -14,6 +14,7 @@ from typing import Any
 import yaml
 
 from unity_workflow.contracts import load_yaml, validate_contract, validate_decomposition_freshness
+from unity_workflow.decomposition_contract import EXPECTED_GATE_CHECKS
 from unity_workflow.acceptance_integrity import check_coverage_failure
 from unity_workflow.file_mutex import FileMutex
 from unity_workflow.g1_integrity import g1_vertical_slice_failure
@@ -25,9 +26,11 @@ from unity_workflow.platform_contract import (
     profile_platform_failure,
     s00_platform_failure,
 )
+from unity_workflow.psd_policy import find_prohibited_photoshop_documents
 
 CONTRACT_TYPES = {
     "project-profile",
+    "quality-gates",
     "decomposition-plan",
     "module-manifest",
     "quality-report",
@@ -83,7 +86,6 @@ REQUIRED_CHECK_EVIDENCE_TYPES = {
     "platforms.approved": "project-profile",
     "s00.verified": "s00-report",
     "vertical-slice.playable": "scene-manifest",
-    "visual.runtime-approved": "runtime-visual-evidence",
     "build.platform-development": "quality-report",
     "scope.complete": "scene-manifest",
     "modules.acceptance-complete": "quality-report",
@@ -162,6 +164,10 @@ def evaluate_gate(
             evaluated.append({"id": check_id, "status": "FAIL", "evidence": list(source.get("evidence", [])) if source else [], "failureReason": failure})
 
     gate_failures: list[str] = list(upstream_failures)
+    prohibited_documents = find_prohibited_photoshop_documents(root)
+    if prohibited_documents:
+        paths = "、".join(path.as_posix() for path in prohibited_documents)
+        gate_failures.append(f"开发阶段禁止 PSD/PSB/PSDT 方案，发现文件：{paths}")
     if gate_id == "G0":
         try:
             binding_failure = g0_grilling_profile_failure(verifier, checks_by_id)
@@ -390,6 +396,8 @@ class _EvidenceVerifier:
 
         if kind == "project-profile":
             document_id = payload.get("projectId")
+        elif kind == "quality-gates":
+            document_id = "g2.development-complete"
         elif kind == "scene-manifest":
             document_id = payload.get("id")
         elif kind in {"scene-report", "scene-2d-adaptation", "runtime-visual-evidence"}:
@@ -404,7 +412,11 @@ class _EvidenceVerifier:
                     payload.get("taskId", payload.get("resourceId", payload.get("sceneId"))),
                 ),
             )
-        document_version = payload.get("subjectVersion", payload.get("sceneVersion", payload.get("version", payload.get("sourceVersion"))))
+        document_version = (
+            payload.get("projectStateVersion")
+            if kind == "quality-gates"
+            else payload.get("subjectVersion", payload.get("sceneVersion", payload.get("version", payload.get("sourceVersion"))))
+        )
         # 契约证据必须显式声明主体与版本，缺省不能被解释为“接受任意当前版本”。
         if document_id is not None and reference.get("subjectId") is None:
             raise GateEvidenceError(f"{kind} 引用缺少 subjectId 绑定")
@@ -423,6 +435,29 @@ class _EvidenceVerifier:
 
     def _verify_status(self, kind: str, payload: Mapping[str, Any]) -> None:
         """确保已知契约达到门禁允许消费的最终状态。"""
+        if kind == "quality-gates":
+            gates = payload.get("gates")
+            g2 = next(
+                (item for item in gates if isinstance(item, Mapping) and item.get("id") == "G2"),
+                None,
+            ) if isinstance(gates, Sequence) and not isinstance(gates, (str, bytes)) else None
+            if not isinstance(g2, Mapping) or g2.get("status") != "PASS":
+                raise GateEvidenceError("研发完成证据中的 G2 尚未 PASS")
+            required = g2.get("requiredChecks")
+            results = {
+                item.get("id"): item
+                for item in g2.get("checkResults", [])
+                if isinstance(item, Mapping) and isinstance(item.get("id"), str)
+            }
+            if (
+                not isinstance(required, Sequence)
+                or isinstance(required, (str, bytes))
+                or set(required) != EXPECTED_GATE_CHECKS["G2"]
+                or set(results) != set(required)
+                or any(results[check_id].get("status") != "PASS" for check_id in required)
+            ):
+                raise GateEvidenceError("研发完成证据中的 G2 检查集合不标准、不完整或未全部 PASS")
+            return
         if kind == "project-profile":
             workflow = payload.get("workflow")
             if not isinstance(workflow, Mapping) or workflow.get("qualityTargetsStatus") != "APPROVED":
@@ -477,18 +512,35 @@ class _EvidenceVerifier:
             if performance_failure:
                 raise GateEvidenceError(performance_failure)
             references.extend(payload.get("evidence", []))
+            completion = payload.get("developmentCompletionEvidence")
+            if completion is not None:
+                references.append(completion)
+                if isinstance(completion, Mapping):
+                    for field in ("projectId", "sourceRevision", "projectStateVersion"):
+                        if completion.get(field) != payload.get(field):
+                            raise GateEvidenceError(f"设备阶段质量报告的研发完成证据 {field} 不一致")
             for check in payload.get("checks", []):
                 references.extend(check.get("evidence", []))
         elif kind == "runtime-visual-evidence":
+            completion = payload.get("developmentCompletionEvidence")
+            references.append(completion)
+            if isinstance(completion, Mapping):
+                for field in ("projectId", "sourceRevision", "projectStateVersion"):
+                    if completion.get(field) != payload.get(field):
+                        raise GateEvidenceError(f"实机视觉的研发完成证据 {field} 与当前候选不一致")
             screenshot = payload.get("screenshot", {})
             references.append({"type": "runtime-screenshot", "path": screenshot.get("path"), "sha256": screenshot.get("sha256")})
             references.extend(_approval_references(payload.get("reviews", [])))
             references.extend(_approval_references(payload.get("userApprovals", [])))
+        elif kind == "performance-measurement-evidence":
+            references.extend((payload.get("developmentCompletionEvidence"), payload.get("rawArtifact")))
+        elif kind == "performance-raw-artifact":
+            references.append(payload.get("developmentCompletionEvidence"))
         elif kind == "scene-manifest":
             references.append(payload.get("decompositionPlan"))
             references.append(payload.get("adaptation2D"))
             references.extend(payload.get("qualityReports", []))
-            references.extend(payload.get("runtimeCaptures", []))
+            references.extend(payload.get("editorCaptures", []))
             references.extend(payload.get("visualReviews", {}).values())
             references.extend(
                 (
@@ -501,7 +553,7 @@ class _EvidenceVerifier:
             references.extend(payload.get("evidence", []))
         elif kind == "scene-report":
             references.append(payload.get("sceneManifest"))
-            for field in ("greybox", "gameVisual", "implementation", "uiVisual", "runtimeComparison", "tests", "performance"):
+            for field in ("greybox", "gameVisual", "implementation", "uiVisual", "editorComparison", "tests", "performance"):
                 references.extend(payload.get(field, {}).get("evidence", []))
         elif kind == "s00-report":
             if platform_failure := s00_platform_failure(self, payload):
@@ -716,7 +768,7 @@ class _EvidenceVerifier:
             ),
             None,
         )
-        if item is None or item.get("action") not in {"GENERATE", "REDRAW", "EXPORT_LAYER"}:
+        if item is None or item.get("action") not in {"GENERATE", "REDRAW"}:
             raise GateEvidenceError("image-task 引用的拆分条目不存在或仍被阻塞")
         expected_item = {
             "itemVersion": split_reference.get("itemVersion"),
@@ -786,7 +838,6 @@ class _EvidenceVerifier:
             "REUSE": "REUSED_ASSET",
             "GENERATE": "IMAGE_TASK",
             "REDRAW": "IMAGE_TASK",
-            "EXPORT_LAYER": "EXPORTED_LAYER",
             "PROGRAMMATIC": "PROGRAMMATIC",
             "MODEL_3D": "MODEL_3D",
             "MATERIAL": "MATERIAL",

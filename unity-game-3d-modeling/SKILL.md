@@ -22,7 +22,7 @@ description: 通过 CoplayDev/unity-mcp 的 asset_gen、ProBuilder 与模型导�
 3. 需要 AI 候选模型时激活 `asset_gen`，先调用 `generate_model(action="list_providers")`。向用户说明供应商、成本、上传数据、许可和预计格式并取得批准后，才可提交生成任务；按 job ID 轮询 `status`，不阻塞等待。
 4. 已有本地 FBX、OBJ、GLB 或 glTF 时使用 `import_model_file` 导入项目内批准路径；不得把图片导入工具描述成模型导入器。
 5. 复杂角色拓扑、精确 UV、雕刻、重拓扑或高级烘焙需要 DCC 时，仅使用用户已批准且能力已发现的本地 DCC MCP。缺少能力就 `BLOCKED`，不伪报完成。
-6. 供应商输出、ProBuilder 输出和 DCC 输出都只是候选，必须经过规格、许可与 Unity 实机门禁。
+6. 供应商输出、ProBuilder 输出和 DCC 输出都只是候选，研发期必须经过规格、许可与 Unity Editor/PlayMode 门禁；批准平台实机门禁只能在 G2 `PASS` 后的 G3 执行。
 
 ## 场景小循环
 

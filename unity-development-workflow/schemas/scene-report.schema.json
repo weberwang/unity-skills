@@ -6,7 +6,7 @@
   "required": [
     "schemaVersion", "projectId", "sceneId", "sceneVersion", "reportPurpose", "sourceRevision", "projectStateVersion", "buildVersion",
     "generatedAtUtc", "sceneManifest", "greybox", "gameVisual", "implementation", "uiVisual",
-    "runtimeComparison", "tests", "performance", "status"
+    "editorComparison", "tests", "performance", "status"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -24,7 +24,7 @@
     "gameVisual": {"$ref": "common.schema.json#/$defs/checkResult"},
     "implementation": {"$ref": "common.schema.json#/$defs/checkResult"},
     "uiVisual": {"$ref": "common.schema.json#/$defs/checkResult"},
-    "runtimeComparison": {"$ref": "common.schema.json#/$defs/checkResult"},
+    "editorComparison": {"$ref": "common.schema.json#/$defs/checkResult"},
     "tests": {"$ref": "common.schema.json#/$defs/checkResult"},
     "performance": {"$ref": "common.schema.json#/$defs/checkResult"},
     "status": {"enum": ["NOT_RUN", "PASS", "FAIL", "BLOCKED"]},
@@ -39,7 +39,7 @@
           "gameVisual": {"properties": {"status": {"const": "PASS"}}},
           "implementation": {"properties": {"status": {"const": "PASS"}}},
           "uiVisual": {"properties": {"status": {"const": "PASS"}}},
-          "runtimeComparison": {"properties": {"status": {"const": "PASS"}}},
+          "editorComparison": {"properties": {"status": {"const": "PASS"}}},
           "tests": {"properties": {"status": {"const": "PASS"}}},
           "performance": {"properties": {"status": {"const": "PASS"}}}
         }

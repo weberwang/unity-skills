@@ -1,0 +1,219 @@
+schemaVersion: "1.0"
+recordType: CHARACTER_PROJECT_COMPARISON
+projectId: star-blogger
+characterId: P3-002
+comparisonVersion: baseline-v1
+sourceRevision: working-tree-snapshot-20260803
+projectStateVersion: project-state-v1
+generatedAtUtc: "2026-08-03T00:00:00Z"
+status: BASELINE_AUDITED
+projectMarkers:
+  packagesManifest: {path: Packages/manifest.json, sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+  projectVersion: {path: ProjectSettings/ProjectVersion.txt, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}
+authorityBindings:
+  target:
+    path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/target-board/p3-002-v5-neutral-target-r3.png
+    sha256: 3c4da040649bd6f3a52dbd9ee423493ccd063b32619ed25a34a29334bbfb5ce6
+  approval:
+    path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/target-board/p3-002-v5-target-user-approval.yaml
+    sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+  visualBible:
+    path: Artifacts/Visual/GlobalDirection/visual-bible-v0.9.yaml
+    sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  productionPlan:
+    path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/layered-character-production-plan-v5-round1.yaml
+    sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+layerMappings:
+  - category: Hair/Back
+    label: curls-dark-back-v2
+    filename: hair-back-curls-dark-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/hair-back-curls-dark-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000001"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/hair-back-curls-dark-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000001"}
+    guid: "00000000000000000000000000000001"
+  - category: Body/Base
+    label: skin-warm-medium-v2
+    filename: body-base-skin-warm-medium-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/body-base-skin-warm-medium-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000002"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/body-base-skin-warm-medium-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000002"}
+    guid: "00000000000000000000000000000002"
+  - category: Outfit/Bottom
+    label: ivory-wide-leg-v2
+    filename: outfit-bottom-ivory-wide-leg-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/outfit-bottom-ivory-wide-leg-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000003"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/outfit-bottom-ivory-wide-leg-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000003"}
+    guid: "00000000000000000000000000000003"
+  - category: Shoes
+    label: white-sneakers-v2
+    filename: shoes-white-sneakers-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/shoes-white-sneakers-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000004"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/shoes-white-sneakers-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000004"}
+    guid: "00000000000000000000000000000004"
+  - category: Outfit/Top
+    label: creator-blue-jacket-cream-top-v2
+    filename: outfit-top-creator-blue-jacket-cream-top-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/outfit-top-creator-blue-jacket-cream-top-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000005"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/outfit-top-creator-blue-jacket-cream-top-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000005"}
+    guid: "00000000000000000000000000000005"
+  - category: Hair/Front
+    label: curls-dark-front-v2
+    filename: hair-front-curls-dark-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/hair-front-curls-dark-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000006"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/hair-front-curls-dark-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000006"}
+    guid: "00000000000000000000000000000006"
+  - category: Face/Brows
+    label: neutral-v2
+    filename: face-brows-neutral-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-brows-neutral-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000007"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-brows-neutral-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000007"}
+    guid: "00000000000000000000000000000007"
+  - category: Face/Brows
+    label: raised-v2
+    filename: face-brows-raised-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-brows-raised-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000008"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-brows-raised-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000008"}
+    guid: "00000000000000000000000000000008"
+  - category: Face/Eyes
+    label: open-brown-v2
+    filename: face-eyes-open-brown-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-eyes-open-brown-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000009"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-eyes-open-brown-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000009"}
+    guid: "00000000000000000000000000000009"
+  - category: Face/Eyes
+    label: blink-v2
+    filename: face-eyes-blink-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-eyes-blink-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000a"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-eyes-blink-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000a"}
+    guid: "0000000000000000000000000000000a"
+  - category: Face/Nose
+    label: natural-medium-v2
+    filename: face-nose-natural-medium-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-nose-natural-medium-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000b"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-nose-natural-medium-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000b"}
+    guid: "0000000000000000000000000000000b"
+  - category: Face/Mouth
+    label: neutral-rose-v2
+    filename: face-mouth-neutral-rose-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-neutral-rose-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000c"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-neutral-rose-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000c"}
+    guid: "0000000000000000000000000000000c"
+  - category: Face/Mouth
+    label: smile-v2
+    filename: face-mouth-smile-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-smile-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000d"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-smile-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000d"}
+    guid: "0000000000000000000000000000000d"
+  - category: Face/Mouth
+    label: open-v2
+    filename: face-mouth-open-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-open-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000e"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-open-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000e"}
+    guid: "0000000000000000000000000000000e"
+  - category: Face/Mouth
+    label: frown-v2
+    filename: face-mouth-frown-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-frown-v2.png, sha256: "000000000000000000000000000000000000000000000000000000000000000f"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/face-mouth-frown-v2.png.meta, sha256: "100000000000000000000000000000000000000000000000000000000000000f"}
+    guid: "0000000000000000000000000000000f"
+  - category: Accessory/Necklace
+    label: simple-chain-v2
+    filename: accessory-necklace-simple-chain-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/accessory-necklace-simple-chain-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000010"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/accessory-necklace-simple-chain-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000010"}
+    guid: "00000000000000000000000000000010"
+  - category: Accessory/Earrings
+    label: simple-hoops-v2
+    filename: accessory-earrings-simple-hoops-v2.png
+    runtime: {path: Assets/Art/Runtime/Characters/Player/Sprites/accessory-earrings-simple-hoops-v2.png, sha256: "0000000000000000000000000000000000000000000000000000000000000011"}
+    meta: {path: Assets/Art/Runtime/Characters/Player/Sprites/accessory-earrings-simple-hoops-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000011"}
+    guid: "00000000000000000000000000000011"
+runtimeAssets:
+  spriteLibrary:
+    asset: {path: Assets/Art/Runtime/Characters/Player/PlayerCharacter.spriteLib, sha256: f111111111111111111111111111111111111111111111111111111111111111}
+    meta: {path: Assets/Art/Runtime/Characters/Player/PlayerCharacter.spriteLib.meta, sha256: f211111111111111111111111111111111111111111111111111111111111111}
+    guid: "10000000000000000000000000000001"
+  spriteAtlas:
+    asset: {path: Assets/Art/Runtime/Characters/Player/PlayerCharacter.spriteatlasv2, sha256: f122222222222222222222222222222222222222222222222222222222222222}
+    meta: {path: Assets/Art/Runtime/Characters/Player/PlayerCharacter.spriteatlasv2.meta, sha256: f222222222222222222222222222222222222222222222222222222222222222}
+    guid: "10000000000000000000000000000002"
+  playerPrefab:
+    asset: {path: Assets/Prefabs/Characters/Player/PlayerCharacter.prefab, sha256: f133333333333333333333333333333333333333333333333333333333333333}
+    meta: {path: Assets/Prefabs/Characters/Player/PlayerCharacter.prefab.meta, sha256: f233333333333333333333333333333333333333333333333333333333333333}
+    guid: "10000000000000000000000000000003"
+  performancePrefab:
+    asset: {path: Assets/Prefabs/Characters/Performance/DualCharacterPerformance.prefab, sha256: f144444444444444444444444444444444444444444444444444444444444444}
+    meta: {path: Assets/Prefabs/Characters/Performance/DualCharacterPerformance.prefab.meta, sha256: f244444444444444444444444444444444444444444444444444444444444444}
+    guid: "10000000000000000000000000000004"
+checks:
+  - checkId: authority.target-binding
+    expected: 合同目标路径、哈希与内容绑定批准一致
+    actual: 已从当前项目重新读取目标与批准记录
+    status: MATCH
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/target-board/p3-002-v5-target-user-approval.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}]
+  - checkId: authority.approval-binding
+    expected: 批准记录绑定当前目标内容
+    actual: 批准记录中的主体与目标哈希可复核
+    status: MATCH
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/target-board/p3-002-v5-target-user-approval.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}]
+  - checkId: project.unity-root
+    expected: Unity 项目根标记和版本均可读取
+    actual: Packages 与 ProjectSettings 根标记存在
+    status: MATCH
+    evidence: [{path: ProjectSettings/ProjectVersion.txt, sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb}]
+  - checkId: layers.runtime-set
+    expected: 17 项运行时 PNG、meta 与 GUID 完整唯一
+    actual: 17 项已逐项绑定
+    status: MATCH
+    evidence: [{path: Assets/Art/Runtime/Characters/Player/Sprites/hair-back-curls-dark-v2.png.meta, sha256: "1000000000000000000000000000000000000000000000000000000000000001"}]
+  - checkId: import.sprite-settings
+    expected: Sprite 导入设置符合统一画布、PPU、Pivot 和 Alpha 契约
+    actual: 当前导入设置已从 meta 和 Unity Inspector 证据核对
+    status: DIFFERENT
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/import-settings.yaml, sha256: a111111111111111111111111111111111111111111111111111111111111111}]
+  - checkId: sprite-library.mapping
+    expected: 12 类与 17 标签逐项指向合同资源
+    actual: 当前 SpriteLibrary 映射已导出
+    status: DIFFERENT
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/sprite-library-mapping.yaml, sha256: a222222222222222222222222222222222222222222222222222222222222222}]
+  - checkId: sprite-atlas.membership
+    expected: 17 项全部且仅一次进入 PlayerCharacter Atlas
+    actual: 当前 Atlas 成员已导出
+    status: MATCH
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/sprite-atlas-membership.yaml, sha256: a333333333333333333333333333333333333333333333333333333333333333}]
+  - checkId: prefab.references
+    expected: 两个 Prefab 保持稳定 GUID 并引用当前 SpriteLibrary 与 Renderer
+    actual: 当前 Prefab 引用已导出
+    status: MATCH
+    evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/prefab-references.yaml, sha256: a444444444444444444444444444444444444444444444444444444444444444}]
+visualComparison:
+  target:
+    path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/target-board/p3-002-v5-neutral-target-r3.png
+    sha256: 3c4da040649bd6f3a52dbd9ee423493ccd063b32619ed25a34a29334bbfb5ce6
+  currentComposite:
+    path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/current-neutral-composite.png
+    sha256: b111111111111111111111111111111111111111111111111111111111111111
+  normalization:
+    coordinateSpace: CANONICAL_2048_RGBA
+    scaleMethod: SOLE_TO_CROWN_EQUAL_HEIGHT
+    anchors: SOLE_BASELINE_AND_FACE_CENTER
+    resampling: NEAREST_NEIGHBOR
+    backgrounds: [LIGHT, DARK, CHECKERBOARD]
+  regions:
+    - {id: full-body, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-full-body.png, sha256: b200000000000000000000000000000000000000000000000000000000000001}]}
+    - {id: face, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-face.png, sha256: b200000000000000000000000000000000000000000000000000000000000002}]}
+    - {id: hair, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-hair.png, sha256: b200000000000000000000000000000000000000000000000000000000000003}]}
+    - {id: shoulders-chest, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-shoulders-chest.png, sha256: b200000000000000000000000000000000000000000000000000000000000004}]}
+    - {id: hands, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-hands.png, sha256: b200000000000000000000000000000000000000000000000000000000000005}]}
+    - {id: waist-hips, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-waist-hips.png, sha256: b200000000000000000000000000000000000000000000000000000000000006}]}
+    - {id: pants-shoes, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/region-pants-shoes.png, sha256: b200000000000000000000000000000000000000000000000000000000000007}]}
+  states:
+    - {id: neutral, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-neutral.png, sha256: b300000000000000000000000000000000000000000000000000000000000001}]}
+    - {id: smile, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-smile.png, sha256: b300000000000000000000000000000000000000000000000000000000000002}]}
+    - {id: speaking, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-speaking.png, sha256: b300000000000000000000000000000000000000000000000000000000000003}]}
+    - {id: frown, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-frown.png, sha256: b300000000000000000000000000000000000000000000000000000000000004}]}
+    - {id: blink, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-blink.png, sha256: b300000000000000000000000000000000000000000000000000000000000005}]}
+    - {id: raised-brows, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-raised-brows.png, sha256: b300000000000000000000000000000000000000000000000000000000000006}]}
+    - {id: accessories-on, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-accessories-on.png, sha256: b300000000000000000000000000000000000000000000000000000000000007}]}
+    - {id: accessories-off, status: DIFFERENT, evidence: [{path: Artifacts/Visual/P4/g1-v0.6/p3-002/v5/comparisons/state-accessories-off.png, sha256: b300000000000000000000000000000000000000000000000000000000000008}]}
+summary:
+  result: DIFFERENCES_FOUND
+  blockingReasons: []

@@ -19,7 +19,7 @@
 5. **制作贴图与材质**：模型拓扑与 UV 责任边界冻结后，把对应 P3 条目交给 `$unity-game-3d-texturing`；记录 UV0、静态物体 UV2、Texel Density、贴图集、色彩空间、通道打包、分辨率、压缩、MipMap、URP Shader、材质槽和变体。贴图依据 Visual Bible 独立制作，不复制参考截图或 P1 效果图的像素与材质风格。所有几何、贴图、材质操作记录为版本化 recipe 或 DCC 源变更。
 6. **P4 逐项验证**：每个地图条目独立经历 `PLANNED -> GENERATING -> REVIEWING -> APPROVED -> IMPORTED -> VALIDATED`；建模与贴图代理分别自检，独立 QA/视觉/性能代理复核，并在隔离 Prefab、目标灯光、相机、动画和物理条件下验证。混合场景还必须等待图片和实现通道的全部条目通过；只有 P3 全部生产项均为当前版本 `VALIDATED` 才可产生 `ALL_ITEMS_VALIDATED`。
 7. **P5 结构化装配与清理**：`ALL_ITEMS_VALIDATED` 前保持 `ASSEMBLY_BLOCKED`；解除后由单写集成代理按 P0 层级和 P3 槽位串行写入 Mesh、贴图、材质、LOD、Collider、Prefab、地址和依赖场景，状态先进入 `ASSEMBLY_READY -> ASSEMBLY_RUNNING`。不得把高保真渲染、资产地图标注图或单张合成图作为场景替身。正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，清理序列化、场景、Prefab、地址和登记引用；保留已确认结构节点、稳定 ID 以及 `prefab-structure`、预览和批准记录等审计证据。只有清理验证为 `PASS` 后才可进入 `ASSEMBLY_VERIFIED`。现行资产不原地静默覆盖，新修订通过后再标记旧版本被取代。
-8. **验证、批准与登记**：先在主开发平台构建中检查轮廓、接缝、法线、闪烁、LOD 跳变、Collider、材质槽、纹理采样、Draw Call、Mesh/纹理内存和加载；再在 G2 为各批准平台复验平台差异。保存 Console、Profiler/Frame Debugger、固定角度预览与实机证据。独立代理复核且用户最终批准当前外观后写不可变登记事实，再由单写集成者合并总资产登记。
+8. **验证、批准与登记**：研发阶段只在 Unity Editor/PlayMode 检查轮廓、接缝、法线、闪烁、LOD 跳变、Collider、材质槽、纹理采样、Draw Call、Mesh/纹理内存和加载，并保存 Console、Editor Profiler/Frame Debugger 与固定角度预览。独立代理复核且用户批准当前实现外观后写不可变登记事实。G2 `PASS` 后，G3 才在各批准平台候选制品和设备上复验实机差异。
 9. **执行版本失效**：P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 要求修改时退回 P1；P3 条目、分类、规格或槽位变化使受影响 P4 条目与 P5 失效；模型拓扑、UV、材质槽、LOD、Collider、资源内容、GUID/地址或导入设置变化会清除相关 `VALIDATED` 与 `ALL_ITEMS_VALIDATED`，并使装配及运行证据失效；Visual Bible 变化使受影响场景从 P1 重启。旧审批仅作历史，不得跨版本继承。上游回退所需 Blockout 或碰撞草模从审计证据重建，不在运行时 Prefab/Scene 中保留低保真副本。
 
 ## 子代理角色与并行边界
@@ -38,7 +38,7 @@
 
 ## 机器可读输出
 
-输出 P0 `prefab-structure.yaml`、P1/P2 目标外观与审查、P3 带编号 `split-plan.yaml` 完整资产地图、模型任务、可重建 recipe/DCC 源索引、贴图与材质任务、逐项状态、`ALL_ITEMS_VALIDATED`、P5 `prefab-assembly.yaml` 与清理验证、模型验证报告、质量报告、固定角度预览、带平台身份的实机证据、不可变登记记录和总资产登记引用。每项记录项目/源码/场景/Visual Bible/P0-P3/资源版本、唯一生产通道、目标槽位、MCP/DCC 工具与版本、输入输出路径、SHA-256、GUID/地址、预算、实际统计、审批、失效原因和取代关系；清理验证记录已删除对象、占位资源、引用扫描和保留审计证据。
+研发阶段输出 P0-P5、模型验证报告、质量报告、Editor 固定角度预览、不可变登记记录和总资产登记引用；带平台身份的实机证据只能在 G2 `PASS` 后由 G3 输出并引用研发完成证据。
 
 只有工具真实生成且 Unity 重新导入验证通过时，才能把 FBX、OBJ、Mesh Asset 或 Prefab 列为交付物；否则输出 `BLOCKED` 的 DCC 移交包，包含 turnaround、尺寸、拓扑/UV/材质/LOD/Collider 预算和验收条件。
 

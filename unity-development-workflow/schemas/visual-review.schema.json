@@ -12,7 +12,7 @@
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
-    "subjectType": {"enum": ["VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL"]},
+    "subjectType": {"enum": ["VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL", "RUNTIME_VISUAL"]},
     "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "subjectVersion": {"type": "string", "minLength": 1},
     "round": {"type": "integer", "minimum": 1},

@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision", "projectStateVersion",
-    "platformId", "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
+    "platformId", "developmentCompletionEvidence", "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -15,6 +15,18 @@
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
     "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+    "developmentCompletionEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {
+          "required": ["projectId", "subjectId", "subjectVersion", "sourceRevision", "projectStateVersion"],
+          "properties": {
+            "type": {"const": "quality-gates"},
+            "subjectId": {"const": "g2.development-complete"}
+          }
+        }
+      ]
+    },
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},

@@ -49,7 +49,7 @@
       "properties": {
         "approvalType": {
           "enum": [
-            "VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL",
+            "VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL", "RUNTIME_VISUAL",
             "PREFAB_STRUCTURE", "ASSET_MAP", "DECOMPOSITION", "GRILLING_DECISION", "QUALITY_GATE",
             "RELEASE", "RISK_WAIVER"
           ]

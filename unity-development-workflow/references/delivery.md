@@ -16,7 +16,7 @@
 2. 显式绑定正确的 `unity-mcp` 实例。Windows 与 Android 在能力可用时使用官方 `manage_build`；iOS/iPadOS 生成 Xcode 工程后必须在 macOS、Xcode、有效签名与目标设备条件下导出 IPA。缺少平台工具链时保持该平台 `BLOCKED`。
 3. 每个平台只能生成一个当前候选主制品：Windows 为 EXE，Android 为 APK 或 AAB，iOS/iPadOS 为 IPA。分别计算 SHA-256，冻结与当前版本对应的文件清单，禁止以其他平台结果补位。
 4. 只在 G2 已通过后执行最终“各平台设备档位 × 全部批准场景”矩阵；每个组合检查干净启动、核心循环、输入、窗口或方向/安全区、2D 适配、音频、生命周期、稳定性、退出和关键日志，并绑定所属平台候选制品哈希。
-5. Windows 可逐场景运行 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py` 生成 `CAPTURED` 实机视觉证据；Android、iOS 与 iPadOS 必须从安装后的对应 Player 和设备采集。任何捕获成功都不等于视觉批准或设备验收通过。
+5. Windows 逐场景运行 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py` 时必须传入 `--g2-result <Artifacts/Quality 下当前 G2 PASS 结果>`；脚本在启动 EXE 前验证项目、源码修订、项目状态和 G2 全检查。Android、iOS 与 iPadOS 的捕获器也必须执行同等前置验证，再从安装后的对应候选 Player 和设备采集。任何捕获成功都不等于视觉批准或设备验收通过。
 6. 汇总各平台测试、性能、视觉、资源授权、第三方包许可、隐私/数据处理和安全检查，编写发布说明、已知问题、安装/卸载与回滚步骤。
 7. 对各发行渠道所需图标、截图、描述、分级、隐私说明、崩溃收集、联网和账号能力逐项登记；未启用能力标明关闭，不虚构商店审核结论。
 8. 由独立交付代理核对平台集合、证据、版本、哈希、候选包和发行资料一致性；对当前候选集合、已知风险和回滚策略执行 `$unity-game-grilling`。

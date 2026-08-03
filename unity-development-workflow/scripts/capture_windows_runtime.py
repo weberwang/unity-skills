@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["Pillow>=11,<12"]
+# dependencies = ["Pillow>=11,<12", "PyYAML>=6,<7"]
 # ///
 """启动 Windows Standalone、捕获真实窗口并生成未批准的实机视觉证据。"""
 
@@ -20,8 +20,18 @@ import tempfile
 import time
 from typing import Any
 
+import yaml
+
 
 TASK_ID = re.compile(r"^[a-z0-9][a-z0-9.-]{0,95}$")
+EXPECTED_G2_CHECKS = {
+    "scope.complete",
+    "modules.acceptance-complete",
+    "platforms.adaptation-complete",
+    "assets.production-ready",
+    "regression.pass",
+    "defects.p0-p1-resolved",
+}
 
 
 class RuntimeCaptureError(RuntimeError):
@@ -138,6 +148,7 @@ def capture_window(window: int, output_path: Path) -> tuple[int, int]:
 
 def build_evidence(
     args: argparse.Namespace,
+    completion_hash: str,
     executable_hash: str,
     screenshot_hash: str,
     width: int,
@@ -152,6 +163,16 @@ def build_evidence(
         "sourceRevision": args.source_revision,
         "projectStateVersion": args.project_state_version,
         "platformId": "WINDOWS",
+        "developmentCompletionEvidence": {
+            "type": "quality-gates",
+            "path": args.g2_result,
+            "sha256": completion_hash,
+            "projectId": args.project_id,
+            "subjectId": "g2.development-complete",
+            "subjectVersion": args.project_state_version,
+            "sourceRevision": args.source_revision,
+            "projectStateVersion": args.project_state_version,
+        },
         "buildArtifactSha256": executable_hash,
         "captureSource": "WINDOWS_STANDALONE",
         "screenshot": {
@@ -188,7 +209,46 @@ def write_json_atomically(path: Path, payload: dict[str, Any]) -> None:
             temporary_path.unlink(missing_ok=True)
 
 
-def validate_args(args: argparse.Namespace) -> tuple[Path, Path, Path]:
+def validate_development_completion(path: Path, args: argparse.Namespace) -> None:
+    """在启动任何 Standalone 前验证同项目、同修订的 G2 研发完成结果。"""
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, yaml.YAMLError) as error:
+        raise RuntimeCaptureError(f"无法读取 G2 研发完成证据：{error}") from error
+    if not isinstance(payload, dict):
+        raise RuntimeCaptureError("G2 研发完成证据顶层必须是对象。")
+    expected = {
+        "projectId": args.project_id,
+        "sourceRevision": args.source_revision,
+        "projectStateVersion": args.project_state_version,
+    }
+    mismatches = [field for field, value in expected.items() if payload.get(field) != value]
+    if mismatches:
+        raise RuntimeCaptureError(f"G2 研发完成证据身份不匹配：{', '.join(mismatches)}。")
+    gates = payload.get("gates")
+    g2 = next(
+        (item for item in gates if isinstance(item, dict) and item.get("id") == "G2"),
+        None,
+    ) if isinstance(gates, list) else None
+    if not isinstance(g2, dict) or g2.get("status") != "PASS":
+        raise RuntimeCaptureError("G2 尚未 PASS，禁止启动设备验证。")
+    required = g2.get("requiredChecks")
+    results = g2.get("checkResults")
+    result_by_id = {
+        item.get("id"): item
+        for item in results
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    } if isinstance(results, list) else {}
+    if (
+        not isinstance(required, list)
+        or set(required) != EXPECTED_G2_CHECKS
+        or set(result_by_id) != set(required)
+        or any(result_by_id[check_id].get("status") != "PASS" for check_id in required)
+    ):
+        raise RuntimeCaptureError("G2 研发完成检查集合不标准、不完整或存在非 PASS 结果。")
+
+
+def validate_args(args: argparse.Namespace) -> tuple[Path, Path, Path, Path]:
     """校验标识、时间和全部文件范围，再返回规范化路径。"""
     for label, value in (("project-id", args.project_id), ("scene-id", args.scene_id)):
         if not TASK_ID.fullmatch(value):
@@ -201,20 +261,24 @@ def validate_args(args: argparse.Namespace) -> tuple[Path, Path, Path]:
     if not root.is_dir():
         raise RuntimeCaptureError("Unity 项目根目录不存在。")
     executable = resolve_project_path(root, args.executable, "Artifacts/Builds")
+    g2_result = resolve_project_path(root, args.g2_result, "Artifacts/Quality")
     screenshot = resolve_project_path(root, args.screenshot, "Artifacts/Visual/Runtime")
     evidence = resolve_project_path(root, args.evidence, "Artifacts/Visual/Runtime")
     if not executable.is_file() or executable.suffix.casefold() != ".exe":
         raise RuntimeCaptureError("Windows 构建 EXE 不存在或扩展名错误。")
+    if not g2_result.is_file() or g2_result.suffix.casefold() not in {".yaml", ".yml", ".json"}:
+        raise RuntimeCaptureError("G2 研发完成证据不存在或格式错误。")
+    validate_development_completion(g2_result, args)
     if screenshot.suffix.casefold() != ".png" or evidence.suffix.casefold() != ".json":
         raise RuntimeCaptureError("截图必须为 PNG，实机证据必须为 JSON。")
     if screenshot.exists() or evidence.exists():
         raise RuntimeCaptureError("截图或实机证据已存在，禁止覆盖。")
-    return executable, screenshot, evidence
+    return executable, g2_result, screenshot, evidence
 
 
 def run_capture(args: argparse.Namespace) -> dict[str, Any]:
     """执行启动、窗口等待、截图、哈希、证据写入和进程清理闭环。"""
-    executable, screenshot, evidence_path = validate_args(args)
+    executable, g2_result, screenshot, evidence_path = validate_args(args)
     executable_hash = hash_file(executable)
     process = subprocess.Popen(
         [str(executable), *args.launch_arg],
@@ -227,7 +291,9 @@ def run_capture(args: argparse.Namespace) -> dict[str, Any]:
         window = wait_for_window(process, args.window_title, args.timeout)
         time.sleep(args.capture_delay)
         width, height = capture_window(window, screenshot)
-        payload = build_evidence(args, executable_hash, hash_file(screenshot), width, height)
+        payload = build_evidence(
+            args, hash_file(g2_result), executable_hash, hash_file(screenshot), width, height
+        )
         write_json_atomically(evidence_path, payload)
         return payload
     finally:
@@ -245,6 +311,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="启动 Windows Standalone 并生成实机视觉证据")
     parser.add_argument("--project-root", required=True, type=Path)
     parser.add_argument("--executable", required=True, help="Artifacts/Builds 下的项目相对 EXE 路径")
+    parser.add_argument("--g2-result", required=True, help="Artifacts/Quality 下已 PASS 的 G2 门禁结果")
     parser.add_argument("--project-id", required=True)
     parser.add_argument("--scene-id", required=True)
     parser.add_argument("--build-version", required=True)

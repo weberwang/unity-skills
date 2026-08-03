@@ -30,8 +30,8 @@ uiVisual:
   id: visual.ui
   status: NOT_RUN
   evidence: []
-runtimeComparison:
-  id: visual.runtime
+editorComparison:
+  id: visual.editor
   status: NOT_RUN
   evidence: []
 tests:

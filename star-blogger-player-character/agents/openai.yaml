@@ -1,0 +1,4 @@
+interface:
+  display_name: "Star Blogger 玩家角色"
+  short_description: "规范对照当前项目，锁定角色身份与分层单图并验证 Unity 还原"
+  default_prompt: "使用 $star-blogger-player-character 先建立 P3-002 当前项目基线，再按统一生产母版逐张制作并验证 17 张独立 PNG。"

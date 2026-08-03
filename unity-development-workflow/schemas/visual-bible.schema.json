@@ -59,11 +59,13 @@
     "assetRegeneration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mode", "independentItemGenerationRequired", "assetMapOnlyAfterReview"],
+      "required": ["mode", "independentItemGenerationRequired", "assetMapOnlyAfterReview", "psdWorkflow", "layeredSourceStrategy"],
       "properties": {
         "mode": {"const": "REGENERATE_FROM_VISUAL_BIBLE"},
         "independentItemGenerationRequired": {"const": true},
-        "assetMapOnlyAfterReview": {"const": true}
+        "assetMapOnlyAfterReview": {"const": true},
+        "psdWorkflow": {"const": "FORBIDDEN_DURING_DEVELOPMENT"},
+        "layeredSourceStrategy": {"const": "SEPARATE_FILES_AND_MASKS"}
       }
     },
     "directionCandidates": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},

@@ -22,11 +22,11 @@ S00 通过后，为每个场景进行需求、实现、视觉、测试、审批�
 7. 执行 **P3 完整资产地图确认**：在 P2 通过的游戏/UI 原图上框选所有可见生产元素，赋予唯一条目 ID；拆分前由 `$unity-game-grilling` 逐项拷问用途、独立生成必要性、复用边界、轮廓、遮挡补全、尺寸、透明、枢轴/锚点、PPU、九宫格、动画帧、交付形式、性能代价和目标槽位，并绑定唯一生产通道及列出无需生产的排除项。状态依次为 `ASSET_MAP_DRAFT -> ASSET_MAP_AWAITING_USER -> ASSET_MAP_APPROVED`；地图、绑定当前版本的拷问记录和用户确认未完成时不得生产正式资源。
 8. 执行 **P4 逐项生产与验证**：2D/位图项逐张依据 Visual Bible 独立生成，模型项走建模，PBR/材质项走贴图材质，灯光、相机、后处理、Shader、UI Toolkit 和代码项走实现；每项依次为 `PLANNED -> GENERATING -> REVIEWING -> APPROVED -> IMPORTED -> VALIDATED`，其中实现类的 `IMPORTED` 表示已写入并可由 Unity 加载。只有地图全部生产项处于当前版本 `VALIDATED`，聚合状态才可设为 `ALL_ITEMS_VALIDATED`。
 9. 执行 **P5 结构化装配与清理**：初始状态为 `ASSEMBLY_BLOCKED`，仅 `ALL_ITEMS_VALIDATED` 可转为 `ASSEMBLY_READY`，再由单写 Unity 集成代理进入 `ASSEMBLY_RUNNING`。严格按 P0 层级与 P3 槽位装配 Prefab/Scene；不得把效果图、整张背景合成图、联系表、占位图或未登记对象当作正式实现。玩法、内容与 UI Toolkit 交互接线在该结构中串行完成。正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，并清理序列化、场景、Prefab、地址和登记引用；保留已确认结构节点及稳定 ID，并保留 `prefab-structure`、预览和批准记录等审计证据。只有清理验证为 `PASS` 后，才可从 `ASSEMBLY_RUNNING` 进入 `ASSEMBLY_VERIFIED`。
-10. 使用官方 `manage_build` 为 `primaryDevelopmentPlatform` 生成参考环境构建。主平台为 Windows 时，从项目根目录运行 `uv run .agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py --project-root <项目> --executable <Artifacts/Builds 下 EXE> --project-id <ID> --scene-id <场景> --build-version <版本> --source-revision <修订> --project-state-version <项目状态版本> --screenshot <Artifacts/Visual/Runtime 下 PNG> --evidence <Artifacts/Visual/Runtime 下 JSON>`；主平台为 Android、iOS 或 iPadOS 时，必须安装该平台构建并从对应真机或已批准等价设备采集 `ANDROID_PLAYER`、`IOS_PLAYER` 或 `IPADOS_PLAYER` 证据。捕获只产出 `CAPTURED` 证据，随后必须与 P1 目标对比并交由三个独立审查子代理；修复并重新构建、捕获，对当前最终候选执行 `$unity-game-grilling` 后才能请求用户批准。单一参考环境结果不是最终设备验收，Windows 脚本也不能用于证明移动端通过。
+10. 研发阶段只用 Unity Editor/Game View 在批准参考分辨率、方向、安全区和交互状态下捕获固定机位实现画面；与 P1 目标对比并交由视觉一致性、Unity 可实现性、UX/可读性三个独立审查子代理，修复并重新捕获，对当前实现候选执行 `$unity-game-grilling` 后请求用户批准。禁止安装或启动 Standalone/Player、真机或等价设备，也不得调用 `capture_windows_runtime.py`。只有全部场景、模块和平台适配完成且 G2 `PASS` 后，G3 才能生成候选包并开始设备验证。
 11. 执行场景测试、冒烟、可访问性、视觉与性能门禁；2D 场景还必须完成参考、边带、裁切三类适配检查。此处只验证场景实现与适配契约，不得执行或标记完整设备矩阵为 `PASS`。P0 变化使 P1-P5 失效；P1 变化使 P2-P5 失效；P2 退回时重做 P1；P3 变化使受影响 P4 和 P5 失效；P4 任一资源内容、规格、GUID/地址、导入设置或槽位变化都会清除 `ALL_ITEMS_VALIDATED` 并使 P5 失效；Visual Bible 变化使受影响场景从 P1 重启。上游需要回退时，从结构、预览、批准记录等审计证据重建灰盒，不在运行时保留低保真资产。所有证据重建、清理验证 `PASS` 且用户最终批准后才能冻结场景或标记 `DONE`。
 12. 可提前只读准备下一场景，但禁止提前写其正式共享状态；当前场景冻结后再切换主场景。
 
-P0-P5、参考环境实机视觉验证和场景批准构成不可跨越的小循环。每次状态迁移必须解析当前版本的全部前置证据；失败、阻塞、未运行、确认未绑定精确版本或证据失效时保持原状态。任何代理不得以审查结论代替 P0、P1、P3 或最终视觉的用户批准。所有模块和场景完成并通过 G2 后，才由 G3 对同一候选包执行最终设备验收。
+P0-P5、Editor 实现视觉验证和场景批准构成不可跨越的小循环。每次状态迁移必须解析当前版本的全部前置证据；失败、阻塞、未运行、确认未绑定精确版本或证据失效时保持原状态。任何代理不得以审查结论代替 P0、P1、P3 或实现视觉的用户批准。G2 `PASS` 标志研发完成；此前不得开始任何设备验证，之后才由 G3 对同一候选包执行设备验收。
 
 ## 子代理角色与并行边界
 
@@ -45,7 +45,7 @@ P0-P5、参考环境实机视觉验证和场景批准构成不可跨越的小循
 
 ## 机器可读输出
 
-更新 `scene-manifest.yaml`，输出 P0 `prefab-structure.yaml`、P1 高保真候选、P2 三份审查、P3 `split-plan.yaml` 完整资产地图、P4 条目状态与 `ALL_ITEMS_VALIDATED` 聚合证据、P5 `prefab-assembly.yaml` 及清理验证，以及 `scene-report`、`runtime-visual-evidence` 与最终审查。2D 场景必须引用当前 `VERIFIED` 适配契约，但该状态只证明场景配置与参考环境检查通过；G3 设备报告另行证明跨设备矩阵。3D 场景还索引模型/贴图任务、recipe/DCC 源、几何/材质/LOD/Collider 统计、Prefab 登记与运行报告。每份引用均带 Visual Bible、场景、结构、视觉、地图、资源版本和 SHA-256；`DONE` 必须深度解析完整未失效链、清理验证 `PASS`、`ASSEMBLY_VERIFIED`、质量报告、参考环境实机证据与用户最终批准。P0 `prefab-structure`、预览和批准记录作为重建依据保留，不作为运行时资产加载。
+更新 `scene-manifest.yaml`，输出 P0 `prefab-structure.yaml`、P1 高保真候选、P2 三份审查、P3 `split-plan.yaml` 完整资产地图、P4 条目状态与 `ALL_ITEMS_VALIDATED` 聚合证据、P5 `prefab-assembly.yaml` 及清理验证，以及 `scene-report`、Editor 固定机位证据与最终实现审查。2D 场景必须引用当前 `VERIFIED` 适配契约，但该状态只证明 Editor 配置与参考分辨率检查通过；G3 设备报告另行证明跨设备矩阵。每份引用均带 Visual Bible、场景、结构、视觉、地图、资源版本和 SHA-256；`DONE` 必须深度解析完整未失效链、清理验证 `PASS`、`ASSEMBLY_VERIFIED`、质量报告、Editor 证据与用户最终批准。`runtime-visual-evidence` 只能在 G2 `PASS` 后生成。
 
 ## 通过条件
 
@@ -54,12 +54,12 @@ P0-P5、参考环境实机视觉验证和场景批准构成不可跨越的小循
 - 已确认结构节点和稳定 ID 未因清理改变，`prefab-structure`、预览与批准记录等审计证据完整可用于重建。
 - 2D 场景的高度/宽度基准、纯视觉边带、无黑边和交互安全区已通过本场景适配检查；跨设备最终结论留到 G3。
 - 3D 场景的模型比例、拓扑、法线、UV、贴图、材质、LOD、Collider、Prefab 和性能均有当前版本证据。
-- 游戏效果图、UI 效果图和实机效果均经过独立审查、修改闭环与用户批准。
+- 游戏效果图、UI 效果图和 Editor 实现效果均经过独立审查、修改闭环与用户批准；设备实机效果留到 G3。
 - 场景没有未声明共享写入，冻结状态可追溯。
 
 ## 失败与恢复出口
 
-- P0、P1、P3 或最终实机视觉被拒绝时回到对应阶段，新修订按版本失效规则清除下游有效状态。
+- P0、P1、P3 或 Editor 实现视觉被拒绝时回到对应阶段，新修订按版本失效规则清除下游有效状态。
 - P2 要求修改时必须返回 P1；P3 漏项或路由冲突时停在资产地图；任何 P4 项未验证时不得解除 `ASSEMBLY_BLOCKED`。
 - P5 清理验证失败时保持 `ASSEMBLY_RUNNING`，删除残留低保真对象或引用后重验；不得以保留运行时灰盒支持潜在回退。
 - 实现或测试失败时解除冻结意图，修复当前场景后重跑受影响门禁。

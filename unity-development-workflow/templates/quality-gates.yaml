@@ -34,7 +34,6 @@ gates:
     requiredChecks:
       - s00.verified
       - vertical-slice.playable
-      - visual.runtime-approved
       - build.platform-development
     checkResults: []
     evidence: []
@@ -46,7 +45,6 @@ gates:
       - platforms.adaptation-complete
       - assets.production-ready
       - regression.pass
-      - performance.pass
       - defects.p0-p1-resolved
     checkResults: []
     evidence: []
@@ -58,6 +56,7 @@ gates:
       - privacy.verified
       - rollback.ready
       - devices.acceptance-verified
+      - performance.pass
       - scenes.2d-adaptation-verified
       - user.release-approved
     checkResults: []

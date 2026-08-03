@@ -11,6 +11,7 @@ ROOT = Path(__file__).parents[2]
 PACKAGE_PATH = ROOT / "package.json"
 INSTALLER_PATH = ROOT / "scripts" / "install-project-skills.mjs"
 EXPECTED_SKILL_NAMES = (
+    "star-blogger-player-character",
     "unity-development-workflow",
     "unity-game-grilling",
     "unity-game-3d-modeling",

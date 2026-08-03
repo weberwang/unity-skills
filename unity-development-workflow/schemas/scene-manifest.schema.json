@@ -8,8 +8,8 @@
     "entryConditions", "exitConditions", "dependencies", "moduleDependencies",
     "sharedCapabilities", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
     "prefabStructure", "highFidelityVisualReview", "assetMap", "prefabAssembly",
-    "qualityGate", "status", "approvals", "qualityReportPaths", "runtimeCapturePaths",
-    "qualityReports", "runtimeCaptures", "visualReviews", "evidence"
+    "qualityGate", "status", "approvals", "qualityReportPaths", "editorCapturePaths",
+    "qualityReports", "editorCaptures", "visualReviews", "evidence"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -83,9 +83,9 @@
     "status": {"$ref": "common.schema.json#/$defs/taskStatus"},
     "approvals": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
     "qualityReportPaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
-    "runtimeCapturePaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
+    "editorCapturePaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "qualityReports": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
-    "runtimeCaptures": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "editorCaptures": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
     "visualReviews": {
       "type": "object",
       "additionalProperties": false,
@@ -114,9 +114,9 @@
         "required": ["frozenAtUtc"],
         "properties": {
           "qualityReportPaths": {"minItems": 1},
-          "runtimeCapturePaths": {"minItems": 1},
+          "editorCapturePaths": {"minItems": 1},
           "qualityReports": {"minItems": 1},
-          "runtimeCaptures": {"minItems": 1},
+          "editorCaptures": {"minItems": 1},
           "evidence": {"minItems": 1},
           "approvals": {
             "minItems": 12,
@@ -129,10 +129,10 @@
               {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
               {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
               {"contains": {"properties": {"approvalType": {"const": "UI_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}},
-              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"approvalType": {"const": "RUNTIME_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}}
+              {"contains": {"properties": {"approvalType": {"const": "IMPLEMENTATION_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "IMPLEMENTATION_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "IMPLEMENTATION_VISUAL"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
+              {"contains": {"properties": {"approvalType": {"const": "IMPLEMENTATION_VISUAL"}, "authority": {"const": "USER"}}, "required": ["approvalType", "authority"]}}
             ]
           }
         }

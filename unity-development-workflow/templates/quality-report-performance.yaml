@@ -5,6 +5,15 @@ sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
 platformId: WINDOWS
+developmentCompletionEvidence:
+  type: quality-gates
+  path: Artifacts/Quality/quality-gates.g2.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  projectId: starfall-arena
+  subjectId: g2.development-complete
+  subjectVersion: project-state-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 generatedAtUtc: "2026-07-27T12:00:00Z"
 profileEvidence:
   type: project-profile

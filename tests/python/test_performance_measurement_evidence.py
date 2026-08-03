@@ -169,6 +169,26 @@ def test_real_gate_reads_measurement_contracts_and_raw_artifacts(tmp_path: Path)
     raw_template = yaml.safe_load(
         (TEMPLATES / "performance-raw-artifact.yaml").read_text(encoding="utf-8")
     )
+    completion = yaml.safe_load((TEMPLATES / "quality-gates.yaml").read_text(encoding="utf-8"))
+    for gate in completion["gates"]:
+        if gate["id"] == "G2":
+            gate["status"] = "PASS"
+            gate["checkResults"] = [
+                {
+                    "id": check_id,
+                    "status": "PASS",
+                    "evidence": [{"type": "test-log", "path": "Artifacts/Quality/g2.txt", "sha256": "f" * 64}],
+                }
+                for check_id in gate["requiredChecks"]
+            ]
+            gate["evidence"] = [{"type": "test-log", "path": "Artifacts/Quality/g2.txt", "sha256": "f" * 64}]
+    completion_path = tmp_path / "Artifacts" / "Quality" / "quality-gates.g2.yaml"
+    completion_path.parent.mkdir(parents=True, exist_ok=True)
+    completion_path.write_text(
+        yaml.safe_dump(completion, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
+    completion_hash = hashlib.sha256(completion_path.read_bytes()).hexdigest()
+    report["developmentCompletionEvidence"]["sha256"] = completion_hash
     for index, measurement in enumerate(report["measurements"]):
         reference = measurement["measurementEvidence"]
         raw_path = tmp_path / "Artifacts" / "Performance" / "raw" / f"metric-{index}.yaml"
@@ -184,6 +204,7 @@ def test_real_gate_reads_measurement_contracts_and_raw_artifacts(tmp_path: Path)
             }
         )
         raw["captureMetadata"]["sampleCount"] = 2
+        raw["developmentCompletionEvidence"]["sha256"] = completion_hash
         raw_path.write_text(
             yaml.safe_dump(raw, allow_unicode=True, sort_keys=False), encoding="utf-8"
         )
@@ -207,7 +228,8 @@ def test_real_gate_reads_measurement_contracts_and_raw_artifacts(tmp_path: Path)
                 "sourceRevision": report["sourceRevision"],
                 "projectStateVersion": report["projectStateVersion"],
                 "buildVersion": report["buildVersion"],
-            }
+                }
+        evidence["developmentCompletionEvidence"]["sha256"] = completion_hash
         evidence_path = tmp_path / reference["path"]
         evidence_path.parent.mkdir(parents=True, exist_ok=True)
         evidence_path.write_text(yaml.safe_dump(evidence, allow_unicode=True, sort_keys=False), encoding="utf-8")
@@ -217,7 +239,7 @@ def test_real_gate_reads_measurement_contracts_and_raw_artifacts(tmp_path: Path)
         report["projectId"],
         report["sourceRevision"],
         report["buildVersion"],
-        "G2",
+        "G3",
         report["projectStateVersion"],
         {},
     )

@@ -60,5 +60,7 @@ assetRegeneration:
   mode: REGENERATE_FROM_VISUAL_BIBLE
   independentItemGenerationRequired: true
   assetMapOnlyAfterReview: true
+  psdWorkflow: FORBIDDEN_DURING_DEVELOPMENT
+  layeredSourceStrategy: SEPARATE_FILES_AND_MASKS
 directionCandidates: []
 reviews: []

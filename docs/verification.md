@@ -2,7 +2,7 @@
 
 ## 本次验证范围
 
-本记录对应 2026-08-02 的工作流重构，覆盖总控与角色 Skills、严格默认拒绝策略、不可跳关质量门、阶段新证据状态机、拆分前拷问、用户驱动的平台选择、Windows/Android/iOS/iPadOS 独立适配、主开发平台 S00/G1、G2 逐模块与逐平台验收、G3 多平台候选制品及最终设备矩阵、全局视觉、P0 低保真 Prefab/Scene 结构、P1 高保真候选确认、P2 独立审阅、P3 编号资产地图、逐项资源生成、结构化拼装及最终低保真清理、2D 多比例与移动安全区适配、基于 MCP 的 3D 模型与 PBR 纹理流程、YAML/JSON Schema 契约、Python 编译/调度工具、项目文档初始化、Python 与 npx Skill 安装器、Unity Workflow Toolkit 源码与最小测试宿主。
+本记录更新于 2026-08-03，覆盖总控与角色 Skills、严格默认拒绝策略、不可跳关质量门、开发阶段禁止 PSD/PSB/PSDT 与分层导出、G1/G2 禁止设备验证、G2 `DEVELOPMENT_COMPLETE`、G3 独占候选设备视觉与性能验证、Windows/Android/iOS/iPadOS 独立适配、模块与场景小循环、全局视觉、P0-P5、低保真清理、2D/3D 资源流程、YAML/JSON Schema、Python 调度工具、npx 安装器和 Unity Workflow Toolkit。
 
 ## 已实际通过
 
@@ -11,29 +11,29 @@
 命令：
 
 ```powershell
-rtk proxy uv run pytest -q
+rtk uv run pytest -q
 ```
 
-结果：`427 passed`。覆盖契约校验、确定性 Job 编译、严格策略入口与默认提示、标准检查全集、版本化拷问与候选快照摘要、拆分到模块/场景的精确投影、G0 平台批准与主开发平台约束、Windows/Android/iPhone/iPad 独立设备形态、S00/G1 主平台制品绑定、G2 批准模块/平台/性能报告全集、G3 各平台候选清单与设备档位/批准场景笛卡尔积、逐用例平台制品哈希、平台实机视觉来源、九项分平台性能原始样本回读、极值重算与预算实算、类型化资源登记与 PBR 闭合引用链、阶段新证据状态机、模块/场景 DAG、跨进程锁、CLI、初始化器、Python/npx 安装器、Windows 实机捕获脚本、三次用户视觉确认与实机三学科审阅、P0-P5 视觉资源小循环、低保真清理、2D/安全区适配、3D 模型/贴图角色路由、端到端门禁和 Toolkit 静态结构。
+结果：`437 passed`。覆盖 Star Blogger P3-002 当前项目对照 Schema、固定检查/视觉区域/状态矩阵、全绑定重算与漂移阻断，PSD/PSB/PSDT 真实文件扫描、分层导出通道拒绝、Visual Bible 无 PSD 常量策略、G1/G2 无设备研发门禁、G2 标准检查全集、Windows 捕获脚本启动前的 G2 状态与身份校验、设备视觉缺少研发完成证据时拒绝、G3 研发完成证据绑定、设备档位与场景矩阵、设备安装/输入/生命周期/视觉/性能/稳定性检查、九项分平台性能原始样本回读，以及既有契约、资源、2D/3D、P0-P5、低保真清理、并发锁和 Toolkit 静态结构测试。
 
 ### npx 安装入口
 
-已执行 `node .\scripts\install-project-skills.mjs --help`，确认帮助信息提供 `npx -y github:weberwang/unity-skills` 最短命令。随后执行 `npm pack --dry-run --json`，确认包内包含总控与十一个角色 Skill 的参考文档和代理配置；安装器测试确认 `.agents/skills/` 下精确生成十二个 Skill，且安装内容逐文件来自当前包而不是再次拉取远端默认分支。
+已执行 `node .\scripts\install-project-skills.mjs --help`，确认帮助信息提供 `npx -y github:weberwang/unity-skills` 最短命令。随后执行 `npm pack --dry-run --json`，确认包内包含总控、十一个角色与一个 Star Blogger 项目专项 Skill 的参考文档和代理配置；安装器测试确认 `.agents/skills/` 下精确生成十三个 Skill，且安装内容逐文件来自当前包而不是再次拉取远端默认分支。
 
 另将双进程竞争同一场景锁的测试连续执行 20 次，结果 `20/20` 通过；此前审查代理修复后也完成过 `30/30` 压力验证。
 
 ### Skill Creator 校验
 
-使用 Skill Creator 的 `quick_validate.py` 分别校验总控和十一个角色 Skill；Windows 下设置 `PYTHONUTF8=1`，避免校验器按系统 GBK 默认编码读取 UTF-8 文档。
+使用 Skill Creator 的 `quick_validate.py` 分别校验总控、十一个角色和一个 Star Blogger 项目专项 Skill；Windows 下设置 `PYTHONUTF8=1`，避免校验器按系统 GBK 默认编码读取 UTF-8 文档。
 
-结果：12 个 Skill 全部返回 `Skill is valid!`。
+结果：13 个 Skill 全部返回 `Skill is valid!`。
 
 ### Toolkit 静态校验
 
 命令：
 
 ```powershell
-rtk proxy uv run pytest tests\python\test_toolkit_structure.py -q
+rtk uv run pytest tests\python\test_toolkit_structure.py -q
 ```
 
 结果：`6 passed`。已确认模块/测试文件齐备、asmdef 可解析且名称唯一、UnityHost 固定 unity-mcp v10.1.0、四个自定义工具名称准确、2D 适配 Runtime/Editor/EditMode 测试结构齐备、C# 文件均小于 1000 行且类型/方法具备中文 XML 摘要，并覆盖新增 Toolkit 安全约束的静态结构。
@@ -44,11 +44,9 @@ rtk proxy uv run pytest tests\python\test_toolkit_structure.py -q
 
 ## 环境阻塞
 
-- `UNITY_PATH` 未设置。
-- 常见 Unity Hub/Editor 安装目录未发现 Unity 可执行文件。
-- 当前环境没有可绑定的 Unity Editor，因此没有实际执行 Toolkit 编译、EditMode 测试、自定义工具发现、图片导入、固定机位截图、Profiler 或任何目标平台 Player 构建。
+- 本次验证发现已有 Unity Editor 进程，但未确认其中任何实例绑定当前 `tests/UnityHost`；按单实例与项目归属规则，没有复用或启动 Editor，也没有实际执行 Toolkit 编译、EditMode 测试、自定义工具发现、图片导入或固定机位截图。
 - 当前环境没有执行 Android 安装测试，也没有验证 iOS/iPadOS 所需的 macOS、Xcode、证书、IPA 与真机链路；这些平台只能保持 `BLOCKED`，不能由静态测试推断为通过。
-- 验证前检查了现有 Unity 进程，没有可复用实例，因此未启动新的 Editor 或服务。
+- 验证前检查了现有进程；由于没有可证明属于测试宿主的可复用实例，因此未启动新的 Editor 或服务。
 
 上述项目状态为 `BLOCKED`，不能由 Python 或静态检查推断为 `PASS`。
 

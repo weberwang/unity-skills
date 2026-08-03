@@ -501,7 +501,7 @@ def _scene_approval_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
         expected_version=payload.get("version"),
         path="$.approvals",
     )
-    for approval_type in ("GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL"):
+    for approval_type in ("GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL"):
         reviews = [
             item
             for item in payload.get("approvals", [])

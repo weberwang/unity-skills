@@ -592,7 +592,7 @@ def test_done_scene_requires_all_visual_approvals_and_runtime_evidence() -> None
     paths = {issue.path for issue in issues}
     assert "$.approvals" in paths
     assert "$.qualityReportPaths" in paths
-    assert "$.runtimeCapturePaths" in paths
+    assert "$.editorCapturePaths" in paths
     assert "$.evidence" in paths
     assert "$.frozenAtUtc" in paths
 
@@ -605,7 +605,7 @@ def test_done_scene_rejects_approval_from_old_scene_version() -> None:
             "status": "DONE",
             "frozenAtUtc": "2026-07-27T12:00:00Z",
             "qualityReportPaths": ["Artifacts/Quality/scene.json"],
-            "runtimeCapturePaths": ["Artifacts/Visual/scene/runtime.png"],
+            "editorCapturePaths": ["Artifacts/Visual/scene/editor.png"],
             "evidence": [_evidence()],
         }
     )
@@ -617,8 +617,8 @@ def test_done_scene_rejects_approval_from_old_scene_version() -> None:
                 ("GAME_VISUAL", "USER"),
                 ("UI_VISUAL", "INDEPENDENT_REVIEWER"),
                 ("UI_VISUAL", "USER"),
-                ("RUNTIME_VISUAL", "INDEPENDENT_REVIEWER"),
-                ("RUNTIME_VISUAL", "USER"),
+                ("IMPLEMENTATION_VISUAL", "INDEPENDENT_REVIEWER"),
+                ("IMPLEMENTATION_VISUAL", "USER"),
             )
         )
     ]
@@ -924,14 +924,14 @@ def test_complete_approved_lifecycle_contracts_remain_valid() -> None:
             "status": "DONE",
             "frozenAtUtc": "2026-07-27T12:00:00Z",
             "qualityReportPaths": ["Artifacts/Quality/scene.json"],
-            "runtimeCapturePaths": ["Artifacts/Visual/Runtime/scene.png"],
+            "editorCapturePaths": ["Artifacts/Visual/Editor/scene.png"],
             "qualityReports": [_evidence("Artifacts/Quality/scene.json")],
-            "runtimeCaptures": [_evidence("Artifacts/Visual/Runtime/scene.json")],
+            "editorCaptures": [_evidence("Artifacts/Visual/Editor/scene.json")],
             "evidence": [_evidence("Artifacts/Scenes/scene.json")],
         }
     )
     scene["approvals"] = []
-    for approval_type in ("GAME_VISUAL", "UI_VISUAL", "RUNTIME_VISUAL"):
+    for approval_type in ("GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL"):
         for discipline in ("VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"):
             scene["approvals"].append(
                 _approval(

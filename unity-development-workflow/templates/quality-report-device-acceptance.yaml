@@ -4,6 +4,15 @@ projectId: starfall-arena
 sourceRevision: working-tree-snapshot-20260727
 projectStateVersion: project-state-v1
 buildVersion: 0.1.0-dev.1
+developmentCompletionEvidence:
+  type: quality-gates
+  path: Artifacts/Quality/quality-gates.g2.yaml
+  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+  projectId: starfall-arena
+  subjectId: g2.development-complete
+  subjectVersion: project-state-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 deviceAcceptance:
   acceptedPlatformIds: [WINDOWS, ANDROID]
   acceptedModuleIds: [Foundation.Core, Gameplay.Player]
@@ -46,11 +55,15 @@ deviceAcceptance:
       windowMode: WINDOWED
       inputMode: KEYBOARD_MOUSE
       checks: &device-checks
+        installation: PASS
         launch: PASS
         coreLoop: PASS
         input: PASS
+        lifecycle: PASS
         screenAdaptation: PASS
+        visual: PASS
         audio: PASS
+        performance: PASS
         stability: PASS
       status: PASS
       evidence:

@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/star-blogger-player-character/project-comparison.schema.json",
+  "title": "P3-002 当前项目对照记录",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "recordType",
+    "projectId",
+    "characterId",
+    "comparisonVersion",
+    "sourceRevision",
+    "projectStateVersion",
+    "generatedAtUtc",
+    "status",
+    "projectMarkers",
+    "authorityBindings",
+    "layerMappings",
+    "runtimeAssets",
+    "checks",
+    "visualComparison",
+    "summary"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "recordType": {"const": "CHARACTER_PROJECT_COMPARISON"},
+    "projectId": {"const": "star-blogger"},
+    "characterId": {"const": "P3-002"},
+    "comparisonVersion": {"type": "string", "minLength": 1},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
+    "generatedAtUtc": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["BASELINE_AUDITED", "BLOCKED"]},
+    "projectMarkers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packagesManifest", "projectVersion"],
+      "properties": {
+        "packagesManifest": {"$ref": "#/$defs/binding"},
+        "projectVersion": {"$ref": "#/$defs/binding"}
+      }
+    },
+    "authorityBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "approval", "visualBible", "productionPlan"],
+      "properties": {
+        "target": {"$ref": "#/$defs/binding"},
+        "approval": {"$ref": "#/$defs/binding"},
+        "visualBible": {"$ref": "#/$defs/binding"},
+        "productionPlan": {"$ref": "#/$defs/binding"}
+      }
+    },
+    "layerMappings": {
+      "type": "array",
+      "minItems": 17,
+      "maxItems": 17,
+      "items": {"$ref": "#/$defs/layerMapping"}
+    },
+    "runtimeAssets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spriteLibrary", "spriteAtlas", "playerPrefab", "performancePrefab"],
+      "properties": {
+        "spriteLibrary": {"$ref": "#/$defs/unityAsset"},
+        "spriteAtlas": {"$ref": "#/$defs/unityAsset"},
+        "playerPrefab": {"$ref": "#/$defs/unityAsset"},
+        "performancePrefab": {"$ref": "#/$defs/unityAsset"}
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/check"}
+    },
+    "visualComparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "currentComposite", "normalization", "regions", "states"],
+      "properties": {
+        "target": {"$ref": "#/$defs/binding"},
+        "currentComposite": {"$ref": "#/$defs/binding"},
+        "normalization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coordinateSpace", "scaleMethod", "anchors", "resampling", "backgrounds"],
+          "properties": {
+            "coordinateSpace": {"const": "CANONICAL_2048_RGBA"},
+            "scaleMethod": {"const": "SOLE_TO_CROWN_EQUAL_HEIGHT"},
+            "anchors": {"const": "SOLE_BASELINE_AND_FACE_CENTER"},
+            "resampling": {"const": "NEAREST_NEIGHBOR"},
+            "backgrounds": {
+              "const": ["LIGHT", "DARK", "CHECKERBOARD"]
+            }
+          }
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {"$ref": "#/$defs/visualItem"}
+        },
+        "states": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/visualItem"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "blockingReasons"],
+      "properties": {
+        "result": {"enum": ["MATCHED", "DIFFERENCES_FOUND", "BLOCKED"]},
+        "blockingReasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "safePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "guid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/safePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "unityAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset", "meta", "guid"],
+      "properties": {
+        "asset": {"$ref": "#/$defs/binding"},
+        "meta": {"$ref": "#/$defs/binding"},
+        "guid": {"$ref": "#/$defs/guid"}
+      }
+    },
+    "layerMapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "label", "filename", "runtime", "meta", "guid"],
+      "properties": {
+        "category": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "filename": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*\\.png$"},
+        "runtime": {"$ref": "#/$defs/binding"},
+        "meta": {"$ref": "#/$defs/binding"},
+        "guid": {"$ref": "#/$defs/guid"}
+      }
+    },
+    "status": {
+      "enum": ["MATCH", "DIFFERENT", "MISSING", "UNREADABLE"]
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkId", "expected", "actual", "status", "evidence"],
+      "properties": {
+        "checkId": {"type": "string", "minLength": 1},
+        "expected": {"type": "string", "minLength": 1},
+        "actual": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/status"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/binding"}
+        }
+      }
+    },
+    "visualItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "evidence"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/status"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/binding"}
+        }
+      }
+    }
+  }
+}
