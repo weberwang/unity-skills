@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 玩家角色构建"
+  short_description: "建立 P3-002 项目基线，构建分层单图并验证 Unity 还原"
+  default_prompt: "使用 $unity-game-build-player-character 先建立 P3-002 玩家角色项目基线，再按统一生产母版构建并验证 17 张独立 PNG。"

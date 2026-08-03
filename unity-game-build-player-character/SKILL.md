@@ -1,5 +1,5 @@
 ---
-name: unity-game-star-blogger-rebuild-player-character
+name: unity-game-build-player-character
 description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、当前项目规范化对照、分层生产、审查和接入专用 Skill。需要修正或重做该人物的身份、脸型、五官、卷发、身体比例、服装、鞋、配饰、表情、遮挡蒙版、17 张 Sprite、SpriteLibrary、SpriteAtlas 或 PlayerCharacter Prefab，或准备 P3-002 项目基线、视觉批准、GUID 保留导入和 Unity 对照验收时使用；禁止用 PSD/PSB、目标图裁片或互不共享人物几何的独立生成结果替代统一生产母版。
 ---
 

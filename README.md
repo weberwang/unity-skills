@@ -79,7 +79,7 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 
 ## 项目专项 Skill
 
-- `$unity-game-star-blogger-rebuild-player-character`：为 Star Blogger 的 P3-002 建立玩家角色项目基线，按统一生产母版重制 17 张角色单图，并完成目标 A/B、GUID 保留和 Unity 接入验收。命名采用“Unity 游戏命名空间 + 项目 + 动作 + 对象”；该 Skill 只在任务明确涉及 Star Blogger P3-002 时触发，不属于通用角色路由。
+- `$unity-game-build-player-character`：为 Star Blogger 的 P3-002 建立玩家角色项目基线，按统一生产母版构建 17 张角色单图，并完成目标 A/B、GUID 保留和 Unity 接入验收。该 Skill 只在任务明确涉及 Star Blogger P3-002 时触发，不属于通用角色路由。
 
 ### 严格拷问门禁
 
