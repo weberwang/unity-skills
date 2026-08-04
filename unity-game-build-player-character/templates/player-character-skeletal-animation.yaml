@@ -1,0 +1,222 @@
+schemaVersion: "1.0"
+recordType: PLAYER_CHARACTER_SKELETAL_ANIMATION
+projectId: star-blogger
+characterId: P3-002
+animationId: animation.player.victory
+animationVersion: victory-v1
+sourceRevision: working-tree-snapshot-20260804
+projectStateVersion: project-state-v1
+status: PLAYER_CHARACTER_ANIMATION_POSE_CARDS_APPROVED
+durationSeconds: 1.10
+sampleRate: 60
+rigBinding:
+  prefab:
+    path: Assets/Prefabs/Characters/Player/PlayerCharacter.prefab
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  rigVersion: player-rig-v1
+  boneCount: 30
+  rootBone: PlayerRoot
+  axisCalibrationEvidence:
+    path: Artifacts/Animation/P3-002/Rig/player-rig-v1-axis-calibration.yaml
+    sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+  effectorBones:
+    head: Head
+    leftHand: Hand.L
+    rightHand: Hand.R
+    leftFoot: Foot.L
+    rightFoot: Foot.R
+deformationBudget:
+  shoulderRotationMaxDegrees: 78
+  elbowFlexionDegrees: {minimum: 8, maximum: 132}
+  pantsLegSpreadMaxUnits: 0.42
+  hairSwingMaxUnits: 0.18
+  handScaleAllowed: false
+  footScaleAllowed: false
+  rigidLayers:
+    - Face/Nose
+    - Accessory/Earrings
+    - Shoes
+  meshRevisionTriggers:
+    - 肩部轮廓出现折角或腋下露出 Body/Base
+    - 裤腿跨越允许张开距离或裆部权重塌陷
+    - 手脚必须缩放才能达到目标
+    - 头发摆幅超出网格边界或产生拉丝
+keyPoses:
+  - id: victory.neutral
+    timeSeconds: 0.00
+    intent: NEUTRAL
+    silhouette: 自然站立，重心居中，双臂位于身体两侧且轮廓清楚
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.62}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.42, y: 0.88}, toleranceUnits: 0.03}
+      rightHand: {position: {x: 0.42, y: 0.88}, toleranceUnits: 0.03}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 8}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 8}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 2}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 2}
+    visualState: {expression: NEUTRAL, eyes: OPEN, mouth: NEUTRAL, garmentHighlight: 0.0, flash: 0.0, notes: 默认颜色}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [], notes: 中立姿势作为变形基准}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/00-neutral.png, sha256: "0000000000000000000000000000000000000000000000000000000000000001"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/00-neutral.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000001"}
+    status: STATIC_POSE_PASS
+  - id: victory.anticipation
+    timeSeconds: 0.10
+    intent: ANTICIPATION
+    silhouette: 下蹲蓄力，头和肩整体下降，双手略向身后，躯干保持正面
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.46}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.47, y: 0.73}, toleranceUnits: 0.03}
+      rightHand: {position: {x: 0.47, y: 0.73}, toleranceUnits: 0.03}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 18}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 18}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 22}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 22}
+    visualState: {expression: FOCUSED, eyes: OPEN, mouth: NEUTRAL, garmentHighlight: 0.0, flash: 0.0, notes: 身体整体略暗}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [Outfit/Bottom], notes: 膝部和裤裆仍在现有权重范围内}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/01-anticipation.png, sha256: "0000000000000000000000000000000000000000000000000000000000000002"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/01-anticipation.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000002"}
+    status: STATIC_POSE_PASS
+  - id: victory.explosion
+    timeSeconds: 0.28
+    intent: EXPLOSION
+    silhouette: 身体向上伸展，双手快速经过肩部，动作方向明确但脚底不滑
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.68}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.36, y: 1.28}, toleranceUnits: 0.03}
+      rightHand: {position: {x: 0.36, y: 1.28}, toleranceUnits: 0.03}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 28}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 28}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 6}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 6}
+    visualState: {expression: SMILE, eyes: OPEN, mouth: SMILE, garmentHighlight: 0.45, flash: 0.15, notes: 服装亮度快速提高}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [Outfit/Top], notes: 肩袖变形未超出轮廓预算}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/02-explosion.png, sha256: "0000000000000000000000000000000000000000000000000000000000000003"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/02-explosion.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000003"}
+    status: STATIC_POSE_PASS
+  - id: victory.v-pose
+    timeSeconds: 0.48
+    intent: CELEBRATION
+    silhouette: 双臂形成清晰 V 字，双手位于头顶两侧，肘部微弯且肩颈不挤压
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.70}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.52, y: 1.94}, toleranceUnits: 0.03}
+      rightHand: {position: {x: 0.52, y: 1.94}, toleranceUnits: 0.03}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 18}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 18}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 4}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 4}
+    visualState: {expression: SMILE, eyes: OPEN, mouth: SMILE, garmentHighlight: 1.0, flash: 0.35, notes: 高亮和笑脸同时达到峰值}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [Outfit/Top, Hair/Front], notes: 肩部和前发保持轮廓，无需强行旋转或缩放手部}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/03-v-pose.png, sha256: "0000000000000000000000000000000000000000000000000000000000000004"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/03-v-pose.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000004"}
+    status: STATIC_POSE_PASS
+  - id: victory.hold
+    timeSeconds: 0.78
+    intent: HOLD
+    silhouette: 主体 V 字姿势保持不变，仅头发和服装产生克制的次级运动
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.70}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.52, y: 1.94}, toleranceUnits: 0.02}
+      rightHand: {position: {x: 0.52, y: 1.94}, toleranceUnits: 0.02}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 18}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 18}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 4}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 4}
+    visualState: {expression: SMILE, eyes: OPEN, mouth: SMILE, garmentHighlight: 1.0, flash: 0.0, notes: 高亮保持，头发继续摆动}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [Hair/Back, Hair/Front], notes: 头发摆幅低于最大预算}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/04-hold.png, sha256: "0000000000000000000000000000000000000000000000000000000000000005"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/04-hold.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000005"}
+    status: STATIC_POSE_PASS
+  - id: victory.recovery
+    timeSeconds: 1.10
+    intent: RECOVERY
+    silhouette: 身体回落稳定，双手回到胸口附近，重心重新居中
+    worldTargets:
+      space: CHARACTER_ROOT_WORLD
+      head: {position: {x: 0.00, y: 1.62}, toleranceUnits: 0.03}
+      leftHand: {position: {x: -0.24, y: 1.18}, toleranceUnits: 0.03}
+      rightHand: {position: {x: 0.24, y: 1.18}, toleranceUnits: 0.03}
+      leftFoot: {position: {x: -0.16, y: 0.00}, toleranceUnits: 0.01}
+      rightFoot: {position: {x: 0.16, y: 0.00}, toleranceUnits: 0.01}
+    contacts:
+      leftFoot: {state: PLANTED, anchor: {x: -0.16, y: 0.00}, maxSlipUnits: 0.01}
+      rightFoot: {state: PLANTED, anchor: {x: 0.16, y: 0.00}, maxSlipUnits: 0.01}
+    jointShapes:
+      leftElbow: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 42}
+      rightElbow: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 42}
+      leftKnee: {bendDirection: SCREEN_LEFT, minimumBendDegrees: 6}
+      rightKnee: {bendDirection: SCREEN_RIGHT, minimumBendDegrees: 6}
+    visualState: {expression: SMILE, eyes: OPEN, mouth: SMILE, garmentHighlight: 0.0, flash: 0.0, notes: 颜色恢复默认}
+    deformationAssessment: {status: WITHIN_BUDGET, affectedRegions: [Outfit/Top], notes: 手臂回收后肩袖恢复稳定}
+    acceptanceScreenshot: {path: Artifacts/Animation/P3-002/Victory/Poses/05-recovery.png, sha256: "0000000000000000000000000000000000000000000000000000000000000006"}
+    resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/05-recovery.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000006"}
+    status: STATIC_POSE_PASS
+timeScript:
+  - {fromPoseId: victory.neutral, toPoseId: victory.anticipation, startSeconds: 0.00, endSeconds: 0.10, transition: EASE_IN, holdSeconds: 0.00}
+  - {fromPoseId: victory.anticipation, toPoseId: victory.explosion, startSeconds: 0.10, endSeconds: 0.28, transition: FAST, holdSeconds: 0.00}
+  - {fromPoseId: victory.explosion, toPoseId: victory.v-pose, startSeconds: 0.28, endSeconds: 0.48, transition: EASE_OUT, holdSeconds: 0.00}
+  - {fromPoseId: victory.v-pose, toPoseId: victory.hold, startSeconds: 0.48, endSeconds: 0.78, transition: HOLD, holdSeconds: 0.24}
+  - {fromPoseId: victory.hold, toPoseId: victory.recovery, startSeconds: 0.78, endSeconds: 1.10, transition: EASE_IN_OUT, holdSeconds: 0.00}
+visualEvents:
+  - {id: victory.event.darken, timeSeconds: 0.10, eventType: COLOR, target: character, value: darken-10-percent, durationSeconds: 0.18}
+  - {id: victory.event.highlight-rise, timeSeconds: 0.28, eventType: HIGHLIGHT, target: Outfit/Top, value: 0.45, durationSeconds: 0.20}
+  - {id: victory.event.smile, timeSeconds: 0.48, eventType: EXPRESSION, target: Face, value: smile-v2, durationSeconds: 0.62}
+  - {id: victory.event.flash, timeSeconds: 0.48, eventType: FLASH, target: character, value: 0.35, durationSeconds: 0.08}
+  - {id: victory.event.hair-follow, timeSeconds: 0.78, eventType: SECONDARY_MOTION, target: Hair, value: follow-through-v1, durationSeconds: 0.20}
+  - {id: victory.event.restore, timeSeconds: 1.10, eventType: COLOR, target: character, value: default, durationSeconds: 0.00}
+regression:
+  cameraEvidence: {path: Artifacts/Animation/P3-002/Regression/fixed-camera.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}
+  captures:
+    - {poseId: victory.neutral, timeSeconds: 0.00, screenshot: {path: Artifacts/Animation/P3-002/Regression/00-neutral.png, sha256: "2000000000000000000000000000000000000000000000000000000000000001"}, result: PASS}
+    - {poseId: victory.anticipation, timeSeconds: 0.10, screenshot: {path: Artifacts/Animation/P3-002/Regression/01-anticipation.png, sha256: "2000000000000000000000000000000000000000000000000000000000000002"}, result: PASS}
+    - {poseId: victory.explosion, timeSeconds: 0.28, screenshot: {path: Artifacts/Animation/P3-002/Regression/02-explosion.png, sha256: "2000000000000000000000000000000000000000000000000000000000000003"}, result: PASS}
+    - {poseId: victory.v-pose, timeSeconds: 0.48, screenshot: {path: Artifacts/Animation/P3-002/Regression/03-v-pose.png, sha256: "2000000000000000000000000000000000000000000000000000000000000004"}, result: PASS}
+    - {poseId: victory.hold, timeSeconds: 0.78, screenshot: {path: Artifacts/Animation/P3-002/Regression/04-hold.png, sha256: "2000000000000000000000000000000000000000000000000000000000000005"}, result: PASS}
+    - {poseId: victory.recovery, timeSeconds: 1.10, screenshot: {path: Artifacts/Animation/P3-002/Regression/05-recovery.png, sha256: "2000000000000000000000000000000000000000000000000000000000000006"}, result: PASS}
+builder:
+  builderId: player-character-animation-builder-v1
+  curveSource: APPROVED_RESOLVED_POSES
+  outputClipPath: Assets/Art/Runtime/Characters/Player/Animations/victory-v1.anim
+  overwritePolicy: CREATE_VERSIONED_CLIP
+  rootMotion: false
+poseCardsApproval:
+  subjectId: animation.player.victory
+  subjectVersion: victory-v1
+  approvedBy: animation-owner
+  approvedAtUtc: "2026-08-04T08:00:00Z"
+  evidence: {path: Artifacts/Animation/P3-002/Victory/victory-v1-pose-cards-approval.yaml, sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd}

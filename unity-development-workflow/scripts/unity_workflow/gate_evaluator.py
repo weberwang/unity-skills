@@ -27,6 +27,7 @@ from unity_workflow.platform_contract import (
     s00_platform_failure,
 )
 from unity_workflow.psd_policy import find_prohibited_photoshop_documents
+from unity_workflow.visual_gate_integrity import split_plan_source_failure
 
 CONTRACT_TYPES = {
     "project-profile",
@@ -66,11 +67,11 @@ REQUIRED_STATUSES = {
     "scene-report": {"PASS"},
     "registration-record": {"VALIDATED"},
     "delivery-manifest": {"CANDIDATE", "RELEASE_APPROVED"},
-    "visual-review": {"APPROVED", "REVIEW_APPROVED"},
+    "visual-review": {"APPROVED"},
     "visual-bible": {"APPROVED"},
     "s00-report": {"PASS"},
     "split-plan": {"APPROVED"},
-    "image-generation": {"GENERATED", "USER_CONFIRMED"},
+    "image-generation": {"GENERATED"},
     "image-task": {"APPROVED"},
     "scene-2d-adaptation": {"VERIFIED"},
     "prefab-structure": {"APPROVED"},
@@ -566,6 +567,10 @@ class _EvidenceVerifier:
         elif kind == "visual-review":
             references.append(payload.get("generationEvidence"))
             references.extend(payload.get("candidateEvidence", []))
+            funnel = payload.get("funnel", {})
+            for stage in funnel.get("stages", []) if isinstance(funnel, Mapping) else []:
+                if isinstance(stage, Mapping):
+                    references.extend(stage.get("evidence", []))
             references.extend(_approval_references(payload.get("reviews", [])))
             references.extend(_approval_references([payload.get("userApproval")]))
         elif kind == "visual-bible":
@@ -692,63 +697,10 @@ class _EvidenceVerifier:
                 raise GateEvidenceError(f"decomposition-plan 与 grilling-record 的 {field} 不一致")
 
     def _verify_split_plan_source(self, payload: Mapping[str, Any]) -> None:
-        """确认 P3 资产地图严格绑定 P1 已确认候选与 P2 独立审阅。"""
-        structure_reference = payload.get("prefabStructureEvidence")
-        generation_reference = payload.get("highFidelityGenerationEvidence")
-        review_reference = payload.get("highFidelityReviewEvidence")
-        if not all(
-            isinstance(reference, Mapping)
-            for reference in (structure_reference, generation_reference, review_reference)
-        ):
-            raise GateEvidenceError("split-plan 缺少 P0 结构、P1 高保真生成或 P2 审阅引用")
-        self.verify_reference(structure_reference)
-        structure = self._load_referenced_contract(structure_reference)
-        if structure.get("status") != "APPROVED":
-            raise GateEvidenceError("split-plan 只接受 APPROVED P0 Prefab 结构")
-        if payload.get("projectId") != structure.get("projectId") or payload.get("sceneId") != structure.get("sceneId"):
-            raise GateEvidenceError("split-plan 项目或场景身份与 P0 结构不一致")
-        known_node_ids = {
-            node.get("id")
-            for prefab in structure.get("prefabs", [])
-            if isinstance(prefab, Mapping)
-            for node in prefab.get("nodes", [])
-            if isinstance(node, Mapping)
-        }
-        for item in payload.get("items", []):
-            if not isinstance(item, Mapping):
-                continue
-            unknown = set(item.get("targetPrefabNodeIds", [])) - known_node_ids
-            if unknown:
-                raise GateEvidenceError(
-                    f"P3 条目 {item.get('id')} 引用了 P0 中不存在的 Prefab 节点：{', '.join(sorted(unknown))}"
-                )
-        self.verify_reference(generation_reference)
-        generation = self._load_referenced_contract(generation_reference)
-        if generation.get("status") != "USER_CONFIRMED":
-            raise GateEvidenceError("split-plan 只接受 P1 USER_CONFIRMED 高保真生成")
-        candidate = next(
-            (
-                item
-                for item in generation.get("candidates", [])
-                if isinstance(item, Mapping) and item.get("id") == generation_reference.get("candidateId")
-            ),
-            None,
-        )
-        if candidate is None:
-            raise GateEvidenceError("split-plan 引用的 P1 已确认候选不存在")
-        expected = {
-            "path": generation_reference.get("candidatePath"),
-            "sha256": generation_reference.get("candidateSha256"),
-            "visualVersion": generation_reference.get("candidateVisualVersion"),
-        }
-        if any(candidate.get(field) != value for field, value in expected.items()):
-            raise GateEvidenceError("split-plan 的 P1 候选路径、哈希或视觉版本不匹配")
-        self.verify_reference(review_reference)
-        review = self._load_referenced_contract(review_reference)
-        if review.get("status") != "REVIEW_APPROVED":
-            raise GateEvidenceError("split-plan 只接受 P2 REVIEW_APPROVED 审阅")
-        if review.get("subjectId") != generation.get("id") or review.get("subjectVersion") != candidate.get("visualVersion"):
-            raise GateEvidenceError("P2 审阅未绑定 P1 已确认候选")
+        """确认 P3 资产地图严格绑定 P1 候选与 P2 漏斗最终批准。"""
+        failure = split_plan_source_failure(self, payload)
+        if failure:
+            raise GateEvidenceError(failure)
 
     def _verify_image_task_split_binding(self, payload: Mapping[str, Any]) -> None:
         """确认单图任务绑定真实 P3 条目，且最终候选来自对应单图生成。"""

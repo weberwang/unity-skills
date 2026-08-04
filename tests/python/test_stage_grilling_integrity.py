@@ -21,7 +21,7 @@ STAGES = (
     ("project-profile", "project-profile.yaml", "PRODUCT_GOAL", "starfall-arena", "profile-v1"),
     ("visual-bible", "visual-bible.yaml", "VISUAL_DIRECTION", "starfall-arena", "visual-v1"),
     ("prefab-structure", "prefab-structure.yaml", "PREFAB", "prefab-structure.scene-arena-intro.v1", "prefab-structure-v1"),
-    ("image-generation", "image-generation.yaml", "VISUAL_DIRECTION", "imagegen.scene-arena-intro.game-v1", "scene-v1"),
+    ("visual-review", "visual-review.yaml", "VISUAL_DIRECTION", "imagegen.scene-arena-intro.game-v1", "game-visual-v1"),
     ("split-plan", "split-plan.yaml", "ASSET", "split.scene-arena-intro.game-v1", "game-v1"),
     ("runtime-visual-evidence", "runtime-visual-evidence.yaml", "QUALITY", "scene.arena-intro", "0.1.0-dev.1"),
     ("delivery-manifest", "delivery-manifest.yaml", "RELEASE", "delivery.windows-rc1", "0.1.0-rc.1"),
@@ -51,7 +51,7 @@ def _trigger(kind: str, payload: dict[str, Any]) -> None:
     else:
         payload["status"] = {
             "visual-bible": "APPROVED", "prefab-structure": "APPROVED",
-            "image-generation": "USER_CONFIRMED", "split-plan": "APPROVED",
+            "visual-review": "APPROVED", "split-plan": "APPROVED",
             "runtime-visual-evidence": "APPROVED", "delivery-manifest": "RELEASE_APPROVED",
         }[kind]
 

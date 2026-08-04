@@ -1,6 +1,6 @@
 ---
 name: unity-game-build-player-character
-description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、当前项目规范化对照、分层生产、审查和接入专用 Skill。需要修正或重做该人物的身份、脸型、五官、卷发、身体比例、服装、鞋、配饰、表情、遮挡蒙版、17 张 Sprite、SpriteLibrary、SpriteAtlas 或 PlayerCharacter Prefab，或准备 P3-002 项目基线、视觉批准、GUID 保留导入和 Unity 对照验收时使用；禁止用 PSD/PSB、目标图裁片或互不共享人物几何的独立生成结果替代统一生产母版。
+description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、项目基线、分层生产、Sprite Skin、30 骨骼 Rig、关键姿势卡、世界空间手脚约束、蒙皮变形预算、AnimationClip 生成、审查和 Unity 接入专用 Skill。需要修正或重做人物身份、五官、卷发、比例、服装、17 张 Sprite、SpriteLibrary、SpriteAtlas、PlayerCharacter Prefab、骨骼权重或胜利等角色动画时使用；禁止用 PSD/PSB、目标图裁片、互不共享人物几何的独立生成结果或散落 C# 局部角度数组替代结构化生产规格。
 ---
 
 # Star Blogger 玩家人物
@@ -9,7 +9,7 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 
 ## 权威输入
 
-开始任何判断、生成或写入前，完整读取 [玩家角色合同](references/player-character-contract.md)和[玩家角色项目基线规范](references/player-character-project-baseline.md)。再从当前 Star Blogger 工作区读取合同列出的目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
+开始任何判断、生成或写入前，完整读取 [玩家角色合同](references/player-character-contract.md)和[玩家角色项目基线规范](references/player-character-project-baseline.md)。任务涉及 Sprite Skin、Rig、权重或 AnimationClip 时，再完整读取[关键姿势骨骼动画](references/player-character-skeletal-animation.md)。随后从当前 Star Blogger 工作区读取对应目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
 
 遵循以下权威顺序：
 
@@ -34,6 +34,8 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 8. 技术完整性、视觉还原、移动可读性和 Unity 接入是四个独立结论。任何技术 PASS 都不得推导视觉 PASS。
 9. 不得因用户批准过某个候选而降低目标一致性标准。批准绑定候选，不会自动豁免候选与冻结目标的差异。
 10. 禁止 PSD、PSB、PSDT 和运行时整身合成图路线。保留 17 张独立 PNG、稳定路径和 GUID。
+11. 动画设计必须以关键姿势画面、世界空间目标、接触约束和变形预算为输入；禁止把猜测的骨骼局部角度当作动作权威。
+12. 静态视觉未通过时保持 Rig 暂停；静态姿势未逐张批准时保持过渡、视觉事件和 AnimationClip 构建暂停。
 
 ## 执行流程
 
@@ -136,11 +138,27 @@ uv run scripts/audit_player_character.py --workspace . --baseline Artifacts/Visu
 
 Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`。只有 Unity 捕获再次通过目标 A/B 视觉审查后才能使用 `PLAYER_CHARACTER_UNITY_VISUAL_PASS`。
 
-### 8. 交接
+### 8. 制作骨骼动画
+
+若任务包含骨骼动画，先执行以下专用阶段，再交接：
+
+1. 用 `templates/player-character-skeletal-animation.yaml` 建立 4～8 张关键姿势卡，并用 `schemas/player-character-skeletal-animation.schema.json` 校验。
+2. 冻结头、双手、双脚世界空间目标，双脚接触锚点，双肘双膝弯曲方向和当前 Rig 变形预算。
+3. 在 Unity 中逐张摆出静态姿势，保存固定相机截图和 `resolvedPoseEvidence`；任一姿势超出变形预算时先修网格或权重。
+4. 全部静态姿势通过并获批后，才制作时间脚本、过渡和视觉事件，再由结构化规格生成版本化 AnimationClip。
+5. 对全部关键时间点自动回归截图；脚滑、目标误差、轮廓、蒙皮或视觉事件任一失败都阻断最终批准。
+
+运行规格验证：
+
+```powershell
+uv run scripts/validate_player_character_animation.py --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
+```
+
+### 9. 交接
 
 - 向 `$unity-game-visual-assets` 返回目标绑定、17 项记录、完整组合、审查摘要和用户批准。
 - 向 `$unity-game-qa-performance` 返回 Unity 捕获、导入设置、GUID 清单、测试结果和待执行设备矩阵。
-- 视觉未通过时保持 30 骨骼、权重和动画暂停；不得在待替换轮廓上继续 Rig。
+- 视觉未通过时保持 30 骨骼、权重和动画暂停；视觉通过后，动画仍必须逐张通过关键姿势和变形预算门，不得直接制作连续曲线。
 - P3-009 NPC、场景、UI、设备验收和商店配置不属于本 Skill，除非用户另行扩展范围。
 
 ## 状态词
@@ -157,6 +175,13 @@ Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISU
 - `PLAYER_CHARACTER_FULL_SET_USER_APPROVED`
 - `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`
 - `PLAYER_CHARACTER_UNITY_VISUAL_PASS`
+- `PLAYER_CHARACTER_ANIMATION_DRAFT`
+- `PLAYER_CHARACTER_ANIMATION_POSE_CARDS_AWAITING_REVIEW`
+- `PLAYER_CHARACTER_ANIMATION_POSE_CARDS_APPROVED`
+- `PLAYER_CHARACTER_ANIMATION_TRANSITIONS_BUILT`
+- `PLAYER_CHARACTER_ANIMATION_REGRESSION_REVIEWING`
+- `PLAYER_CHARACTER_ANIMATION_APPROVED`
+- `PLAYER_CHARACTER_ANIMATION_BLOCKED`
 
 禁止使用未注明范围的裸 `PASS`。
 
@@ -170,5 +195,6 @@ Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISU
 - 用户批准完整单图候选。
 - Unity 保留 GUID 接入通过。
 - Unity 目标对照验收通过。
+- 若动画在范围内，4～8 张关键姿势、接触约束和变形预算全部通过，AnimationClip 由结构化规格生成，固定时间回归与最终用户批准有效。
 
 设备验收被用户后置时，明确报告为后续 G3 项，不得伪装为已执行。

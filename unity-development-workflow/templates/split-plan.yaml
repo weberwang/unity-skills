@@ -24,7 +24,7 @@ grillingEvidence:
   projectStateVersion: project-state-v1
 sourceVersion: game-v1
 visualBibleVersion: visual-v1
-sourceOrigin: HIGH_FIDELITY_CONFIRMED
+sourceOrigin: REVIEW_FUNNEL_APPROVED
 visualBibleEvidence:
   type: visual-bible
   path: Artifacts/Visual/Global/visual-v1.yaml

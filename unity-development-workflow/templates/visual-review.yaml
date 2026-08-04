@@ -1,13 +1,34 @@
-schemaVersion: "1.0"
+schemaVersion: "2.0"
 id: review.imagegen.scene-arena-intro.game-v1.round-1
 projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
 sceneId: scene.arena-intro
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/review.imagegen.scene-arena-intro.game-v1.round-1.yaml
+  sha256: "6666666666666666666666666666666666666666666666666666666666666666"
+  projectId: starfall-arena
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: game-visual-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/review.imagegen.scene-arena-intro.game-v1.round-1.yaml
+  sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+  projectId: starfall-arena
+  subjectId: grilling.review.imagegen.scene-arena-intro.game-v1.round-1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
 subjectType: GAME_VISUAL
 subjectId: imagegen.scene-arena-intro.game-v1
 subjectVersion: game-visual-v1
 round: 1
 candidateEvidence:
-  - type: generated-image
+  - candidateId: candidate.scene-arena-intro.game-1
+    type: generated-image
     path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.png
     sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     subjectId: imagegen.scene-arena-intro.game-v1
@@ -18,7 +39,35 @@ generationEvidence:
   sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: imagegen.scene-arena-intro.game-v1
   subjectVersion: scene-v1
+funnel:
+  policy: STANDARD
+  stages:
+    - stage: F0_AUTOMATED
+      status: PENDING
+      inputCandidateIds:
+        - candidate.scene-arena-intro.game-1
+      outputCandidateIds: []
+      decisionSummary: 等待执行契约、证据和硬性约束预检
+      evidence: []
+    - stage: F1_OWNER_SCREEN
+      status: PENDING
+      inputCandidateIds: []
+      outputCandidateIds: []
+      decisionSummary: 等待主责人从合格候选中筛选至多三个方案
+      evidence: []
+    - stage: F2_SPECIALIST_REVIEW
+      status: PENDING
+      inputCandidateIds: []
+      outputCandidateIds: []
+      decisionSummary: 等待独立专业审查收敛到唯一候选
+      evidence: []
+    - stage: F3_USER_DECISION
+      status: PENDING
+      inputCandidateIds: []
+      outputCandidateIds: []
+      decisionSummary: 等待向用户提交唯一推荐候选和合并结论
+      evidence: []
 reviews: []
 consolidatedChanges: []
 userDecision: PENDING
-status: REVIEWING
+status: SCREENING
