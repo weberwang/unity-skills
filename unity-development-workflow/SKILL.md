@@ -14,7 +14,7 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows、Android、iOS/iPadOS 
 3. 只读发现阶段读[项目发现](references/project-discovery.md)；出现无法由证据确定的产品、体验、技术、模块、视觉资源、质量或发布取舍，模块首次实现或边界变化，或用户要求“拷问/grill/压力测试”时，必须调用 `$unity-game-grilling` 并按[决策与变更控制](references/decision-change-control.md)记录当前版本 `grilling-record`。
 4. 划分模块与场景时读[模块与场景拆分](references/module-planning.md)，由 `$unity-game-grilling` 完成 13 项拆分前拷问并取得用户对当前版本的确认；未确认不得创建拆分产物或进入 S00/G1/G2。多任务、锁或子代理调度时读[多代理执行](references/multi-agent-execution.md)；只有用户明确要求 Worktree 时才读[Worktree 工作区隔离](references/worktree-integration.md)。
 5. G0 平台选择、S00/G1 主开发平台构建、G2 平台适配或 G3 多平台交付时读[平台选择与适配](references/platform-adaptation.md)；建立全局骨架和首个垂直切片时分别读[S00 基础工作流](references/foundation-workflow.md)与[游戏实现闭环](references/game-implementation.md)。
-6. 每个场景读[场景小循环](references/scene-loop.md)；2D 场景同时读[2D 场景屏幕适配](references/scene-2d-adaptation.md)，3D 场景或模型/材质任务同时读[3D 资产工作流](references/3d-asset-workflow.md)。开始任何场景效果图或正式美术资源前，先按[视觉工作流](references/visual-workflow.md)执行“全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真效果图 → 用户确认送审候选 → 三类独立审阅 → 效果图完整编号框选/分类 → 用户确认资产地图 → 逐项独立生成/审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 清理运行时灰盒与占位 → Unity 验证”；2D 单图重新生成、正式导入和登记读[资源流水线](references/asset-pipeline.md)。
+6. 每个场景读[场景小循环](references/scene-loop.md)；任何候选审核先读[多级漏斗审核](references/review-funnel.md)。2D 场景同时读[2D 场景屏幕适配](references/scene-2d-adaptation.md)，3D 场景或模型/材质任务同时读[3D 资产工作流](references/3d-asset-workflow.md)。开始任何场景效果图或正式美术资源前，先按[视觉工作流](references/visual-workflow.md)执行“全局视觉 → 低保真 Prefab/Scene 结构说明 → 用户确认 → 高保真候选集 → F0 自动预检 → F1 主责筛选 → F2 三类独立审阅并收敛唯一候选 → F3 用户批准 → 效果图完整编号框选/分类 → 用户确认资产地图 → 逐项独立生成/漏斗审查 → 正式结构化 Prefab/Scene/UXML/USS 拼装 → 清理运行时灰盒与占位 → Unity 验证”；2D 单图重新生成、正式导入和登记读[资源流水线](references/asset-pipeline.md)。
 7. 进入质量门、全局回归或候选包验证时读[质量门禁](references/quality-gates.md)；准备任一批准平台的制品时读[交付](references/delivery.md)；创建或维护项目文档时读[项目交付物](references/project-artifacts.md)。
 
 不要一次读取全部参考。快速通道优先读任务直接相关的代码、配置、资源和测试。
@@ -61,8 +61,8 @@ description: 面向 Unity 6、URP、UI Toolkit、Windows、Android、iOS/iPadOS 
 ## 美术主流程硬门禁
 
 1. 全局 Visual Bible 批准后，先为每个场景提交低保真 Prefab/Scene 灰盒、层级树和结构说明；说明必须覆盖稳定节点 ID、父子关系、渲染顺序、元素类型、交互状态、Anchor、Pivot、安全区、遮罩和资源占位 ID。UI Toolkit 同时定义 UXML/USS 与 UIDocument 结构。用户未确认当前结构版本时，不得生成高保真效果图。
-2. 高保真效果图必须依据已批准全局视觉和结构版本生成。用户首次确认只将其指定为送审候选；候选随后分别接受视觉一致性、Unity 可实现性、UX/可读性三类独立审阅，开发者不得批准自己的输出。
-3. 审阅要求修改时，必须生成新的高保真版本并重新取得用户送审确认和三类审阅；三类审阅均通过后，才可在该同版本效果图上用稳定编号完整框选待生产单图，并将所有可见元素分类为独立图片、批准复用资源、文本、Unity 图元/程序绘制、UXML/USS/矢量、材质/VFX 或 3D 对象。编号、分类、结构节点、状态变体和导入规格共同组成资产地图；存在漏标、未分类或无节点映射时不得请求批准。
+2. 高保真效果图必须依据已批准全局视觉和结构版本生成。候选集先过 F0 自动预检和 F1 主责筛选，再由视觉一致性、Unity 可实现性、UX/可读性三个不同审查者在 F2 收敛到唯一推荐候选；开发者不得批准自己的输出。用户只在 F3 接收唯一候选、合并结论和未消除风险，避免先确认送审再因审阅修改而反复打断。
+3. F0-F2 要求修改时，必须按影响返回最早受影响级；候选内容或版本变化时从 F0 重跑。只有 F0-F3 全部通过后，才可在该同版本效果图上用稳定编号完整框选待生产单图，并将所有可见元素分类为独立图片、批准复用资源、文本、Unity 图元/程序绘制、UXML/USS/矢量、材质/VFX 或 3D 对象。编号、分类、结构节点、状态变体和导入规格共同组成资产地图；存在漏标、未分类或无节点映射时不得请求批准。
 4. 用户确认资产地图后，按编号逐项独立生成或重绘并分别审查。截图与效果图只能作为内容、构图和信息层级参考；禁止裁切截图或效果图充当资源，禁止轻微修饰裁片后冒充独立生成，禁止将整张效果图作为游戏或 UI 铺底。开发阶段禁止 PSD、PSB、PSDT、Photoshop 分层文档及任何分层导出方案；只允许批准的独立成品复用，或使用独立扁平图片、独立遮罩和 Unity 原生结构重新生产。
 5. 全部单项资源批准后，按已确认结构拼装正式 Prefab、Scene，或 UI Toolkit 的 UXML/USS、VisualTreeAsset 与 UIDocument。正式结构化拼装完成后，删除全部灰盒组件、占位 Mesh/Sprite/Material 和临时低保真 Prefab/Scene 对象，清理其序列化、场景、Prefab、地址和登记引用，再执行 Unity 多分辨率、多宽高比、安全区和交互状态验证。已确认结构节点及稳定 ID 必须保留，`prefab-structure`、预览、批准记录等审计证据必须继续可追溯；只有清理验证为 `PASS`，并且资源与节点双向映射、父子层级、渲染顺序、Anchor、Pivot、遮罩、状态、黑边和孤儿资源均通过后，才可标记 `ASSEMBLY_VERIFIED` 或 `DONE`。
 

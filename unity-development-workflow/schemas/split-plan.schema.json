@@ -20,7 +20,7 @@
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "sourceVersion": {"type": "string", "minLength": 1},
     "visualBibleVersion": {"type": "string", "minLength": 1},
-    "sourceOrigin": {"const": "HIGH_FIDELITY_CONFIRMED"},
+    "sourceOrigin": {"const": "REVIEW_FUNNEL_APPROVED"},
     "visualBibleEvidence": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},

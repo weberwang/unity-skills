@@ -24,7 +24,7 @@ STAGE_RULES = {
     "decomposition-plan": ("MODULE_BOUNDARY", lambda item: item.get("id"), lambda item: item.get("version")),
     "visual-bible": ("VISUAL_DIRECTION", lambda item: item.get("projectId"), lambda item: item.get("version")),
     "prefab-structure": ("PREFAB", lambda item: item.get("id"), lambda item: item.get("version")),
-    "image-generation": ("VISUAL_DIRECTION", lambda item: item.get("id"), lambda item: item.get("subjectVersion")),
+    "visual-review": ("VISUAL_DIRECTION", lambda item: item.get("subjectId"), lambda item: item.get("subjectVersion")),
     "split-plan": ("ASSET", lambda item: item.get("id"), lambda item: item.get("sourceVersion")),
     "runtime-visual-evidence": ("QUALITY", lambda item: item.get("sceneId"), lambda item: item.get("buildVersion")),
     "delivery-manifest": ("RELEASE", lambda item: item.get("id"), lambda item: item.get("version")),
@@ -35,7 +35,7 @@ EXCLUDED_TOP_LEVEL_FIELDS = {
     "decomposition-plan": {"candidateSnapshot", "grillingEvidence", "status", "blockedReason"},
     "visual-bible": {"candidateSnapshot", "grillingEvidence", "status", "reviews", "approval"},
     "prefab-structure": {"candidateSnapshot", "grillingEvidence", "status", "userApproval", "blockedReason"},
-    "image-generation": {"candidateSnapshot", "grillingEvidence", "status", "userApproval", "failureReason"},
+    "visual-review": {"candidateSnapshot", "grillingEvidence", "status", "userDecision", "userApproval", "blockedReason"},
     "split-plan": {"candidateSnapshot", "grillingEvidence", "status", "reviews", "userApproval", "blockedReason"},
     "runtime-visual-evidence": {"candidateSnapshot", "grillingEvidence", "status", "reviews", "userApprovals", "blockedReason"},
     "delivery-manifest": {"candidateSnapshot", "grillingEvidence", "status", "authorization", "blockedReason"},
@@ -126,6 +126,11 @@ def candidate_digest(kind: str, payload: Mapping[str, Any]) -> str:
         recovery = candidate.get("recoveryExit")
         if isinstance(recovery, dict):
             recovery.pop("resumeAt", None)
+    elif kind == "visual-review":
+        # 用户只裁决 F2 已收敛的唯一候选；摘要保留 F0-F2，排除之后才产生的 F3 回执。
+        funnel = candidate.get("funnel")
+        if isinstance(funnel, dict) and isinstance(funnel.get("stages"), list):
+            funnel["stages"] = funnel["stages"][:3]
     canonical = json.dumps(candidate, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -164,7 +169,7 @@ def _requires_grilling(kind: str, payload: Mapping[str, Any]) -> bool:
         "decomposition-plan": "APPROVED",
         "visual-bible": "APPROVED",
         "prefab-structure": "APPROVED",
-        "image-generation": "USER_CONFIRMED",
+        "visual-review": "APPROVED",
         "split-plan": "APPROVED",
         "runtime-visual-evidence": "APPROVED",
         "delivery-manifest": "RELEASE_APPROVED",

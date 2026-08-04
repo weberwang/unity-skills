@@ -43,8 +43,8 @@ def test_screenshot_reference_cannot_authorize_style_transfer() -> None:
     assert any(issue.path.endswith("styleTransfer") for issue in issues)
 
 
-def test_generated_or_confirmed_candidate_cannot_reuse_screenshot_pixels() -> None:
-    """生成中或用户已确认的候选都必须拒绝直接复用截图像素。"""
+def test_generated_candidate_cannot_reuse_screenshot_pixels() -> None:
+    """进入漏斗前的生成候选必须拒绝直接复用截图像素。"""
     payload = load_yaml(TEMPLATES / "image-generation.yaml")
     payload.update(
         {
@@ -75,10 +75,8 @@ def test_generated_or_confirmed_candidate_cannot_reuse_screenshot_pixels() -> No
         for index, character in enumerate(("a", "b", "c"), start=1)
     ]
 
-    for status in ("GENERATED", "USER_CONFIRMED"):
-        payload["status"] = status
-        issues = validate_contract("image-generation", payload)
-        assert any(issue.path == "$.candidates[0].sha256" for issue in issues)
+    issues = validate_contract("image-generation", payload)
+    assert any(issue.path == "$.candidates[0].sha256" for issue in issues)
 
 
 def test_scene_generation_binds_approved_visual_bible_version() -> None:

@@ -556,27 +556,124 @@ def _image_task_approval_issues(payload: Mapping[str, Any]) -> list[ValidationIs
 
 
 def _visual_review_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
-    """校验最终视觉审查的三代理独立性、批准类型和主体版本。"""
-    if payload.get("status") not in {"APPROVED", "REVIEW_APPROVED"}:
-        return []
+    """校验多级漏斗的顺序、候选收敛以及最终批准绑定。"""
+    issues = _review_funnel_issues(payload)
     approval_type = payload.get("subjectType")
     reviews = payload.get("reviews")
-    issues = _subject_binding_issues(
-        reviews,
-        expected_id=payload.get("subjectId"),
-        expected_version=payload.get("subjectVersion"),
-        path="$.reviews",
-    )
+    if isinstance(reviews, Sequence) and not isinstance(reviews, (str, bytes)) and reviews:
+        issues.extend(
+            _subject_binding_issues(
+                reviews,
+                expected_id=payload.get("subjectId"),
+                expected_version=payload.get("subjectVersion"),
+                path="$.reviews",
+            )
+        )
     reviewer_items = [item for item in reviews or [] if isinstance(item, Mapping)]
-    issues.extend(_unique_three_reviewer_issues(reviewer_items, "$.reviews", "视觉"))
     for index, review in enumerate(reviewer_items):
         if review.get("approvalType") != approval_type:
             issues.append(ValidationIssue(f"$.reviews[{index}].approvalType", "审查类型必须匹配 subjectType"))
     user = payload.get("userApproval")
     if payload.get("status") == "APPROVED" and isinstance(user, Mapping):
+        issues.extend(_unique_three_reviewer_issues(reviewer_items, "$.reviews", "视觉"))
         issues.extend(_subject_binding_issues([user], expected_id=payload.get("subjectId"), expected_version=payload.get("subjectVersion"), path="$.userApproval"))
         if user.get("approvalType") != approval_type:
             issues.append(ValidationIssue("$.userApproval.approvalType", "用户批准类型必须匹配 subjectType"))
+    return issues
+
+
+def _review_funnel_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
+    """要求候选逐级减少，并阻止跳级、扩容或绕过最终用户决定。"""
+    candidates = [
+        item for item in payload.get("candidateEvidence", [])
+        if isinstance(item, Mapping)
+    ]
+    candidate_ids = [item.get("candidateId") for item in candidates if isinstance(item.get("candidateId"), str)]
+    issues: list[ValidationIssue] = []
+    if len(candidate_ids) != len(set(candidate_ids)):
+        issues.append(ValidationIssue("$.candidateEvidence", "漏斗候选 ID 必须唯一"))
+    for index, candidate in enumerate(candidates):
+        if candidate.get("subjectId") != payload.get("subjectId"):
+            issues.append(ValidationIssue(f"$.candidateEvidence[{index}].subjectId", "漏斗候选必须绑定当前审查主体"))
+
+    funnel = payload.get("funnel")
+    stages = funnel.get("stages") if isinstance(funnel, Mapping) else None
+    if not isinstance(stages, Sequence) or isinstance(stages, (str, bytes)) or len(stages) != 4:
+        return issues
+    stage_items = [item for item in stages if isinstance(item, Mapping)]
+    if len(stage_items) != 4:
+        return issues
+
+    expected_order = (
+        "F0_AUTOMATED",
+        "F1_OWNER_SCREEN",
+        "F2_SPECIALIST_REVIEW",
+        "F3_USER_DECISION",
+    )
+    actual_order = tuple(item.get("stage") for item in stage_items)
+    if actual_order != expected_order:
+        issues.append(ValidationIssue("$.funnel.stages", "审核漏斗必须严格按 F0→F1→F2→F3 排列"))
+
+    previous_output: set[object] | None = None
+    stopped = False
+    for index, stage in enumerate(stage_items):
+        stage_path = f"$.funnel.stages[{index}]"
+        raw_inputs = stage.get("inputCandidateIds", [])
+        raw_outputs = stage.get("outputCandidateIds", [])
+        inputs = {item for item in raw_inputs if isinstance(item, str)} if isinstance(raw_inputs, Sequence) and not isinstance(raw_inputs, (str, bytes)) else set()
+        outputs = {item for item in raw_outputs if isinstance(item, str)} if isinstance(raw_outputs, Sequence) and not isinstance(raw_outputs, (str, bytes)) else set()
+        status = stage.get("status")
+        if index > 0 and status != "PENDING" and any(
+            previous.get("status") != "PASS" for previous in stage_items[:index]
+        ):
+            issues.append(ValidationIssue(f"{stage_path}.status", "上游级未全部通过时不得启动或完成本级"))
+        if index == 0 and inputs != set(candidate_ids):
+            issues.append(ValidationIssue(f"{stage_path}.inputCandidateIds", "F0 输入必须覆盖全部候选且不得引入外部候选"))
+        if previous_output is not None and inputs != previous_output:
+            issues.append(ValidationIssue(f"{stage_path}.inputCandidateIds", "本级输入必须精确等于上一级输出"))
+        if not outputs.issubset(inputs):
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "本级输出必须是本级输入的子集"))
+        if len(outputs) > len(inputs):
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "审核漏斗不得在下游扩增候选"))
+        if status == "PASS":
+            if not outputs:
+                issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "通过的漏斗级必须至少保留一个候选"))
+            if not stage.get("evidence"):
+                issues.append(ValidationIssue(f"{stage_path}.evidence", "通过的漏斗级必须提供证据"))
+        elif status == "PENDING" and outputs:
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "待处理级不得预填输出候选"))
+        elif status in {"CHANGES_REQUIRED", "REJECTED", "BLOCKED"} and outputs:
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "未通过的漏斗级不得输出候选"))
+        if stopped and status != "PENDING":
+            issues.append(ValidationIssue(f"{stage_path}.status", "上一级未通过后，下游级必须保持 PENDING"))
+        if status in {"CHANGES_REQUIRED", "REJECTED", "BLOCKED"}:
+            stopped = True
+        if index == 1 and len(outputs) > 3:
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "F1 主责筛选最多保留三个候选"))
+        if index in {2, 3} and status == "PASS" and len(outputs) != 1:
+            issues.append(ValidationIssue(f"{stage_path}.outputCandidateIds", "F2/F3 通过时必须收敛到唯一候选"))
+        previous_output = outputs
+
+    if payload.get("status") == "APPROVED":
+        if any(stage.get("status") != "PASS" for stage in stage_items):
+            issues.append(ValidationIssue("$.funnel.stages", "最终批准前 F0-F3 必须全部通过"))
+        selected = payload.get("selectedCandidate")
+        final_output = stage_items[-1].get("outputCandidateIds", [])
+        final_ids = {item for item in final_output if isinstance(item, str)} if isinstance(final_output, Sequence) and not isinstance(final_output, (str, bytes)) else set()
+        if isinstance(selected, Mapping):
+            selected_id = selected.get("id")
+            if final_ids != {selected_id}:
+                issues.append(ValidationIssue("$.selectedCandidate.id", "最终候选必须等于 F3 唯一输出"))
+            matching = next((item for item in candidates if item.get("candidateId") == selected_id), None)
+            expected = {
+                "path": selected.get("path"),
+                "sha256": selected.get("sha256"),
+                "subjectVersion": selected.get("visualVersion"),
+            }
+            if matching is None or any(matching.get(field) != value for field, value in expected.items()):
+                issues.append(ValidationIssue("$.selectedCandidate", "最终候选必须完整匹配当前漏斗候选证据"))
+            if selected.get("visualVersion") != payload.get("subjectVersion"):
+                issues.append(ValidationIssue("$.selectedCandidate.visualVersion", "最终候选版本必须匹配审查主体版本"))
     return issues
 
 
@@ -604,7 +701,7 @@ def _split_plan_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
 
 def _image_generation_issues(payload: Mapping[str, Any]) -> list[ValidationIssue]:
     """确保生成完成时候选数量、尺寸、ID 和路径与输出规格一致。"""
-    if payload.get("status") not in {"GENERATED", "USER_CONFIRMED"}:
+    if payload.get("status") != "GENERATED":
         return []
     candidates = payload.get("candidates")
     output = payload.get("output")
@@ -621,34 +718,6 @@ def _image_generation_issues(payload: Mapping[str, Any]) -> list[ValidationIssue
             continue
         if item.get("width") != output.get("width") or item.get("height") != output.get("height"):
             issues.append(ValidationIssue(f"$.candidates[{index}]", "候选尺寸必须匹配输出规格"))
-    if payload.get("status") == "USER_CONFIRMED":
-        selected = payload.get("selectedCandidate")
-        if isinstance(selected, Mapping):
-            identities = {
-                (item.get("id"), item.get("path"), item.get("sha256"), item.get("visualVersion"))
-                for item in candidates
-                if isinstance(item, Mapping)
-            }
-            identity = (
-                selected.get("id"),
-                selected.get("path"),
-                selected.get("sha256"),
-                selected.get("visualVersion"),
-            )
-            if identity not in identities:
-                issues.append(ValidationIssue("$.selectedCandidate", "P1 用户确认候选必须来自当前生成结果"))
-        approval = payload.get("userApproval")
-        if isinstance(approval, Mapping) and isinstance(selected, Mapping):
-            if approval.get("approvalType") != payload.get("visualType"):
-                issues.append(ValidationIssue("$.userApproval.approvalType", "P1 用户批准类型必须匹配效果图类型"))
-            issues.extend(
-                _subject_binding_issues(
-                    [approval],
-                    expected_id=payload.get("id"),
-                    expected_version=selected.get("visualVersion"),
-                    path="$.userApproval",
-                )
-            )
     return issues
 
 

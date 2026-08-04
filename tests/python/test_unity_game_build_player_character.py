@@ -22,7 +22,19 @@ PROJECT_BASELINE_SCHEMA_PATH = (
 PROJECT_BASELINE_TEMPLATE_PATH = (
     SKILL_DIR / "templates" / "player-character-project-baseline.yaml"
 )
+ANIMATION_REFERENCE_PATH = (
+    SKILL_DIR / "references" / "player-character-skeletal-animation.md"
+)
+ANIMATION_SCHEMA_PATH = (
+    SKILL_DIR / "schemas" / "player-character-skeletal-animation.schema.json"
+)
+ANIMATION_TEMPLATE_PATH = (
+    SKILL_DIR / "templates" / "player-character-skeletal-animation.yaml"
+)
 AUDIT_PATH = SKILL_DIR / "scripts" / "audit_player_character.py"
+ANIMATION_VALIDATOR_PATH = (
+    SKILL_DIR / "scripts" / "validate_player_character_animation.py"
+)
 
 
 def read_text(path: Path) -> str:
@@ -42,6 +54,18 @@ def parse_frontmatter(text: str) -> dict[str, object]:
 def load_audit_module():
     """从真实 Skill 路径加载审计脚本。"""
     spec = importlib.util.spec_from_file_location("audit_player_character", AUDIT_PATH)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_animation_validator_module():
+    """从真实 Skill 路径加载骨骼动画规格验证脚本。"""
+    spec = importlib.util.spec_from_file_location(
+        "validate_player_character_animation",
+        ANIMATION_VALIDATOR_PATH,
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -96,10 +120,15 @@ def test_skill_metadata_and_direct_reference_are_valid() -> None:
     assert "P3-002" in frontmatter["description"]
     assert "references/player-character-contract.md" in text
     assert "references/player-character-project-baseline.md" in text
+    assert "references/player-character-skeletal-animation.md" in text
     assert CONTRACT_PATH.is_file()
     assert PROJECT_BASELINE_REFERENCE_PATH.is_file()
     assert PROJECT_BASELINE_SCHEMA_PATH.is_file()
     assert PROJECT_BASELINE_TEMPLATE_PATH.is_file()
+    assert ANIMATION_REFERENCE_PATH.is_file()
+    assert ANIMATION_SCHEMA_PATH.is_file()
+    assert ANIMATION_TEMPLATE_PATH.is_file()
+    assert ANIMATION_VALIDATOR_PATH.is_file()
     assert len(text.splitlines()) < 500
 
 
@@ -107,7 +136,7 @@ def test_agent_interface_invokes_exact_skill_name() -> None:
     """界面默认提示必须显式调用当前人物 Skill。"""
     payload = yaml.safe_load(read_text(AGENT_PATH))
 
-    assert payload["interface"]["display_name"] == "Unity 玩家角色构建"
+    assert payload["interface"]["display_name"] == "Unity 玩家角色与骨骼动画"
     assert 25 <= len(payload["interface"]["short_description"]) <= 64
     assert "$unity-game-build-player-character" in payload["interface"]["default_prompt"]
 
@@ -196,20 +225,40 @@ def test_player_character_project_baseline_reference_has_standard_contract() -> 
         assert heading in text
 
 
+def test_player_character_animation_reference_has_standard_contract() -> None:
+    """骨骼动画参考必须提供完整执行、权限、输出和恢复契约。"""
+    text = read_text(ANIMATION_REFERENCE_PATH)
+    for heading in (
+        "## 何时读取",
+        "## 输入",
+        "## 执行步骤",
+        "## 子代理角色与并行边界",
+        "## 所需锁与 Unity 权限",
+        "## 机器可读输出",
+        "## 通过条件",
+        "## 失败与恢复出口",
+    ):
+        assert heading in text
+
+
 def test_skill_resource_names_are_scoped_and_consistent() -> None:
     """专项资源名必须显式包含玩家角色语义，并保持 kebab-case 或 snake_case。"""
     assert {path.name for path in (SKILL_DIR / "references").iterdir()} == {
         "player-character-contract.md",
         "player-character-project-baseline.md",
+        "player-character-skeletal-animation.md",
     }
     assert {path.name for path in (SKILL_DIR / "schemas").iterdir()} == {
-        "player-character-project-baseline.schema.json"
+        "player-character-project-baseline.schema.json",
+        "player-character-skeletal-animation.schema.json",
     }
     assert {path.name for path in (SKILL_DIR / "templates").iterdir()} == {
-        "player-character-project-baseline.yaml"
+        "player-character-project-baseline.yaml",
+        "player-character-skeletal-animation.yaml",
     }
     assert {path.name for path in (SKILL_DIR / "scripts").iterdir() if path.suffix == ".py"} == {
-        "audit_player_character.py"
+        "audit_player_character.py",
+        "validate_player_character_animation.py",
     }
 
 
@@ -236,3 +285,71 @@ def test_project_baseline_audit_rehashes_every_bound_file(tmp_path: Path) -> Non
     drift_errors: list[str] = []
     module.validate_project_baseline(tmp_path, baseline_path, drift_errors)
     assert any("哈希不一致" in error for error in drift_errors)
+
+
+def test_player_character_animation_template_matches_schema_and_semantics() -> None:
+    """胜利动作模板必须完整表达关键姿势、接触、变形和视觉事件。"""
+    schema = json.loads(read_text(ANIMATION_SCHEMA_PATH))
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    module = load_animation_validator_module()
+
+    assert list(validator.iter_errors(payload)) == []
+    assert module.validate_animation_spec(payload) == []
+    assert len(payload["keyPoses"]) == 6
+    assert len(payload["timeScript"]) == 5
+    assert payload["builder"]["curveSource"] == "APPROVED_RESOLVED_POSES"
+    assert all(
+        pose["worldTargets"]["space"] == "CHARACTER_ROOT_WORLD"
+        for pose in payload["keyPoses"]
+    )
+
+
+def test_animation_validator_rejects_hardcoded_local_rotation() -> None:
+    """动画设计规格不得退回猜测局部骨骼角度。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["keyPoses"][0]["localRotationDegrees"] = 62
+
+    errors = module.validate_animation_spec(payload)
+
+    assert any("禁止写入猜测的局部骨骼角度" in error for error in errors)
+
+
+def test_animation_draft_can_precede_pose_evidence() -> None:
+    """初稿可以先冻结意图和目标，验收截图必须在姿势卡批准前补齐。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["status"] = "PLAYER_CHARACTER_ANIMATION_DRAFT"
+    payload.pop("poseCardsApproval")
+    payload["regression"]["captures"] = []
+    for pose in payload["keyPoses"]:
+        pose["status"] = "DRAFT"
+        pose.pop("acceptanceScreenshot")
+        pose.pop("resolvedPoseEvidence")
+
+    assert module.validate_animation_spec(payload) == []
+
+
+def test_animation_validator_rejects_foot_slip_and_timeline_drift() -> None:
+    """连续固定脚滑或时间段不再绑定姿势时必须阻断。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["keyPoses"][2]["contacts"]["leftFoot"]["anchor"]["x"] = -0.05
+    payload["timeScript"][2]["startSeconds"] = 0.30
+
+    errors = module.validate_animation_spec(payload)
+
+    assert any("脚底锚点发生漂移" in error for error in errors)
+    assert any("必须等于起始姿势时间" in error for error in errors)
+
+
+def test_animation_validator_blocks_over_budget_pose_approval() -> None:
+    """姿势超出网格能力时必须先返修网格或权重。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["keyPoses"][3]["deformationAssessment"]["status"] = "MESH_REVISION_REQUIRED"
+
+    errors = module.validate_animation_spec(payload)
+
+    assert any("超出变形预算时不得批准姿势卡" in error for error in errors)

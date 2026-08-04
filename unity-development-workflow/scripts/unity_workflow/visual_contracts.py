@@ -51,7 +51,7 @@ def image_generation_policy_issues(payload: Mapping[str, Any], issue: IssueFacto
         split = payload.get("splitPlanEvidence")
         if isinstance(split, Mapping) and split.get("itemVersion") != payload.get("subjectVersion"):
             issues.append(issue("$.splitPlanEvidence.itemVersion", "单图生成必须绑定当前资产地图条目版本"))
-    if payload.get("status") not in {"GENERATED", "USER_CONFIRMED"}:
+    if payload.get("status") != "GENERATED":
         return issues
     screenshot_hashes = {
         item.get("sha256")

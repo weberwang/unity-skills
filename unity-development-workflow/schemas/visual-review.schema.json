@@ -4,39 +4,106 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "subjectType", "subjectId", "subjectVersion",
-    "round", "candidateEvidence", "reviews", "consolidatedChanges", "userDecision", "status"
+    "schemaVersion", "id", "projectId", "sourceRevision", "projectStateVersion", "subjectType", "subjectId", "subjectVersion",
+    "round", "candidateEvidence", "funnel", "reviews", "consolidatedChanges", "userDecision", "status"
   ],
   "properties": {
-    "schemaVersion": {"const": "1.0"},
+    "schemaVersion": {"const": "2.0"},
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "sourceRevision": {"type": "string", "minLength": 1},
+    "projectStateVersion": {"type": "string", "minLength": 1},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
+    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "subjectType": {"enum": ["VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL", "RUNTIME_VISUAL"]},
     "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "subjectVersion": {"type": "string", "minLength": 1},
     "round": {"type": "integer", "minimum": 1},
     "previousReview": {"$ref": "common.schema.json#/$defs/evidence"},
-    "candidateEvidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
+    "candidateEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidateId", "type", "path", "sha256", "subjectId", "subjectVersion"],
+        "properties": {
+          "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "type": {"type": "string", "minLength": 1},
+          "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+          "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "subjectVersion": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "generationEvidence": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
         {"properties": {"type": {"const": "image-generation"}}, "required": ["type", "subjectId", "subjectVersion"]}
       ]
     },
+    "funnel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "stages"],
+      "properties": {
+        "policy": {"enum": ["STANDARD", "ELEVATED", "CRITICAL"]},
+        "stages": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stage", "status", "inputCandidateIds", "outputCandidateIds", "decisionSummary", "evidence"],
+            "properties": {
+              "stage": {"enum": ["F0_AUTOMATED", "F1_OWNER_SCREEN", "F2_SPECIALIST_REVIEW", "F3_USER_DECISION"]},
+              "status": {"enum": ["PENDING", "PASS", "CHANGES_REQUIRED", "REJECTED", "BLOCKED"]},
+              "inputCandidateIds": {
+                "type": "array", "uniqueItems": true,
+                "items": {"$ref": "common.schema.json#/$defs/taskId"}
+              },
+              "outputCandidateIds": {
+                "type": "array", "uniqueItems": true,
+                "items": {"$ref": "common.schema.json#/$defs/taskId"}
+              },
+              "decisionSummary": {"type": "string", "minLength": 1},
+              "evidence": {
+                "type": "array", "uniqueItems": true,
+                "items": {"$ref": "common.schema.json#/$defs/evidence"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "selectedCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256", "visualVersion"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "visualVersion": {"type": "string", "minLength": 1}
+      }
+    },
     "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
     "consolidatedChanges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "userDecision": {"enum": ["PENDING", "APPROVED", "CHANGES_REQUESTED", "REJECTED"]},
     "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
-    "returnGate": {"enum": ["P1"]},
-    "status": {"enum": ["DRAFT", "REVIEWING", "CHANGES_REQUIRED", "REVIEW_APPROVED", "APPROVED", "REJECTED", "BLOCKED"]},
+    "returnGate": {"enum": ["P1", "F1", "F2"]},
+    "status": {"enum": ["DRAFT", "SCREENING", "SPECIALIST_REVIEWING", "AWAITING_USER", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "BLOCKED"]},
     "blockedReason": {"type": "string", "minLength": 1}
   },
   "allOf": [
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["userApproval"],
+        "required": ["candidateSnapshot", "grillingEvidence", "selectedCandidate", "userApproval"],
         "properties": {
           "userDecision": {"const": "APPROVED"},
           "reviews": {
@@ -52,28 +119,10 @@
       }
     },
     {
-      "if": {"properties": {"status": {"const": "REVIEW_APPROVED"}}, "required": ["status"]},
-      "then": {
-        "required": ["generationEvidence"],
-        "properties": {
-          "subjectType": {"enum": ["GAME_VISUAL", "UI_VISUAL"]},
-          "userDecision": {"const": "PENDING"},
-          "reviews": {
-            "minItems": 3,
-            "allOf": [
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
-            ]
-          }
-        }
-      }
-    },
-    {
       "if": {"properties": {"status": {"const": "CHANGES_REQUIRED"}}, "required": ["status"]},
       "then": {
         "required": ["returnGate"],
-        "properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}, "returnGate": {"const": "P1"}}
+        "properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}}
       }
     },
     {

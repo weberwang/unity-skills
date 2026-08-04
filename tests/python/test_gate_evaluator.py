@@ -74,21 +74,65 @@ def _visual_bible_evidence(project: Path) -> dict[str, object]:
         "evidenceSha256": approval_hash,
     }
 
+    candidate_id = "candidate.global.direction-1"
+    candidate_evidence = {"candidateId": candidate_id, **candidates[0]}
+    stage_evidence = {
+        "type": "review-stage",
+        "path": "Artifacts/Approvals/visual.txt",
+        "sha256": approval_hash,
+    }
     visual_review = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "2.0",
         "id": "review.global.visual-v1",
         "projectId": "starfall-arena",
+        "sourceRevision": "revision-001",
+        "projectStateVersion": "project-state-v1",
         "subjectType": "VISUAL_BASELINE",
         "subjectId": "starfall-arena",
         "subjectVersion": "visual-v1",
         "round": 1,
-        "candidateEvidence": [candidates[0]],
+        "candidateEvidence": [candidate_evidence],
+        "funnel": {
+            "policy": "CRITICAL",
+            "stages": [
+                {
+                    "stage": stage,
+                    "status": "PASS",
+                    "inputCandidateIds": [candidate_id],
+                    "outputCandidateIds": [candidate_id],
+                    "decisionSummary": summary,
+                    "evidence": [stage_evidence],
+                }
+                for stage, summary in (
+                    ("F0_AUTOMATED", "契约、证据和硬约束通过"),
+                    ("F1_OWNER_SCREEN", "主责筛选保留推荐方向"),
+                    ("F2_SPECIALIST_REVIEW", "三类独立审查收敛到唯一方向"),
+                    ("F3_USER_DECISION", "用户批准唯一推荐方向"),
+                )
+            ],
+        },
+        "selectedCandidate": {
+            "id": candidate_id,
+            "path": candidates[0]["path"],
+            "sha256": candidates[0]["sha256"],
+            "visualVersion": "visual-v1",
+        },
         "reviews": reviews,
         "consolidatedChanges": [],
         "userDecision": "APPROVED",
         "userApproval": user_approval,
         "status": "APPROVED",
     }
+    review_grilling, review_snapshot = _grilling_evidence(
+        project,
+        visual_review,
+        "visual-review",
+        "VISUAL_DIRECTION",
+        "starfall-arena",
+        "visual-v1",
+        "visual-review",
+    )
+    visual_review.update({"candidateSnapshot": review_snapshot, "grillingEvidence": review_grilling})
     review_path = project / "Artifacts" / "Visual" / "review.yaml"
     _write_yaml(review_path, visual_review)
     review_evidence = {
@@ -630,7 +674,7 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
                 "candidateCount": 1,
             },
             "candidates": [candidate],
-            "status": "USER_CONFIRMED",
+            "status": "GENERATED",
             "provider": "test-provider",
             "model": "test-model",
             "generatedAtUtc": "2026-07-27T12:00:00Z",
@@ -658,9 +702,10 @@ def test_split_plan_source_must_exist_in_referenced_generation_candidates(tmp_pa
         "subjectVersion": candidate["visualVersion"],
     }
     review = {
-        "status": "REVIEW_APPROVED",
+        "status": "APPROVED",
         "subjectId": generation["id"],
         "subjectVersion": candidate["visualVersion"],
+        "selectedCandidate": dict(candidate),
     }
     structure = yaml.safe_load(
         (ROOT / "templates" / "prefab-structure.yaml").read_text(encoding="utf-8")
@@ -715,7 +760,7 @@ def test_split_plan_rejects_target_node_absent_from_approved_p0(monkeypatch) -> 
     structure["status"] = "APPROVED"
     generation = {
         "id": "imagegen.scene-arena-intro.game-v1",
-        "status": "USER_CONFIRMED",
+        "status": "GENERATED",
         "candidates": [
             {
                 "id": "candidate.scene-arena-intro.game-1",
@@ -726,9 +771,10 @@ def test_split_plan_rejects_target_node_absent_from_approved_p0(monkeypatch) -> 
         ],
     }
     review = {
-        "status": "REVIEW_APPROVED",
+        "status": "APPROVED",
         "subjectId": generation["id"],
         "subjectVersion": "game-v1",
+        "selectedCandidate": dict(generation["candidates"][0]),
     }
     contracts = {
         "prefab-structure": structure,

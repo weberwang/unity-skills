@@ -13,7 +13,7 @@
 ## 执行步骤
 
 1. **P0 冻结 3D 结构**：以低模 Prefab 层级、Blockout 和文字说明确认对象职责、比例、模块拼接、相机距离、Pivot、碰撞草模及交互边界；请求确认前由 `$unity-game-grilling` 对当前候选逐项拷问。状态依次为 `STRUCTURE_DRAFT -> STRUCTURE_AWAITING_USER -> STRUCTURE_APPROVED`。Visual Bible、当前拷问记录或 P0 用户确认缺失时只允许修改灰盒，不得开始高保真或正式资产。
-2. **P1/P2 确认目标外观**：基于 P0 生成高保真游戏/UI 候选，完成用户候选确认后，由视觉一致性、Unity 可实现性、玩法/可读性代理独立审查。P2 要求修改时必须回到新 P1 修订，再次用户确认和独立审查，不得直接沿用旧批准。
+2. **P1/P2 确认目标外观**：基于 P0 生成高保真游戏/UI 候选集；F0 自动预检，F1 主责筛选至多三个，F2 由视觉一致性、Unity 可实现性、玩法/可读性代理独立审查并收敛唯一候选，F3 再请求用户批准。候选内容变化时必须回到新 P1 修订并从 F0 重跑，不得直接沿用旧批准。
 3. **P3 建立跨类型完整资产地图**：在 P2 通过原图上框选所有可见元素和排除项，并唯一分类：`MODEL_GEOMETRY` 进入建模；`PBR_TEXTURE_SET`、`MATERIAL` 进入贴图材质；`DECAL`、`BILLBOARD`、`UI_BITMAP`、位图 VFX 进入独立图片任务；`LIGHT`、`CAMERA`、`POST_PROCESS`、`SHADER`、`UI_TOOLKIT`、`CODE` 进入实现任务。拆分前逐项拷问用途、是否必须独立、复用与模块拼接边界、轮廓、遮挡补全、世界尺寸、Pivot、贴图/LOD/Collider 预算、交付形式、性能代价和目标槽位。Mesh 不是图片任务，PBR 贴图不得从效果图裁取；拷问结论与地图必须一起取得用户确认后才能进入 P4。
 4. **发现能力并制作几何**：读取 MCP 工具组和 Editor 状态。模型 brief、供应商/DCC、上传/成本、轮廓、UV 或顶点顺序的取舍先由 `$unity-game-grilling` 生成绑定记录。低模、模块化、硬表面、灰盒和规则 Mesh 可由 `$unity-game-3d-modeling` 使用实际可用的 ProBuilder/脚本工具制作；高精雕刻、复杂有机重拓扑、精细绑定或工具无法可靠导出的任务转 DCC 移交。为每个 `MODEL_GEOMETRY` 项记录世界尺寸、1 Unity Unit 对应尺度、Y-up/Z-forward、拓扑、预算、排除项和验收角度，再收敛硬边、法线/切线、退化面、非预期非流形、Bounds、子网格、LOD、Collider 和适用骨骼前置。不得把 Unity 灰盒冒充 DCC 成品，也不得声明未验证的 FBX/OBJ 导出。
 5. **制作贴图与材质**：模型拓扑与 UV 责任边界冻结后，把对应 P3 条目交给 `$unity-game-3d-texturing`；记录 UV0、静态物体 UV2、Texel Density、贴图集、色彩空间、通道打包、分辨率、压缩、MipMap、URP Shader、材质槽和变体。贴图依据 Visual Bible 独立制作，不复制参考截图或 P1 效果图的像素与材质风格。所有几何、贴图、材质操作记录为版本化 recipe 或 DCC 源变更。

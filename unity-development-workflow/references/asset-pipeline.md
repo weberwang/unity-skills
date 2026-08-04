@@ -6,7 +6,7 @@
 
 ## 输入
 
-- 已批准 Visual Bible，以及当前场景 P0 `STRUCTURE_APPROVED`、P1 `HIGH_FIDELITY_CONFIRMED`、P2 `REVIEW_APPROVED`、P3 `ASSET_MAP_APPROVED` 的完整版本链；任一证据缺失、失效或哈希不匹配时必须阻塞。
+- 已批准 Visual Bible，以及当前场景 P0 `STRUCTURE_APPROVED`、P1 `HIGH_FIDELITY_GENERATED`、P2 `APPROVED` 漏斗唯一候选、P3 `ASSET_MAP_APPROVED` 的完整版本链；任一证据缺失、失效或哈希不匹配时必须阻塞。
 - 来源文件、来源版本或内容哈希、授权/生成记录、目标路径与 Unity 导入约定。
 - 当前资源登记、性能预算、SpriteAtlas/Addressables 规划和实机反馈。
 

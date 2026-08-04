@@ -23,6 +23,7 @@ REFERENCE_NAMES = (
     "game-implementation.md",
     "scene-loop.md",
     "scene-2d-adaptation.md",
+    "review-funnel.md",
     "visual-workflow.md",
     "asset-pipeline.md",
     "3d-asset-workflow.md",
@@ -155,6 +156,7 @@ def test_required_workflow_concepts_are_documented():
         "显式绑定",
         "unity-mcp",
         "用户视觉批准",
+        "多级漏斗",
         "UI Toolkit",
         "Windows",
     )
