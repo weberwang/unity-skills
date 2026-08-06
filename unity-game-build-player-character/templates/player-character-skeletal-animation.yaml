@@ -1,4 +1,4 @@
-schemaVersion: "1.0"
+schemaVersion: "2.0"
 recordType: PLAYER_CHARACTER_SKELETAL_ANIMATION
 projectId: star-blogger
 characterId: P3-002
@@ -13,6 +13,10 @@ rigBinding:
   prefab:
     path: Assets/Prefabs/Characters/Player/PlayerCharacter.prefab
     sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  skeletalSystemVersion: player-skeletal-system-v1
+  skeletalSystemEvidence:
+    path: Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
+    sha256: "9999999999999999999999999999999999999999999999999999999999999999"
   rigVersion: player-rig-v1
   boneCount: 30
   rootBone: PlayerRoot
@@ -41,11 +45,33 @@ deformationBudget:
     - 裤腿跨越允许张开距离或裆部权重塌陷
     - 手脚必须缩放才能达到目标
     - 头发摆幅超出网格边界或产生拉丝
+motionQuality:
+  priorityOrder: [KEY_POSE, TIMING, TRAJECTORY, SECONDARY_MOTION]
+  style: SNAPPY_WEIGHTED
+  maxIkWeightDeltaPerFrame: 0.20
+  maxJointExtensionRatio: 0.96
+  timingContrast:
+    preparationSegmentId: victory.segment.preparation
+    burstSegmentId: victory.segment.burst
+    maxBurstToPreparationRatio: 0.65
+  playbackReviewRates: [1.0, 0.25]
+runtimeIntegration:
+  actionClass: ONE_SHOT
+  movementAuthority: GAMEPLAY_RIGIDBODY_2D
+  entryTransitionSeconds: 0.06
+  exitTransitionSeconds: 0.10
+  interruptPolicy: AFTER_ACCENT
+  phaseSync: NOT_APPLICABLE
 keyPoses:
   - id: victory.neutral
     timeSeconds: 0.00
     intent: NEUTRAL
     silhouette: 自然站立，重心居中，双臂位于身体两侧且轮廓清楚
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 0.90}
+      support: BOTH_FEET
+      lineOfAction: 头、胸腔和骨盆形成稳定竖向主线
+      weightIntent: 双脚均匀承重，作为后续蓄力的静止基准
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.62}, toleranceUnits: 0.03}
@@ -67,9 +93,14 @@ keyPoses:
     resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/00-neutral.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000001"}
     status: STATIC_POSE_PASS
   - id: victory.anticipation
-    timeSeconds: 0.10
+    timeSeconds: 0.18
     intent: ANTICIPATION
     silhouette: 下蹲蓄力，头和肩整体下降，双手略向身后，躯干保持正面
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 0.74}
+      support: BOTH_FEET
+      lineOfAction: 脊柱压缩并轻微前倾，四肢向内收拢
+      weightIntent: 重心下压蓄力，双脚稳定承受即将向上的反作用力
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.46}, toleranceUnits: 0.03}
@@ -91,9 +122,14 @@ keyPoses:
     resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/01-anticipation.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000002"}
     status: STATIC_POSE_PASS
   - id: victory.explosion
-    timeSeconds: 0.28
+    timeSeconds: 0.27
     intent: EXPLOSION
     silhouette: 身体向上伸展，双手快速经过肩部，动作方向明确但脚底不滑
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 0.94}
+      support: BOTH_FEET
+      lineOfAction: 骨盆先上提，胸腔和双臂沿纵向迅速展开
+      weightIntent: 双脚持续锁地，骨盆驱动胸腔和手臂爆发
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.68}, toleranceUnits: 0.03}
@@ -115,9 +151,14 @@ keyPoses:
     resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/02-explosion.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000003"}
     status: STATIC_POSE_PASS
   - id: victory.v-pose
-    timeSeconds: 0.48
+    timeSeconds: 0.40
     intent: CELEBRATION
     silhouette: 双臂形成清晰 V 字，双手位于头顶两侧，肘部微弯且肩颈不挤压
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 1.00}
+      support: BOTH_FEET
+      lineOfAction: 身体纵向充分伸展，双臂构成向外打开的 V 字
+      weightIntent: 力量传递到手部后保持脚底稳定，关节保留微弯避免锁死
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.70}, toleranceUnits: 0.03}
@@ -139,9 +180,14 @@ keyPoses:
     resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/03-v-pose.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000004"}
     status: STATIC_POSE_PASS
   - id: victory.hold
-    timeSeconds: 0.78
+    timeSeconds: 0.70
     intent: HOLD
     silhouette: 主体 V 字姿势保持不变，仅头发和服装产生克制的次级运动
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 1.00}
+      support: BOTH_FEET
+      lineOfAction: 主体动作线冻结，头发和衣物沿既有方向延迟回弹
+      weightIntent: 主体稳定承重，次级骨骼消化剩余惯性
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.70}, toleranceUnits: 0.03}
@@ -166,6 +212,11 @@ keyPoses:
     timeSeconds: 1.10
     intent: RECOVERY
     silhouette: 身体回落稳定，双手回到胸口附近，重心重新居中
+    bodyMechanics:
+      centerOfMass: {x: 0.00, y: 0.90}
+      support: BOTH_FEET
+      lineOfAction: 四肢向躯干回收，脊柱恢复中立竖向主线
+      weightIntent: 身体先缓冲再稳定，双手和头发稍晚停止
     worldTargets:
       space: CHARACTER_ROOT_WORLD
       head: {position: {x: 0.00, y: 1.62}, toleranceUnits: 0.03}
@@ -187,26 +238,91 @@ keyPoses:
     resolvedPoseEvidence: {path: Artifacts/Animation/P3-002/Victory/Resolved/05-recovery.yaml, sha256: "1000000000000000000000000000000000000000000000000000000000000006"}
     status: STATIC_POSE_PASS
 timeScript:
-  - {fromPoseId: victory.neutral, toPoseId: victory.anticipation, startSeconds: 0.00, endSeconds: 0.10, transition: EASE_IN, holdSeconds: 0.00}
-  - {fromPoseId: victory.anticipation, toPoseId: victory.explosion, startSeconds: 0.10, endSeconds: 0.28, transition: FAST, holdSeconds: 0.00}
-  - {fromPoseId: victory.explosion, toPoseId: victory.v-pose, startSeconds: 0.28, endSeconds: 0.48, transition: EASE_OUT, holdSeconds: 0.00}
-  - {fromPoseId: victory.v-pose, toPoseId: victory.hold, startSeconds: 0.48, endSeconds: 0.78, transition: HOLD, holdSeconds: 0.24}
-  - {fromPoseId: victory.hold, toPoseId: victory.recovery, startSeconds: 0.78, endSeconds: 1.10, transition: EASE_IN_OUT, holdSeconds: 0.00}
+  - id: victory.segment.preparation
+    fromPoseId: victory.neutral
+    toPoseId: victory.anticipation
+    startSeconds: 0.00
+    endSeconds: 0.18
+    phase: PREPARATION
+    transition: EASE_IN
+    holdSeconds: 0.00
+    trajectoryPlan: {head: ARC, leftHand: ARC, rightHand: ARC, leftFoot: LOCKED, rightFoot: LOCKED, maxDeviationUnits: 0.03}
+    leadChain: [Pelvis, Spine, Shoulders, Hands]
+    followThroughDelaySeconds: 0.025
+    ikBlend:
+      leftFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+      rightFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+  - id: victory.segment.burst
+    fromPoseId: victory.anticipation
+    toPoseId: victory.explosion
+    startSeconds: 0.18
+    endSeconds: 0.27
+    phase: BURST
+    transition: FAST
+    holdSeconds: 0.00
+    trajectoryPlan: {head: ARC, leftHand: ARC, rightHand: ARC, leftFoot: LOCKED, rightFoot: LOCKED, maxDeviationUnits: 0.025}
+    leadChain: [Pelvis, Spine, Shoulders, Hands]
+    followThroughDelaySeconds: 0.020
+    ikBlend:
+      leftFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+      rightFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+  - id: victory.segment.follow-through
+    fromPoseId: victory.explosion
+    toPoseId: victory.v-pose
+    startSeconds: 0.27
+    endSeconds: 0.40
+    phase: FOLLOW_THROUGH
+    transition: EASE_OUT
+    holdSeconds: 0.00
+    trajectoryPlan: {head: ARC, leftHand: ARC, rightHand: ARC, leftFoot: LOCKED, rightFoot: LOCKED, maxDeviationUnits: 0.03}
+    leadChain: [Pelvis, Spine, Shoulders, Elbows, Hands]
+    followThroughDelaySeconds: 0.030
+    ikBlend:
+      leftFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+      rightFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+  - id: victory.segment.accent-hold
+    fromPoseId: victory.v-pose
+    toPoseId: victory.hold
+    startSeconds: 0.40
+    endSeconds: 0.70
+    phase: ACCENT_HOLD
+    transition: HOLD
+    holdSeconds: 0.24
+    trajectoryPlan: {head: LOCKED, leftHand: LOCKED, rightHand: LOCKED, leftFoot: LOCKED, rightFoot: LOCKED, maxDeviationUnits: 0.01}
+    leadChain: [Torso, Hair, Garment]
+    followThroughDelaySeconds: 0.040
+    ikBlend:
+      leftFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+      rightFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+  - id: victory.segment.recovery
+    fromPoseId: victory.hold
+    toPoseId: victory.recovery
+    startSeconds: 0.70
+    endSeconds: 1.10
+    phase: RECOVERY
+    transition: EASE_IN_OUT
+    holdSeconds: 0.00
+    trajectoryPlan: {head: ARC, leftHand: ARC, rightHand: ARC, leftFoot: LOCKED, rightFoot: LOCKED, maxDeviationUnits: 0.03}
+    leadChain: [Pelvis, Spine, Shoulders, Hands, Hair]
+    followThroughDelaySeconds: 0.045
+    ikBlend:
+      leftFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
+      rightFoot: {startWeight: 1.0, endWeight: 1.0, curve: HOLD}
 visualEvents:
-  - {id: victory.event.darken, timeSeconds: 0.10, eventType: COLOR, target: character, value: darken-10-percent, durationSeconds: 0.18}
-  - {id: victory.event.highlight-rise, timeSeconds: 0.28, eventType: HIGHLIGHT, target: Outfit/Top, value: 0.45, durationSeconds: 0.20}
-  - {id: victory.event.smile, timeSeconds: 0.48, eventType: EXPRESSION, target: Face, value: smile-v2, durationSeconds: 0.62}
-  - {id: victory.event.flash, timeSeconds: 0.48, eventType: FLASH, target: character, value: 0.35, durationSeconds: 0.08}
-  - {id: victory.event.hair-follow, timeSeconds: 0.78, eventType: SECONDARY_MOTION, target: Hair, value: follow-through-v1, durationSeconds: 0.20}
+  - {id: victory.event.darken, timeSeconds: 0.18, eventType: COLOR, target: character, value: darken-10-percent, durationSeconds: 0.09}
+  - {id: victory.event.highlight-rise, timeSeconds: 0.27, eventType: HIGHLIGHT, target: Outfit/Top, value: 0.45, durationSeconds: 0.13}
+  - {id: victory.event.smile, timeSeconds: 0.40, eventType: EXPRESSION, target: Face, value: smile-v2, durationSeconds: 0.70}
+  - {id: victory.event.flash, timeSeconds: 0.40, eventType: FLASH, target: character, value: 0.35, durationSeconds: 0.08}
+  - {id: victory.event.hair-follow, timeSeconds: 0.70, eventType: SECONDARY_MOTION, target: Hair, value: follow-through-v1, durationSeconds: 0.20}
   - {id: victory.event.restore, timeSeconds: 1.10, eventType: COLOR, target: character, value: default, durationSeconds: 0.00}
 regression:
   cameraEvidence: {path: Artifacts/Animation/P3-002/Regression/fixed-camera.yaml, sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}
   captures:
     - {poseId: victory.neutral, timeSeconds: 0.00, screenshot: {path: Artifacts/Animation/P3-002/Regression/00-neutral.png, sha256: "2000000000000000000000000000000000000000000000000000000000000001"}, result: PASS}
-    - {poseId: victory.anticipation, timeSeconds: 0.10, screenshot: {path: Artifacts/Animation/P3-002/Regression/01-anticipation.png, sha256: "2000000000000000000000000000000000000000000000000000000000000002"}, result: PASS}
-    - {poseId: victory.explosion, timeSeconds: 0.28, screenshot: {path: Artifacts/Animation/P3-002/Regression/02-explosion.png, sha256: "2000000000000000000000000000000000000000000000000000000000000003"}, result: PASS}
-    - {poseId: victory.v-pose, timeSeconds: 0.48, screenshot: {path: Artifacts/Animation/P3-002/Regression/03-v-pose.png, sha256: "2000000000000000000000000000000000000000000000000000000000000004"}, result: PASS}
-    - {poseId: victory.hold, timeSeconds: 0.78, screenshot: {path: Artifacts/Animation/P3-002/Regression/04-hold.png, sha256: "2000000000000000000000000000000000000000000000000000000000000005"}, result: PASS}
+    - {poseId: victory.anticipation, timeSeconds: 0.18, screenshot: {path: Artifacts/Animation/P3-002/Regression/01-anticipation.png, sha256: "2000000000000000000000000000000000000000000000000000000000000002"}, result: PASS}
+    - {poseId: victory.explosion, timeSeconds: 0.27, screenshot: {path: Artifacts/Animation/P3-002/Regression/02-explosion.png, sha256: "2000000000000000000000000000000000000000000000000000000000000003"}, result: PASS}
+    - {poseId: victory.v-pose, timeSeconds: 0.40, screenshot: {path: Artifacts/Animation/P3-002/Regression/03-v-pose.png, sha256: "2000000000000000000000000000000000000000000000000000000000000004"}, result: PASS}
+    - {poseId: victory.hold, timeSeconds: 0.70, screenshot: {path: Artifacts/Animation/P3-002/Regression/04-hold.png, sha256: "2000000000000000000000000000000000000000000000000000000000000005"}, result: PASS}
     - {poseId: victory.recovery, timeSeconds: 1.10, screenshot: {path: Artifacts/Animation/P3-002/Regression/05-recovery.png, sha256: "2000000000000000000000000000000000000000000000000000000000000006"}, result: PASS}
 builder:
   builderId: player-character-animation-builder-v1
