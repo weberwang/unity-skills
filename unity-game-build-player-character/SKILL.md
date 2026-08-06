@@ -1,6 +1,6 @@
 ---
 name: unity-game-build-player-character
-description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、项目基线、分层生产、Sprite Skin、30 骨骼 Rig、关键姿势卡、世界空间手脚约束、蒙皮变形预算、AnimationClip 生成、审查和 Unity 接入专用 Skill。需要修正或重做人物身份、五官、卷发、比例、服装、17 张 Sprite、SpriteLibrary、SpriteAtlas、PlayerCharacter Prefab、骨骼权重或胜利等角色动画时使用；禁止用 PSD/PSB、目标图裁片、互不共享人物几何的独立生成结果或散落 C# 局部角度数组替代结构化生产规格。
+description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还原、分层生产及完整骨骼系统专用 Skill，覆盖 Sprite Skin、30 骨骼 Rig、排序、蒙皮、IK、Animator 状态混合、位移与步幅、左右翻转、玩法事件、物理跟随、换装挂点、性能预算，以及流畅、自然、有张力的关键姿势动画。需要修正或重做 17 张 Sprite、PlayerCharacter Prefab、权重、动作质量或任一骨骼运行时环节时使用；禁止用 PSD/PSB、目标图裁片、不共享人物几何的独立结果或散落 C# 局部角度数组替代结构化规格。
 ---
 
 # Star Blogger 玩家人物
@@ -9,7 +9,7 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 
 ## 权威输入
 
-开始任何判断、生成或写入前，完整读取 [玩家角色合同](references/player-character-contract.md)和[玩家角色项目基线规范](references/player-character-project-baseline.md)。任务涉及 Sprite Skin、Rig、权重或 AnimationClip 时，再完整读取[关键姿势骨骼动画](references/player-character-skeletal-animation.md)。随后从当前 Star Blogger 工作区读取对应目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
+开始任何判断、生成或写入前，完整读取 [玩家角色合同](references/player-character-contract.md)和[玩家角色项目基线规范](references/player-character-project-baseline.md)。任务涉及 Sprite Skin、Rig、排序、IK、Animator、物理、换装或性能时，再完整读取[Unity 2D 骨骼系统](references/player-character-2d-skeletal-system.md)；任务涉及 AnimationClip 或动作质量时，同时完整读取[关键姿势骨骼动画](references/player-character-skeletal-animation.md)。随后从当前 Star Blogger 工作区读取对应目标板、批准记录、Visual Bible、生产计划、运行时映射和 Unity 资产；不得依赖记忆、缩略图或历史 PASS 摘要替代原始证据。
 
 遵循以下权威顺序：
 
@@ -34,8 +34,9 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 8. 技术完整性、视觉还原、移动可读性和 Unity 接入是四个独立结论。任何技术 PASS 都不得推导视觉 PASS。
 9. 不得因用户批准过某个候选而降低目标一致性标准。批准绑定候选，不会自动豁免候选与冻结目标的差异。
 10. 禁止 PSD、PSB、PSDT 和运行时整身合成图路线。保留 17 张独立 PNG、稳定路径和 GUID。
-11. 动画设计必须以关键姿势画面、世界空间目标、接触约束和变形预算为输入；禁止把猜测的骨骼局部角度当作动作权威。
+11. 动画设计必须按关键姿势、节奏、轨迹、次级运动的顺序推进，并以重心与承重点、世界空间目标、接触约束、IK 混合和变形预算为输入；禁止把猜测的骨骼局部角度当作动作权威。
 12. 静态视觉未通过时保持 Rig 暂停；静态姿势未逐张批准时保持过渡、视觉事件和 AnimationClip 构建暂停。
+13. 任何 AnimationClip 必须绑定已审计的骨骼系统版本；生产路线、骨架、排序、蒙皮、IK、状态、位移、翻转、事件、物理、附件或性能任一未冻结时禁止批准动作。
 
 ## 执行流程
 
@@ -138,15 +139,35 @@ uv run scripts/audit_player_character.py --workspace . --baseline Artifacts/Visu
 
 Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`。只有 Unity 捕获再次通过目标 A/B 视觉审查后才能使用 `PLAYER_CHARACTER_UNITY_VISUAL_PASS`。
 
-### 8. 制作骨骼动画
+### 8. 建立 2D 骨骼系统
+
+若任务包含 Rig 或运行时骨骼接入，先完成系统阶段：
+
+1. 用 `templates/player-character-2d-skeletal-system.yaml` 建立系统规格，并用 `schemas/player-character-2d-skeletal-system.schema.json` 校验。
+2. 冻结独立 PNG、Unity 2D Animation、Sprite Skin 与 Animator 路线，以及 30 骨骼、参考姿势、Pivot、视觉根、翻转根和挂点骨。
+3. 冻结 Sorting Group、排序带、动态前后规则、网格密度、每顶点影响数、刚性图层和极端姿势权重证据。
+4. 建立基础 Clip、运行时 IK、次级运动的求解顺序，以及脚贴地、手部目标、头部朝向和双手持物约束。
+5. 建立 Animator 分层、Blend Tree、逐类过渡、打断、脚相位和“步幅 ÷ 循环时长”速度校准；保持玩法或 Rigidbody2D 拥有真实位移。
+6. 分离视觉翻转根与物理根，把关键玩法事件放入动作规格；建立骨骼跟随判定框、换装挂点、离屏更新、LOD 和目标设备性能预算。
+7. 完成参考姿势、极端变形、排序、IK、状态、滑步、翻转、事件、物理、换装和性能回归，得到 `PLAYER_CHARACTER_SKELETAL_SYSTEM_AUDITED` 后再制作单个动作。
+
+运行系统规格验证：
+
+```powershell
+uv run scripts/validate_player_character_skeletal_system.py --source Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
+```
+
+### 9. 制作骨骼动画
 
 若任务包含骨骼动画，先执行以下专用阶段，再交接：
 
-1. 用 `templates/player-character-skeletal-animation.yaml` 建立 4～8 张关键姿势卡，并用 `schemas/player-character-skeletal-animation.schema.json` 校验。
-2. 冻结头、双手、双脚世界空间目标，双脚接触锚点，双肘双膝弯曲方向和当前 Rig 变形预算。
-3. 在 Unity 中逐张摆出静态姿势，保存固定相机截图和 `resolvedPoseEvidence`；任一姿势超出变形预算时先修网格或权重。
-4. 全部静态姿势通过并获批后，才制作时间脚本、过渡和视觉事件，再由结构化规格生成版本化 AnimationClip。
-5. 对全部关键时间点自动回归截图；脚滑、目标误差、轮廓、蒙皮或视觉事件任一失败都阻断最终批准。
+1. 绑定当前 `skeletalSystemVersion` 与 `skeletalSystemEvidence`，再用 `templates/player-character-skeletal-animation.yaml` 建立 4～8 张关键姿势卡，并用 `schemas/player-character-skeletal-animation.schema.json` 校验。
+2. 冻结每张姿势的轮廓、重心、承重点、动作线，头、双手、双脚世界空间目标，双脚接触锚点，双肘双膝弯曲方向和当前 Rig 变形预算。
+3. 在 Unity 中逐张摆出静态姿势，保存固定相机截图和 `resolvedPoseEvidence`；任一姿势不可读、失重、关节锁死或超出变形预算时先返修姿势、网格或权重。
+4. 全部静态姿势通过并获批后，按蓄力、爆发、跟随、强调保持和恢复制作时间脚本；逐段声明速度曲线、五个效应器轨迹、传力链、错位时间和双脚 IK 混合。
+5. 声明动作类型、位移控制权、进入/退出过渡、打断策略和循环相位同步，再由结构化规格生成版本化 AnimationClip；禁止用统一平滑曲线削弱爆发或制造过冲。
+6. 以 1 倍速审查节奏、反馈和张力，以 0.25 倍速审查速度断点、轨迹尖角、IK 跳变、脚滑和次级运动顺序，并保存轨迹证据和逐段动态质量结论。
+7. 对全部关键时间点自动回归截图；脚滑、目标误差、轮廓、蒙皮、运行时切换或动态审查任一失败都阻断最终批准。
 
 运行规格验证：
 
@@ -154,7 +175,7 @@ Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISU
 uv run scripts/validate_player_character_animation.py --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
 ```
 
-### 9. 交接
+### 10. 交接
 
 - 向 `$unity-game-visual-assets` 返回目标绑定、17 项记录、完整组合、审查摘要和用户批准。
 - 向 `$unity-game-qa-performance` 返回 Unity 捕获、导入设置、GUID 清单、测试结果和待执行设备矩阵。
@@ -175,6 +196,10 @@ uv run scripts/validate_player_character_animation.py --source Artifacts/Animati
 - `PLAYER_CHARACTER_FULL_SET_USER_APPROVED`
 - `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISUAL_PENDING`
 - `PLAYER_CHARACTER_UNITY_VISUAL_PASS`
+- `PLAYER_CHARACTER_SKELETAL_SYSTEM_DRAFT`
+- `PLAYER_CHARACTER_SKELETAL_SYSTEM_AUDITED`
+- `PLAYER_CHARACTER_SKELETAL_SYSTEM_APPROVED`
+- `PLAYER_CHARACTER_SKELETAL_SYSTEM_BLOCKED`
 - `PLAYER_CHARACTER_ANIMATION_DRAFT`
 - `PLAYER_CHARACTER_ANIMATION_POSE_CARDS_AWAITING_REVIEW`
 - `PLAYER_CHARACTER_ANIMATION_POSE_CARDS_APPROVED`
@@ -195,6 +220,7 @@ uv run scripts/validate_player_character_animation.py --source Artifacts/Animati
 - 用户批准完整单图候选。
 - Unity 保留 GUID 接入通过。
 - Unity 目标对照验收通过。
-- 若动画在范围内，4～8 张关键姿势、接触约束和变形预算全部通过，AnimationClip 由结构化规格生成，固定时间回归与最终用户批准有效。
+- 若骨骼系统在范围内，生产路线、骨架、排序、蒙皮、IK、Animator、位移、翻转、玩法事件、物理、附件和性能规格全部通过并绑定当前系统版本。
+- 若动画在范围内，4～8 张关键姿势、身体力学、接触约束、节奏反差、轨迹、IK 连续性和变形预算全部通过，AnimationClip 由结构化规格生成，1 倍速与 0.25 倍速动态审查、固定时间回归和最终用户批准有效。
 
 设备验收被用户后置时，明确报告为后续 G3 项，不得伪装为已执行。

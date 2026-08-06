@@ -31,9 +31,21 @@ ANIMATION_SCHEMA_PATH = (
 ANIMATION_TEMPLATE_PATH = (
     SKILL_DIR / "templates" / "player-character-skeletal-animation.yaml"
 )
+SKELETAL_SYSTEM_REFERENCE_PATH = (
+    SKILL_DIR / "references" / "player-character-2d-skeletal-system.md"
+)
+SKELETAL_SYSTEM_SCHEMA_PATH = (
+    SKILL_DIR / "schemas" / "player-character-2d-skeletal-system.schema.json"
+)
+SKELETAL_SYSTEM_TEMPLATE_PATH = (
+    SKILL_DIR / "templates" / "player-character-2d-skeletal-system.yaml"
+)
 AUDIT_PATH = SKILL_DIR / "scripts" / "audit_player_character.py"
 ANIMATION_VALIDATOR_PATH = (
     SKILL_DIR / "scripts" / "validate_player_character_animation.py"
+)
+SKELETAL_SYSTEM_VALIDATOR_PATH = (
+    SKILL_DIR / "scripts" / "validate_player_character_skeletal_system.py"
 )
 
 
@@ -65,6 +77,18 @@ def load_animation_validator_module():
     spec = importlib.util.spec_from_file_location(
         "validate_player_character_animation",
         ANIMATION_VALIDATOR_PATH,
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_skeletal_system_validator_module():
+    """从真实 Skill 路径加载完整骨骼系统验证脚本。"""
+    spec = importlib.util.spec_from_file_location(
+        "validate_player_character_skeletal_system",
+        SKELETAL_SYSTEM_VALIDATOR_PATH,
     )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -118,13 +142,19 @@ def test_skill_metadata_and_direct_reference_are_valid() -> None:
     assert set(frontmatter) == {"name", "description"}
     assert frontmatter["name"] == "unity-game-build-player-character"
     assert "P3-002" in frontmatter["description"]
+    assert "流畅、自然、有张力" in frontmatter["description"]
     assert "references/player-character-contract.md" in text
     assert "references/player-character-project-baseline.md" in text
+    assert "references/player-character-2d-skeletal-system.md" in text
     assert "references/player-character-skeletal-animation.md" in text
     assert CONTRACT_PATH.is_file()
     assert PROJECT_BASELINE_REFERENCE_PATH.is_file()
     assert PROJECT_BASELINE_SCHEMA_PATH.is_file()
     assert PROJECT_BASELINE_TEMPLATE_PATH.is_file()
+    assert SKELETAL_SYSTEM_REFERENCE_PATH.is_file()
+    assert SKELETAL_SYSTEM_SCHEMA_PATH.is_file()
+    assert SKELETAL_SYSTEM_TEMPLATE_PATH.is_file()
+    assert SKELETAL_SYSTEM_VALIDATOR_PATH.is_file()
     assert ANIMATION_REFERENCE_PATH.is_file()
     assert ANIMATION_SCHEMA_PATH.is_file()
     assert ANIMATION_TEMPLATE_PATH.is_file()
@@ -241,24 +271,44 @@ def test_player_character_animation_reference_has_standard_contract() -> None:
         assert heading in text
 
 
+def test_player_character_skeletal_system_reference_has_standard_contract() -> None:
+    """完整骨骼系统参考必须覆盖执行、权限、输出和恢复契约。"""
+    text = read_text(SKELETAL_SYSTEM_REFERENCE_PATH)
+    for heading in (
+        "## 何时读取",
+        "## 输入",
+        "## 执行步骤",
+        "## 子代理角色与并行边界",
+        "## 所需锁与 Unity 权限",
+        "## 机器可读输出",
+        "## 通过条件",
+        "## 失败与恢复出口",
+    ):
+        assert heading in text
+
+
 def test_skill_resource_names_are_scoped_and_consistent() -> None:
     """专项资源名必须显式包含玩家角色语义，并保持 kebab-case 或 snake_case。"""
     assert {path.name for path in (SKILL_DIR / "references").iterdir()} == {
         "player-character-contract.md",
+        "player-character-2d-skeletal-system.md",
         "player-character-project-baseline.md",
         "player-character-skeletal-animation.md",
     }
     assert {path.name for path in (SKILL_DIR / "schemas").iterdir()} == {
+        "player-character-2d-skeletal-system.schema.json",
         "player-character-project-baseline.schema.json",
         "player-character-skeletal-animation.schema.json",
     }
     assert {path.name for path in (SKILL_DIR / "templates").iterdir()} == {
+        "player-character-2d-skeletal-system.yaml",
         "player-character-project-baseline.yaml",
         "player-character-skeletal-animation.yaml",
     }
     assert {path.name for path in (SKILL_DIR / "scripts").iterdir() if path.suffix == ".py"} == {
         "audit_player_character.py",
         "validate_player_character_animation.py",
+        "validate_player_character_skeletal_system.py",
     }
 
 
@@ -287,8 +337,67 @@ def test_project_baseline_audit_rehashes_every_bound_file(tmp_path: Path) -> Non
     assert any("哈希不一致" in error for error in drift_errors)
 
 
+def test_player_character_skeletal_system_template_matches_contract() -> None:
+    """系统模板必须覆盖第一轮全部骨骼生产与运行时问题。"""
+    schema = json.loads(read_text(SKELETAL_SYSTEM_SCHEMA_PATH))
+    payload = yaml.safe_load(read_text(SKELETAL_SYSTEM_TEMPLATE_PATH))
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    module = load_skeletal_system_validator_module()
+
+    assert list(validator.iter_errors(payload)) == []
+    assert module.validate_skeletal_system(payload) == []
+    assert payload["pipeline"]["deformationMode"] == "HYBRID_SPRITE_SKIN"
+    assert payload["rig"]["boneCount"] == 30
+    assert len(payload["rendering"]["sortingBands"]) >= 6
+    assert payload["skinning"]["maxBoneInfluencesPerVertex"] <= 4
+    assert payload["ik"]["solveOrder"] == [
+        "BASE_CLIP",
+        "RUNTIME_IK",
+        "SECONDARY_MOTION",
+    ]
+    assert payload["animationControl"]["applyRootMotion"] is False
+    assert payload["facing"]["physicsRootUnscaled"] is True
+    assert payload["gameplaySync"]["animationEventRole"] == "PRESENTATION_ONLY"
+    assert payload["physics"]["transformOwnership"] == "RIGIDBODY_ROOT_BONES_VISUAL_ONLY"
+    assert payload["attachments"]["skeletonReuse"] == "REQUIRED"
+    assert payload["performance"]["targetPlatform"] == "MOBILE"
+
+
+def test_skeletal_system_validator_rejects_cross_module_drift() -> None:
+    """滑步、物理翻转、关键事件缺失和挂点漂移必须被系统门禁阻断。"""
+    module = load_skeletal_system_validator_module()
+    payload = yaml.safe_load(read_text(SKELETAL_SYSTEM_TEMPLATE_PATH))
+    payload["animationControl"]["locomotion"]["expectedSpeedUnitsPerSecond"] = 1.25
+    payload["facing"]["facingNode"] = payload["physics"]["rigidbodyPath"]
+    payload["gameplaySync"]["criticalEvents"].remove("COMBO_WINDOW")
+    payload["attachments"]["slots"][0]["bone"] = "Head"
+
+    errors = module.validate_skeletal_system(payload)
+
+    assert any("步幅除以循环时长" in error for error in errors)
+    assert any("必须绑定 Rig 声明的翻转根" in error for error in errors)
+    assert any("完整声明六类关键玩法事件" in error for error in errors)
+    assert any("复用 Rig 中同 ID 的稳定挂点骨" in error for error in errors)
+
+
+def test_skeletal_system_validator_rejects_budget_and_transition_collapse() -> None:
+    """约束或跟随对象超预算以及统一过渡时长必须阻断。"""
+    module = load_skeletal_system_validator_module()
+    payload = yaml.safe_load(read_text(SKELETAL_SYSTEM_TEMPLATE_PATH))
+    payload["performance"]["maxActiveConstraintsPerCharacter"] = 2
+    payload["performance"]["maxBoneFollowersPerCharacter"] = 2
+    for profile in payload["animationControl"]["transitionProfiles"]:
+        profile["durationSeconds"] = 0.10
+
+    errors = module.validate_skeletal_system(payload)
+
+    assert any("小于已启用 IK 约束数量" in error for error in errors)
+    assert any("小于当前骨骼跟随对象数量" in error for error in errors)
+    assert any("不得让所有动作类别共用同一过渡时长" in error for error in errors)
+
+
 def test_player_character_animation_template_matches_schema_and_semantics() -> None:
-    """胜利动作模板必须完整表达关键姿势、接触、变形和视觉事件。"""
+    """胜利动作模板必须完整表达关键姿势、身体力学、节奏、轨迹和接触。"""
     schema = json.loads(read_text(ANIMATION_SCHEMA_PATH))
     payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
@@ -298,6 +407,19 @@ def test_player_character_animation_template_matches_schema_and_semantics() -> N
     assert module.validate_animation_spec(payload) == []
     assert len(payload["keyPoses"]) == 6
     assert len(payload["timeScript"]) == 5
+    assert payload["schemaVersion"] == "2.0"
+    assert payload["motionQuality"]["priorityOrder"] == [
+        "KEY_POSE",
+        "TIMING",
+        "TRAJECTORY",
+        "SECONDARY_MOTION",
+    ]
+    assert payload["motionQuality"]["playbackReviewRates"] == [1.0, 0.25]
+    assert all("bodyMechanics" in pose for pose in payload["keyPoses"])
+    assert all("trajectoryPlan" in segment for segment in payload["timeScript"])
+    assert all("ikBlend" in segment for segment in payload["timeScript"])
+    assert payload["rigBinding"]["skeletalSystemVersion"] == "player-skeletal-system-v1"
+    assert "skeletalSystemEvidence" in payload["rigBinding"]
     assert payload["builder"]["curveSource"] == "APPROVED_RESOLVED_POSES"
     assert all(
         pose["worldTargets"]["space"] == "CHARACTER_ROOT_WORLD"
@@ -342,6 +464,46 @@ def test_animation_validator_rejects_foot_slip_and_timeline_drift() -> None:
 
     assert any("脚底锚点发生漂移" in error for error in errors)
     assert any("必须等于起始姿势时间" in error for error in errors)
+
+
+def test_animation_validator_rejects_weightless_timing_and_ik_quality() -> None:
+    """承重点、节奏反差、传力顺序和固定脚 IK 失真时必须阻断。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["keyPoses"][1]["bodyMechanics"]["support"] = "AIRBORNE"
+    payload["motionQuality"]["timingContrast"]["maxBurstToPreparationRatio"] = 0.20
+    payload["timeScript"][1]["leadChain"] = ["Hands", "Shoulders", "Spine", "Pelvis"]
+    payload["timeScript"][1]["ikBlend"]["leftFoot"]["startWeight"] = 0.0
+
+    errors = module.validate_animation_spec(payload)
+
+    assert any("腾空姿势不得声明固定脚" in error for error in errors)
+    assert any("缺少速度反差" in error for error in errors)
+    assert any("必须由骨盆开始传力" in error for error in errors)
+    assert any("固定脚起点 IK 权重不得低于 0.95" in error for error in errors)
+
+
+def test_animation_regression_requires_dynamic_motion_review() -> None:
+    """进入动态回归后必须绑定正常速度、慢放、轨迹和逐段审查。"""
+    module = load_animation_validator_module()
+    payload = yaml.safe_load(read_text(ANIMATION_TEMPLATE_PATH))
+    payload["status"] = "PLAYER_CHARACTER_ANIMATION_REGRESSION_REVIEWING"
+    payload["buildResult"] = {
+        "clip": {
+            "path": payload["builder"]["outputClipPath"],
+            "sha256": "3" * 64,
+        },
+        "curveReport": {
+            "path": "Artifacts/Animation/P3-002/Victory/curve-report.yaml",
+            "sha256": "4" * 64,
+        },
+        "generatedAtUtc": "2026-08-06T08:00:00Z",
+        "builderVersion": "player-character-animation-builder-v2",
+    }
+
+    errors = module.validate_animation_spec(payload)
+
+    assert any("motionReview" in error and "required property" in error for error in errors)
 
 
 def test_animation_validator_blocks_over_budget_pose_approval() -> None:
