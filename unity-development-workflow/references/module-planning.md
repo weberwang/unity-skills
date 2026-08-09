@@ -68,7 +68,7 @@
 - `project-profile.yaml` 与 `quality-gates.yaml`：分别保存当前拆分状态和 `activeDecomposition` 标准指针；两者携带相同 `sourceRevision` 与 `projectStateVersion`。
 - 可选 `module-dag.json` 与 `scene-dag.json`：供并行调度和冲突检测消费。
 
-从项目根目录先运行 `uv run .agents/skills/unity-development-workflow/scripts/workflow.py validate --kind decomposition-plan --source <decomposition-plan.yaml>`。G0 的 `decomposition.approved` 必须引用状态为 `APPROVED` 的真实拆分契约；S00 报告、模块清单和场景清单继续引用同一决策版本。
+由 Codex 核对拆分契约的必填字段、当前用户确认、对象 ID、版本、SHA-256 和 `sourceRevision`；涉及 Unity 事实时使用 MCP/C# Toolkit 回读。G0 的 `decomposition.approved` 必须引用状态为 `APPROVED` 的真实拆分契约；S00 报告、模块清单和场景清单继续引用同一决策版本。
 
 ## 通过条件
 

@@ -17,28 +17,6 @@
       "minLength": 1,
       "pattern": "^[^\\s@]+(?:@[A-Za-z0-9._-]+)?$"
     },
-    "lockRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "resource", "mode"],
-      "properties": {
-        "type": {
-          "enum": [
-            "path", "scene", "prefab", "project_settings", "package_manager",
-            "asset_database", "unity_instance", "build_target"
-          ]
-        },
-        "resource": {"$ref": "#/$defs/projectRelativePath"},
-        "mode": {"enum": ["read", "write"]}
-      }
-    },
-    "taskStatus": {
-      "enum": [
-        "BLOCKED", "READY", "ASSIGNED", "RUNNING", "SELF_VERIFIED",
-        "REVIEWING", "APPROVED", "INTEGRATED", "VERIFIED", "DONE",
-        "RETRYABLE_FAILED", "REJECTED", "CONFLICTED", "CANCELLED"
-      ]
-    },
     "approval": {
       "type": "object",
       "additionalProperties": false,

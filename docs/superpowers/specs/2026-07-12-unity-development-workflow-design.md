@@ -461,7 +461,7 @@ DRAFT
 
 - `project-profile.yaml`：Unity、URP、Windows 和项目约束。
 - `module-manifest.yaml`：模块目录、所有权、依赖和公共接口。
-- `task-contract.yaml`：子代理输入、依赖、锁、权限、验收和输出。
+- 子代理任务包：由 Codex 直接传递输入、依赖、路径所有权、权限、验收和输出，不落地本地任务状态或锁契约。
 - `scene-manifest.yaml`：场景目标、状态、资源、任务和门禁。
 - `image-task.yaml`：图片简报、参考图、候选、导入配置和审批状态。
 - `visual-bible.yaml`：全局风格、色彩、光照、材质、构图和 UI 语言。

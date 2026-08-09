@@ -80,7 +80,7 @@
         "maximumLoadTimeSeconds": {"type": "number", "minimum": 0}
       }
     },
-    "status": {"$ref": "common.schema.json#/$defs/taskStatus"},
+    "status": {"enum": ["DRAFT", "IMPLEMENTING", "VALIDATING", "DONE", "BLOCKED"]},
     "approvals": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
     "qualityReportPaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "editorCapturePaths": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},

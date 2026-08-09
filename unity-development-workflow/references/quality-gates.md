@@ -16,12 +16,12 @@ S00、每个场景冻结、逐模块/逐平台验收、全局回归和任一目�
 2. 依次验证 Schema、静态检查、脚本校验、编译和 Console 增量。
 3. 激活 `testing` 后分别以 `run_tests` 启动 EditMode/PlayMode 异步任务，并通过测试任务查询取得最终结果、用例数和失败详情。
 4. G2 分别对每个批准模块运行职责边界、接口、主路径、失败路径与回归验收，并为每个模块生成唯一 `PASS` 报告。场景小循环内的输入、窗口和分辨率检查只用于参考环境调试，不得形成最终设备验收结论。
-5. 对比已批准效果图与实机捕获，检查视觉偏差、UI 可读性、焦点导航、缩放和本地化溢出。
+5. G2 对比已批准高保真与 Unity Editor/Game View 捕获；G3 仅在用户明确要求设备验收后，才对比所属候选包的设备捕获。检查视觉偏差、UI 可读性、焦点导航、缩放和本地化溢出。
 6. 先读取 `mcpforunity://rendering/stats` 获取渲染快照；激活 `profiling` 后用 `manage_profiler` 或明确记录的等价方法采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理和加载数据。
-7. G2 必须为 `project-profile.delivery.targets` 中每个平台提供唯一无设备 `platforms.adaptation-complete` PASS 报告，只验证编译、参考配置布局、输入映射、生命周期模拟和静态预算。仅在 G2 全部 requiredChecks 通过后，才使用 `manage_build` 或平台规定工具链生成 G3 候选主制品，并执行安装、启动、核心循环、输入、生命周期、视觉、窗口/方向与安全区、2D 适配、音频、性能和稳定性检查。
+7. G2 必须为 `project-profile.delivery.targets` 中每个平台提供唯一无设备 `platforms.adaptation-complete` PASS 报告，只验证编译、参考配置布局、输入映射、生命周期模拟和静态预算。G2 全部检查通过后，G3 才可生成候选主制品；安装、启动、设备输入、设备生命周期、设备视觉和设备性能必须等待用户明确要求，严禁自动发起真机验收。
 8. 核对正式资源唯一登记、授权、导入验证、占位清零和当前版本一致性。
 9. 每项只报告实际运行结果；环境或工具缺失时标记 `BLOCKED`，未运行标记 `NOT_RUN`，不得标记通过。任一必需项为 `FAIL`、`BLOCKED`、`NOT_RUN`、未知、证据缺失或版本不符时，质量门整体失败并阻塞下游。
-10. 填充每个 requiredCheck 的实际结果与证据后，运行 `workflow.py gate evaluate --config <quality-gates> --gate <G0-G3> --project-root <项目> --project-id <ID> --source-revision <修订> --build-version <版本> --output <结果>`。G1 的 `vertical-slice.playable` 与 `build.platform-development` 绑定同一批准场景和主平台构建，但不得消费 `runtime-visual-evidence`。G2 精确覆盖全部场景、模块和批准平台；G3 只有在当前 G2 `PASS` 时才可求值，设备视觉、性能和矩阵证据都必须引用同项目、同源码和同项目状态的 `g2.development-complete`。求值器还会扫描 `Assets`、`ArtSource`、`Artifacts`，发现 PSD、PSB 或 PSDT 即失败。
+10. Codex 汇总每个 requiredCheck 的真实证据；Unity 项目事实必须来自 MCP/C# Toolkit 或实际 Unity 测试/构建输出。G1 的 `vertical-slice.playable` 与 `build.platform-development` 绑定同一批准场景和主平台构建，但不得消费设备证据。G2 精确覆盖全部场景、模块和批准平台；G3 证据必须引用同项目、同源码、同项目状态和当前 G2 `PASS`。开发资源目录发现 PSD、PSB 或 PSDT 时失败。
 
 ## 子代理角色与并行边界
 

@@ -15,8 +15,8 @@
 1. 从 `project-profile.delivery.targets` 读取用户批准的平台集合；逐平台预检版本、场景列表、Build Profile、脚本后端、发行方式、输出目录、签名条件和剩余磁盘空间，不处理未选择平台。
 2. 显式绑定正确的 `unity-mcp` 实例。Windows 与 Android 在能力可用时使用官方 `manage_build`；iOS/iPadOS 生成 Xcode 工程后必须在 macOS、Xcode、有效签名与目标设备条件下导出 IPA。缺少平台工具链时保持该平台 `BLOCKED`。
 3. 每个平台只能生成一个当前候选主制品：Windows 为 EXE，Android 为 APK 或 AAB，iOS/iPadOS 为 IPA。分别计算 SHA-256，冻结与当前版本对应的文件清单，禁止以其他平台结果补位。
-4. 只在 G2 已通过后执行最终“各平台设备档位 × 全部批准场景”矩阵；每个组合检查干净启动、核心循环、输入、窗口或方向/安全区、2D 适配、音频、生命周期、稳定性、退出和关键日志，并绑定所属平台候选制品哈希。
-5. Windows 逐场景运行 `.agents/skills/unity-development-workflow/scripts/capture_windows_runtime.py` 时必须传入 `--g2-result <Artifacts/Quality 下当前 G2 PASS 结果>`；脚本在启动 EXE 前验证项目、源码修订、项目状态和 G2 全检查。Android、iOS 与 iPadOS 的捕获器也必须执行同等前置验证，再从安装后的对应候选 Player 和设备采集。任何捕获成功都不等于视觉批准或设备验收通过。
+4. G2 已通过后可准备最终“各平台设备档位 × 全部批准场景”矩阵，但只有用户明确要求当前设备验收时才执行；严禁由工作流自动启动真机、Standalone 或等价设备。每个已授权组合检查干净启动、核心循环、输入、窗口或方向/安全区、2D 适配、音频、生命周期、稳定性、退出和关键日志，并绑定所属平台候选制品哈希。
+5. 设备捕获通过已审查的 Unity MCP、平台工具或人工测试主机执行，必须先核对当前项目、源码修订、项目状态、候选制品哈希和 G2 `PASS`。任何捕获成功都不等于视觉批准或设备验收通过；缺少明确用户指令或环境时保持 `NOT_RUN`/`BLOCKED`。
 6. 汇总各平台测试、性能、视觉、资源授权、第三方包许可、隐私/数据处理和安全检查，编写发布说明、已知问题、安装/卸载与回滚步骤。
 7. 对各发行渠道所需图标、截图、描述、分级、隐私说明、崩溃收集、联网和账号能力逐项登记；未启用能力标明关闭，不虚构商店审核结论。
 8. 由独立交付代理核对平台集合、证据、版本、哈希、候选包和发行资料一致性；对当前候选集合、已知风险和回滚策略执行 `$unity-game-grilling`。
@@ -36,7 +36,7 @@
 
 ## 机器可读输出
 
-Windows 构建前可编译 `delivery-preflight.yaml` 并由 Toolkit 输出 Windows 专用预检结果；该预检不得用于 Android、iOS 或 iPadOS。每个批准平台分别输出一个 `delivery-manifest`，包含平台、项目、版本、源码修订、构建配置、唯一主制品与哈希、启动检查、带哈希质量报告引用、带哈希实机视觉引用、许可、隐私、说明、已知问题、回滚和授权；Android 示例见 `templates/delivery-manifest-mobile.yaml`。另按 `templates/quality-report-device-acceptance.yaml` 输出唯一最终设备验收报告，精确列出当前全部平台、模块、场景、平台主制品、设备档位与笛卡尔积用例。每个冻结场景必须提供与所属平台构建哈希对应、状态为 `APPROVED` 的 `runtime-visual-evidence`，不得用 Editor 固定机位截图代替。G3 前以 `gate evaluate` 深验平台全集、交付引用链与设备矩阵。
+Windows 构建前可由 Toolkit 输出 Windows 专用预检结果；该预检不得用于 Android、iOS 或 iPadOS。每个批准平台分别输出一个 `delivery-manifest`，包含平台、项目、版本、源码修订、构建配置、唯一主制品与哈希、启动检查、带哈希质量报告引用、设备视觉引用、许可、隐私、说明、已知问题、回滚和授权。实际执行设备验收后，按 `templates/quality-report-device-acceptance.yaml` 输出报告并完整列出平台、模块、场景、制品、设备档位和用例；未获用户要求时不得伪造该报告为通过。
 
 ## 通过条件
 

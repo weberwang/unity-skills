@@ -68,8 +68,8 @@
         "layeredSourceStrategy": {"const": "SEPARATE_FILES_AND_MASKS"}
       }
     },
-    "directionCandidates": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/evidence"}},
-    "selectedDirection": {"$ref": "common.schema.json#/$defs/evidence"},
+    "directionCandidates": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/directionEvidence"}},
+    "selectedDirection": {"$ref": "#/$defs/directionEvidence"},
     "finalVisualReview": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
@@ -85,7 +85,7 @@
       "then": {
         "required": ["candidateSnapshot", "grillingEvidence", "selectedDirection", "finalVisualReview", "approval"],
         "properties": {
-          "directionCandidates": {"minItems": 2},
+          "directionCandidates": {"minItems": 3, "maxItems": 3},
           "approval": {
             "allOf": [
               {"$ref": "common.schema.json#/$defs/approval"},
@@ -105,6 +105,12 @@
     }
   ],
   "$defs": {
-    "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+    "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "directionEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"required": ["subjectId", "subjectVersion", "sourceRevision"]}
+      ]
+    }
   }
 }

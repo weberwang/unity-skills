@@ -36,7 +36,7 @@
 
 ## 机器可读输出
 
-以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、主开发平台空壳构建、独立审查和状态。S00 进入 PASS 前必须校验该契约，并由 `gate evaluate` 深验引用文件及哈希。
+以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、主开发平台空壳构建、独立审查和状态。S00 进入 `PASS` 前由 Codex 核对契约引用与哈希，并通过 Unity MCP/C# Toolkit 回读所有 Unity 事实。
 
 ## 通过条件
 

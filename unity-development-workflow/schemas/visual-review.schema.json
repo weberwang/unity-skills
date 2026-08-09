@@ -4,130 +4,142 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "id", "projectId", "sourceRevision", "projectStateVersion", "subjectType", "subjectId", "subjectVersion",
-    "round", "candidateEvidence", "funnel", "reviews", "consolidatedChanges", "userDecision", "status"
+    "schemaVersion", "id", "projectId", "sourceRevision", "subjectType", "subjectId", "subjectVersion",
+    "candidatePolicy", "candidateEvidence", "funnel", "reviews", "userDecision", "status"
   ],
   "properties": {
-    "schemaVersion": {"const": "2.0"},
+    "schemaVersion": {"const": "3.0"},
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
-    "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
-    "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
-    "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
-    "subjectType": {"enum": ["VISUAL_BASELINE", "GAME_VISUAL", "UI_VISUAL", "IMPLEMENTATION_VISUAL", "RUNTIME_VISUAL"]},
+    "subjectType": {"enum": ["GLOBAL_DIRECTION", "SCENE_SKETCH", "SCENE_HIGH_FIDELITY", "ASSET_MAP", "ASSET_ITEM", "IMPLEMENTATION_VISUAL", "RUNTIME_VISUAL"]},
     "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "subjectVersion": {"type": "string", "minLength": 1},
-    "round": {"type": "integer", "minimum": 1},
-    "previousReview": {"$ref": "common.schema.json#/$defs/evidence"},
+    "candidatePolicy": {"enum": ["GLOBAL_EXACTLY_THREE", "STANDARD"]},
     "candidateEvidence": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
+      "type": "array", "minItems": 1, "uniqueItems": true,
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["candidateId", "type", "path", "sha256", "subjectId", "subjectVersion"],
+        "type": "object", "additionalProperties": false,
+        "required": ["candidateId", "path", "sha256", "subjectId", "subjectVersion", "sourceRevision"],
         "properties": {
           "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
-          "type": {"type": "string", "minLength": 1},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
-          "subjectVersion": {"type": "string", "minLength": 1}
+          "subjectVersion": {"type": "string", "minLength": 1},
+          "sourceRevision": {"type": "string", "minLength": 1},
+          "differenceSummary": {"type": "string", "minLength": 1}
         }
       }
     },
-    "generationEvidence": {
-      "allOf": [
-        {"$ref": "common.schema.json#/$defs/evidence"},
-        {"properties": {"type": {"const": "image-generation"}}, "required": ["type", "subjectId", "subjectVersion"]}
-      ]
-    },
     "funnel": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["policy", "stages"],
+      "type": "object", "additionalProperties": false, "required": ["stages"],
       "properties": {
-        "policy": {"enum": ["STANDARD", "ELEVATED", "CRITICAL"]},
         "stages": {
-          "type": "array",
-          "minItems": 4,
-          "maxItems": 4,
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["stage", "status", "inputCandidateIds", "outputCandidateIds", "decisionSummary", "evidence"],
+          "type": "array", "minItems": 5, "maxItems": 5,
+          "prefixItems": [
+            {"$ref": "#/$defs/f0"}, {"$ref": "#/$defs/f1"}, {"$ref": "#/$defs/f2"}, {"$ref": "#/$defs/f3"}, {"$ref": "#/$defs/f4"}
+          ],
+          "items": false
+        }
+      }
+    },
+    "reviews": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/approval"}},
+    "selectedCandidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "userDecision": {"enum": ["PENDING", "SELECTED", "APPROVED", "CHANGES_REQUESTED", "REJECTED"]},
+    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "status": {"enum": ["DRAFT", "VALIDATING", "REVIEWING", "CONSOLIDATING", "AWAITING_USER", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "BLOCKED"]},
+    "blockedReason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"subjectType": {"const": "GLOBAL_DIRECTION"}}, "required": ["subjectType"]},
+      "then": {
+        "properties": {
+          "candidatePolicy": {"const": "GLOBAL_EXACTLY_THREE"},
+          "candidateEvidence": {"minItems": 3, "maxItems": 3, "items": {"required": ["differenceSummary"]}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"candidatePolicy": {"const": "GLOBAL_EXACTLY_THREE"}}, "required": ["candidatePolicy"]},
+      "then": {
+        "properties": {
+          "subjectType": {"const": "GLOBAL_DIRECTION"},
+          "candidateEvidence": {"minItems": 3, "maxItems": 3},
+          "funnel": {
             "properties": {
-              "stage": {"enum": ["F0_AUTOMATED", "F1_OWNER_SCREEN", "F2_SPECIALIST_REVIEW", "F3_USER_DECISION"]},
-              "status": {"enum": ["PENDING", "PASS", "CHANGES_REQUIRED", "REJECTED", "BLOCKED"]},
-              "inputCandidateIds": {
-                "type": "array", "uniqueItems": true,
-                "items": {"$ref": "common.schema.json#/$defs/taskId"}
-              },
-              "outputCandidateIds": {
-                "type": "array", "uniqueItems": true,
-                "items": {"$ref": "common.schema.json#/$defs/taskId"}
-              },
-              "decisionSummary": {"type": "string", "minLength": 1},
-              "evidence": {
-                "type": "array", "uniqueItems": true,
-                "items": {"$ref": "common.schema.json#/$defs/evidence"}
+              "stages": {
+                "prefixItems": [
+                  {},
+                  {},
+                  {},
+                  {"properties": {"outputCandidateIds": {"minItems": 3, "maxItems": 3}}},
+                  {
+                    "properties": {
+                      "inputCandidateIds": {"minItems": 3, "maxItems": 3},
+                      "outputCandidateIds": {"minItems": 1, "maxItems": 1}
+                    }
+                  }
+                ]
               }
             }
           }
         }
       }
     },
-    "selectedCandidate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "path", "sha256", "visualVersion"],
-      "properties": {
-        "id": {"$ref": "common.schema.json#/$defs/taskId"},
-        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-        "visualVersion": {"type": "string", "minLength": 1}
-      }
-    },
-    "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
-    "consolidatedChanges": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
-    "userDecision": {"enum": ["PENDING", "APPROVED", "CHANGES_REQUESTED", "REJECTED"]},
-    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
-    "returnGate": {"enum": ["P1", "F1", "F2"]},
-    "status": {"enum": ["DRAFT", "SCREENING", "SPECIALIST_REVIEWING", "AWAITING_USER", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "BLOCKED"]},
-    "blockedReason": {"type": "string", "minLength": 1}
-  },
-  "allOf": [
     {
-      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "if": {"properties": {"candidatePolicy": {"const": "STANDARD"}}, "required": ["candidatePolicy"]},
       "then": {
-        "required": ["candidateSnapshot", "grillingEvidence", "selectedCandidate", "userApproval"],
         "properties": {
-          "userDecision": {"const": "APPROVED"},
-          "reviews": {
-            "minItems": 3,
-            "allOf": [
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["authority", "reviewDiscipline"]}}
-            ]
-          },
-          "userApproval": {"properties": {"authority": {"const": "USER"}}, "required": ["authority"]}
+          "funnel": {
+            "properties": {
+              "stages": {
+                "prefixItems": [
+                  {},
+                  {},
+                  {},
+                  {"properties": {"outputCandidateIds": {"maxItems": 1}}},
+                  {
+                    "properties": {
+                      "inputCandidateIds": {"maxItems": 1},
+                      "outputCandidateIds": {"maxItems": 1}
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     },
     {
-      "if": {"properties": {"status": {"const": "CHANGES_REQUIRED"}}, "required": ["status"]},
-      "then": {
-        "required": ["returnGate"],
-        "properties": {"userDecision": {"const": "CHANGES_REQUESTED"}, "consolidatedChanges": {"minItems": 1}}
-      }
+      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
+      "then": {"required": ["selectedCandidateId", "userApproval"], "properties": {"userDecision": {"enum": ["SELECTED", "APPROVED"]}}}
     },
     {
       "if": {"properties": {"status": {"const": "BLOCKED"}}, "required": ["status"]},
       "then": {"required": ["blockedReason"]}
     }
-  ]
+  ],
+  "$defs": {
+    "stage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage", "status", "inputCandidateIds", "outputCandidateIds", "decisionSummary", "evidence"],
+      "properties": {
+        "stage": {"type": "string"},
+        "status": {"enum": ["PENDING", "PASS", "CHANGES_REQUIRED", "REJECTED", "BLOCKED", "NOT_RUN"]},
+        "inputCandidateIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+        "outputCandidateIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+        "decisionSummary": {"type": "string", "minLength": 1},
+        "evidence": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/evidence"}}
+      }
+    },
+    "f0": {"allOf": [{"$ref": "#/$defs/stage"}, {"properties": {"stage": {"const": "F0_ACTUAL_VALIDATION"}}}]},
+    "f1": {"allOf": [{"$ref": "#/$defs/stage"}, {"properties": {"stage": {"const": "F1_ORCHESTRATOR_TRIAGE"}}}]},
+    "f2": {"allOf": [{"$ref": "#/$defs/stage"}, {"properties": {"stage": {"const": "F2_INDEPENDENT_REVIEW"}}}]},
+    "f3": {"allOf": [{"$ref": "#/$defs/stage"}, {"properties": {"stage": {"const": "F3_ORCHESTRATOR_CONSOLIDATION"}}}]},
+    "f4": {"allOf": [{"$ref": "#/$defs/stage"}, {"properties": {"stage": {"const": "F4_USER_DECISION"}}}]}
+  }
 }

@@ -125,7 +125,7 @@ namespace Project.UnityWorkflow.Core.Models
     }
 
     /// <summary>
-    /// 表示 Python 契约编译器生成的通用 Unity JSON Job。
+    /// 表示 Node 文件工具生成的通用 Unity JSON Job。
     /// </summary>
     /// <typeparam name="TPayload">Job 中 payload 的 DTO 类型。</typeparam>
     [Serializable]
@@ -145,10 +145,10 @@ namespace Project.UnityWorkflow.Core.Models
         /// <summary>获取或设置契约类型。</summary>
         public string Kind { get => kind; set => kind = value; }
 
-        /// <summary>获取或设置源 YAML 路径。</summary>
+        /// <summary>获取或设置源 JSON 路径。</summary>
         public string SourcePath { get => sourcePath; set => sourcePath = value; }
 
-        /// <summary>获取或设置源 YAML SHA-256。</summary>
+        /// <summary>获取或设置源 JSON SHA-256。</summary>
         public string SourceSha256 { get => sourceSha256; set => sourceSha256 = value; }
 
         /// <summary>获取或设置规范化 payload SHA-256。</summary>

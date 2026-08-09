@@ -62,7 +62,7 @@ namespace Project.UnityWorkflow.Core.Tests
         }
 
         /// <summary>
-        /// ManifestLoader 应读取 Python 编译器的通用 Job 信封与负载。
+        /// ManifestLoader 应读取 Node 文件工具生成的通用 Job 信封与负载。
         /// </summary>
         [Test]
         public void ManifestLoader_ValidJob_LoadsTypedPayload()

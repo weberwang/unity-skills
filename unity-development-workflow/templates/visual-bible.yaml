@@ -62,5 +62,23 @@ assetRegeneration:
   assetMapOnlyAfterReview: true
   psdWorkflow: FORBIDDEN_DURING_DEVELOPMENT
   layeredSourceStrategy: SEPARATE_FILES_AND_MASKS
-directionCandidates: []
+directionCandidates:
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-a.png
+    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    subjectId: global-direction.a
+    subjectVersion: direction-a-v1
+    sourceRevision: working-tree-snapshot-20260727
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-b.png
+    sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    subjectId: global-direction.b
+    subjectVersion: direction-b-v1
+    sourceRevision: working-tree-snapshot-20260727
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-c.png
+    sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+    subjectId: global-direction.c
+    subjectVersion: direction-c-v1
+    sourceRevision: working-tree-snapshot-20260727
 reviews: []

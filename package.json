@@ -9,6 +9,9 @@
   "engines": {
     "node": ">=22.20.0"
   },
+  "scripts": {
+    "test:workflow": "node --test tests/node/*.test.mjs"
+  },
   "files": [
     "scripts/install-project-skills.mjs",
     "unity-game-build-player-character",

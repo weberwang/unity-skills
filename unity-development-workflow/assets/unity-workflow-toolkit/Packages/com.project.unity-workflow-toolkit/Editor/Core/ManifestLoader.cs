@@ -139,7 +139,7 @@ namespace Project.UnityWorkflow.Core
             }
         }
 
-        /// <summary>按键名递归排序并生成与 Python 编译器一致的无空白 JSON。</summary>
+        /// <summary>按键名递归排序并生成与 Node 文件工具一致的无空白 JSON。</summary>
         private static string Canonicalize(JToken token)
         {
             return SortToken(token).ToString(Formatting.None);
