@@ -23,6 +23,7 @@ EXPECTED_SKILL_NAMES = (
     "unity-game-qa-performance",
     "unity-game-release",
     "unity-game-visual-assets",
+    "unity-game-spine-reskin",
     "unity-gameplay-development",
 )
 PACKAGE_EXCLUDES = ("!**/__pycache__/**", "!**/*.py[cod]")

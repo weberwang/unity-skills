@@ -10,7 +10,7 @@
 
 ## 安装 Skills
 
-需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控、十一个角色与一个 Star Blogger 项目专项 Skill 复制到项目的 `.agents/skills/`：
+需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行一条命令，即可把总控、十二个角色与一个 Star Blogger 项目专项 Skill 复制到项目的 `.agents/skills/`：
 
 ```powershell
 npx -y github:weberwang/unity-skills
@@ -22,7 +22,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器直接复制本次 npx 下载包内的全部十三个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
+安装器直接复制本次 npx 下载包内的全部十四个 Skills，确保安装内容与入口来自同一提交，不依赖本仓库的本地路径。`-y` 仅跳过 npx 的下载执行确认；安装器默认拒绝覆盖项目中已有的同名 Skill。执行前可只读检查远端内容：
 
 ```powershell
 npx -y skills@1.5.19 add weberwang/unity-skills -l --full-depth
@@ -71,6 +71,7 @@ Toolkit 不复制 `unity-mcp`，也不代替官方 `manage_build`。它只提供
 - `$unity-gameplay-development`：玩法、场景、交互与状态实现。
 - `$unity-game-balance`：难度、经济、成长和参数验证。
 - `$unity-game-visual-assets`：全局视觉、低保真结构、高保真效果图、编号资产地图、逐项独立生成、结构化拼装与实机迭代。
+- `$unity-game-spine-reskin`：在 Bone、Slot、Attachment、Mesh、约束和动画保持不变时，为现有 Spine 源工程新增原生 Skin，并完成 Atlas、Unity 运行时切换和验证矩阵验收。
 - `$unity-game-3d-modeling`：通过 Unity MCP、生成式供应商或经批准的 DCC MCP 制作几何、UV、LOD、碰撞和 Prefab。
 - `$unity-game-3d-texturing`：为冻结模型制作与烘焙 PBR 纹理，完成 URP 通道打包、Importer、Material 和场景验证。
 - `$unity-game-audio`：音乐、音效、混音、授权和接入。

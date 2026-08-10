@@ -18,6 +18,7 @@ const SKILL_NAMES = Object.freeze([
   "unity-game-qa-performance",
   "unity-game-release",
   "unity-game-visual-assets",
+  "unity-game-spine-reskin",
   "unity-gameplay-development",
 ]);
 
@@ -81,7 +82,7 @@ function rejectSymbolicLink(path, label) {
 }
 
 /**
- * 校验 npm 包中固定的十三个 Skill 完整存在。
+ * 校验 npm 包中固定的十四个 Skill 完整存在。
  *
  * @returns {Array<{ name: string, source: string }>} 已验证的安装源。
  */

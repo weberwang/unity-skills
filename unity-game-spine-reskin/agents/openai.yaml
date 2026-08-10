@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity Spine 外观换皮"
+  short_description: "在固定骨架与动画前提下完成 Spine 外观换皮和 Unity 验收"
+  default_prompt: "使用 $unity-game-spine-reskin 为现有 Spine 角色规划并执行仅替换外观的换皮任务。"

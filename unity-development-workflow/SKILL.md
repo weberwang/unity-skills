@@ -13,7 +13,7 @@ description: 面向 Unity 6、URP、UI Toolkit 与 Unity MCP 的全周期总控�
 2. 标准或发布通道缺少项目文档时，用 `node scripts/workflow-files.mjs init-docs` 初始化；规则见[项目交付物](references/project-artifacts.md)。
 3. 范围、模块、场景或关键取舍不明确时调用 `$unity-game-grilling`，再读[模块与场景拆分](references/module-planning.md)。
 4. G0-G3 读[质量门禁](references/quality-gates.md)；S00/G1 读[基础工作流](references/foundation-workflow.md)和[游戏实现闭环](references/game-implementation.md)。
-5. 任何视觉任务先读[多级漏斗审核](references/review-funnel.md)和[视觉工作流](references/visual-workflow.md)；逐场景同时读[场景小循环](references/scene-loop.md)。2D、3D、资源和交付再按需读取对应参考。
+5. 任何视觉任务先读[多级漏斗审核](references/review-funnel.md)和[视觉工作流](references/visual-workflow.md)；逐场景同时读[场景小循环](references/scene-loop.md)。2D、3D、资源和交付再按需读取对应参考。现有 Spine 角色在 Skeleton、Slot、Attachment、Mesh、约束、动画和玩法挂点全部固定、仅替换外观时调用 `$unity-game-spine-reskin`；需要改变任一固定项时升级为更高范围角色任务。
 
 不要一次读取全部参考。控制面不维护本地流程状态机或锁文件；Codex 依据当前证据直接编排，并保证同一 Unity 项目正式写入单写者。
 
