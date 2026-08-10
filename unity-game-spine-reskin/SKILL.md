@@ -57,6 +57,18 @@ description: 在固定 Spine Skeleton、Slot、Attachment、Mesh、约束、动�
 4. 对每项核对现有 Attachment 类型、Mesh 顶点/UV/权重和 Linked Mesh。明显轮廓变化、画布/Pivot 不一致、连接区不兼容或网格无法承载时立即 `BLOCKED`，不得修改 Mesh、UV 或权重解决。
 5. 每张源图分别验证透明边缘、完整轮廓、连接区、方向、尺寸、采样、色彩和在关键姿势中的变形，再允许进入 A4。
 
+### A3 分批处理记录
+
+只有完整 A3 资产地图已由 F4 确认后才可拆批。分批只是执行调度，不能替代 A0-A3 任何门禁；所有资产仍必须先完成全量编号、分类、映射和地图确认。
+
+1. 在项目内建立机器可读 JSON 台账：`Artifacts/Spine/<characterId>/batch-ledger.json`。路径必须是项目根内的 POSIX 相对路径，不得使用绝对路径、项目外路径、符号链接段或临时聊天附件；台账和证据写入由一个单写者维护。
+2. 台账根对象至少记录 `ledgerVersion`、`projectId`、`characterId`、`sourceRevision`、`assetMapVersion`、`assetMapSha256`、`visualBibleVersion`、`visualBibleSha256`、完整 `assetIds`、`batches`、追加式 `events` 和 `overallStatus`。`assetIds` 必须与已确认 A3 地图逐项相同。
+3. 每个批次至少记录：`taskId`、`skinId`、`batchId`、从 1 开始且不重复的 `ordinal`、唯一 `assetIds`、`dependsOnBatchIds`、`inputVersion`/`inputSha256`、`outputVersion`/`outputSha256`、`owner`、`singleWriter`、`status`、创建/开工/更新时间、验证/审核/用户决定证据、失败与阻塞原因、`recoveryPoint`、`unityVersion`、`spineEditorVersion`、`spineRuntimeVersion`、`exportFormat`、`supersedes` 和 `supersededBy`。
+4. 每个 A3 `assetId` 必须在且只能在一个当前有效批次中出现；建批时校验集合与 A3 地图完全相等，禁止遗漏、重复、空批次或依赖循环。失败批次仍保留原资产归属，修订时建立新 `batchId` 并记录 supersedes 关系。
+5. 状态只能按 `PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED` 推进；异常进入 `FAILED` 或 `BLOCKED`，不得写 `PASS` 或伪造完成。建批、开工、每次产物生成、审核、Unity 集成和验证完成后立即向 `events` 追加事件，事件记录时间、执行者、状态、输入/输出哈希和证据路径；禁止覆盖旧事件、旧证据或用聊天记录补写历史。
+6. 恢复批次前重新读取并核对当前 A3 地图/Visual Bible 哈希、输入/输出哈希、依赖批次状态、Spine/Unity 导出版本和单写者；任一不匹配即作废并重开受影响批次，记录 `supersedes`/`supersededBy`，不得凭对话记忆续做。
+7. 全部批次达到 `VALIDATED`、整批映射无遗漏且 A4 集成完成后，仍必须做一次整角色全量回归：完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射、Atlas/材质/PMA/Draw Call/纹理内存、全部动画与 Attachment Timeline、默认/新 Skin、多实例隔离、极端姿势、Clipping 和遮挡。只有全量回归实际 `PASS`，才可写整体 `COMPLETE`；任何失败或阻塞都保留台账并回到对应批次。
+
 ### A4 Spine 源工程与 Unity 接入
 
 1. 在原 Spine 源工程新增原生 Skin，复用冻结的 Skeleton、Slot、Attachment 名称/类型、Mesh、权重、约束、动画和 Attachment Timeline；只替换各 Skin 的区域/图片绑定。

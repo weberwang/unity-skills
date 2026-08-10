@@ -49,6 +49,35 @@ test("换皮严格执行 A0-A4 与独立 F4 用户门", () => {
   assert.match(SKILL_TEXT, /禁止裁切、抠取、放大或轻微修饰高保真效果图/);
 });
 
+test("A3 分批必须依赖完整地图并维护追加式 JSON 台账", () => {
+  assert.match(SKILL_TEXT, /只有完整 A3 资产地图已由 F4 确认后才可拆批/);
+  assert.match(SKILL_TEXT, /分批只是执行调度，不能替代 A0-A3 任何门禁/);
+  assert.match(SKILL_TEXT, /Artifacts\/Spine\/<characterId>\/batch-ledger\.json/);
+  for (const field of [
+    "taskId", "skinId", "batchId", "ordinal", "assetIds", "dependsOnBatchIds",
+    "inputVersion", "inputSha256", "outputVersion", "outputSha256", "owner", "singleWriter",
+    "status", "assetMapVersion", "assetMapSha256", "sourceRevision", "recoveryPoint",
+    "unityVersion", "spineEditorVersion", "spineRuntimeVersion", "exportFormat",
+  ]) assert.ok(SKILL_TEXT.includes("`" + field + "`"), "台账缺少字段：" + field);
+  assert.match(SKILL_TEXT, /且只能在一个当前有效批次中出现/);
+  assert.match(SKILL_TEXT, /禁止遗漏、重复、空批次或依赖循环/);
+  assert.match(SKILL_TEXT, /PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED/);
+  assert.match(SKILL_TEXT, /FAILED` 或 `BLOCKED`/);
+  assert.match(SKILL_TEXT, /追加式 `events`/);
+  assert.match(SKILL_TEXT, /禁止覆盖旧事件、旧证据或用聊天记录补写历史/);
+  assert.match(SKILL_TEXT, /重新读取并核对当前 A3 地图\/Visual Bible 哈希、输入\/输出哈希、依赖批次状态/);
+  assert.match(SKILL_TEXT, /`supersedes`\/`supersededBy`/);
+});
+
+test("批次全部完成后仍需整角色全量回归", () => {
+  assert.match(SKILL_TEXT, /全部批次达到 `VALIDATED`、整批映射无遗漏且 A4 集成完成后/);
+  assert.match(SKILL_TEXT, /完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射/);
+  for (const token of ["Atlas/材质/PMA/Draw Call/纹理内存", "全部动画与 Attachment Timeline", "默认/新 Skin、多实例隔离", "极端姿势、Clipping 和遮挡"]) {
+    assert.ok(SKILL_TEXT.includes(token), "全量回归缺少：" + token);
+  }
+  assert.match(SKILL_TEXT, /只有全量回归实际 `PASS`，才可写整体 `COMPLETE`/);
+});
+
 test("源工程、导出、运行时与验证边界不可绕过", () => {
   assert.match(SKILL_TEXT, /没有可写[\s\S]*源工程时立即 `BLOCKED`/);
   assert.match(SKILL_TEXT, /禁止直接篡改导出 JSON、Binary 或 Atlas/);
