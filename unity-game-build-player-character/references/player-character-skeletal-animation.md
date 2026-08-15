@@ -62,7 +62,7 @@
 运行：
 
 ```powershell
-uv run scripts/validate_player_character_animation.py --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
+node scripts/validate_player_character_animation.mjs --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
 ```
 
 脚本只证明结构、时间、约束和证据链一致，不会自动宣布动作自然或视觉正确。

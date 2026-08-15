@@ -72,6 +72,7 @@
         "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
       }
     },
+    "splitPlanApproval": {"$ref": "common.schema.json#/$defs/splitPlanApproval"},
     "output": {
       "type": "object",
       "additionalProperties": false,
@@ -135,6 +136,15 @@
     "approvals": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/approval"}}
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {"enum": ["GENERATING", "REVIEWING", "APPROVED", "IMPORTED", "VALIDATED"]}
+        },
+        "required": ["status"]
+      },
+      "then": {"required": ["splitPlanEvidence", "splitPlanApproval"]}
+    },
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {

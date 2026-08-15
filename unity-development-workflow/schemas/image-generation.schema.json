@@ -47,6 +47,7 @@
         "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
       }
     },
+    "splitPlanApproval": {"$ref": "common.schema.json#/$defs/splitPlanApproval"},
     "referencePolicy": {
       "type": "object",
       "additionalProperties": false,
@@ -133,7 +134,7 @@
     {
       "if": {"properties": {"generationMode": {"const": "RUNTIME_ASSET_ITEM"}}, "required": ["generationMode"]},
       "then": {
-        "required": ["splitPlanEvidence"],
+        "required": ["splitPlanEvidence", "splitPlanApproval"],
         "properties": {"visualType": {"const": "ASSET_SOURCE"}}
       }
     },

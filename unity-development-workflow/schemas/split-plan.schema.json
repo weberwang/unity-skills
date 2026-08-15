@@ -73,7 +73,7 @@
     "annotatedPreview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256", "sourcePath", "sourceSha256", "sourceVersion", "width", "height"],
+      "required": ["type", "path", "sha256", "sourcePath", "sourceSha256", "sourceVersion", "width", "height", "annotations"],
       "properties": {
         "type": {"const": "annotated-split-preview"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
@@ -82,7 +82,8 @@
         "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "sourceVersion": {"type": "string", "minLength": 1},
         "width": {"type": "integer", "minimum": 1},
-        "height": {"type": "integer", "minimum": 1}
+        "height": {"type": "integer", "minimum": 1},
+        "annotations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/splitPlanAnnotation"}}
       }
     },
     "coverageDeclaration": {
@@ -128,7 +129,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "resourceId", "itemVersion", "itemSpecSha256", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "bounds", "delivery", "action"],
+        "required": ["id", "resourceId", "itemVersion", "itemSpecSha256", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "targetPath", "stateVariants", "bounds", "delivery", "action"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -140,6 +141,14 @@
           "generationBrief": {"type": "string", "minLength": 1},
           "splitRationale": {"type": "string", "minLength": 1},
           "targetPrefabNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+          "targetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+          "stateVariants": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {
+              "type": "object", "additionalProperties": false, "required": ["id", "description"],
+              "properties": {"id": {"$ref": "common.schema.json#/$defs/taskId"}, "description": {"type": "string", "minLength": 1}}
+            }
+          },
           "bounds": {
             "type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"],
             "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}, "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}
@@ -153,14 +162,16 @@
           "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
           "border": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "integer", "minimum": 0}},
           "delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE", "NOT_APPLICABLE"]},
-          "action": {"enum": ["REUSE", "GENERATE", "REDRAW", "PROGRAMMATIC", "MODEL_3D", "MATERIAL", "VFX", "CODE", "BLOCKED"]},
+          "action": {"$ref": "common.schema.json#/$defs/productionRoute"},
           "existingAssetId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "reuseReason": {"type": "string", "minLength": 1},
+          "reuseResourcePlan": {"$ref": "reuse-resource-plan.schema.json#/$defs/reuseResourcePlan"},
           "notes": {"type": "string"}
         },
         "allOf": [
           {
             "if": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}, "required": ["delivery"]},
-            "then": {"not": {"anyOf": [{"required": ["targetSize"]}, {"required": ["alphaRequired"]}, {"required": ["pivot"]}, {"required": ["pixelsPerUnit"]}]}},
+            "then": {"not": {"anyOf": [{"required": ["targetSize"]}, {"required": ["alphaRequired"]}, {"required": ["pivot"]}, {"required": ["pixelsPerUnit"]}, {"required": ["border"]}]}},
             "else": {"required": ["targetSize", "alphaRequired", "pivot", "pixelsPerUnit"]}
           },
           {
@@ -173,7 +184,8 @@
           },
           {
             "if": {"properties": {"action": {"const": "REUSE"}}, "required": ["action"]},
-            "then": {"required": ["existingAssetId"]}
+            "then": {"required": ["existingAssetId", "reuseReason", "reuseResourcePlan"]},
+            "else": {"not": {"required": ["reuseResourcePlan"]}}
           },
           {
             "if": {"properties": {"action": {"const": "BLOCKED"}}, "required": ["action"]},
@@ -183,7 +195,7 @@
       }
     },
     "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
-    "userApproval": {"$ref": "common.schema.json#/$defs/approval"},
+    "userApproval": {"$ref": "common.schema.json#/$defs/splitPlanApproval"},
     "status": {"enum": ["DRAFT", "REVIEWING", "APPROVED", "CHANGES_REQUIRED", "BLOCKED"]},
     "blockedReason": {"type": "string", "minLength": 1}
   },

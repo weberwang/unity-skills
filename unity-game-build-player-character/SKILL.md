@@ -113,7 +113,7 @@ description: Star Blogger 的 P3-002 玩家人物 Unity 2D 独立 PNG 视觉还�
 在提交完整候选前运行：
 
 ```powershell
-uv run scripts/audit_player_character.py --workspace . --baseline Artifacts/Visual/P4/g1-v0.6/p3-002/v5/project-baselines/p3-002-player-character-project-baseline.yaml --layers Artifacts/Visual/P4/g1-v0.6/p3-002/v5/layers --reviews Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/layers --report Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/player-character-audit.json
+node scripts/audit_player_character.mjs --workspace . --baseline Artifacts/Visual/P4/g1-v0.6/p3-002/v5/project-baselines/p3-002-player-character-project-baseline.yaml --layers Artifacts/Visual/P4/g1-v0.6/p3-002/v5/layers --reviews Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/layers --report Artifacts/Visual/P4/g1-v0.6/p3-002/v5/reviews/player-character-audit.json
 ```
 
 脚本检查项目基线未漂移、目标绑定、17 张 PNG、逐项记录、哈希和必需证据是否齐备。它最多只能输出 `PLAYER_CHARACTER_EVIDENCE_TECHNICAL_PASS_VISUAL_REVIEW_REQUIRED`，不得把脚本成功解释成视觉通过。
@@ -154,7 +154,7 @@ Unity 只证明接入结果时使用 `PLAYER_CHARACTER_UNITY_TECHNICAL_PASS_VISU
 运行系统规格验证：
 
 ```powershell
-uv run scripts/validate_player_character_skeletal_system.py --source Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
+node scripts/validate_player_character_skeletal_system.mjs --source Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
 ```
 
 ### 9. 制作骨骼动画
@@ -172,7 +172,7 @@ uv run scripts/validate_player_character_skeletal_system.py --source Artifacts/A
 运行规格验证：
 
 ```powershell
-uv run scripts/validate_player_character_animation.py --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
+node scripts/validate_player_character_animation.mjs --source Artifacts/Animation/P3-002/Victory/victory-v1/animation-spec.yaml
 ```
 
 ### 10. 交接

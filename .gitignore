@@ -1,12 +1,7 @@
-# Python 虚拟环境、缓存与测试产物
+# 本地虚拟环境、缓存与测试产物
 .venv/
 venv/
 __pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
 .coverage
 coverage.xml
 htmlcov/

@@ -10,6 +10,7 @@
     "node": ">=22.20.0"
   },
   "scripts": {
+    "test": "npm run test:workflow",
     "test:workflow": "node --test tests/node/*.test.mjs"
   },
   "files": [
@@ -27,13 +28,16 @@
     "unity-game-release",
     "unity-game-visual-assets",
     "unity-game-spine-reskin",
-    "unity-gameplay-development",
-    "!**/__pycache__/**",
-    "!**/*.py[cod]"
+    "unity-gameplay-development"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/weberwang/unity-skills.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.9.0"
+  }
 }

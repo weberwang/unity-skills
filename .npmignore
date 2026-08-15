@@ -1,12 +1,7 @@
-# 防止本地验证生成的 Python 缓存进入 npx 安装包。
-**/__pycache__/**
-**/*.py[cod]
-*$py.class
-
 # 测试与本地工具状态不属于 Skill 运行时。
-.pytest_cache/
 .venv/
 venv/
+**/__pycache__/**
 .coverage
 coverage.xml
 htmlcov/

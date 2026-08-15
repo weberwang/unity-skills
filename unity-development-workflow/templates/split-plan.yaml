@@ -71,9 +71,31 @@ annotatedPreview:
   sourceVersion: game-v1
   width: 1920
   height: 1080
+  annotations:
+    - elementIndex: 1
+      itemId: asset.arena-intro.background
+      coordinateSpace: EFFECT_IMAGE_PIXELS
+      bounds: {x: 0, y: 0, width: 1920, height: 1080}
+      label: "[01][GENERATE] 竞技场背景"
+      productionRoute: GENERATE
+      brief: 框选整张竞技场开场背景，作为独立不透明背景资源
+    - elementIndex: 2
+      itemId: asset.arena-intro.logo
+      coordinateSpace: EFFECT_IMAGE_PIXELS
+      bounds: {x: 80, y: 80, width: 256, height: 128}
+      label: "[02][REUSE] 竞技场徽标"
+      productionRoute: REUSE
+      brief: 框选已登记竞技场徽标，复用现有资源文件而不取效果图像素
+    - elementIndex: 3
+      itemId: asset.arena-intro.grid-overlay
+      coordinateSpace: EFFECT_IMAGE_PIXELS
+      bounds: {x: 128, y: 128, width: 1664, height: 824}
+      label: "[03][PROGRAMMATIC] 网格叠加"
+      productionRoute: PROGRAMMATIC
+      brief: 框选网格叠加区域，交由 Unity 图元或 Shader/代码实现
 coverageDeclaration:
   allRequiredVisualElementsMapped: true
-  declaredItemCount: 1
+  declaredItemCount: 3
   excludedElements: []
 splitQuestions:
   - id: split-question.background-independence
@@ -92,6 +114,10 @@ items:
     splitRationale: 背景需独立缩放和替换，且不参与角色透明排序
     targetPrefabNodeIds:
       - node.arena-background
+    targetPath: Assets/Art/Runtime/Scenes/ArenaIntro/arena-background.png
+    stateVariants:
+      - id: default
+        description: 默认竞技场开场状态
     bounds:
       x: 0
       y: 0
@@ -112,5 +138,77 @@ items:
       - 0
     delivery: SINGLE_SPRITE
     action: GENERATE
+  - id: asset.arena-intro.logo
+    resourceId: asset.arena-logo
+    itemVersion: arena-logo-spec-v1
+    itemSpecSha256: "1212121212121212121212121212121212121212121212121212121212121212"
+    elementIndex: 2
+    assetType: arena-logo-sprite
+    purpose: 竞技场标题徽标
+    generationBrief: 不生成图片，使用已登记且风格兼容的竞技场徽标资源
+    splitRationale: 徽标已有可复用登记资源，避免重复生产和像素漂移
+    targetPrefabNodeIds:
+      - node.arena-logo
+    targetPath: Assets/Art/Runtime/Scenes/ArenaIntro/arena-logo.png
+    stateVariants:
+      - id: default
+        description: 默认竞技场徽标状态
+    bounds: {x: 80, y: 80, width: 256, height: 128}
+    targetSize: {width: 512, height: 256}
+    alphaRequired: true
+    pivot: {x: 0.5, y: 0.5}
+    pixelsPerUnit: 100
+    border: [0, 0, 0, 0]
+    delivery: SINGLE_SPRITE
+    action: REUSE
+    existingAssetId: asset.arena-logo-registered
+    reuseReason: 已登记资源与当前 Visual Bible 风格兼容且已有 Unity 验证
+    reuseResourcePlan:
+      existingAssetId: asset.arena-logo-registered
+      reuseReason: 已登记资源与当前 Visual Bible 风格兼容且已有 Unity 验证
+      reuseMode: REGISTERED_ASSET
+      effectImagePixelReuse: FORBIDDEN
+      sourcePath: Assets/Art/Library/Arena/ArenaLogo.png
+      sourceSha256: "2323232323232323232323232323232323232323232323232323232323232323"
+      unityGuid: 0123456789abcdef0123456789abcdef
+      assetRegisterEvidence:
+        recordId: asset-register.arena-logo-v1
+        path: Artifacts/AssetRegister/arena-logo-v1.yaml
+        sha256: "3434343434343434343434343434343434343434343434343434343434343434"
+      licenseEvidence:
+        rightsStatus: APPROVED
+        path: Artifacts/Licenses/arena-logo-v1.yaml
+        sha256: "4545454545454545454545454545454545454545454545454545454545454545"
+      visualBibleStyleReview:
+        subjectId: starfall-arena
+        subjectVersion: visual-v1
+        decision: COMPATIBLE
+        path: Artifacts/Visual/Reviews/arena-logo-style-v1.yaml
+        sha256: "5656565656565656565656565656565656565656565656565656565656565656"
+      importerEvidence:
+        path: Artifacts/Imports/arena-logo-v1.yaml
+        sha256: "6767676767676767676767676767676767676767676767676767676767676767"
+      unityValidationEvidence:
+        status: PASS
+        path: Artifacts/UnityValidation/arena-logo-v1.yaml
+        sha256: "7878787878787878787878787878787878787878787878787878787878787878"
+  - id: asset.arena-intro.grid-overlay
+    resourceId: asset.arena-grid-overlay
+    itemVersion: arena-grid-overlay-spec-v1
+    itemSpecSha256: "8989898989898989898989898989898989898989898989898989898989898989"
+    elementIndex: 3
+    assetType: grid-overlay
+    purpose: 竞技场网格叠加
+    generationBrief: 不创建图片，由 Unity 图元、Shader 或代码实时绘制网格
+    splitRationale: 网格需随相机和状态变化，程序实现可避免位图放大和额外贴图
+    targetPrefabNodeIds:
+      - node.arena-grid-overlay
+    targetPath: Assets/Scripts/Presentation/ArenaGridOverlay.cs
+    stateVariants:
+      - id: default
+        description: 默认网格叠加状态
+    bounds: {x: 128, y: 128, width: 1664, height: 824}
+    delivery: NOT_APPLICABLE
+    action: PROGRAMMATIC
 reviews: []
 status: REVIEWING

@@ -44,7 +44,7 @@
 输出符合 `player-character-2d-skeletal-system.schema.json` 的 YAML/JSON，建议路径为 `Artifacts/Animation/P3-002/Rig/<version>/skeletal-system.yaml`。记录生产路线、骨架、排序、蒙皮、IK、动画控制、朝向、玩法事件、物理、附件、性能和证据绑定。运行：
 
 ```powershell
-uv run scripts/validate_player_character_skeletal_system.py --source Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
+node scripts/validate_player_character_skeletal_system.mjs --source Artifacts/Animation/P3-002/Rig/player-rig-v1/skeletal-system.yaml
 ```
 
 让每个 AnimationClip 规格通过 `skeletalSystemVersion` 和 `skeletalSystemEvidence` 绑定该系统版本。脚本只证明结构和可计算约束，不替代视觉、手感或性能人工判断。

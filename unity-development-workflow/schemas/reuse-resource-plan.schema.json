@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/reuse-resource-plan.schema.json",
+  "title": "Unity 已登记资源复用计划",
+  "$defs": {
+    "projectRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,95}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "reuseResourcePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "existingAssetId", "reuseReason", "reuseMode", "effectImagePixelReuse",
+        "sourcePath", "sourceSha256", "unityGuid", "assetRegisterEvidence",
+        "licenseEvidence", "visualBibleStyleReview", "importerEvidence", "unityValidationEvidence"
+      ],
+      "properties": {
+        "existingAssetId": {"$ref": "#/$defs/taskId"},
+        "reuseReason": {"type": "string", "minLength": 1},
+        "reuseMode": {"enum": ["REGISTERED_ASSET", "APPROVED_LIBRARY_ASSET", "EXISTING_RUNTIME_ASSET"]},
+        "effectImagePixelReuse": {"const": "FORBIDDEN"},
+        "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
+        "sourceSha256": {"$ref": "#/$defs/sha256"},
+        "unityGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+        "assetRegisterEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "recordId"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "recordId": {"$ref": "#/$defs/taskId"}
+          }
+        },
+        "licenseEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "rightsStatus"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "rightsStatus": {"const": "APPROVED"}
+          }
+        },
+        "visualBibleStyleReview": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "subjectId", "subjectVersion", "decision"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "subjectId": {"$ref": "#/$defs/taskId"},
+            "subjectVersion": {"type": "string", "minLength": 1},
+            "decision": {"const": "COMPATIBLE"}
+          }
+        },
+        "importerEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "unityValidationEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "status"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "status": {"const": "PASS"}
+          }
+        }
+      }
+    }
+  }
+}
