@@ -2,11 +2,11 @@
 
 ## 何时读取
 
-初始化标准/发布通道文档，进入新角色阶段，或汇合质量门并整理控制面时读取。
+初始化阶段文档、进入新领域任务，或整理 Work Item 投影视图时读取。
 
 ## 输入
 
-- 项目根目录、工作通道、当前质量门和已启用角色。
+- 项目根目录、当前 Work Item、阶段、质量门和已启用角色。
 - 已存在的 `docs/` 文档、机器契约与证据目录。
 - 用户批准的范围、视觉、指标、渠道和豁免。
 
@@ -14,8 +14,8 @@
 
 1. 新项目默认只创建 `project-profile.yaml`、`GDD.md`、`TDD.md` 和 `control-plane.md`。
 2. 对应角色实际开工时才创建可选文档：`balance.md`、`asset-register.yaml`、`audio-plan.md`、`qa-plan.md`、`distribution-matrix.md`，以及发布阶段的 `release-checklist.md`、`privacy-review.md`、`third-party-notices.md`。
-3. GDD 保存玩家体验、范围和验收；TDD 保存模块、生命周期、数据、构建和验证设计；控制面只保存当前门禁、待决策、阻断、有效变更和交接索引。
-4. 详细规则、资源登记、测试矩阵和证据留在所属交付物，不复制到控制面。
+3. GDD 保存玩家体验、范围和验收；TDD 保存模块、生命周期、数据、构建和验证设计；`control-plane.md` 只是 `.workflow-control/` 当前状态的可读投影，不是状态权威。
+4. Work Item、Implementation Package、证据、审批和 Change Request 保存在 `.workflow-control/`；详细规则、资源登记和测试矩阵留在所属交付物。
 5. 质量门汇合后，删除已写入基线且不再影响后续工作的控制面条目；保留当前门、未决项、阻断项和有效结论链接。
 6. 任何覆盖操作必须获得用户明确授权；初始化脚本默认拒绝覆盖。
 
@@ -33,7 +33,7 @@
 
 ## 机器可读输出
 
-核心交付物位于 `docs/`；可复现日志、截图、Profiler 数据、质量报告和构建清单位于项目配置指定的制品目录。
+核心领域交付物位于 `docs/`，机器控制记录位于 `.workflow-control/`；可再生成日志、截图、Profiler 数据和构建产物位于项目配置指定的制品目录。
 
 ## 通过条件
 

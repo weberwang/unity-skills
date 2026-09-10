@@ -1,51 +1,31 @@
-schemaVersion: "3.0"
-id: review.scene-arena-intro.high-fidelity-v1
-projectId: starfall-arena
-sourceRevision: working-tree-snapshot-20260810
-projectStateVersion: project-state-v1
-subjectType: SCENE_HIGH_FIDELITY
-subjectId: scene.arena-intro.high-fidelity
-subjectVersion: high-fidelity-v1
-candidatePolicy: STANDARD
-candidateEvidence:
-  - candidateId: candidate.scene-arena-intro.high-fidelity-1
-    path: Artifacts/Visual/scene.arena-intro/high-fidelity-v1.png
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    subjectId: scene.arena-intro.high-fidelity
-    subjectVersion: high-fidelity-v1
-    sourceRevision: working-tree-snapshot-20260810
-funnel:
-  stages:
-    - stage: F0_ACTUAL_VALIDATION
-      status: PENDING
-      inputCandidateIds: [candidate.scene-arena-intro.high-fidelity-1]
-      outputCandidateIds: []
-      decisionSummary: 等待对真实文件执行预检
-      evidence: []
-    - stage: F1_ORCHESTRATOR_TRIAGE
-      status: NOT_RUN
-      inputCandidateIds: []
-      outputCandidateIds: []
-      decisionSummary: 等待总控分诊
-      evidence: []
-    - stage: F2_INDEPENDENT_REVIEW
-      status: NOT_RUN
-      inputCandidateIds: []
-      outputCandidateIds: []
-      decisionSummary: 等待非作者专业审核
-      evidence: []
-    - stage: F3_ORCHESTRATOR_CONSOLIDATION
-      status: NOT_RUN
-      inputCandidateIds: []
-      outputCandidateIds: []
-      decisionSummary: 等待总控形成送审包
-      evidence: []
-    - stage: F4_USER_DECISION
-      status: NOT_RUN
-      inputCandidateIds: []
-      outputCandidateIds: []
-      decisionSummary: 等待用户确认精确版本
-      evidence: []
-reviews: []
-userDecision: PENDING
-status: VALIDATING
+schemaVersion: "1.0"
+reviewId: visual-review.scene-main.v1
+subject:
+  type: SCENE_TARGET
+  subjectId: scene.main
+  subjectVersion: v1
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  sourceRevision: working-tree-snapshot
+baselineHash: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+authorId: visual-author
+reviewers:
+  - reviewerId: independent-visual-reviewer
+    role: VISUAL
+    independent: true
+    status: PASS
+    findings: []
+  - reviewerId: independent-unity-reviewer
+    role: UNITY_IMPLEMENTATION
+    independent: true
+    status: PASS
+    findings: []
+checks:
+  visualConsistency: PASS
+  unityFeasibility: PASS
+  readability: PASS
+  runtimeEvidence: NOT_APPLICABLE
+userDecision:
+  required: false
+  status: NOT_REQUIRED
+verdict: PASS
+recordedAtUtc: 2026-09-10T00:00:00Z

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 游戏全局工作流控制"
+  short_description: "以状态、风险、路径和证据门禁控制 Unity 游戏全流程"
+  default_prompt: "使用 $unity-game-workflow-control 建立 Unity Work Item，冻结实施包并按精确门禁推进、验证和交接。"

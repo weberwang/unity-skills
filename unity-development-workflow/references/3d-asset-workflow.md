@@ -1,28 +1,10 @@
-# 3D 资产工作流
+# Unity 3D 资源工作流
 
-## 何时读取
+3D 模型、UV、PBR、LOD、Collider、Rig、动画前置和 Prefab 仍嵌入 V0-V4。
 
-场景涉及 Blockout、Mesh、拓扑、UV、PBR 贴图、URP 材质、LOD、Collider、Rig、动画前置、模型 Prefab 或 DCC 时读取；仍嵌入统一 A0-A4 主链。
+1. **V0/V1 规格与 Blockout**：冻结世界尺寸、轴向、Pivot、轮廓、观看距离、交互边界、拓扑/UV/材质槽/LOD/Collider/动画预算，并提交目标机位下可查看的 Blockout。
+2. **V2 生产边界**：冻结几何、贴图、材质、Rig 和 VFX 的责任划分、资源 ID、目标节点、工具/DCC/供应商、许可、源文件和验证矩阵。外部上传、付费或 DCC 任意代码执行需要精确批准。
+3. **V3 逐项生产与组合**：模型角色负责几何、拓扑、法线、UV、LOD 和 Collider；贴图角色负责烘焙、PBR 通道、Texel Density、压缩、MipMap 和 URP 材质。候选分别经 F2 独立领域审查和 Unity 导入验证后组成 Prefab。
+4. **V4 场景接入**：单写者接入 Mesh、材质、LOD、Collider、Rig/Animator、Prefab、Addressables 和 Scene，清理 Blockout/占位与残留引用，并在目标灯光、相机、动画、物理和性能条件下运行 EditMode/PlayMode 验证。
 
-## 执行
-
-1. **A1 3D 草图/灰盒**：提交实际可查看的 Blockout/低模草图和结构说明，覆盖稳定节点、比例、模块拼接、相机距离、Pivot、碰撞草模、交互边界和资源槽；F4 确认精确版本。
-2. **A2 高保真外观**：基于冻结 Visual Bible 和已确认 A1 生成高保真；F0 实际验证、F1 总控分诊、F2 非作者专业审核、F3 总控可收敛唯一推荐，F4 确认当前精确版本。
-3. **A3 跨类型资产地图**：只分析已确认 A2 原图，完整编号并分类为独立位图/复用/文本/Unity 图元/UXML USS 矢量/材质 VFX/3D。3D 项进一步记录世界尺寸、轴向、Pivot、轮廓、遮挡补全、拓扑/UV、贴图、LOD、Collider、材质槽、预算、交付形式和 A1 节点；F4 确认地图。
-4. **逐项生产几何**：先发现真实 Unity MCP/ProBuilder/DCC 能力。规则 Mesh、硬表面或模块化对象可用已验证能力制作；高精雕刻、复杂有机重拓扑、精细绑定或能力不足时输出 DCC 移交包，不以灰盒冒充成品。
-5. **逐项生产贴图/材质**：拓扑和 UV 责任边界冻结后，制作 UV0/UV2、PBR 贴图集、通道打包、Texel Density、分辨率、压缩、MipMap、URP Shader、材质槽和变体。禁止从 A2 高保真图裁取贴图或成品像素。
-6. 每个 A3 项分别经过制作、自检、非作者 QA/视觉/性能审核、Unity 导入和隔离 Prefab/目标灯光/相机/动画/物理验证；全部项当前有效后才能进入 A4。
-7. **A4 结构化还原**：由单写者按 A1 层级和 A3 槽位串行接入 Mesh、贴图、材质、LOD、Collider、Prefab、地址和 Scene。不得用高保真渲染、标注图或合成图替代 3D 结构。
-8. 删除全部 Blockout、灰盒组件、占位 Mesh/Sprite/Material 和临时低保真对象，清理序列化、Prefab、Scene、地址和登记残留引用；用 Unity MCP/Toolkit 验证轮廓、接缝、法线/切线、Bounds、LOD、Collider、材质、纹理、Draw Call、内存和 Console。
-
-## 并行与工具边界
-
-几何、拓扑和 UV 冻结前不得制作正式贴图。同一 DCC 工程、模型源、贴图集、材质、Prefab 或依赖场景只有一个写入者；DCC 完整导出后再由 Unity 单写者导入。外部供应商、付费、上传参考和未审查脚本必须另行取得用户授权。
-
-## 失效
-
-A0 变化使受影响 A1-A4 失效；A1 变化使 A2-A4 失效；A2 变化使 A3-A4 失效；A3 变化使受影响几何/贴图/材质和 A4 失效。拓扑、UV、材质槽、LOD、Collider、GUID/地址或导入设置变化会清除相关验证和装配证据。
-
-## 通过条件
-
-A1-A4 严格有序；全部 A3 项在 Unity 中为当前版本 `VALIDATED`；A4 结构化接入与清理验证实际通过；运行时不存在 Blockout、灰盒、占位、合成图替身或残留引用；来源、授权、DCC recipe、GUID/地址和非作者审核链完整。
+不得用高保真渲染、标注图或合成图替代真实 3D 结构。源模型、拓扑、UV、材质槽、骨骼、GUID、地址或 Importer 变化，只失效其实际依赖的 V3/V4 证据。

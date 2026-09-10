@@ -1,7 +1,7 @@
 {
   "name": "unity-skills",
   "version": "1.0.0",
-  "description": "Unity 6 游戏协作 Skills 的项目级安装器",
+  "description": "Unity 6 阶段化工作流控制与领域协作 Skills 安装器",
   "type": "module",
   "bin": {
     "unity-skills": "./scripts/install-project-skills.mjs"
@@ -15,6 +15,7 @@
   },
   "files": [
     "scripts/install-project-skills.mjs",
+    "unity-game-workflow-control",
     "unity-game-build-player-character",
     "unity-development-workflow",
     "unity-game-grilling",

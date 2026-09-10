@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-game-workflow-control/schemas/work-item.schema.json",
+  "title": "Unity Work Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workItemId", "projectId", "stageId", "globalState", "baselineHash", "objective", "allowedPaths", "revision"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "workItemId": {"type": "string", "minLength": 1},
+    "projectId": {"type": "string", "minLength": 1},
+    "moduleIds": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "domain": {"type": "string", "minLength": 1},
+    "stageId": {"enum": ["requirements-scope", "global-baseline", "foundation-engineering", "scene-production", "global-integration-validation", "release"]},
+    "globalState": {"enum": ["INTAKE", "BASELINE", "PROPOSAL", "REVIEW", "IMPLEMENTING", "VALIDATING", "PASSED", "INTEGRATING", "RELEASE_APPROVAL_REQUIRED", "RELEASING", "COMPLETE", "BLOCKED", "RETURN"]},
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage"],
+      "properties": {
+        "sceneId": {"type": "string", "minLength": 1},
+        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "PASS", "FAIL", "NOT_RUN"]}
+      }
+    },
+    "baselineId": {"type": "string", "minLength": 1},
+    "baselineVersion": {"type": "string", "minLength": 1},
+    "baselineHash": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0},
+    "objective": {"type": "string", "minLength": 1},
+    "userOriginalText": {"type": "string", "minLength": 1},
+    "inScope": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "outOfScope": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "approvedRequirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "allowedActions": {"type": "array", "items": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"}},
+    "allowedActionLevels": {"type": "array", "items": {"enum": ["A0", "A1", "A2", "A3"]}, "uniqueItems": true},
+    "explicitApprovalActionLevels": {"type": "array", "items": {"enum": ["A4", "A5", "A6"]}, "uniqueItems": true},
+    "prohibitedActions": {"type": "array", "items": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"}},
+    "allowedPaths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "forbiddenPaths": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "allowedExternalTargets": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "protectedExternalTargets": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "requiredGates": {"type": "array", "items": {"enum": ["F0", "F1", "F2", "F3", "F4"]}, "uniqueItems": true},
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "F0": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "F1": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "F2": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "F3": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "F4": {"enum": ["PASS", "FAIL", "NOT_RUN"]}
+      }
+    },
+    "assignedAgent": {"type": "string", "minLength": 1},
+    "delegatedAgents": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "expectedOutputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "validationPlan": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "exitCriteria": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "nextGate": {"enum": ["F0", "F1", "F2", "F3", "F4"]},
+    "evidenceRoot": {"type": "string", "minLength": 1},
+    "implementationPackage": {"type": "string", "minLength": 1},
+    "implementationPackagePath": {"type": "string", "minLength": 1},
+    "evidenceManifest": {"type": "string", "minLength": 1},
+    "evidenceManifestPath": {"type": "string", "minLength": 1},
+    "actionLevel": {"enum": ["A0", "A1", "A2", "A3", "A4", "A5", "A6"]},
+    "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
+    "sideEffects": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "userDecisionRequired": {"type": "boolean"},
+    "decisionId": {"type": "string", "minLength": 1},
+    "editorWriter": {"type": "string", "minLength": 1},
+    "pendingApproval": {"$ref": "#/$defs/pendingApproval"},
+    "approval": {"$ref": "#/$defs/approval"},
+    "returnRecord": {"$ref": "#/$defs/returnRecord"},
+    "metadata": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}}
+  },
+  "$defs": {
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approvalId", "workItemId", "baselineHash", "stageId", "actionType", "actionLevel", "gate", "object", "impact", "target", "approvedAt", "approvedBy"],
+      "properties": {
+        "approvalId": {"type": "string", "minLength": 1},
+        "workItemId": {"type": "string", "minLength": 1},
+        "baselineHash": {"type": "string", "minLength": 1},
+        "stageId": {"type": "string", "minLength": 1},
+        "actionLevel": {"enum": ["A4", "A5", "A6"]},
+        "gate": {"const": "F4"},
+        "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
+        "object": {"type": "string", "minLength": 1},
+        "impact": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "target": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "approvedAt": {"type": "string", "minLength": 1},
+        "approvedBy": {"type": "string", "minLength": 1}
+      }
+    },
+    "pendingApproval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approvalId", "workItemId", "baselineHash", "stageId", "actionType", "actionLevel", "gate", "object", "impact", "target"],
+      "properties": {
+        "approvalId": {"type": "string", "minLength": 1},
+        "workItemId": {"type": "string", "minLength": 1},
+        "baselineHash": {"type": "string", "minLength": 1},
+        "stageId": {"type": "string", "minLength": 1},
+        "actionLevel": {"enum": ["A4", "A5", "A6"]},
+        "gate": {"const": "F4"},
+        "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
+        "object": {"type": "string", "minLength": 1},
+        "impact": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "target": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "returnRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "reason", "affectedScope", "fromState", "toState", "recordedAt"],
+      "properties": {
+        "classification": {"enum": ["upstream-fact-invalidated", "scope-changed", "hard-gate-would-be-bypassed"]},
+        "reason": {"type": "string", "minLength": 1},
+        "affectedScope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "fromState": {"type": "string", "minLength": 1},
+        "toState": {"const": "RETURN"},
+        "recordedAt": {"type": "string", "minLength": 1},
+        "resolvedAt": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
