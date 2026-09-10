@@ -20,11 +20,10 @@ Smoothness 必须由 `1 - Roughness` 计算，保留未打包的灰度主通道�
 - 检查射线遗漏、Cage 穿透、偏斜、接缝、法线方向和 Mip 边缘；Skinned Mesh 额外验证权重、BlendShape 与顶点顺序未变。
 - BaseColor 不烘焙固定光照；风格化例外必须在 Visual Bible 中批准。
 
-## MCP 能力边界
+## @Unity 与 DCC 能力边界
 
-- Unity MCP `manage_texture`：简单程序纹理和导入设置。
-- Unity MCP `manage_material`：创建、读取、修改材质和设置属性。
-- Unity MCP `asset_gen` 工具组的 `generate_image`：视觉候选，不承担 UV、烘焙或物理正确性保证。
+- [@Unity](plugin://unity@openai-curated-remote) 项目 Pipeline 命令：处理已发现并获准的简单程序纹理、Importer、Material 和 Renderer 接入；命令名与参数以 `unity list` 为准。
+- 已批准的外部生成式供应商：只生成视觉候选，不承担 UV、烘焙或物理正确性保证。
 - 本地 DCC MCP：UV 检查、Cage、高低模烘焙、绘制与精确通道处理。若缺少对应能力，任务为 `BLOCKED`。
 
 DCC 能力发现至少逐项记录连接标识、活动源文件、允许的输出根，以及 `inspect_mesh`、`inspect_uv`/`unwrap_uv`、`configure_cage`、`bake_maps`、`process_channels`、`export_textures` 的真实等价工具、参数 Schema、版本和只读/写入属性。名称可以因实现不同而变化，但不得用笼统的“可执行脚本”代替逐项能力证据。
@@ -42,4 +41,4 @@ DCC 能力发现至少逐项记录连接标识、活动源文件、允许的输�
 
 ## 交接与失败
 
-每个纹理版本绑定模型和 UV SHA-256，记录 DCC/Unity/MCP 版本、提示词、烘焙参数、主通道、打包语义、Importer、Material GUID、来源与许可。发现模型或 UV 变化后立即使旧烘焙和贴图证据失效并退回重做。缺少 Visual Bible、模型/UV 哈希、DCC 能力证据、UV 报告、通道定义、Unity 证据或许可时，逐项记录阻断原因，不得通过。
+每个纹理版本绑定模型和 UV SHA-256，记录 DCC、Unity Editor、Unity CLI、Pipeline 与 Toolkit 版本、提示词、烘焙参数、主通道、打包语义、Importer、Material GUID、来源与许可。发现模型或 UV 变化后立即使旧烘焙和贴图证据失效并退回重做。缺少 Visual Bible、模型/UV 哈希、DCC 能力证据、UV 报告、通道定义、Unity 证据或许可时，逐项记录阻断原因，不得通过。

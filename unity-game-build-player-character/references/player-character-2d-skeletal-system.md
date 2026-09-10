@@ -35,7 +35,7 @@
 
 ## 所需锁与 Unity 权限
 
-- 审计现有资产时只使用只读权限；修改前绑定唯一 Unity MCP 实例。
+- 审计现有资产时只使用只读权限；修改前用 `unity status` 确认唯一项目目标，并为 `unity command` 显式传递项目路径。
 - 写入前取得 PlayerCharacter Prefab、Sprite Skin、骨架、Animator Controller、AnimationClip、2D IK、Sorting Group、碰撞体、SpriteLibrary、SpriteAtlas 和 AssetDatabase 独占锁。
 - Editor 编译、导入、域重载、PlayMode 或 Prefab Stage 脏状态时禁止写入；验证前优先复用现有 Unity 进程，不启动重复实例。
 

@@ -44,7 +44,7 @@
 ## 所需锁与 Unity 权限
 
 - 读取 Rig、轴校准、Sprite Skin、网格、权重、Animator 和现有 Clip 时只使用只读权限。
-- 摆姿势、修改网格或权重、生成 Clip、写 Animator 前，显式绑定唯一 Unity MCP 实例并取得 PlayerCharacter Prefab、Sprite Library、Sprite Skin、AnimationClip、Animator 与 AssetDatabase 独占锁。
+- 摆姿势、修改网格或权重、生成 Clip、写 Animator 前，用 `unity status` 确认唯一项目目标，为 `unity command` 显式传递项目路径，并取得 PlayerCharacter Prefab、Sprite Library、Sprite Skin、AnimationClip、Animator 与 AssetDatabase 独占锁。
 - 构建期间禁止其他写入者修改 Rig、骨骼层级、轴校准、Sprite GUID、网格或权重；Editor 编译、导入、域重载、PlayMode 或 Prefab Stage 脏状态时禁止写入。
 
 ## 机器可读输出

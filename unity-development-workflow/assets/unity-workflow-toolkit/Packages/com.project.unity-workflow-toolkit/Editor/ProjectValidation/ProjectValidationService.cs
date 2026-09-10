@@ -130,7 +130,7 @@ namespace Project.UnityWorkflow.ProjectValidation
             AddCheck(report, "console-errors", "console", consoleStatus,
                 snapshot.ConsoleCountAvailable
                     ? $"Console Error 当前 {snapshot.ConsoleErrorCount}，允许基线 {snapshot.ConsoleErrorBaseline}。"
-                    : "当前 Unity 版本无法读取 Console Error 数量，必须由 unity-mcp 提供增量错误证据。" );
+                    : "当前 Unity 版本无法读取 Console Error 数量，必须由工作流 Pipeline 命令提供增量错误证据。" );
 
             report.Status = DetermineOverallStatus(report.Checks);
             return report;

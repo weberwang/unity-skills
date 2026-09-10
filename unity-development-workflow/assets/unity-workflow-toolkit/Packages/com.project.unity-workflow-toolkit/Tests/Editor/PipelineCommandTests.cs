@@ -4,8 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using MCPForUnity.Editor.Helpers;
-using MCPForUnity.Editor.Tools;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -13,55 +11,56 @@ using Project.UnityWorkflow.BuildPipeline;
 using Project.UnityWorkflow.Core;
 using Project.UnityWorkflow.Core.Models;
 using Project.UnityWorkflow.ImagePipeline;
-using Project.UnityWorkflow.McpTools;
+using Project.UnityWorkflow.PipelineCommands;
 using Project.UnityWorkflow.VisualQA;
+using Unity.Pipeline.Commands;
 
 namespace Project.UnityWorkflow.Tests
 {
     /// <summary>
-    /// 验证 Toolkit 自定义工具的 v10 API 形状、入口保护和业务服务转发。
+    /// 验证 Unity Pipeline 命令的 API 形状、入口保护和四项业务服务转发。
     /// </summary>
-    public sealed class McpToolTests
+    public sealed class PipelineCommandTests
     {
-        private static readonly Type[] ToolTypes =
+        private static readonly Type[] CommandTypes =
         {
-            typeof(ValidateProjectTool),
-            typeof(ImportImageTool),
-            typeof(CaptureVisualTool),
-            typeof(DeliveryPreflightTool)
+            typeof(ValidateProjectCommand),
+            typeof(ImportImageCommand),
+            typeof(CaptureVisualCommand),
+            typeof(DeliveryPreflightCommand)
         };
 
         /// <summary>
-        /// 确认四个工具使用不重复的显式名称并满足 CommandRegistry 的精确处理器签名。
+        /// 确认四个命令使用稳定名称、主线程执行、字符串 Job 参数和统一结果类型。
         /// </summary>
         [Test]
-        public void ToolDefinitions_UseUniqueNamesAndExactHandlerSignature()
+        public void CommandDefinitions_UseStableNamesAndExactHandlerSignature()
         {
-            string[] names = ToolTypes.Select(type =>
+            string[] names = CommandTypes.Select(type =>
             {
-                McpForUnityToolAttribute attribute = type.GetCustomAttribute<McpForUnityToolAttribute>();
-                Assert.That(attribute, Is.Not.Null, type.Name + " 缺少 McpForUnityTool 特性。");
-                Assert.That(attribute.AutoRegister, Is.True, type.Name + " 必须默认注册。");
-                Assert.That(attribute.Group, Is.EqualTo("core"));
-
                 MethodInfo handler = type.GetMethod(
-                    "HandleCommand",
+                    "Execute",
                     BindingFlags.Public | BindingFlags.Static,
                     null,
-                    new[] { typeof(JObject) },
+                    new[] { typeof(string) },
                     null);
-                Assert.That(handler, Is.Not.Null, type.Name + " 缺少精确的 HandleCommand(JObject)。");
-                Assert.That(handler.ReturnType, Is.EqualTo(typeof(object)));
+                Assert.That(handler, Is.Not.Null, type.Name + " 缺少 Execute(string)。");
+                Assert.That(handler.ReturnType, Is.EqualTo(typeof(PipelineCommandResult)));
 
-                Type parametersType = type.GetNestedType("Parameters", BindingFlags.Public);
-                Assert.That(parametersType, Is.Not.Null, type.Name + " 缺少公开的 Parameters 元数据类型。");
-                PropertyInfo jobPathProperty = parametersType.GetProperty("job_path");
-                Assert.That(jobPathProperty, Is.Not.Null, type.Name + " 缺少 job_path 属性。");
-                Assert.That(
-                    jobPathProperty.GetCustomAttribute<ToolParameterAttribute>(),
-                    Is.Not.Null,
-                    type.Name + " 的 job_path 缺少 ToolParameter 特性。");
-                return attribute.Name;
+                CliCommandAttribute commandAttribute = handler.GetCustomAttribute<CliCommandAttribute>();
+                Assert.That(commandAttribute, Is.Not.Null, type.Name + " 缺少 CliCommand 特性。");
+
+                PropertyInfo mainThreadProperty = typeof(CliCommandAttribute).GetProperty("MainThreadRequired");
+                Assert.That(mainThreadProperty, Is.Not.Null, "CliCommand 缺少 MainThreadRequired 属性。");
+                Assert.That(mainThreadProperty.GetValue(commandAttribute), Is.EqualTo(true));
+
+                ParameterInfo jobPath = handler.GetParameters()[0];
+                Assert.That(jobPath.Name, Is.EqualTo("jobPath"));
+                Assert.That(jobPath.GetCustomAttribute<CliArgAttribute>(), Is.Not.Null);
+                return (string)handler.GetCustomAttributesData()
+                    .Single(attribute => attribute.AttributeType == typeof(CliCommandAttribute))
+                    .ConstructorArguments[0]
+                    .Value;
             }).ToArray();
 
             Assert.That(names, Is.EquivalentTo(new[]
@@ -74,76 +73,62 @@ namespace Project.UnityWorkflow.Tests
             Assert.That(names.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(names.Length));
         }
 
-        /// <summary>
-        /// 确认全部工具在缺少 `job_path` 时返回 ErrorResponse，而不是抛出异常。
-        /// </summary>
+        /// <summary>确认四个命令在缺少 Job 路径时返回失败信封而不是抛出异常。</summary>
         [Test]
-        public void HandleCommand_WithoutJobPath_ReturnsErrorResponse()
+        public void Execute_WithoutJobPath_ReturnsFailureResult()
         {
-            object[] responses =
+            PipelineCommandResult[] results =
             {
-                ValidateProjectTool.HandleCommand(new JObject()),
-                ImportImageTool.HandleCommand(new JObject()),
-                CaptureVisualTool.HandleCommand(new JObject()),
-                DeliveryPreflightTool.HandleCommand(new JObject())
+                ValidateProjectCommand.Execute(null),
+                ImportImageCommand.Execute(string.Empty),
+                CaptureVisualCommand.Execute("   "),
+                DeliveryPreflightCommand.Execute(null)
             };
 
-            Assert.That(responses.All(response => response is ErrorResponse), Is.True);
+            Assert.That(results.All(result => result != null && !result.Success), Is.True);
+            Assert.That(results.All(result => result.Data == null), Is.True);
         }
 
-        /// <summary>
-        /// 确认缺失 Job 的底层绝对路径不会进入可共享的 MCP 错误。
-        /// </summary>
+        /// <summary>确认缺失 Job 的底层绝对路径不会进入可共享的错误消息。</summary>
         [Test]
-        public void HandleCommand_MissingJob_DoesNotLeakProjectRoot()
+        public void Execute_MissingJob_DoesNotLeakProjectRoot()
         {
-            string relativePath = "Library/UwtMcpToolTests/missing-" + Guid.NewGuid().ToString("N") + ".json";
-            object response = ValidateProjectTool.HandleCommand(new JObject
-            {
-                ["job_path"] = relativePath
-            });
+            string relativePath = "Library/UwtPipelineCommandTests/missing-" + Guid.NewGuid().ToString("N") + ".json";
+            PipelineCommandResult result = ValidateProjectCommand.Execute(relativePath);
 
-            Assert.That(response, Is.TypeOf<ErrorResponse>());
-            ErrorResponse error = (ErrorResponse)response;
-            Assert.That(error.Error, Does.Not.Contain(WorkflowPaths.ProjectRoot));
-            Assert.That(error.Error, Does.Not.Contain(relativePath));
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Does.Not.Contain(WorkflowPaths.ProjectRoot));
+            Assert.That(result.Message, Does.Not.Contain(relativePath));
         }
 
-        /// <summary>
-        /// 确认父目录跳转和绝对路径都无法绕过项目边界。
-        /// </summary>
+        /// <summary>确认父目录跳转和绝对路径无法绕过项目边界。</summary>
         /// <param name="jobPath">应被拒绝的不安全路径。</param>
         [TestCase("../outside.json")]
         [TestCase("C:\\sensitive\\job.json")]
-        public void HandleCommand_WithUnsafePath_ReturnsErrorResponse(string jobPath)
+        public void Execute_WithUnsafePath_ReturnsFailureResult(string jobPath)
         {
-            object response = ValidateProjectTool.HandleCommand(new JObject
-            {
-                ["job_path"] = jobPath
-            });
+            PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
 
-            Assert.That(response, Is.TypeOf<ErrorResponse>());
-            Assert.That(((ErrorResponse)response).Error, Does.Not.Contain(jobPath));
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Message, Does.Not.Contain(jobPath));
         }
 
-        /// <summary>
-        /// 确认每个工具都拒绝不属于自身契约类型的编译 Job。
-        /// </summary>
+        /// <summary>确认每个命令都拒绝不属于自身契约类型的编译 Job。</summary>
         [Test]
-        public void HandleCommand_WithWrongKind_ReturnsErrorResponseForEveryTool()
+        public void Execute_WithWrongKind_ReturnsFailureForEveryCommand()
         {
             string jobPath = WriteJob("unexpected-kind", new JObject());
             try
             {
-                object[] responses =
+                PipelineCommandResult[] results =
                 {
-                    ValidateProjectTool.HandleCommand(JobParameters(jobPath)),
-                    ImportImageTool.HandleCommand(JobParameters(jobPath)),
-                    CaptureVisualTool.HandleCommand(JobParameters(jobPath)),
-                    DeliveryPreflightTool.HandleCommand(JobParameters(jobPath))
+                    ValidateProjectCommand.Execute(jobPath),
+                    ImportImageCommand.Execute(jobPath),
+                    CaptureVisualCommand.Execute(jobPath),
+                    DeliveryPreflightCommand.Execute(jobPath)
                 };
 
-                Assert.That(responses.All(response => response is ErrorResponse), Is.True);
+                Assert.That(results.All(result => !result.Success), Is.True);
             }
             finally
             {
@@ -151,11 +136,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// MCP 工具必须拒绝 payload 被修改但 payloadSha256 未更新的 Job。
-        /// </summary>
+        /// <summary>确认命令拒绝 payload 被修改但 payloadSha256 未更新的 Job。</summary>
         [Test]
-        public void HandleCommand_WithTamperedPayload_ReturnsErrorResponse()
+        public void Execute_WithTamperedPayload_ReturnsFailureResult()
         {
             string jobPath = WriteJob("project-profile", new JObject
             {
@@ -169,9 +152,9 @@ namespace Project.UnityWorkflow.Tests
                 job["payload"]["projectId"] = "after-tamper";
                 File.WriteAllText(absolutePath, job.ToString());
 
-                object response = ValidateProjectTool.HandleCommand(JobParameters(jobPath));
+                PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
 
-                Assert.That(response, Is.TypeOf<ErrorResponse>());
+                Assert.That(result.Success, Is.False);
             }
             finally
             {
@@ -179,11 +162,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// MCP 工具必须拒绝源契约被修改而 sourceSha256 未更新的 Job。
-        /// </summary>
+        /// <summary>确认命令拒绝源契约被修改而 sourceSha256 未更新的 Job。</summary>
         [Test]
-        public void HandleCommand_WithModifiedSource_ReturnsErrorResponse()
+        public void Execute_WithModifiedSource_ReturnsFailureResult()
         {
             string jobPath = WriteJob("project-profile", new JObject
             {
@@ -195,9 +176,9 @@ namespace Project.UnityWorkflow.Tests
                 string sourcePath = Path.ChangeExtension(jobPath, ".source.yaml").Replace('\\', '/');
                 File.AppendAllText(WorkflowPaths.ResolveProjectRelative(sourcePath), "# tampered\n");
 
-                object response = ValidateProjectTool.HandleCommand(JobParameters(jobPath));
+                PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
 
-                Assert.That(response, Is.TypeOf<ErrorResponse>());
+                Assert.That(result.Success, Is.False);
             }
             finally
             {
@@ -205,16 +186,14 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 确认合法 project-profile Job 会调用项目校验服务并返回质量报告。
-        /// </summary>
+        /// <summary>确认合法 project-profile Job 会调用项目校验服务并保持业务状态。</summary>
         [Test]
-        public void ValidateProjectTool_WithValidJob_ReturnsQualityReport()
+        public void ValidateProjectCommand_WithValidJob_ReturnsQualityReport()
         {
             string jobPath = WriteJob("project-profile", new JObject
             {
                 ["schemaVersion"] = "1.0",
-                ["projectId"] = "mcp-tool-test",
+                ["projectId"] = "pipeline-command-test",
                 ["unity"] = new JObject
                 {
                     ["version"] = "6",
@@ -229,9 +208,9 @@ namespace Project.UnityWorkflow.Tests
 
             try
             {
-                object response = ValidateProjectTool.HandleCommand(JobParameters(jobPath));
-                QualityReportDto report = GetResponseData<QualityReportDto>(response);
-                Assert.That(response is SuccessResponse, Is.EqualTo(report.Status == "PASS"));
+                PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
+                QualityReportDto report = GetData<QualityReportDto>(result);
+                Assert.That(result.Success, Is.EqualTo(string.Equals(report.Status, "PASS", StringComparison.Ordinal)));
             }
             finally
             {
@@ -239,11 +218,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 确认合法 image-task Job 会调用图片导入服务并返回结构化导入结果。
-        /// </summary>
+        /// <summary>确认合法 image-task Job 会调用图片导入服务并保留业务失败状态。</summary>
         [Test]
-        public void ImportImageTool_WithValidJob_ReturnsImageImportResult()
+        public void ImportImageCommand_WithValidJob_ReturnsImageImportResult()
         {
             string taskId = "image-test-" + Guid.NewGuid().ToString("N");
             string jobPath = WriteJob("image-task", new JObject
@@ -279,9 +256,9 @@ namespace Project.UnityWorkflow.Tests
 
             try
             {
-                object response = ImportImageTool.HandleCommand(JobParameters(jobPath));
-                Assert.That(response, Is.TypeOf<ErrorResponse>());
-                ImageImportResult result = GetResponseData<ImageImportResult>(response);
+                PipelineCommandResult result = ImportImageCommand.Execute(jobPath);
+                ImageImportResult importResult = GetData<ImageImportResult>(result);
+                Assert.That(result.Success, Is.EqualTo(importResult.Success));
                 Assert.That(result.Success, Is.False);
             }
             finally
@@ -291,11 +268,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 确认合法 visual-capture Job 会调用截图服务并返回结构化业务结果。
-        /// </summary>
+        /// <summary>确认合法 visual-capture Job 会调用截图服务并返回业务失败。</summary>
         [Test]
-        public void CaptureVisualTool_WithValidJob_ReturnsCaptureResult()
+        public void CaptureVisualCommand_WithValidJob_ReturnsCaptureResult()
         {
             string jobPath = WriteJob("visual-capture", new JObject
             {
@@ -310,10 +285,11 @@ namespace Project.UnityWorkflow.Tests
 
             try
             {
-                object response = CaptureVisualTool.HandleCommand(JobParameters(jobPath));
-                Assert.That(response, Is.TypeOf<ErrorResponse>());
-                VisualCaptureResult result = GetResponseData<VisualCaptureResult>(response);
-                Assert.That(result.ErrorCode, Is.EqualTo("INVALID_RESOLUTION"));
+                PipelineCommandResult result = CaptureVisualCommand.Execute(jobPath);
+                VisualCaptureResult captureResult = GetData<VisualCaptureResult>(result);
+                Assert.That(result.Success, Is.EqualTo(string.Equals(captureResult.Status, "PASS", StringComparison.Ordinal)));
+                Assert.That(result.Success, Is.False);
+                Assert.That(captureResult.ErrorCode, Is.EqualTo("INVALID_RESOLUTION"));
             }
             finally
             {
@@ -321,11 +297,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 确认合法 delivery-preflight Job 会调用交付服务并返回预检结果。
-        /// </summary>
+        /// <summary>确认合法 delivery-preflight Job 会调用交付服务并返回业务失败。</summary>
         [Test]
-        public void DeliveryPreflightTool_WithValidJob_ReturnsPreflightResult()
+        public void DeliveryPreflightCommand_WithValidJob_ReturnsPreflightResult()
         {
             string jobPath = WriteJob("delivery-preflight", new JObject
             {
@@ -343,10 +317,10 @@ namespace Project.UnityWorkflow.Tests
 
             try
             {
-                object response = DeliveryPreflightTool.HandleCommand(JobParameters(jobPath));
-                Assert.That(response, Is.TypeOf<ErrorResponse>());
-                DeliveryPreflightResult result = GetResponseData<DeliveryPreflightResult>(response);
-                Assert.That(result.Status, Is.EqualTo("FAIL"));
+                PipelineCommandResult result = DeliveryPreflightCommand.Execute(jobPath);
+                DeliveryPreflightResult preflight = GetData<DeliveryPreflightResult>(result);
+                Assert.That(result.Success, Is.EqualTo(string.Equals(preflight.Status, "PASS", StringComparison.Ordinal)));
+                Assert.That(result.Success, Is.False);
             }
             finally
             {
@@ -354,12 +328,13 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 写入一个包含通用信封的临时编译 Job，并返回项目相对路径。
-        /// </summary>
+        /// <summary>写入一个包含通用信封的临时编译 Job，并返回项目相对路径。</summary>
+        /// <param name="kind">Job 契约类型。</param>
+        /// <param name="payload">Job 负载对象。</param>
+        /// <returns>项目相对 Job 路径。</returns>
         private static string WriteJob(string kind, JObject payload)
         {
-            string relativePath = "Library/UwtMcpToolTests/" + Guid.NewGuid().ToString("N") + ".json";
+            string relativePath = "Library/UwtPipelineCommandTests/" + Guid.NewGuid().ToString("N") + ".json";
             string absolutePath = WorkflowPaths.ResolveProjectRelative(relativePath);
             Directory.CreateDirectory(Path.GetDirectoryName(absolutePath));
             string sourcePath = Path.ChangeExtension(relativePath, ".source.yaml").Replace('\\', '/');
@@ -379,38 +354,19 @@ namespace Project.UnityWorkflow.Tests
             return relativePath;
         }
 
-        /// <summary>
-        /// 构造仅包含 `job_path` 的 MCP 参数。
-        /// </summary>
-        private static JObject JobParameters(string jobPath)
-        {
-            return new JObject
-            {
-                ["job_path"] = jobPath
-            };
-        }
-
-        /// <summary>
-        /// 从成功或业务失败响应中读取结构化数据，并确认类型与预期一致。
-        /// </summary>
+        /// <summary>从统一结果信封中读取并验证结构化业务数据。</summary>
         /// <typeparam name="T">预期业务结果类型。</typeparam>
-        /// <param name="response">MCP 工具返回值。</param>
+        /// <param name="result">命令返回的结果信封。</param>
         /// <returns>已验证类型的业务结果。</returns>
-        private static T GetResponseData<T>(object response) where T : class
+        private static T GetData<T>(PipelineCommandResult result) where T : class
         {
-            object data = response switch
-            {
-                SuccessResponse success => success.Data,
-                ErrorResponse error => error.Data,
-                _ => null
-            };
-            Assert.That(data, Is.TypeOf<T>());
-            return (T)data;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Data, Is.TypeOf<T>());
+            return (T)result.Data;
         }
 
-        /// <summary>
-        /// 删除测试创建的临时 Job，不影响其他测试证据。
-        /// </summary>
+        /// <summary>删除测试创建的临时 Job，不影响其他测试证据。</summary>
+        /// <param name="jobPath">项目相对 Job 路径。</param>
         private static void DeleteJob(string jobPath)
         {
             DeleteProjectFile(Path.ChangeExtension(jobPath, ".source.yaml").Replace('\\', '/'));
@@ -418,12 +374,16 @@ namespace Project.UnityWorkflow.Tests
         }
 
         /// <summary>按序数递归排序对象属性并生成无空白 JSON。</summary>
+        /// <param name="token">待规范化的 JSON 节点。</param>
+        /// <returns>规范化后的 JSON 文本。</returns>
         private static string Canonicalize(JToken token)
         {
             return SortToken(token).ToString(Formatting.None);
         }
 
         /// <summary>复制 JSON，同时保持数组顺序并排序所有对象键。</summary>
+        /// <param name="token">待排序的 JSON 节点。</param>
+        /// <returns>排序后的 JSON 节点。</returns>
         private static JToken SortToken(JToken token)
         {
             if (token is JObject sourceObject)
@@ -454,6 +414,8 @@ namespace Project.UnityWorkflow.Tests
         }
 
         /// <summary>计算小写十六进制 SHA-256。</summary>
+        /// <param name="bytes">待计算的字节序列。</param>
+        /// <returns>小写 SHA-256 文本。</returns>
         private static string ComputeSha256(byte[] bytes)
         {
             using (SHA256 algorithm = SHA256.Create())
@@ -462,9 +424,8 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>
-        /// 删除指定项目相对路径的测试文件，不递归删除目录。
-        /// </summary>
+        /// <summary>删除指定项目相对路径的测试文件，不递归删除目录。</summary>
+        /// <param name="projectRelativePath">待删除的项目相对路径。</param>
         private static void DeleteProjectFile(string projectRelativePath)
         {
             string absolutePath = WorkflowPaths.ResolveProjectRelative(projectRelativePath);

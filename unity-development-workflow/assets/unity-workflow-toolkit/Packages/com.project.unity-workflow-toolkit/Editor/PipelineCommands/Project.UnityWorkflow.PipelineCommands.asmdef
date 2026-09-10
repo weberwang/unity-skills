@@ -1,8 +1,8 @@
 {
-  "name": "Project.UnityWorkflow.McpTools",
-  "rootNamespace": "Project.UnityWorkflow.McpTools",
+  "name": "Project.UnityWorkflow.PipelineCommands",
+  "rootNamespace": "Project.UnityWorkflow.PipelineCommands",
   "references": [
-    "MCPForUnity.Editor",
+    "Unity.Pipeline",
     "Project.UnityWorkflow.Core",
     "Project.UnityWorkflow.ImagePipeline",
     "Project.UnityWorkflow.ProjectValidation",
@@ -14,19 +14,17 @@
   ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "Newtonsoft.Json.dll"
-  ],
+  "overrideReferences": false,
+  "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [
-    "UWT_UNITY_MCP"
+    "UWT_UNITY_PIPELINE"
   ],
   "versionDefines": [
     {
-      "name": "com.coplaydev.unity-mcp",
-      "expression": "[10.0.0,11.0.0)",
-      "define": "UWT_UNITY_MCP"
+      "name": "com.unity.pipeline",
+      "expression": "[0.6.0-exp.1,0.7.0)",
+      "define": "UWT_UNITY_PIPELINE"
     }
   ],
   "noEngineReferences": false

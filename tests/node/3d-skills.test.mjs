@@ -61,3 +61,17 @@ test("3D Skill 限制高风险 MCP 写入", () => {
     assert.match(text, /同时只允许一个写代理/);
   }
 });
+
+test("3D Unity 写入使用 @Unity，DCC MCP 仅保留专用边界", () => {
+  const text = [
+    readText(resolve(MODELING_DIR, "SKILL.md")),
+    readText(resolve(MODELING_DIR, "references/mcp-modeling-workflow.md")),
+    readText(resolve(TEXTURING_DIR, "SKILL.md")),
+    readText(resolve(TEXTURING_DIR, "references/pbr-texture-workflow.md")),
+  ].join("\n");
+  assert.match(text, /@Unity/);
+  assert.match(text, /unity status/);
+  assert.match(text, /unity list/);
+  assert.match(text, /本地 DCC MCP/);
+  assert.doesNotMatch(text, /CoplayDev|unity-mcp|mcpforunity:\/\/|manage_texture|manage_material|asset_gen|import_model_file/i);
+});

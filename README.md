@@ -1,6 +1,6 @@
 # Unity 游戏协作 Skills
 
-面向 Unity 6、URP、UI Toolkit 与 [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp) 的阶段化开发工作流。`$unity-game-workflow-control` 是唯一全局控制面，`$unity-development-workflow` 负责 Unity 领域编排，其余 Skills 负责制作、架构、玩法、视觉、3D、音频、数值、QA 和发布。
+面向 Unity 6、URP、UI Toolkit 与 [@Unity](plugin://unity@openai-curated-remote) 插件的阶段化开发工作流。`$unity-game-workflow-control` 是唯一全局控制面，`$unity-development-workflow` 负责 Unity 领域编排，其余 Skills 负责制作、架构、玩法、视觉、3D、音频、数值、QA 和发布。
 
 ## 流程模型
 
@@ -71,15 +71,16 @@ node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs r
 node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs init-docs --project-root D:\Projects\my-game --project-id my-game
 ```
 
-## Unity MCP 与 Toolkit
+## @Unity 与 Toolkit
 
-在 Unity 6 Package Manager 中添加已审查版本的 CoplayDev/unity-mcp，再把 Toolkit 复制到项目：
+启用 [@Unity](plugin://unity@openai-curated-remote) 插件，并用其 Unity CLI 为目标项目安装 Pipeline 包，再复制 Toolkit：
 
 ```powershell
+unity pipeline install --project-path D:\Projects\my-game
 Copy-Item -Recurse .\.agents\skills\unity-development-workflow\assets\unity-workflow-toolkit\Packages\com.project.unity-workflow-toolkit .\Packages\com.project.unity-workflow-toolkit
 ```
 
-Toolkit 提供项目验证、批准图片导入、固定机位取证和交付预检。它不复制 unity-mcp，不代替 AssetDatabase、官方构建、EditMode/PlayMode、设备或发布验证。外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
+先用 `unity status --format json` 确认目标 Editor，再用 `unity list --project-path <项目路径> --format json` 发现命令。Toolkit 通过 `com.unity.pipeline` 暴露项目验证、批准图片导入、固定机位取证和交付预检命令，由 `unity command <命令> --project-path <项目路径>` 调用。正式测试和构建分别使用 `unity test`、`unity build`；命令返回成功不能代替 AssetDatabase 回读、Console、EditMode/PlayMode、设备或发布证据。外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
 
 ## 角色
 

@@ -80,7 +80,7 @@ namespace Project.UnityWorkflow.BuildPipeline
     }
 
     /// <summary>
-    /// 在调用 unity-mcp 正式构建前验证交付条件，不产生构建制品。
+    /// 在调用官方构建链前验证交付条件，不产生构建制品。
     /// </summary>
     public sealed class DeliveryPreflightService
     {

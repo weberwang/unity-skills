@@ -1,15 +1,15 @@
-# 基于 MCP 的建模工作流
+# 3D 建模工具工作流
 
 ## 能力选择
 
 | 路径 | 适用范围 | 必要检查 |
 | --- | --- | --- |
-| Unity MCP `probuilder` | 灰盒、模块件、低模、碰撞原型 | 工具组已启用；结果仍需保存、导入与运行验证 |
-| Unity MCP `asset_gen.generate_model` | 文本或图片驱动的候选模型 | 供应商、成本、上传、许可、格式和纹理选项已获批准 |
-| Unity MCP `import_model_file` | 本地 FBX、OBJ、GLB、glTF | 输入在批准目录；glTF/GLB 项目已具备 glTFast |
+| @Unity + ProBuilder Pipeline 命令 | 灰盒、模块件、低模、碰撞原型 | `unity list` 已发现命令；结果仍需保存、导入与运行验证 |
+| 已批准生成式供应商 | 文本或图片驱动的候选模型 | 供应商、成本、上传、许可、格式和纹理选项已获批准 |
+| @Unity + AssetDatabase/Pipeline 导入命令 | 本地 FBX、OBJ、GLB、glTF | 输入在批准目录；glTF/GLB 项目已具备 glTFast |
 | 本地 DCC MCP | 精确拓扑、UV、重拓扑、LOD 与复杂修改 | 连接、活动源文件、能力、写入范围和脚本已批准 |
 
-[`generate_model`](https://coplaydev.github.io/unity-mcp/reference/tools/asset_gen/generate_model) 是异步任务：保存 job ID，用 `status` 轮询，用 `cancel` 取消。不要用长时间阻塞等待代替状态检查。开始前调用 `list_providers`，不要假定 Tripo、Meshy 或其他供应商已配置。本地模型导入遵循 [`import_model_file`](https://coplaydev.github.io/unity-mcp/reference/tools/asset_gen/import_model_file) 的格式和项目范围限制。文档只是能力基线；每次必须以当前绑定实例实际发现的工具及参数 Schema 为准，缺失或不匹配时 `BLOCKED`。
+通过 `unity status --format json` 选择项目，通过 `unity list --project-path <项目路径> --format json` 发现命令，再用 `unity command <命令> --project-path <项目路径>` 执行。命令目录是事实来源，不假定 ProBuilder、导入或供应商命令存在。生成式供应商任务必须保存任务 ID，按供应商协议查询或取消；不要用长时间阻塞等待代替状态检查。缺失命令、格式支持或参数不匹配时保持 `BLOCKED`。
 
 ## 模型规格
 

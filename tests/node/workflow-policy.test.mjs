@@ -32,6 +32,22 @@ test("控制面与领域编排职责分离", () => {
   assert.match(skill, /同一物理 Unity 项目的正式 Editor 写入保持单写者/);
 });
 
+test("Unity 执行层只使用 @Unity 插件与 Pipeline 命令", () => {
+  const text = [
+    orchestrationText("SKILL.md"),
+    orchestrationText("references/project-discovery.md"),
+    orchestrationText("references/foundation-workflow.md"),
+    orchestrationText("references/delivery.md"),
+    orchestrationText("references/unity-plugin-execution.md"),
+    orchestrationText("references/workflow-overview.md"),
+  ].join("\n");
+  assert.match(text, /@Unity/);
+  for (const command of ["unity status", "unity list", "unity command", "unity run", "unity test", "unity build"]) {
+    assert.ok(text.includes(command), `缺少 @Unity 命令契约：${command}`);
+  }
+  assert.doesNotMatch(text, /CoplayDev|unity-mcp|mcpforunity:\/\/|manage_build|MCPForUnity/i);
+});
+
 test("六阶段与 V0-V4 是稳定用户视图", () => {
   const text = [orchestrationText("SKILL.md"), orchestrationText("references/workflow-overview.md"), orchestrationText("references/scene-loop.md")].join("\n");
   for (const phase of ["需求与范围", "全局基线", "基础工程", "逐场景生产", "全局集成验证", "发布"]) assert.ok(text.includes(phase), `缺少阶段：${phase}`);

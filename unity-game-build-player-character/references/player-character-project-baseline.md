@@ -35,7 +35,7 @@
 ## 所需锁与 Unity 权限
 
 - 建立基线只读，不需要 Unity 写权限。
-- 读取序列化引用优先使用稳定状态下的 Unity MCP；无法唯一绑定当前项目实例时只保留文件级事实，并将 Editor 内引用检查标为 `UNREADABLE`。
+- 读取序列化引用优先使用稳定状态下由 [@Unity](plugin://unity@openai-curated-remote) 发现的只读 Pipeline 命令；无法按项目路径唯一选择 Editor 时只保留文件级事实，并将 Editor 内引用检查标为 `UNREADABLE`。
 - 覆盖运行时 PNG、重导入或修改 SpriteLibrary、Atlas、Prefab 前必须取得对应路径与 AssetDatabase 独占锁，并保存写前基线。
 
 ## 机器可读输出

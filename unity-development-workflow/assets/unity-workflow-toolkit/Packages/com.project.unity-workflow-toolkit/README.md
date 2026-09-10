@@ -1,6 +1,6 @@
 # Unity Workflow Toolkit
 
-该 UPM 包为 Unity 6 项目提供工作流基础设施，不复制或修改 CoplayDev/unity-mcp。当前包含：
+该 UPM 包为 Unity 6 项目提供工作流基础设施，通过 [@Unity](plugin://unity@openai-curated-remote) 与官方 `com.unity.pipeline` 提供 Editor CLI 命令。当前包含：
 
 - Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
@@ -8,21 +8,27 @@
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供竖屏高度适配、横屏宽度适配、UI Toolkit match 配置和无交互装饰边带布局。
 - VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代任一目标平台 Player 实机视觉证据。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
-- McpTools：把四项业务服务作为 unity-mcp 短同步自定义工具暴露。
+- PipelineCommands：把四项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
 - EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
 
 ## 安装
 
-在目标项目的 `Packages/manifest.json` 中加入本包的本地地址，并先安装固定、已审查版本的 CoplayDev/unity-mcp。当前测试宿主使用 `v10.1.0` 和 `com.unity.nuget.newtonsoft-json` 3.0.2。业务模块只依赖 Core；只有 Editor-only 的 McpTools 薄层依赖 `MCPForUnity.Editor`，并通过版本定义在 unity-mcp 10.x 缺失时停止编译该集成层。
+在目标项目的 `Packages/manifest.json` 中加入本包的本地地址，并固定官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0` 与 `com.unity.nuget.newtonsoft-json` `3.0.2`。也可在 Work Item 已授权修改 `Packages/manifest.json` 时运行 `unity pipeline install --project-path <项目路径>`。业务模块只依赖 Core；Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
 
-## 自定义工具
+## 自定义 Pipeline 命令
 
 - `uwt_validate_project`：消费 `project-profile` Job，返回项目质量报告。
 - `uwt_import_image`：消费已批准的 `image-task` Job，执行安全导入与 Importer 复核。
 - `uwt_capture_visual`：消费 `visual-capture` Job，生成固定机位证据。
 - `uwt_delivery_preflight`：消费 `delivery-preflight` Job，只执行技术构建预检。
 
-每个工具参数为项目内 `job_path`。业务失败返回错误响应并携带结构化结果；响应不包含本机绝对路径。
+每个命令参数为项目内 `job_path`。命令返回包含 `Success`、`Message`、`Data` 的统一结果信封；业务失败会明确返回 `Success: false` 并携带结构化结果，不包含本机绝对路径。
+
+先用 `unity status --format json` 确认 Editor，再运行 `unity list --project-path <项目路径> --format json` 发现命令。调用示例：
+
+```powershell
+unity command uwt_validate_project --project-path D:\Projects\my-game --job_path Artifacts/Jobs/project-profile.json
+```
 
 ## 图片导入边界
 
@@ -34,14 +40,14 @@
 
 ## 交付边界
 
-`uwt_delivery_preflight` 只适用于 Windows；其 `PASS` 仅表示技术构建前置检查通过，不包含许可、隐私、签名、上传、发行或用户 G3 放行。正式 Windows 构建仍由 unity-mcp 官方 `manage_build` 执行，Android、iOS 和 iPadOS 不得复用该结论。
+`uwt_delivery_preflight` 只适用于 Windows；其 `PASS` 仅表示技术构建前置检查通过，不包含许可、隐私、签名、上传、发行或用户 G3 放行。正式 Windows 构建仍由 Unity 官方构建链执行，Android、iOS 和 iPadOS 不得复用该结论。
 
 ## 测试
 
-设置 `UNITY_PATH` 后从仓库根目录执行：
+安装 [@Unity](plugin://unity@openai-curated-remote) 对应的 Unity CLI 后，从仓库根目录执行：
 
 ```powershell
-& $env:UNITY_PATH -batchmode -nographics -quit -projectPath tests/UnityHost -runTests -testPlatform EditMode -testResults Artifacts/TestResults/toolkit.xml
+unity test .\tests\UnityHost --mode EditMode --report-format junit --output .\Artifacts\TestResults\toolkit.xml --timeout 600
 ```
 
 若环境未安装 Unity，只能完成文件结构、JSON 与 C# 静态检查，不能把 EditMode 测试标记为通过。

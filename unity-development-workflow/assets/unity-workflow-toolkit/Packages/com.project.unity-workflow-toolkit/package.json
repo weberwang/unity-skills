@@ -5,6 +5,8 @@
   "description": "为 Unity 游戏开发工作流提供契约读取、结构化报告、图片导入与质量验证能力。",
   "unity": "6000.0",
   "dependencies": {
+    "com.unity.pipeline": "0.6.0-exp.1",
+    "com.unity.inputsystem": "1.20.0",
     "com.unity.nuget.newtonsoft-json": "3.0.2"
   },
   "author": {
@@ -14,7 +16,7 @@
     "workflow",
     "automation",
     "editor",
-    "mcp"
+    "pipeline"
   ],
   "samples": []
 }

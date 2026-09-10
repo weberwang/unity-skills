@@ -13,12 +13,12 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 
 ## 执行与交接
 
-1. 在 TDD 记录 Unity/MCP/包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建。
+1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建。
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。
 3. 只将至少两个场景共同需要的能力上移 Foundation/Shared；为公共接口建立消费者和变更影响清单。
 4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建；平台服务通过接口隔离，不为未选择平台增加实现。
 5. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$unity-game-3d-modeling`、`$unity-game-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
 6. 规定 3D 运行时目录、稳定资源 ID、模型/材质/Prefab 所有权和替换边界；玩法只能消费已登记且验证通过的 Prefab，禁止场景内复制并私改 Mesh、Material 或 Texture。
-7. 通过 CoplayDev/unity-mcp 写入前确认唯一实例、编辑器稳定状态和所需工具组。
+7. 通过 [@Unity](plugin://unity@openai-curated-remote) 写入前用 `unity status` 确认唯一项目目标和 Editor 稳定状态，并用 `unity list` 验证所需 Pipeline 命令真实存在。
 
 新增或修改的类、函数和实体定义必须有简体中文注释；注释说明设计边界、生命周期、兼容风险或性能取舍。

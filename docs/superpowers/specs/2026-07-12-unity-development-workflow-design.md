@@ -2,7 +2,7 @@
 
 ## 目标
 
-以 `unity-game-workflow-control` 作为唯一全局控制面，以 `unity-development-workflow` 作为 Unity 领域编排层，以 Unity MCP 与随附 C# Toolkit 作为事实执行层。流程不保留旧版通道、视觉 A0-A4 或 F0-F4 审核漏斗兼容语义。
+以 `unity-game-workflow-control` 作为唯一全局控制面，以 `unity-development-workflow` 作为 Unity 领域编排层，以 [@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与随附 C# Toolkit 作为事实执行层。流程不保留旧版通道、视觉 A0-A4 或 F0-F4 审核漏斗兼容语义。
 
 ## 用户阶段
 

@@ -2,7 +2,7 @@
 
 ## 控制面与执行面
 
-`unity-game-workflow-control` 保存 Work Item、状态、风险门、实施包和证据索引；本 Skill 负责 Unity 领域编排；Unity MCP/C# Toolkit 负责 Scene、Prefab、Importer、AssetDatabase、Editor、截图、测试与构建事实。三者不得相互伪造结果。
+`unity-game-workflow-control` 保存 Work Item、状态、风险门、实施包和证据索引；本 Skill 负责 Unity 领域编排；[@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与 C# Toolkit 负责 Scene、Prefab、Importer、AssetDatabase、Editor、截图、测试与构建事实。三层不得相互伪造结果。
 
 ## 六阶段项目视图
 

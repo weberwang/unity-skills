@@ -1,6 +1,6 @@
 ---
 name: unity-game-3d-texturing
-description: 通过 CoplayDev/unity-mcp 与经批准的本地 DCC MCP，为已冻结几何和 UV 的 Unity 6 URP 模型制作、烘焙、打包、导入并验证 PBR 纹理与材质。需要处理 UV 烘焙、BaseColor/Normal/Metallic/AO/Smoothness、URP 通道打包、TextureImporter 或 Material 接入时使用；不负责修改生产拓扑、绑定动画或最终 QA 放行。
+description: 通过 @Unity 插件、Unity CLI 与经批准的本地 DCC MCP，为已冻结几何和 UV 的 Unity 6 URP 模型制作、烘焙、打包、导入并验证 PBR 纹理与材质。需要处理 UV 烘焙、BaseColor/Normal/Metallic/AO/Smoothness、URP 通道打包、TextureImporter 或 Material 接入时使用；不负责修改生产拓扑、绑定动画或最终 QA 放行。
 ---
 
 # Unity 游戏 3D 纹理贴图
@@ -9,17 +9,17 @@ description: 通过 CoplayDev/unity-mcp 与经批准的本地 DCC MCP，为已�
 
 ## 输入与职责
 
-- 要求 Visual Bible、冻结的模型和 UV 哈希、材质槽、观看距离、纹理预算、透明需求、目标 Shader、许可与唯一 Unity MCP 实例。
+- 要求 Visual Bible、冻结的模型和 UV 哈希、材质槽、观看距离、纹理预算、透明需求、目标 Shader、许可与唯一 Unity 项目目标。
 - 建模角色拥有几何、拓扑与 UV；本角色只读校验。发现 UV、法线、材质槽或顶点顺序问题时退回 `$unity-game-3d-modeling`，不静默修改。
 - 负责烘焙、PBR 主通道、URP 打包、TextureImporter、Material、自检与交接；最终 QA 由独立角色执行。
 - 纹理 brief、材质外观、贴图集合/通道、透明方案、外部供应商或 DCC、上传与付费、UV 或顶点顺序变化都必须先交给 `$unity-game-grilling`，生成绑定当前候选的批准记录；未批准时禁止受影响写入或外部调用。
 
-## MCP 路由
+## @Unity 与 DCC 路由
 
-1. 显式绑定唯一 Unity MCP 实例，检查 Editor 稳定状态。
-2. `manage_texture` 只用于 solid、pattern、gradient、noise 等简单程序纹理或修改导入设置；不得宣称它能完成生产级 UV 烘焙。
-3. `manage_material` 用于创建、读取和修改已批准 Shader 的 Unity Material，并接入纹理属性。
-4. `asset_gen` 工具组的 `generate_image` 只能生成受 Visual Bible 约束的候选视觉素材，不能保证 UV 对齐、PBR 物理语义、通道精度或透明边缘。
+1. 使用 `unity status --format json` 选择唯一项目目标，再用 `unity list --project-path <项目路径> --format json` 发现纹理、材质与导入命令，并检查 Editor 稳定状态。
+2. 简单程序纹理或 Importer 修改只使用已发现的项目 Pipeline 命令；不得宣称其能完成生产级 UV 烘焙。
+3. Material 创建、读取、修改和纹理接入只使用已发现且受 Work Item 所有权约束的 Pipeline 命令。
+4. 外部图像生成只能生成受 Visual Bible 约束的候选视觉素材，不能保证 UV 对齐、PBR 物理语义、通道精度或透明边缘；供应商、上传与成本必须独立批准。
 5. UV 展开、高低模烘焙、Cage、切线空间校验和精确通道处理需要经批准且能力已发现的本地 DCC MCP。能力缺失时输出 `BLOCKED`。
 
 ## 纹理小循环

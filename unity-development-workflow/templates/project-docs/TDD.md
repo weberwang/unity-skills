@@ -5,7 +5,7 @@
 - Unity：6
 - 渲染：URP
 - UI：UI Toolkit
-- 自动化：CoplayDev/unity-mcp
+- 自动化：[@Unity](plugin://unity@openai-curated-remote) / Unity CLI / com.unity.pipeline
 - 目标平台：待 G0 用户确认（Windows / Android / iOS / iPadOS 可分别选择）
 - 主开发平台：待 G0 用户确认
 
@@ -24,7 +24,7 @@
 
 ## 构建与验证
 
-按批准平台分别记录 Unity/MCP/包版本、Build Profile、脚本后端、场景列表、可复现命令、签名工具链和证据位置。
+按批准平台分别记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与 Toolkit 版本、Build Profile、脚本后端、场景列表、可复现命令、签名工具链和证据位置。
 
 ## 风险与待决策
 

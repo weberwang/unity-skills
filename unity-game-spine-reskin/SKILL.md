@@ -76,7 +76,7 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 3. 保持 Atlas Region 与 V2 映射一致。明确使用 PMA 或 Straight Alpha，纹理导入、Atlas 设置和材质 Shader 必须同一策略，禁止混用导致黑边/白边。URP 使用当前 `spine-unity` 支持的 Spine/Skeleton Shader 与正确材质关键字，不擅自换成不兼容通用 Shader。
 4. 记录 Atlas 页数、材质/混合模式、Clipping、Draw Call、纹理尺寸、格式、MipMap 和估算/实测纹理内存；新 Skin 不得以无预算的额外 Atlas 页或材质放大批次数。只有用户明确需要独立下载、卸载或内容分包时才引入 Addressables，并验证 `SkeletonDataAsset`、AtlasAsset、材质和纹理引用原子加载。
 5. 在 Unity 中以当前实例切换 Skin：先确认目标 Skin 存在；保持原 `AnimationState` 与当前 Track，不重建或清空动画状态；对该实例的 `Skeleton` 设置 Skin，恢复 Slot setup pose，再重新应用当前 AnimationState。目标 Skin 缺失时回退默认 Skin并报告，不写入共享 `SkeletonData`，不让一个实例的切换污染其他实例。
-6. 重新导入后核对 `SkeletonDataAsset`、AtlasAsset、材质、纹理、GUID/地址、Prefab/Scene 引用和 Console；不得用 MCP/API 调用成功代替真实验证。
+6. 重新导入后核对 `SkeletonDataAsset`、AtlasAsset、材质、纹理、GUID/地址、Prefab/Scene 引用和 Console；不得用 `unity command` 返回成功代替真实验证。
 
 ## Unity 验证矩阵
 

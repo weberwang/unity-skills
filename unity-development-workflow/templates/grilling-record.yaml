@@ -14,7 +14,7 @@ subject:
 triggerReason: 新项目进入设计阶段，必须先消除会改变范围、架构、视觉和交付方案的高影响歧义。
 facts:
   - 示例候选把 Windows 作为待确认目标平台；最终平台集合仍由用户批准。
-  - 项目使用 Unity 6 和 Unity MCP。
+  - 项目使用 Unity 6、@Unity 插件与 com.unity.pipeline。
 assumptions:
   - 首个里程碑只覆盖单机核心循环。
 questions:
