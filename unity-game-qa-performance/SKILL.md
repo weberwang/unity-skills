@@ -13,9 +13,11 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 
 ## 执行与交接
 
+测试、构建、Editor/Player 日志和 Profiler 入口使用 `unity:unity-cli`；Web、音频、TMP 与具体渲染问题分别路由到 `unity:optimize-web`、`unity:optimize-audio`、`unity:optimize-text-mesh-pro` 及适用的 URP 专项 Skill。本角色负责测试矩阵、证据真实性、预算判定和独立放行，不复制专项调优教程。
+
 1. 在 QA 计划中预先定义 EditMode、PlayMode、场景主路径、模块边界和用户批准的目标平台。设备用例与档位只能提前规划；G2 `PASS` 前禁止安装或启动任何 Standalone/Player、真机或等价设备，也禁止采集设备视觉、输入、生命周期、性能或稳定性结果。
-2. 激活 `testing` 工具组后运行测试并查询异步任务到终态；记录版本、用例数、失败详情与原始日志。
-3. G2 前只做 Editor Profiler 趋势、静态预算、资源统计和构建日志检查，不产生目标设备性能 `PASS`。G2 `PASS` 后在 G3 激活 `profiling`，按平台候选制品和设备档位采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体。
+2. 按 `unity:unity-cli` 当前规则运行测试并等待任务终态；记录版本、用例数、失败详情与原始日志。
+3. G2 前只做 Editor Profiler 趋势、静态预算、资源统计和构建日志检查，不产生目标设备性能 `PASS`。G2 `PASS` 后在 G3 按批准的平台工具链与候选制品采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体。
 4. 缺陷记录版本、场景、设备、复现步骤、预期/实际、证据、P0-P3、所有者和回归状态。
 5. 2D/UI 小循环至少覆盖窄/标准竖屏、横屏、桌面宽屏、代表性安全区和连续 resize/orientation 轨迹。逐例实测 Screen/Game View/backbuffer 或 RenderTexture、Camera `pixelRect`/投影、CanvasScaler 或 PanelSettings、`Screen.safeArea`、输入命中、关键 UI 矩形、状态、语言、稳定帧和截图；只存在组件、构建成功、单张截图或静态配置不能证明响应式通过。缺少真实测量时标记 `NOT_RUN` 或 `unverified`。
 6. 对 `$unity-game-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、蒙皮/骨骼/BlendShape、Collider、挂点、Prefab 引用和架构预算；模型生产代理的自检不能替代 QA。

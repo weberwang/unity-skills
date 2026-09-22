@@ -15,6 +15,11 @@ function orchestrationText(path) {
   return readFileSync(resolve(ORCHESTRATOR, path), "utf8");
 }
 
+/** 读取仓库内指定 Skill 的 UTF-8 文本。 */
+function skillText(skillName) {
+  return readFileSync(resolve(ROOT, skillName, "SKILL.md"), "utf8");
+}
+
 /** 递归枚举普通文件，供语言与配置完整性检查使用。 */
 function listFiles(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -32,9 +37,10 @@ test("控制面与领域编排职责分离", () => {
   assert.match(skill, /同一物理 Unity 项目的正式 Editor 写入保持单写者/);
 });
 
-test("Unity 执行层只使用 @Unity 插件与 Pipeline 命令", () => {
+test("Unity 执行层路由到官方插件并仅保留工作流扩展", () => {
   const text = [
     orchestrationText("SKILL.md"),
+    orchestrationText("references/unity-plugin-routing.md"),
     orchestrationText("references/project-discovery.md"),
     orchestrationText("references/foundation-workflow.md"),
     orchestrationText("references/delivery.md"),
@@ -42,10 +48,39 @@ test("Unity 执行层只使用 @Unity 插件与 Pipeline 命令", () => {
     orchestrationText("references/workflow-overview.md"),
   ].join("\n");
   assert.match(text, /@Unity/);
-  for (const command of ["unity status", "unity list", "unity command", "unity run", "unity test", "unity build"]) {
-    assert.ok(text.includes(command), `缺少 @Unity 命令契约：${command}`);
+  for (const skill of [
+    "unity:unity-cli",
+    "unity:unity-package-management",
+    "unity:ui",
+    "unity:audio-setup-mixers",
+    "unity:initialize-ai-navigation",
+    "unity:implement-in-app-purchases",
+  ]) {
+    assert.ok(text.includes(skill), `缺少 Unity 插件能力路由：${skill}`);
   }
+  for (const command of ["uwt_validate_project", "uwt_import_image", "uwt_capture_visual", "uwt_delivery_preflight"]) {
+    assert.ok(text.includes(command), `缺少本地 Toolkit 扩展：${command}`);
+  }
+  assert.match(text, /computer-use@openai-bundled/);
+  assert.doesNotMatch(orchestrationText("references/unity-plugin-execution.md"), /unity (?:status|list|run|test|build|open|install)\b/);
   assert.doesNotMatch(text, /CoplayDev|unity-mcp|mcpforunity:\/\/|manage_build|MCPForUnity/i);
+});
+
+test("领域 Skill 把具体 Unity 操作交给对应插件能力", () => {
+  const routes = new Map([
+    ["unity-game-architecture", ["unity:new-unity-project", "unity:unity-package-management", "unity:migrate-birp-to-urp"]],
+    ["unity-game-audio", ["unity:audio-setup-mixers", "unity:optimize-audio", "unity:setup-vivox-voice-chat"]],
+    ["unity-game-qa-performance", ["unity:unity-cli", "unity:optimize-web", "unity:optimize-text-mesh-pro"]],
+    ["unity-game-visual-assets", ["unity:ui", "unity:sprite-editor", "unity:manage-sprite-atlas"]],
+    ["unity-gameplay-development", ["unity:initialize-ai-navigation", "unity:physics-3d-collision", "unity:setup-multiplayer-services"]],
+    ["unity-game-release", ["unity:unity-cli", "IAP", "LevelPlay", "Vivox"]],
+  ]);
+
+  for (const [skillName, expectedRoutes] of routes) {
+    const text = skillText(skillName);
+    for (const route of expectedRoutes) assert.ok(text.includes(route), `${skillName} 缺少插件路由：${route}`);
+  }
+  assert.doesNotMatch(skillText("unity-game-qa-performance"), /`(?:testing|profiling)` 工具组/);
 });
 
 test("六阶段与 V0-V4 是稳定用户视图", () => {

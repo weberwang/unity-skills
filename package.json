@@ -11,12 +11,12 @@
   },
   "scripts": {
     "test": "npm run test:workflow",
-    "test:workflow": "node --test tests/node/*.test.mjs"
+    "test:workflow": "node --test tests/node/*.test.mjs",
+    "remove:background": "node unity-game-visual-assets/scripts/remove-background-local.mjs"
   },
   "files": [
     "scripts/install-project-skills.mjs",
     "unity-game-workflow-control",
-    "unity-game-build-player-character",
     "unity-development-workflow",
     "unity-game-grilling",
     "unity-game-3d-modeling",

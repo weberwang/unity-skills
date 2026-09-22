@@ -12,15 +12,14 @@
 
 ## 执行步骤
 
-1. 读取磁盘项目配置，并用 `unity status --format json` 只读确认可达 Editor；确认 Unity 6、URP、活动 BuildTarget 和现有平台配置，只记录事实，不从当前开发机或 BuildTarget 推断最终交付平台。
+1. 按 `unity:unity-cli` 的当前说明只读发现 Editor，并按规范化项目绝对路径绑定唯一目标；确认 Unity 6、URP、活动 BuildTarget 和现有平台配置，只记录事实，不从当前开发机或 BuildTarget 推断最终交付平台。
 2. 检查包清单、Assets 目录、场景目录、测试目录、UI Toolkit 资源，以及现有模型/贴图/材质/Prefab 目录、模型导入约定、ProBuilder/渲染相关包和 DCC 源索引。
-3. 读取 `unity status --format json` 与项目登记的只读状态命令，记录 Console 基线，确认编译、导入、域重载、PlayMode、连接陈旧状态是否正在运行或失败。
+3. 读取插件发现的项目状态命令，记录 Console 基线，确认编译、导入、域重载、PlayMode、连接陈旧状态是否正在运行或失败。
 4. 检查未保存场景、脏资源和可能阻塞自动化的对话框。
-5. 从 `unity status --format json` 的实例清单按规范化项目绝对路径选择唯一目标；多实例时所有后续命令显式传 `--project-path`，禁止依赖当前目录猜测。
-6. 通过 `unity list --project-path <项目路径> --format json` 发现当前 Editor 的实际命令与参数 Schema。只调用当前阶段允许的项目登记命令；未发现的命令不得按名称猜测。
-7. 若项目声明 DCC 流程，只读记录 DCC 类型/版本、工程和外链资源路径、单位/轴向、导出目录、进程/文件占用与最近有效源版本；不启动 DCC、不保存、不导出。
-8. 记录 [@Unity](plugin://unity@openai-curated-remote) 能力版本、Unity CLI 版本、`com.unity.pipeline` 包版本和目标选择方式，避免把执行层版本差异误判为项目缺陷。
-9. 任一只读检查失败时停止，禁止试探性写入。
+5. 发现当前 Editor 的实际命令与参数 Schema，只调用当前阶段允许的项目登记命令；未发现的命令不得按名称猜测。
+6. 若项目声明 DCC 流程，只读记录 DCC 类型/版本、工程和外链资源路径、单位/轴向、导出目录、进程/文件占用与最近有效源版本；不启动 DCC、不保存、不导出。
+7. 记录 [@Unity](plugin://unity@openai-curated-remote) 能力版本、Unity CLI 版本、`com.unity.pipeline` 包版本、目标选择方式和命令 Schema，避免把执行层版本差异误判为项目缺陷。
+8. 任一只读检查失败时停止，禁止试探性写入。
 
 ## 子代理角色与并行边界
 
@@ -42,7 +41,7 @@
 
 - Unity 6、URP、活动 BuildTarget、已批准目标平台、包与目录检查全部有实际证据。
 - Console、编译、导入、PlayMode 和未保存状态均已记录。
-- Unity Editor 目标唯一、项目路径匹配，且 `unity list` 已确认所需命令存在。
+- Unity Editor 目标唯一、项目路径匹配，且插件发现结果已确认所需命令存在。
 
 ## 失败与恢复出口
 

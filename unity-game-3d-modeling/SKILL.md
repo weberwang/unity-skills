@@ -17,7 +17,7 @@ description: 通过 @Unity 插件、Unity CLI、ProBuilder 与项目 Pipeline �
 
 ## @Unity 与 DCC 路由
 
-1. 使用 `unity status --format json` 按项目路径选择唯一 Editor；再用 `unity list --project-path <项目路径> --format json` 读取实际命令和参数 Schema。Unity 不稳定、命令不存在或参数不匹配时停止写入。
+1. 按 `unity:unity-cli` 当前规则选择唯一 Editor，并读取实际命令和参数 Schema。Unity 不稳定、命令不存在或参数不匹配时停止写入。
 2. 简单、模块化、低模或灰盒几何优先使用项目已安装的 ProBuilder API，并通过已发现的项目 Pipeline 命令生成可复现结构；不得猜测命令名称。
 3. 需要 AI 候选模型时，先选择用户批准的生成式供应商。向用户说明供应商、成本、上传数据、许可和预计格式并取得批准后，才可提交异步生成任务；保存任务 ID 并按供应商协议查询状态，不阻塞等待。
 4. 已有本地 FBX、OBJ、GLB 或 glTF 时，通过 AssetDatabase 或已发现的项目 Pipeline 导入命令处理项目内批准路径；不得把图片导入命令描述成模型导入器。

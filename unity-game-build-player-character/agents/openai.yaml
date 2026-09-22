@@ -1,4 +1,0 @@
-interface:
-  display_name: "Unity 玩家角色与骨骼动画"
-  short_description: "构建完整 Unity 2D 玩家骨骼系统与流畅自然的高质量动作"
-  default_prompt: "使用 $unity-game-build-player-character 为 P3-002 建立从 Rig、蒙皮、IK、Animator、物理、换装到性能与动作质量的完整 Unity 2D 骨骼系统。"

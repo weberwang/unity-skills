@@ -70,8 +70,8 @@ test("3D Unity 写入使用 @Unity，DCC MCP 仅保留专用边界", () => {
     readText(resolve(TEXTURING_DIR, "references/pbr-texture-workflow.md")),
   ].join("\n");
   assert.match(text, /@Unity/);
-  assert.match(text, /unity status/);
-  assert.match(text, /unity list/);
+  assert.match(text, /unity:unity-cli/);
+  assert.doesNotMatch(text, /unity (?:status|list|run|test|build|open|install)\b/);
   assert.match(text, /本地 DCC MCP/);
   assert.doesNotMatch(text, /CoplayDev|unity-mcp|mcpforunity:\/\/|manage_texture|manage_material|asset_gen|import_model_file/i);
 });

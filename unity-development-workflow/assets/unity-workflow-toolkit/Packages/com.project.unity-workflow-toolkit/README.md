@@ -24,7 +24,7 @@
 
 每个命令参数为项目内 `job_path`。命令返回包含 `Success`、`Message`、`Data` 的统一结果信封；业务失败会明确返回 `Success: false` 并携带结构化结果，不包含本机绝对路径。
 
-先用 `unity status --format json` 确认 Editor，再运行 `unity list --project-path <项目路径> --format json` 发现命令。调用示例：
+按 `unity:unity-cli` 当前规则确认 Editor 并发现命令。Toolkit 专用调用示例：
 
 ```powershell
 unity command uwt_validate_project --project-path D:\Projects\my-game --job_path Artifacts/Jobs/project-profile.json

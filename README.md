@@ -36,7 +36,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器把十五个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
+安装器把十四个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
 
 ```powershell
 node .\scripts\install-project-skills.mjs D:\Projects\my-game
@@ -80,7 +80,15 @@ unity pipeline install --project-path D:\Projects\my-game
 Copy-Item -Recurse .\.agents\skills\unity-development-workflow\assets\unity-workflow-toolkit\Packages\com.project.unity-workflow-toolkit .\Packages\com.project.unity-workflow-toolkit
 ```
 
-先用 `unity status --format json` 确认目标 Editor，再用 `unity list --project-path <项目路径> --format json` 发现命令。Toolkit 通过 `com.unity.pipeline` 暴露项目验证、批准图片导入、固定机位取证和交付预检命令，由 `unity command <命令> --project-path <项目路径>` 调用。正式测试和构建分别使用 `unity test`、`unity build`；命令返回成功不能代替 AssetDatabase 回读、Console、EditMode/PlayMode、设备或发布证据。外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
+具体的 Editor、Scene、Prefab、资源、包、UI、测试和构建操作由匹配的 Unity 插件 Skill 负责，本仓库不复制插件命令教程。Toolkit 只补充项目验证、批准图片导入、固定机位取证和交付预检四项工作流命令；完整分工见 [Unity 插件能力路由](unity-development-workflow/references/unity-plugin-routing.md)。命令成功不能代替 AssetDatabase 回读、Console、EditMode/PlayMode、设备或发布证据；外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
+
+生成式透明素材如果先产出不透明纯色背景 PNG，可在 Unity 导入前运行本地边缘连通去背景工具：
+
+```powershell
+npm run remove:background -- --source .\art\hero.raw.png --output .\art\hero.png --background-color "#00aa55" --tolerance 24 --require-solid-background --record .\art\hero.background-removal.json --preview
+```
+
+脚本不覆盖原图、不改变尺寸，并输出 SHA、删除像素、Alpha、失败原因和可选深浅底预览。只有记录为 `PASS` 的输出才能进入 `uwt_import_image`；复杂背景、毛发、玻璃、发光或半透明边缘仍需人工遮罩、专门分割或重新生成。
 
 ## 角色
 

@@ -4,12 +4,12 @@
 
 | 路径 | 适用范围 | 必要检查 |
 | --- | --- | --- |
-| @Unity + ProBuilder Pipeline 命令 | 灰盒、模块件、低模、碰撞原型 | `unity list` 已发现命令；结果仍需保存、导入与运行验证 |
+| @Unity + ProBuilder Pipeline 命令 | 灰盒、模块件、低模、碰撞原型 | `unity:unity-cli` 已发现命令；结果仍需保存、导入与运行验证 |
 | 已批准生成式供应商 | 文本或图片驱动的候选模型 | 供应商、成本、上传、许可、格式和纹理选项已获批准 |
 | @Unity + AssetDatabase/Pipeline 导入命令 | 本地 FBX、OBJ、GLB、glTF | 输入在批准目录；glTF/GLB 项目已具备 glTFast |
 | 本地 DCC MCP | 精确拓扑、UV、重拓扑、LOD 与复杂修改 | 连接、活动源文件、能力、写入范围和脚本已批准 |
 
-通过 `unity status --format json` 选择项目，通过 `unity list --project-path <项目路径> --format json` 发现命令，再用 `unity command <命令> --project-path <项目路径>` 执行。命令目录是事实来源，不假定 ProBuilder、导入或供应商命令存在。生成式供应商任务必须保存任务 ID，按供应商协议查询或取消；不要用长时间阻塞等待代替状态检查。缺失命令、格式支持或参数不匹配时保持 `BLOCKED`。
+项目选择、命令发现与执行遵循 `unity:unity-cli` 的当前说明；命令目录是事实来源，不假定 ProBuilder、导入或供应商命令存在。生成式供应商任务必须保存任务 ID，按供应商协议查询或取消；不要用长时间阻塞等待代替状态检查。缺失命令、格式支持或参数不匹配时保持 `BLOCKED`。
 
 ## 模型规格
 

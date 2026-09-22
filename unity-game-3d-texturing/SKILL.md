@@ -16,7 +16,7 @@ description: 通过 @Unity 插件、Unity CLI 与经批准的本地 DCC MCP，�
 
 ## @Unity 与 DCC 路由
 
-1. 使用 `unity status --format json` 选择唯一项目目标，再用 `unity list --project-path <项目路径> --format json` 发现纹理、材质与导入命令，并检查 Editor 稳定状态。
+1. 按 `unity:unity-cli` 当前规则选择唯一项目目标、发现纹理/材质/导入命令，并检查 Editor 稳定状态。
 2. 简单程序纹理或 Importer 修改只使用已发现的项目 Pipeline 命令；不得宣称其能完成生产级 UV 烘焙。
 3. Material 创建、读取、修改和纹理接入只使用已发现且受 Work Item 所有权约束的 Pipeline 命令。
 4. 外部图像生成只能生成受 Visual Bible 约束的候选视觉素材，不能保证 UV 对齐、PBR 物理语义、通道精度或透明边缘；供应商、上传与成本必须独立批准。

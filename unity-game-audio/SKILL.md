@@ -11,6 +11,8 @@ description: Unity 游戏的音频设计与接入角色。需要规划、生成�
 
 ## 执行与交接
 
+AudioSource→AudioMixer 分组与场景扫描交给 `unity:audio-setup-mixers`，Importer、Load Type、编码、采样率和 Mixer 性能优化交给 `unity:optimize-audio`；Vivox 语音/文字聊天交给 `unity:setup-vivox-voice-chat`。本角色保留音频方向、事件语义、来源授权、预算和跨领域交接，不复制插件操作流程。
+
 1. 按核心反馈、UI、环境、音乐、语音和可访问性定义事件、优先级与静默降级行为。
 2. 在资源登记记录来源、授权/生成、格式、采样率、声道、时长、循环点、响度、压缩、加载方式、大小、用途和发布资格。
 3. 用 AudioMixer 规划 Master/Music/SFX/Voice/UI 分组、音量、Duck、并发限制和持久设置；避免每次播放产生不必要分配。

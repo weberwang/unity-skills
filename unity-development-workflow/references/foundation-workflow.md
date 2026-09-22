@@ -8,7 +8,7 @@
 
 - 已通过的项目发现、用户确认且状态为 `APPROVED` 的 `project-profile` 与 `decomposition-plan`、module-manifest、场景 DAG 和 Visual Bible。
 - 全部场景 manifest 草案与共同能力清单。
-- 已由 `unity status` 确认并通过 `--project-path` 唯一选择的 Unity Editor 目标。
+- 已按 `unity:unity-cli` 当前规则发现并唯一绑定的 Unity Editor 目标。
 
 ## 执行步骤
 
@@ -19,7 +19,7 @@
 5. 可并行准备不写 Unity 的契约、测试清单和资源说明。
 6. 串行执行 asmdef、场景、资源和共享状态的 Unity 正式写入。
 7. 运行 Schema、静态、编译、Console、EditMode 与 PlayMode 基线。
-8. 使用 [@Unity](plugin://unity@openai-curated-remote) 的 `unity build` 为 `primaryDevelopmentPlatform` 生成可启动空壳构建，记录平台、Build Profile、场景列表、脚本后端、选项和任务结果；该构建只证明主开发平台基线，不代表其他目标平台已适配。
+8. 通过 `unity:unity-cli` 为 `primaryDevelopmentPlatform` 生成可启动空壳构建，记录平台、Build Profile、场景列表、脚本后端、选项和任务结果；该构建只证明主开发平台基线，不代表其他目标平台已适配。
 9. 独立审查 S00 证据，通过后选择代表性场景进入 G1 垂直切片；不得把空壳骨架本身视为垂直切片完成。
 
 ## 子代理角色与并行边界
@@ -31,7 +31,7 @@
 ## 所需锁与 Unity 权限
 
 - S00 是全局骨架代码的正式实现时点，写入持有 Foundation、Shared 和启动场景路径的独占锁。
-- 任何写调用前用 `unity status` 验证目标，并为 `unity command` 显式传递项目绝对路径。
+- 任何写调用前按 `unity:unity-cli` 当前规则复核唯一目标，并显式绑定项目绝对路径。
 - 空壳构建阶段持有构建输出目录独占锁。
 
 ## 机器可读输出

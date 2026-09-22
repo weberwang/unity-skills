@@ -13,6 +13,8 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 
 ## 执行与交接
 
+项目创建与 Editor/构建操作交给 `unity:new-unity-project`、`unity:unity-cli`；UPM 交给 `unity:unity-package-management`；BiRP→URP 和 Render Graph 专项分别交给 `unity:migrate-birp-to-urp`、`unity:validate-urp-render-graph-renderer-feature`。本角色只决定架构、预算、依赖和验收边界，不重复维护插件操作步骤。
+
 1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建。
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。
 3. 只将至少两个场景共同需要的能力上移 Foundation/Shared；为公共接口建立消费者和变更影响清单。
@@ -21,6 +23,6 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 6. 场景 Implementation Package 只包含 `SCENE`，弹窗包只包含 `DISPLAY_LAYER`；`hostSceneId` 只绑定公开接口和运行上下文，不表示所有权或完成依赖。Scene/Prefab/UXML/UIDocument 装配与视觉资源来源分别建模，禁止用整屏复合图代替结构。
 7. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$unity-game-3d-modeling`、`$unity-game-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
 8. 规定 3D 运行时目录、稳定资源 ID、模型/材质/Prefab 所有权和替换边界；玩法只能消费已登记且验证通过的 Prefab，禁止场景内复制并私改 Mesh、Material 或 Texture。
-9. 通过 [@Unity](plugin://unity@openai-curated-remote) 写入前用 `unity status` 确认唯一项目目标和 Editor 稳定状态，并用 `unity list` 验证所需 Pipeline 命令真实存在。
+9. Unity 写入按 `unity:unity-cli` 的当前规则发现唯一项目目标和实际命令；结果仍须回填当前实施包与证据清单。
 
 新增或修改的类、函数和实体定义必须有简体中文注释；注释说明设计边界、生命周期、兼容风险或性能取舍。

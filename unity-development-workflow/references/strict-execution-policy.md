@@ -10,7 +10,7 @@
 
 写入前：
 
-1. 用 `unity status --format json` 发现 Editor，并按规范化项目绝对路径选择唯一目标；多实例时所有调用显式传 `--project-path`。
+1. 按 `unity:unity-cli` 当前规则发现 Editor，并按规范化项目绝对路径选择唯一目标；多实例时所有调用显式绑定项目路径。
 2. 确认 Editor 未播放、未编译、未导入、未进入域重载，且目标 Scene 已保存。
 3. 校验 Work Item、Implementation Package、基线、允许路径、Unity 对象所有权和单写者。
 4. 读取目标对象、资源 GUID、Importer、Scene/Prefab 基线与 Console。
@@ -20,7 +20,7 @@
 1. 等待 AssetDatabase 刷新、编译、域重载和导入结束。
 2. 保存并复读 Scene/Prefab/ScriptableObject/UXML，核对 GUID、序列化引用、Importer 与实际差异。
 3. 读取 Console，执行与改动直接相关的 EditMode/PlayMode/结构/构建验证并保存原始结果。
-4. 后置校验失败时停止后续写入，选择 `repair` 或 `revalidate`，不得把 `unity command`、`unity test` 或 `unity build` 的调用成功写成 PASS。
+4. 后置校验失败时停止后续写入，选择 `repair` 或 `revalidate`，不得把任何命令调用成功写成 PASS。
 
 ## 禁止自动执行
 

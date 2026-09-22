@@ -11,6 +11,8 @@ description: Unity 游戏的玩法开发角色。需要依据 GDD、TDD、场景
 
 ## 实现与交接
 
+Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先用 `unity:ui`；NavMesh、3D 碰撞、多人和 LiveOps 分别路由到 `unity:initialize-ai-navigation`、`unity:physics-3d-collision`、`unity:setup-multiplayer-services`、`unity:build-live-game`。本角色保留玩法规则、状态所有权、接口和场景增量，不复制插件专项实现指南。
+
 1. 先冻结玩家行为、边界情况和测试点；A3 前冻结实施包，再按总控的阶段任务闭环编码。
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$unity-game-3d-modeling` 与 `$unity-game-3d-texturing`。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。

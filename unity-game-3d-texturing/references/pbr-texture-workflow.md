@@ -22,7 +22,7 @@ Smoothness 必须由 `1 - Roughness` 计算，保留未打包的灰度主通道�
 
 ## @Unity 与 DCC 能力边界
 
-- [@Unity](plugin://unity@openai-curated-remote) 项目 Pipeline 命令：处理已发现并获准的简单程序纹理、Importer、Material 和 Renderer 接入；命令名与参数以 `unity list` 为准。
+- [@Unity](plugin://unity@openai-curated-remote) 项目 Pipeline 命令：处理已发现并获准的简单程序纹理、Importer、Material 和 Renderer 接入；命令名与参数以 `unity:unity-cli` 当前发现结果为准。
 - 已批准的外部生成式供应商：只生成视觉候选，不承担 UV、烘焙或物理正确性保证。
 - 本地 DCC MCP：UV 检查、Cage、高低模烘焙、绘制与精确通道处理。若缺少对应能力，任务为 `BLOCKED`。
 

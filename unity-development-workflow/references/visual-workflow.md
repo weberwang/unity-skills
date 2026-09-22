@@ -31,6 +31,8 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 
 按拆解计划逐项独立生产或复用。位图、模型、材质、字体、音频和 VFX 使用其真实 Importer 与平台设置；Unity 管理资源与 `.meta` 同步进入所有权和证据。UI/2D 位图生产默认 `sourceScale=2`，平台预算或像素美术合同另有明确批准值时才改变；运行时不使用固定 Web DPR，而读取 Unity 平台、Canvas/PanelSettings、Camera 和动态分辨率事实。SpriteAtlas、压缩、MipMap 和 Addressables 由 Unity 预算决定。
 
+生成式透明位图可采用“生成不透明单一纯色背景 PNG → `unity-game-visual-assets/scripts/remove-background-local.mjs` → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、SHA、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
+
 在宿主 Scene/Prefab/UXML 中完成正式资源同屏组合预验收，核对 GUID、序列化引用、Prefab Variant/Override、布局、状态、遮罩、渲染排序与 Console。V3 通过前不把正式场景实现声明为可验收候选。
 
 ## V4 正式实现与运行验收

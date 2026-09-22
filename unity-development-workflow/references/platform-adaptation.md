@@ -17,7 +17,7 @@ G0 确定目标平台、S00/G1 选择主开发平台、G2 完成各平台适配�
 - 输入至少按批准范围覆盖键鼠与手柄；检查热插拔、焦点导航、按键提示切换和退出路径。
 - 2D 竖屏固定设计高度、横屏固定设计宽度；扩展区域使用依据 Visual Bible 生成的无交互纯视觉边带，不得出现黑边。
 - 针对批准的最低、推荐或参考 PC 档位记录 CPU、GPU、内存、操作系统、分辨率、窗口模式和性能证据。
-- Windows 预检可通过 `unity command uwt_delivery_preflight --project-path <项目路径> --job_path <Job>` 调用 Toolkit，正式构建使用 [@Unity](plugin://unity@openai-curated-remote) 的 `unity build`；该命令的通过不能代替 G3 设备矩阵。
+- Windows 预检使用 Toolkit 的 `uwt_delivery_preflight`，正式构建按 `unity:unity-cli` 当前规则执行；预检通过不能代替 G3 设备矩阵。
 
 ## 移动端适配方案
 

@@ -37,7 +37,7 @@
 ## 所需锁与 Unity 权限
 
 - 生成候选图只需视觉制品路径锁；正式资源导入需要目标资源路径锁。
-- 摄像机、PanelSettings、Prefab 或场景写入前必须用 `unity status` 确认唯一项目目标，调用 `unity command` 时显式传 `--project-path`，并持有对应 Unity 写锁。
+- 摄像机、PanelSettings、Prefab 或场景写入前必须按 `unity:unity-cli` 当前规则确认唯一项目目标，并持有对应 Unity 写锁。
 - 分辨率取证和审查原则上只读；需要切换 Game View 时先确认 Editor 未编译、导入或进入 PlayMode。
 
 ## 计算口径
