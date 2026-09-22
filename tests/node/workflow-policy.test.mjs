@@ -50,9 +50,26 @@ test("Unity 执行层只使用 @Unity 插件与 Pipeline 命令", () => {
 
 test("六阶段与 V0-V4 是稳定用户视图", () => {
   const text = [orchestrationText("SKILL.md"), orchestrationText("references/workflow-overview.md"), orchestrationText("references/scene-loop.md")].join("\n");
-  for (const phase of ["需求与范围", "全局基线", "基础工程", "逐场景生产", "全局集成验证", "发布"]) assert.ok(text.includes(phase), `缺少阶段：${phase}`);
+  for (const phase of ["需求与范围", "全局基线", "基础工程", "场景与弹窗生产", "全局集成验证", "发布"]) assert.ok(text.includes(phase), `缺少阶段：${phase}`);
   for (const stage of ["V0", "V1", "V2", "V3", "V4"]) assert.ok(text.includes(stage), `缺少场景阶段：${stage}`);
   for (const unit of ["SHARED", "MODULE", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]) assert.ok(text.includes(unit), `缺少执行单元：${unit}`);
+});
+
+test("弹窗、响应式与视觉拆解合同使用 Unity 原生语义", () => {
+  const text = [
+    orchestrationText("SKILL.md"),
+    orchestrationText("references/workflow-overview.md"),
+    orchestrationText("references/scene-loop.md"),
+    orchestrationText("references/visual-workflow.md"),
+    orchestrationText("references/responsive-ui-contract.md"),
+  ].join("\n");
+  assert.match(text, /独立 `DISPLAY_LAYER` Work Item/);
+  assert.match(text, /hostSceneId.*上下文/);
+  assert.match(text, /visualRouteAnalysis/);
+  assert.match(text, /assemblyAnalysis/);
+  assert.match(text, /sourceScale=2/);
+  for (const locale of ["en", "zh-CN", "ja", "ru", "es"]) assert.ok(text.includes(`\`${locale}\``), `缺少语言合同：${locale}`);
+  assert.doesNotMatch(text, /devicePixelRatio|CSS 像素|deferred_layers/);
 });
 
 test("F0-F4 只保留全局质量门语义", () => {

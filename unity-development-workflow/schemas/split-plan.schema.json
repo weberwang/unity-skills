@@ -129,7 +129,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "resourceId", "itemVersion", "itemSpecSha256", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "targetPath", "stateVariants", "bounds", "delivery", "action"],
+          "required": ["id", "resourceId", "itemVersion", "itemSpecSha256", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "targetPath", "stateVariants", "bounds", "delivery", "action", "parentElementId", "semanticGrouping", "visualRouteAnalysis", "assemblyAnalysis", "layoutBinding"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -166,7 +166,12 @@
           "existingAssetId": {"$ref": "common.schema.json#/$defs/taskId"},
           "reuseReason": {"type": "string", "minLength": 1},
           "reuseResourcePlan": {"$ref": "reuse-resource-plan.schema.json#/$defs/reuseResourcePlan"},
-          "notes": {"type": "string"}
+          "notes": {"type": "string"},
+          "parentElementId": {"type": "string", "minLength": 1},
+          "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
+          "visualRouteAnalysis": {"$ref": "common.schema.json#/$defs/visualRouteAnalysis"},
+          "assemblyAnalysis": {"$ref": "common.schema.json#/$defs/assemblyAnalysis"},
+          "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"}
         },
         "allOf": [
           {

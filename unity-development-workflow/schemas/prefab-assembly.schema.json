@@ -31,14 +31,16 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["itemId", "resourceId", "productionType", "productionEvidence", "assetPath", "assetGuid"],
+        "required": ["itemId", "resourceId", "decompositionElementId", "productionType", "productionEvidence", "assetPath", "assetGuid", "consumerNodeIds"],
         "properties": {
           "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
           "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "decompositionElementId": {"$ref": "common.schema.json#/$defs/taskId"},
           "productionType": {"enum": ["IMAGE_TASK", "MODEL_3D", "MATERIAL", "VFX", "CODE", "REUSED_ASSET", "PROGRAMMATIC"]},
           "productionEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
           "assetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"}
+          "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+          "consumerNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}}
         }
       }
     },
@@ -58,16 +60,19 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["id", "name", "components", "position", "rotation", "scale"],
+              "required": ["id", "name", "decompositionElementId", "parentId", "semanticGrouping", "layoutBinding", "components", "position", "rotation", "scale"],
               "properties": {
                 "id": {"$ref": "common.schema.json#/$defs/taskId"},
-                "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "parentId": {"type": "string", "minLength": 1},
                 "name": {"type": "string", "minLength": 1},
+                "decompositionElementId": {"$ref": "common.schema.json#/$defs/taskId"},
                 "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
                 "components": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
                 "position": {"$ref": "#/$defs/vector3"},
                 "rotation": {"$ref": "#/$defs/vector3"},
-                "scale": {"$ref": "#/$defs/vector3"}
+                "scale": {"$ref": "#/$defs/vector3"},
+                "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
+                "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"}
               }
             }
           }
@@ -86,11 +91,14 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "prefabId", "position", "rotation", "scale"],
+              "required": ["id", "prefabId", "decompositionElementId", "parentId", "semanticGrouping", "layoutBinding", "position", "rotation", "scale"],
             "properties": {
-              "id": {"$ref": "common.schema.json#/$defs/taskId"},
-              "prefabId": {"$ref": "common.schema.json#/$defs/taskId"},
-              "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "id": {"$ref": "common.schema.json#/$defs/taskId"},
+                "prefabId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "decompositionElementId": {"$ref": "common.schema.json#/$defs/taskId"},
+                "parentId": {"type": "string", "minLength": 1},
+                "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
+                "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"},
               "position": {"$ref": "#/$defs/vector3"},
               "rotation": {"$ref": "#/$defs/vector3"},
               "scale": {"$ref": "#/$defs/vector3"}

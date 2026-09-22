@@ -6,6 +6,8 @@
 
 `run` 只沿主路径前向推进已满足门禁的安全状态，进入 `IMPLEMENTING` 后停止等待实际实施；它永远不选择 `RETURN`、不批准用户决定、不执行设备/外部/发布操作。
 
+可见 `SCENE` 与 `DISPLAY_LAYER` 在 `scene-production` 内分别推进自己的 V0-V4。`hostSceneId` 仅作为 DISPLAY_LAYER 的上下文依赖；缺少独立 `displayLayerId`、层类型、阶段或状态时直接阻断，不允许把弹窗挂回宿主场景工作项。
+
 ## 合法迁移
 
 ```text
@@ -34,10 +36,11 @@ COMPLETE                  → (无)
 - 进入 `PASSED` 必须有相同基线和实施包的 Evidence Manifest，且 F0-F3 和适用 Unity 证据为 PASS。
 - `PASSED` 没有证据时仍是未闭环状态；`status`/`run` 必须返回阻断，不能自动进入 `COMPLETE`。
 - A4-A6 的副作用必须通过 F4 精确批准；批准不继承到下一个对象、阶段、基线或发布批次。
+- 可见 Work Item 必须先通过 Unity 原生 `responsiveContract` 合同；可见包必须通过 `responsiveContractRef.path/version/sha256` 文件绑定，且 `SCENE` 与 `DISPLAY_LAYER` 不能混包。
+- V4 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程 resize/orientation 轨迹、截图和候选 SHA 共同证明；静态声明、构建成功或单图均不得替代。
 
 ## 三级处置
 
 1. `repair`：补齐字段、路径、所有权或可补的证据，保持候选和阶段不变。
 2. `revalidate`：候选和基线身份未变，只重新获取失效或过期的机器证据。
 3. `return`：上游事实失效、范围变化或继续推进会绕过硬门；显式记录最小影响范围，再从指定前序状态重新开始。
-

@@ -17,10 +17,11 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 2. 激活 `testing` 工具组后运行测试并查询异步任务到终态；记录版本、用例数、失败详情与原始日志。
 3. G2 前只做 Editor Profiler 趋势、静态预算、资源统计和构建日志检查，不产生目标设备性能 `PASS`。G2 `PASS` 后在 G3 激活 `profiling`，按平台候选制品和设备档位采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体。
 4. 缺陷记录版本、场景、设备、复现步骤、预期/实际、证据、P0-P3、所有者和回归状态。
-5. 2D 场景小循环至少以参考环境覆盖参考比例、装饰边带比例和外围裁切比例，复算摄像机与 UI match，检查无黑边、纯视觉边带、无 Collider/交互组件及交互安全区不越界；全部通过后适配契约才可进入 `VERIFIED`。该状态只证明场景技术实现，G3 仍须用最终设备矩阵重新验收同一候选包。
+5. 2D/UI 小循环至少覆盖窄/标准竖屏、横屏、桌面宽屏、代表性安全区和连续 resize/orientation 轨迹。逐例实测 Screen/Game View/backbuffer 或 RenderTexture、Camera `pixelRect`/投影、CanvasScaler 或 PanelSettings、`Screen.safeArea`、输入命中、关键 UI 矩形、状态、语言、稳定帧和截图；只存在组件、构建成功、单张截图或静态配置不能证明响应式通过。缺少真实测量时标记 `NOT_RUN` 或 `unverified`。
 6. 对 `$unity-game-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、蒙皮/骨骼/BlendShape、Collider、挂点、Prefab 引用和架构预算；模型生产代理的自检不能替代 QA。
 7. 对 `$unity-game-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
 8. 研发期 3D 验收使用 Unity Editor 覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形与目标场景光照；批准平台实机转台、设备性能和稳定性只在 G2 `PASS` 后的 G3 执行。
-9. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
+9. 程序化文本对 `en`、`zh-CN`、`ja`、`ru`、`es` 分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
+10. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。

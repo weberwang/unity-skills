@@ -17,8 +17,10 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。
 3. 只将至少两个场景共同需要的能力上移 Foundation/Shared；为公共接口建立消费者和变更影响清单。
 4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建；平台服务通过接口隔离，不为未选择平台增加实现。
-5. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$unity-game-3d-modeling`、`$unity-game-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
-6. 规定 3D 运行时目录、稳定资源 ID、模型/材质/Prefab 所有权和替换边界；玩法只能消费已登记且验证通过的 Prefab，禁止场景内复制并私改 Mesh、Material 或 Texture。
-7. 通过 [@Unity](plugin://unity@openai-curated-remote) 写入前用 `unity status` 确认唯一项目目标和 Editor 稳定状态，并用 `unity list` 验证所需 Pipeline 命令真实存在。
+5. 为所有可见 Scene、常驻 HUD 和独立 DISPLAY_LAYER 定义唯一 Unity 原生响应式合同，冻结 Camera、Screen/Game View、CanvasScaler 或 PanelSettings、安全区、输入坐标、resize/orientation、文本、资源分辨率、性能预算和代表性视口。UI/2D 位图默认 `sourceScale=2` 只表示生产像素密度，不是固定运行时 DPR；运行时以平台、Canvas/Panel、Camera、Render Scale、动态分辨率和 Importer 实测为准。
+6. 场景 Implementation Package 只包含 `SCENE`，弹窗包只包含 `DISPLAY_LAYER`；`hostSceneId` 只绑定公开接口和运行上下文，不表示所有权或完成依赖。Scene/Prefab/UXML/UIDocument 装配与视觉资源来源分别建模，禁止用整屏复合图代替结构。
+7. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$unity-game-3d-modeling`、`$unity-game-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
+8. 规定 3D 运行时目录、稳定资源 ID、模型/材质/Prefab 所有权和替换边界；玩法只能消费已登记且验证通过的 Prefab，禁止场景内复制并私改 Mesh、Material 或 Texture。
+9. 通过 [@Unity](plugin://unity@openai-curated-remote) 写入前用 `unity status` 确认唯一项目目标和 Editor 稳定状态，并用 `unity list` 验证所需 Pipeline 命令真实存在。
 
 新增或修改的类、函数和实体定义必须有简体中文注释；注释说明设计边界、生命周期、兼容风险或性能取舍。

@@ -9,8 +9,8 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## 最短流程
 
-1. 读取 Work Item、当前阶段、工程基线和适用门禁；需要字段时按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
-2. 以“需求与范围 → 全局基线 → 基础工程 → 逐场景生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
+1. 读取 Work Item、当前阶段、工程基线和适用门禁；需要字段时按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
+2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前冻结 Implementation Package，明确基线、文件所有权、Unity 对象所有权、执行单元、验证命令和停止条件。任务内方案、路径或资源清单变化时更新包并重验受影响范围。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。
 5. 阶段完成后回到控制面运行 `check`/`run`。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
@@ -27,10 +27,10 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 
-- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、布局、安全区和验收轨迹。
-- V2 冻结资源拆解、组件状态、生产路线、Importer/GUID/地址约定和用户必须决定的视觉边界。
+- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹。
+- V2 先冻结位置依赖、语义分组与父子关系，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定和用户必须决定的视觉边界。
 - V3 验证正式资源、Prefab/Scene/UXML 组合、序列化引用与宿主同屏效果；不得以灰盒或整张效果图冒充正式资源。
-- V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据。显示层可作为宿主场景子任务并行准备，但必须在 V4 联合验收前关闭。
+- V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。
 
 ## 领域协作
 

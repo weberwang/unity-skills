@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision", "projectStateVersion",
-    "platformId", "developmentCompletionEvidence", "buildArtifactSha256", "captureSource", "screenshot", "status", "reviews", "userApprovals"
+    "platformId", "developmentCompletionEvidence", "buildArtifactSha256", "candidateSha256", "captureSource", "screenshot", "responsiveContractRef", "contractVersions", "status", "reviews", "userApprovals"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -30,6 +30,7 @@
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
     "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "candidateSha256": {"$ref": "common.schema.json#/$defs/sha256"},
     "captureSource": {"enum": ["WINDOWS_STANDALONE", "ANDROID_PLAYER", "IOS_PLAYER", "IPADOS_PLAYER"]},
     "screenshot": {
       "type": "object",
@@ -52,6 +53,10 @@
         }
       }
     },
+    "responsiveContractRef": {"$ref": "common.schema.json#/$defs/responsiveContractRef"},
+    "contractVersions": {"$ref": "common.schema.json#/$defs/contractVersions"},
+    "runtimeMeasurement": {"$ref": "common.schema.json#/$defs/runtimeMeasurement"},
+    "v4Status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
     "status": {"enum": ["CAPTURED", "REVIEWING", "APPROVED", "REJECTED", "BLOCKED"]},
     "reviews": {
       "type": "array",
@@ -77,6 +82,20 @@
   },
   "allOf": [
     {
+      "if": {"properties": {"v4Status": {"const": "PASS"}}, "required": ["v4Status"]},
+      "then": {
+        "required": ["runtimeMeasurement"],
+        "properties": {
+          "runtimeMeasurement": {
+            "properties": {
+              "runtimeMeasured": {"const": true},
+              "verificationStatus": {"const": "PASS"}
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {"properties": {"platformId": {"const": "WINDOWS"}}, "required": ["platformId"]},
       "then": {"properties": {"captureSource": {"const": "WINDOWS_STANDALONE"}}}
     },
@@ -95,8 +114,10 @@
     {
       "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
       "then": {
-        "required": ["candidateSnapshot", "grillingEvidence"],
+        "required": ["candidateSnapshot", "grillingEvidence", "runtimeMeasurement", "v4Status"],
         "properties": {
+          "v4Status": {"const": "PASS"},
+          "runtimeMeasurement": {"properties": {"runtimeMeasured": {"const": true}, "verificationStatus": {"const": "PASS"}}},
           "reviews": {
             "minItems": 3,
             "allOf": [

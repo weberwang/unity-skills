@@ -39,6 +39,17 @@ gameplayVisualTasks:
   - visual.arena-environment
 uiVisualTasks:
   - visual.movement-prompt
+responsiveContractRef:
+  contractId: scene-arena-intro-responsive
+  version: responsive-v1
+  path: Artifacts/Contracts/Scenes/scene.arena-intro/responsive-v1.yaml
+  sha256: "1111111111111111111111111111111111111111111111111111111111111111"
+  scope: SCENE
+contractVersions:
+  responsive: responsive-v1
+  layout: layout-v1
+  visualBaseline: visual-v1
+  schema: "2.0"
 prefabStructure:
   type: prefab-structure
   path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml

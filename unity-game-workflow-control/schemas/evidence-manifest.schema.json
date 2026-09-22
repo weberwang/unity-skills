@@ -4,12 +4,15 @@
   "title": "Unity Evidence Manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "evidenceId", "workItemId", "packageId", "baselineHash", "recordedAt", "verdict", "gateResults"],
+  "required": ["schemaVersion", "evidenceId", "workItemId", "packageId", "workItemType", "visualStage", "contractVersions", "baselineHash", "recordedAt", "verdict", "gateResults"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "evidenceId": {"type": "string", "minLength": 1},
     "workItemId": {"type": "string", "minLength": 1},
     "packageId": {"type": "string", "minLength": 1},
+    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
+    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+    "contractVersions": {"$ref": "#/$defs/contractVersions"},
     "baselineHash": {"type": "string", "minLength": 1},
     "recordedAt": {"type": "string", "minLength": 1},
     "verdict": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
@@ -26,11 +29,68 @@
       }
     },
     "unityEvidence": {"$ref": "#/$defs/unityEvidence"},
+    "responsiveEvidence": {"$ref": "#/$defs/responsiveEvidence"},
+    "productionContractAudit": {"$ref": "#/$defs/productionContractAudit"},
     "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
     "approval": {"$ref": "#/$defs/approval"},
     "metadata": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}}
   },
+  "allOf": [
+    {"if": {"properties": {"workItemType": {"enum": ["SCENE", "DISPLAY_LAYER"]}, "visualStage": {"const": "V4"}, "verdict": {"const": "PASS"}}, "required": ["workItemType", "visualStage", "verdict"]}, "then": {"required": ["responsiveEvidence", "productionContractAudit"]}}
+  ],
   "$defs": {
+    "contractVersions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["responsiveContract"],
+      "properties": {"responsiveContract": {"type": "string", "minLength": 1}}
+    },
+    "sha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "measuredArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "measured", "path", "sha256"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "measured": {"const": true},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "object", "additionalProperties": false, "required": ["width", "height"], "properties": {"width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}},
+        "orientation": {"enum": ["portrait", "landscape", "square"]}
+      }
+    },
+    "responsiveEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gameView", "screen", "backbuffer", "camera", "safeArea", "inputHit", "resizeOrientationTrajectory", "screenshot", "candidateSha256"],
+      "properties": {
+        "gameView": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "GameView"}}}]},
+        "screen": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Screen"}}}]},
+        "backbuffer": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "backbuffer"}}}]},
+        "canvasScaler": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "CanvasScaler"}}}]},
+        "panelSettings": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "PanelSettings"}}}]},
+        "camera": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Camera"}}}]},
+        "safeArea": {"type": "object", "additionalProperties": false, "required": ["source", "measured", "rect"], "properties": {"source": {"const": "Screen.safeArea"}, "measured": {"const": true}, "rect": {"type": "object", "minProperties": 1}}},
+        "inputHit": {"type": "object", "additionalProperties": false, "required": ["system", "eventSystem", "hit", "coordinates"], "properties": {"system": {"const": "InputSystem"}, "eventSystem": {"const": "EventSystem"}, "hit": {"const": true}, "coordinates": {"type": "object", "minProperties": 1}}},
+        "resizeOrientationTrajectory": {"type": "object", "additionalProperties": false, "required": ["sameProcess", "events"], "properties": {"sameProcess": {"const": true}, "events": {"type": "array", "minItems": 2, "items": {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {"type": {"enum": ["resize", "orientation"]}, "path": {"type": "string", "minLength": 1}}}}}},
+        "screenshot": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Screenshot"}}}]},
+        "candidateSha256": {"$ref": "#/$defs/sha256"}
+      },
+      "anyOf": [{"required": ["canvasScaler"]}, {"required": ["panelSettings"]}]
+    },
+    "productionContractAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "contractVersion", "candidateSha256", "staticDeclarationOnly", "buildOnly", "singleScreenshotOnly"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "contractVersion": {"type": "string", "minLength": 1},
+        "candidateSha256": {"$ref": "#/$defs/sha256"},
+        "staticDeclarationOnly": {"const": false},
+        "buildOnly": {"const": false},
+        "singleScreenshotOnly": {"const": false}
+      }
+    },
     "gateResult": {
       "type": "object",
       "additionalProperties": false,

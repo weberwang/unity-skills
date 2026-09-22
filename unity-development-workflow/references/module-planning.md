@@ -10,12 +10,14 @@
 
 - `SHARED`：最小共享骨架，强制串行。
 - `MODULE`：场景无关能力；只有状态与路径互斥时可并行。
-- `SCENE`：单场景 V0-V4 聚合。
-- `DISPLAY_LAYER`：归属一个宿主场景，紧邻宿主计划。
+- `SCENE`：单场景 V0-V4 聚合，只拥有玩法、画面和常驻 HUD。
+- `DISPLAY_LAYER`：独立 Work Item，负责 modal、popup、drawer、toast 等瞬态层；`hostSceneId` 只绑定运行上下文，不把实现和验收并入宿主场景。
 - `INTEGRATION`：跨场景入口、Build Settings、Addressables、共享配置与联合验证，强制串行。
 - `RELEASE`：独立 Work Item，处理候选包和获批外部动作。
 
 `ProjectSettings/`、`Packages/`、共享 asmdef、场景列表、输入资产和全局 Addressables 不能分配给并行单元。`Assets` 资源与 `.meta` 必须同属一个单元；Prefab Variant 与基础 Prefab、Scene 与其共享 SubScene/资源的并行修改要显式证明互斥。
+
+视觉拆解 item 和 Prefab/Scene 节点必须绑定 `parentElementId`、`semanticGrouping` 与 `layoutBinding`。父子仅由位置依赖建立；共同信息没有位置依赖时声明同组同级，禁止按距离、bounds 或组件类型推断父级。父级、分组或布局绑定改变时，V2 和所有下游结构/运行证据标记为 `stale`。
 
 ## 依赖原则
 

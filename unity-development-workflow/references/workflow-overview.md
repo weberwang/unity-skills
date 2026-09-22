@@ -11,7 +11,7 @@
 | 需求与范围 | Work Item、目标、范围、验收、风险 | 项目路径和需求边界明确 |
 | 全局基线 | GDD/TDD、技术/视觉基线、平台集合 | Unity/包/渲染管线/输入/存档/资源策略已冻结 |
 | 基础工程 | SHARED/MODULE 实施包 | asmdef、Composition Root、测试入口和最小可构建骨架有效 |
-| 逐场景生产 | SCENE/DISPLAY_LAYER 实施包与 V0-V4 证据 | 每个场景的正式资源、结构、交互和 Editor 运行验收闭环 |
+| 场景与弹窗生产 | SCENE/DISPLAY_LAYER 实施包与 V0-V4 证据 | 场景只闭环玩法、画面和常驻 HUD；瞬态显示层独立验收 |
 | 全局集成验证 | INTEGRATION 单元和联合证据 | 导航、存档、音频、平台适配、性能与回归绑定同一候选 |
 | 发布 | 独立 RELEASE Work Item | 候选包、合规、回滚和精确外部操作批准 |
 
@@ -23,9 +23,15 @@
 
 纯局部修改从最早受影响阶段开始。模块/场景/资源互不相关时不得强制重跑全项目；共享配置、序列化引用、全局基线或发布候选变化时，才扩展失效范围。
 
+## 视觉来源与结构装配
+
+场景使用 V0-V4。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系只能由位置依赖和显式节点事实建立；没有位置依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。
+
+视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 必须绑定精确 GUID、源 SHA、Importer 指纹和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
+
 ## 场景与显示层
 
-场景使用 V0-V4；modal、popup、drawer、toast、HUD 等显示层作为宿主子任务。未就绪层登记为 deferred，不阻止宿主完成自身前置，但最终 V4 必须关闭全部必需显示层并重放焦点、输入、时间缩放和底层状态恢复。
+场景只包含玩法、画面和常驻 HUD。modal、popup、drawer、toast 等瞬态层是独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只表示运行上下文，不表示实现归属，也不阻断宿主场景 V4。显示层拥有自己的结构、响应式合同、打开/交互/关闭/恢复轨迹和运行证据。
 
 ## 失败处置
 

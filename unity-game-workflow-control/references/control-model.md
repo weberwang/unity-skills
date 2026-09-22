@@ -14,6 +14,20 @@
 
 A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍必须满足。A4 只有在无外部、无破坏性副作用时可以按安全本地集成推进；A4-A6 一旦带副作用，必须有与对象、影响、路径和基线精确绑定的批准。
 
+## Work Item 类型与显示层边界
+
+`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V0-V4）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
+
+`hostSceneId` 只表示显示层打开时的宿主上下文和公开接线目标，不是场景身份，也不把宿主场景完成状态并入显示层。场景与显示层必须各自规划、各自实施、各自验收；同一 Implementation Package 不得同时出现 `SCENE` 和 `DISPLAY_LAYER` 单元。
+
+## Unity 原生响应式合同
+
+可见 `SCENE`/`DISPLAY_LAYER` 必须携带 `responsiveContract` 和当前正式候选的 `candidateSha256`。合同只描述 Unity 原生事实：版本、UI 系统、Unity logical units、backbuffer、Panel、RenderTexture、CanvasScaler、PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 坐标转换、同进程 resize、方向重排、文本/本地化、资源分辨率、性能预算、代表性视口和所需运行证据。
+
+Implementation Package 的 `responsiveContractRef.path/version/sha256` 必须指向仓库内合同文件；控制器会回读文件、重新计算 SHA，并规范化比较合同完整内容，不能用同版本的另一份合同替代当前 Work Item 合同。
+
+程序化文本为 `programmatic=true` 时，`locales` 必须精确为 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`；非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=2`，其他正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
+
 ## F0-F4 唯一语义
 
 | 门 | 语义 | 核心问题 |

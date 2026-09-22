@@ -4,15 +4,22 @@
   "title": "Unity Implementation Package",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "packageId", "workItemId", "baselineHash", "executionUnits", "fileOwnership", "unityOwnership", "packageStatus"],
+  "required": ["schemaVersion", "packageId", "workItemId", "workItemType", "baselineHash", "executionUnits", "fileOwnership", "unityOwnership", "packageStatus"],
   "allOf": [{
     "if": {"properties": {"packageStatus": {"const": "COMPLETE"}}},
     "then": {"properties": {"executionUnits": {"items": {"properties": {"status": {"const": "COMPLETE"}}}}}}
+  }, {
+    "if": {"properties": {"workItemType": {"enum": ["SCENE", "DISPLAY_LAYER"]}}, "required": ["workItemType"]},
+    "then": {"required": ["responsiveContractRef"]}
+  }, {
+    "if": {"properties": {"workItemType": {"enum": ["PROJECT", "FOUNDATION", "INTEGRATION", "RELEASE"]}}, "required": ["workItemType"]},
+    "then": {"not": {"required": ["responsiveContractRef"]}}
   }],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "packageId": {"type": "string", "minLength": 1},
     "workItemId": {"type": "string", "minLength": 1},
+    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
     "baselineHash": {"type": "string", "minLength": 1},
     "stageId": {"type": "string", "minLength": 1},
     "approvedRequirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
@@ -21,6 +28,7 @@
     "editorWriter": {"type": "string", "minLength": 1},
     "fileOwnership": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
     "unityOwnership": {"$ref": "#/$defs/unityOwnership"},
+    "responsiveContractRef": {"$ref": "#/$defs/responsiveContractRef"},
     "expectedFiles": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "executionUnits": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/executionUnit"}},
     "packageStatus": {"enum": ["FROZEN", "IN_PROGRESS", "COMPLETE", "BLOCKED"]},
@@ -36,6 +44,9 @@
         "unitType": {"enum": ["SHARED", "MODULE", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
         "scopeId": {"type": "string", "minLength": 1},
         "moduleId": {"type": "string", "minLength": 1},
+        "sceneId": {"type": "string", "minLength": 1},
+        "displayLayerId": {"type": "string", "minLength": 1},
+        "hostSceneId": {"type": "string", "minLength": 1},
         "owner": {"type": "string", "minLength": 1},
         "files": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
         "status": {"enum": ["PLANNED", "READY", "IMPLEMENTING", "COMPLETE", "BLOCKED", "NOT_RUN"]},
@@ -43,6 +54,21 @@
         "editorWrite": {"type": "boolean"},
         "serial": {"type": "boolean"},
         "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      },
+      "allOf": [
+        {"if": {"properties": {"unitType": {"const": "SCENE"}}, "required": ["unitType"]}, "then": {"required": ["sceneId"], "not": {"anyOf": [{"required": ["displayLayerId"]}, {"required": ["hostSceneId"]}]}}},
+        {"if": {"properties": {"unitType": {"const": "DISPLAY_LAYER"}}, "required": ["unitType"]}, "then": {"required": ["displayLayerId", "hostSceneId"], "not": {"required": ["sceneId"]}}},
+        {"if": {"properties": {"unitType": {"enum": ["SHARED", "MODULE", "INTEGRATION", "RELEASE"]}}, "required": ["unitType"]}, "then": {"not": {"anyOf": [{"required": ["sceneId"]}, {"required": ["displayLayerId"]}, {"required": ["hostSceneId"]}]}}}
+      ]
+    },
+    "responsiveContractRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "version", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "version": {"const": "unity-responsive/1.0"},
+        "sha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
       }
     },
     "unityOwnership": {

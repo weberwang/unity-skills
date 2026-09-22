@@ -18,6 +18,7 @@ splitPlanEvidence:
 assetBindings:
   - itemId: asset.arena-intro.background
     resourceId: asset.arena-background
+    decompositionElementId: asset.arena-intro.background
     productionType: IMAGE_TASK
     productionEvidence:
       type: image-task
@@ -27,12 +28,28 @@ assetBindings:
       subjectVersion: arena-background-v1
     assetPath: Assets/Art/Runtime/Arena/background.png
     assetGuid: dddddddddddddddddddddddddddddddd
+    consumerNodeIds: [node.arena-background]
 prefabs:
   - id: prefab.arena-root
     path: Assets/Prefabs/Scenes/ArenaRoot.prefab
     nodes:
       - id: node.arena-root
         name: ArenaRoot
+        parentId: viewport
+        decompositionElementId: arena-root
+        semanticGrouping:
+          kind: region
+          rationale: 竞技场根节点是场景的结构化视觉区域。
+        layoutBinding:
+          parentElementId: viewport
+          positionDependency: PARENT_CHILD
+          coordinateSpace: SCENE_LOCAL
+          anchor:
+            min: {x: 0, y: 0}
+            max: {x: 1, y: 1}
+          pivot: {x: 0.5, y: 0.5}
+          constraints: [scene-root]
+          resizePolicy: CAMERA_RELATIVE
         components: [Transform]
         position: {x: 0, y: 0, z: 0}
         rotation: {x: 0, y: 0, z: 0}
@@ -40,6 +57,20 @@ prefabs:
       - id: node.arena-background
         parentId: node.arena-root
         name: Background
+        decompositionElementId: asset.arena-intro.background
+        semanticGrouping:
+          kind: part
+          rationale: 背景是竞技场根节点下的静态视觉部件。
+        layoutBinding:
+          parentElementId: node.arena-root
+          positionDependency: PARENT_CHILD
+          coordinateSpace: PREFAB_LOCAL
+          anchor:
+            min: {x: 0, y: 0}
+            max: {x: 1, y: 1}
+          pivot: {x: 0.5, y: 0.5}
+          constraints: [background-fill]
+          resizePolicy: SCALE_WITH_PARENT
         resourceId: asset.arena-background
         components: [Transform, SpriteRenderer]
         position: {x: 0, y: 0, z: 1}
@@ -50,6 +81,21 @@ scene:
   prefabInstances:
     - id: instance.arena-root
       prefabId: prefab.arena-root
+      decompositionElementId: arena-root
+      parentId: viewport
+      semanticGrouping:
+        kind: region
+        rationale: 场景实例承载竞技场结构化区域。
+      layoutBinding:
+        parentElementId: viewport
+        positionDependency: PARENT_CHILD
+        coordinateSpace: SCENE_LOCAL
+        anchor:
+          min: {x: 0, y: 0}
+          max: {x: 1, y: 1}
+        pivot: {x: 0.5, y: 0.5}
+        constraints: [scene-root]
+        resizePolicy: CAMERA_RELATIVE
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0}
       scale: {x: 1, y: 1, z: 1}

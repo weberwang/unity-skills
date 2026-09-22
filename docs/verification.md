@@ -2,7 +2,7 @@
 
 ## 本次验证范围
 
-本记录更新于 2026-09-10，覆盖以 Phaser 工作流控制为基线重构后的 Unity 控制面，以及将旧 Unity MCP 执行层整体替换为 [@Unity](plugin://unity@openai-curated-remote) 与 `com.unity.pipeline` 命令层的改动。验证范围包括六阶段任务投影、V0-V4 场景循环、F0-F4 质量门、A0-A6 动作等级、Work Item、Implementation Package、Evidence Manifest、精确审批、Unity 路径所有权、单写者约束、四个 Toolkit Pipeline 命令、UPM 依赖闭包、安装器与领域 Skill 文档。
+本记录更新于 2026-09-22，覆盖将 Phaser 工作流 2026-09-10 至 2026-09-21 的流程更新同步到 Unity 控制面，并保留 [@Unity](plugin://unity@openai-curated-remote) 与 `com.unity.pipeline` 命令层。验证范围包括独立 `DISPLAY_LAYER` Work Item/实施包、Unity 原生响应式合同、V4 运行测量、视觉来源与结构装配分离、父级和语义分组、五语言程序化文本策略、六阶段任务投影、V0-V4 场景循环、F0-F4 质量门、路径所有权、单写者约束、Schema、模板和领域 Skill 文档。
 
 本次按 T2（模块验证）执行。原因是改动跨越控制器、Schema、安装清单、编排文档和领域 Skill，需要全量 Node.js 回归、控制器 lint 与 Skill 结构校验。按仓库约束，没有启动 Unity Editor、服务或真机验收。
 
@@ -16,7 +16,7 @@
 rtk npm test
 ```
 
-结果：`81/81` 个 `node:test` 测试通过。覆盖控制面安全推进、实施包冻结、证据绑定、精确审批、A4 集成门禁、A5/A6 发布闭环、RETURN 恢复、路径规范化、Unity 共享路径单写者、依赖顺序、Schema/runtime 一致性、进程锁、revision/CAS、安装器、`com.unity.pipeline` 与 Input System 依赖闭包、Pipeline 命令契约、旧 Unity MCP 清理以及专项 Skill 静态契约。
+结果：`98/98` 个 `node:test` 测试通过。新增覆盖场景与显示层包隔离、`hostSceneId` 上下文语义、CanvasScaler/PanelSettings 路线互斥、`sourceScale=2` 默认值及显式覆盖、程序化文本五语言策略、合同完整内容绑定、运行工件回读与 SHA 校验、当前候选绑定、V4 响应式运行证据、视觉来源与装配分析，以及六个 YAML 模板的 AJV 校验；既有控制面、安装器、Pipeline 命令和专项 Skill 回归保持通过。
 
 ### 控制面 lint
 
@@ -35,16 +35,15 @@ rtk node unity-game-workflow-control/scripts/workflow-control.mjs lint --reposit
 ```powershell
 $env:PYTHONUTF8='1'
 rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-development-workflow
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-3d-modeling
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-3d-texturing
 rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-architecture
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-build-player-character
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-grilling
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-release
-rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-spine-reskin
+rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-production
+rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-qa-performance
+rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-visual-assets
+rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-game-workflow-control
+rtk python C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py unity-gameplay-development
 ```
 
-结果：八个受影响 Skill 均返回 `Skill is valid!`。
+结果：七个受影响 Skill 均返回 `Skill is valid!`。
 
 ### 静态完整性
 

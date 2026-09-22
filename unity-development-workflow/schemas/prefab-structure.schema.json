@@ -49,12 +49,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "prefabId", "scenePath", "position", "rotation", "scale"],
+        "required": ["id", "prefabId", "scenePath", "parentId", "decompositionElementId", "semanticGrouping", "layoutBinding", "position", "rotation", "scale"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "prefabId": {"$ref": "common.schema.json#/$defs/taskId"},
           "scenePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "parentId": {"type": "string", "minLength": 1},
+          "decompositionElementId": {"$ref": "common.schema.json#/$defs/taskId"},
+          "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
+          "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"},
           "position": {"$ref": "#/$defs/vector3"},
           "rotation": {"$ref": "#/$defs/vector3"},
           "scale": {"$ref": "#/$defs/vector3"}
@@ -106,10 +109,11 @@
     "node": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "nodeType", "interactive", "position", "rotation", "scale", "components"],
+      "required": ["id", "name", "nodeType", "interactive", "parentId", "decompositionElementId", "semanticGrouping", "layoutBinding", "position", "rotation", "scale", "components"],
       "properties": {
         "id": {"$ref": "common.schema.json#/$defs/taskId"},
-        "parentId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "parentId": {"type": "string", "minLength": 1},
+        "decompositionElementId": {"$ref": "common.schema.json#/$defs/taskId"},
         "name": {"type": "string", "minLength": 1},
         "nodeType": {"enum": ["CONTAINER", "VISUAL", "UI", "INTERACTION", "CAMERA", "LIGHT"]},
         "interactive": {"type": "boolean"},
@@ -117,6 +121,8 @@
         "position": {"$ref": "#/$defs/vector3"},
         "rotation": {"$ref": "#/$defs/vector3"},
         "scale": {"$ref": "#/$defs/vector3"},
+        "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
+        "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"},
         "components": {
           "type": "array",
           "uniqueItems": true,

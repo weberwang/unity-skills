@@ -6,7 +6,7 @@
 
 ## 用户阶段
 
-项目按六阶段展示：需求与范围、全局基线、基础工程、逐场景生产、全局集成验证、发布。场景按 V0 分流、V1 场景定义、V2 拆解确认、V3 正式资源与组合验收、V4 正式实现与运行验收闭环。
+项目按六阶段展示：需求与范围、全局基线、基础工程、场景与弹窗生产、全局集成验证、发布。SCENE 与 DISPLAY_LAYER 分别按 V0 分流、V1 对象定义、V2 拆解确认、V3 正式资源与组合验收、V4 正式实现与运行验收闭环。场景只负责自身玩法、画面和常驻 HUD；modal、popup、drawer、toast 使用独立 Work Item 与 Implementation Package，`hostSceneId` 只绑定运行上下文和公开接口，不构成宿主完成依赖。
 
 内部 G0-G3 只作为领域里程碑标签，不建立第二套状态机。纯局部任务直接落到最早受影响阶段，不重走无关项目流程。
 
@@ -16,6 +16,7 @@
 - F0-F4：范围流程、规格一致性、领域质量、工程验证、高影响操作批准。
 - A3 前冻结 Implementation Package，记录基线、路径/Unity 对象所有权、执行单元、验证与停止条件。
 - 证据绑定 Work Item、基线、候选摘要、命令、环境、文件 SHA 和门禁结果。
+- 可见对象在 V1 冻结 Unity 原生响应式合同；V2 先确认位置依赖、语义分组与父子关系，再分别冻结视觉来源和 Scene/Prefab/UI 装配；V4 PASS 必须绑定 Screen/Game View、Camera、CanvasScaler/PanelSettings、安全区、输入命中、resize/orientation、截图和候选身份的真实运行测量。
 - 失败优先 `repair`，候选未变时 `revalidate`；只有上游事实失效、范围变化或硬门将被绕过时显式 `return`。
 
 ## Unity 原生边界

@@ -23,6 +23,12 @@ G0 确定目标平台、S00/G1 选择主开发平台、G2 完成各平台适配�
 
 移动端共同要求：UI Toolkit 与游戏画面处理安全区、刘海/挖孔、圆角、系统栏、横竖屏、旋转和尺寸变化；交互目标、字号和间距服从触控可用性。输入以触控为主，按批准范围覆盖点击、拖拽、长按、多点触控、手势冲突、软键盘、系统返回或系统手势，不得依赖悬停和右键。所有目标都检查前后台、音频中断、权限拒绝、低内存、资源恢复、安装升级、离线、网络切换、热状态和耗电。
 
+## Unity 原生响应式合同
+
+每个场景和独立 `DISPLAY_LAYER` 绑定 `responsiveContractRef` 与 `contractVersions`。运行时读取真实 Unity 事实：Screen/GameView、backbuffer 或 RenderTexture 尺寸，Camera `pixelRect`/`orthographicSize`/projection，CanvasScaler 或 PanelSettings，`Screen.safeArea`，方向与连续 resize，EventSystem/InputSystem 命中，截图、候选 SHA 和状态轨迹。缺少任一合同要求的实测时，V4/PASS 必须失败或保持 `NOT_RUN`。
+
+UI/2D 位图生产默认 `sourceScale=2`，不把固定 Web DPR 带入运行时；运行时按平台、Canvas/Panel、Camera 与动态分辨率实际值布局。程序化文本覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 single-line/wrap，禁止截断，并验证 TMP/UI Toolkit 的字体回退、字形、基线和容器边界。
+
 ### Android
 
 - 可分别批准 PHONE、TABLET 或两者；每种批准形态至少有一个设备档位。

@@ -6,6 +6,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { canonicalizePosixPath as canonicalizePosixPathRuntime, commitWithLock } from './runtime/io.mjs';
+import { assertVisibleContract, validateUnitDependencies, validateUnityOwnershipShape, validateVisibleEvidenceContract, validateVisibleImplementationPackage, validateVisibleWorkItemContract } from './runtime/visible-contract.mjs';
 /** 唯一接受的数据合同版本；旧字段不会被迁移或解释。 */
 export const SCHEMA_VERSION = '1.0';
 /** 用户可见的六个项目阶段。 */
@@ -59,11 +60,8 @@ export const ACTION_LEVEL = Object.freeze({
 
 /** 阶段中文标签仅用于稳定展示，不参与门禁判断。 */
 export const STAGE_LABELS = Object.freeze({
-  'requirements-scope': '需求与范围',
-  'global-baseline': '全局基线',
-  'foundation-engineering': '基础工程',
-  'scene-production': '逐场景生产',
-  'global-integration-validation': '全局集成验证',
+  'requirements-scope': '需求与范围', 'global-baseline': '全局基线', 'foundation-engineering': '基础工程',
+  'scene-production': '场景与弹窗生产', 'global-integration-validation': '全局集成验证',
   release: '发布',
 });
 /** 场景阶段中文标签仅用于稳定展示。 */
@@ -203,7 +201,7 @@ function approvalSnapshot(work) {
 
 /** 校验并返回 Work Item 的只读规范化视图。 */
 export function validateWorkItem(work) {
-  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'workItemType', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'displayLayer', 'responsiveContract', 'candidateSha256', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata']);
   knownObject(work, allowed, 'Work Item');
   schemaVersion(work, 'Work Item');
   for (const field of ['workItemId', 'projectId', 'baselineHash', 'objective']) if (typeof work[field] !== 'string' || !work[field].trim()) fail(`Work Item.${field} 必须为非空字符串`);
@@ -234,6 +232,7 @@ export function validateWorkItem(work) {
     enumValue(work.scene.stage, SCENE_STAGES, 'Work Item.scene.stage');
     if (work.scene.status !== undefined) enumValue(work.scene.status, ['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'], 'Work Item.scene.status');
   }
+  assertVisibleContract(validateVisibleWorkItemContract(work), fail);
   const approvalContext = { ...work, actionType: snapshot.actionType, actionLevel: snapshot.actionLevel };
   if (work.pendingApproval !== undefined) validateApprovalShape(work.pendingApproval, 'Work Item.pendingApproval', approvalContext, { pending: true });
   if (work.approval !== undefined) validateApprovalShape(work.approval, 'Work Item.approval', approvalContext);
@@ -318,50 +317,9 @@ function isSharedUnityPath(file) {
   return normalized.startsWith('ProjectSettings/') || normalized.startsWith('Packages/') || normalized.startsWith('Build/') || normalized.startsWith('BuildSettings/') || normalized.includes('/AddressableAssetsData/') || normalized.startsWith('Assets/AddressableAssetsData/') || sharedAsmdef;
 }
 
-/** 校验实施包的 Unity 所有权实体结构，保持 schema 与运行时拒绝边界一致。 */
-function validateUnityOwnershipShape(ownership) {
-  if (!ownership || typeof ownership !== 'object' || Array.isArray(ownership)) fail('Implementation Package.unityOwnership 必须为对象');
-  knownObject(ownership, new Set(['metaPairs', 'guidImporter', 'serializedAssets', 'scenePrefabScriptableObject', 'projectSettingsPackagesBuildSettings']), 'Implementation Package.unityOwnership');
-  for (const field of ['guidImporter', 'serializedAssets', 'scenePrefabScriptableObject', 'projectSettingsPackagesBuildSettings']) stringArray(ownership[field], `unityOwnership.${field}`);
-  if (ownership.metaPairs !== undefined) {
-    if (!Array.isArray(ownership.metaPairs)) fail('unityOwnership.metaPairs 必须为数组');
-    for (const pair of ownership.metaPairs) {
-      knownObject(pair, new Set(['asset', 'meta']), 'unityOwnership.metaPairs');
-      stringArray([pair.asset, pair.meta], 'unityOwnership.metaPairs 条目', true);
-    }
-  }
-  return ownership;
-}
-
-/** 校验实施单元依赖存在、无环，并满足当前状态的完成前置。 */
-function validateUnitDependencies(units) {
-  const byId = new Map(units.map((unit) => [unit.unitId, unit]));
-  for (const unit of units) {
-    const dependencies = stringArray(unit.dependsOn, `实施单元 ${unit.unitId}.dependsOn`);
-    if (new Set(dependencies).size !== dependencies.length) fail(`实施单元 dependsOn 不能重复：${unit.unitId}`, 2, { errorCode: 'UNIT_DEPENDENCY_DUPLICATE' });
-    if (dependencies.includes(unit.unitId)) fail(`实施单元不能依赖自身：${unit.unitId}`, 2, { errorCode: 'UNIT_SELF_DEPENDENCY' });
-    for (const dependency of dependencies) if (!byId.has(dependency)) fail(`实施单元依赖不存在：${unit.unitId} → ${dependency}`, 2, { errorCode: 'UNIT_DEPENDENCY_MISSING' });
-    unit.dependsOn = dependencies;
-  }
-  const visiting = new Set();
-  const visited = new Set();
-  const visit = (unitId) => {
-    if (visiting.has(unitId)) fail(`实施单元依赖存在循环：${unitId}`, 2, { errorCode: 'UNIT_DEPENDENCY_CYCLE' });
-    if (visited.has(unitId)) return;
-    visiting.add(unitId);
-    for (const dependency of byId.get(unitId).dependsOn) visit(dependency);
-    visiting.delete(unitId);
-    visited.add(unitId);
-  };
-  for (const unit of units) visit(unit.unitId);
-  for (const unit of units) {
-    if (['IMPLEMENTING', 'COMPLETE'].includes(unit.status) && unit.dependsOn.some((dependency) => byId.get(dependency).status !== 'COMPLETE')) fail(`实施单元 ${unit.unitId} 的依赖尚未 COMPLETE`, 2, { errorCode: 'UNIT_DEPENDENCY_NOT_COMPLETE' });
-  }
-}
-
 /** 校验 Unity 实施包、路径所有权、.meta/GUID/Importer 和单写者约束。 */
 export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
-  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'expectedFiles', 'executionUnits', 'packageStatus', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'workItemType', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'responsiveContractRef', 'expectedFiles', 'executionUnits', 'packageStatus', 'metadata']);
   knownObject(pkg, allowed, 'Implementation Package');
   schemaVersion(pkg, 'Implementation Package');
   for (const field of ['packageId', 'workItemId', 'baselineHash']) if (typeof pkg[field] !== 'string' || !pkg[field].trim()) fail(`Implementation Package.${field} 必须为非空字符串`);
@@ -372,7 +330,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
   if (!Array.isArray(pkg.executionUnits) || pkg.executionUnits.length === 0) fail('Implementation Package.executionUnits 不能为空');
   if (!pkg.fileOwnership || typeof pkg.fileOwnership !== 'object' || Array.isArray(pkg.fileOwnership) || !Object.keys(pkg.fileOwnership).length) fail('Implementation Package.fileOwnership 必须为非空对象');
   for (const [file, owner] of Object.entries(pkg.fileOwnership)) if (typeof owner !== 'string' || !owner.trim()) fail(`fileOwnership 所有者无效：${file}`);
-  validateUnityOwnershipShape(pkg.unityOwnership);
+  validateUnityOwnershipShape(pkg.unityOwnership, { knownObject, stringArray, fail });
   const packageAllowed = stringArray(pkg.allowedPaths, 'Implementation Package.allowedPaths');
   if (pkg.allowedPaths !== undefined && packageAllowed.length === 0) fail('Implementation Package.allowedPaths 显式提供时必须为非空数组');
   const allowedPaths = packageAllowed.length ? packageAllowed.map(normalizePattern) : work.allowedPaths;
@@ -385,7 +343,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
   const editorOwners = new Set();
   const specialParallel = new Set();
   for (const unit of pkg.executionUnits) {
-    const unitAllowed = new Set(['unitId', 'unitType', 'scopeId', 'moduleId', 'owner', 'files', 'status', 'parallelGroup', 'editorWrite', 'serial', 'dependsOn']);
+    const unitAllowed = new Set(['unitId', 'unitType', 'scopeId', 'moduleId', 'sceneId', 'displayLayerId', 'hostSceneId', 'owner', 'files', 'status', 'parallelGroup', 'editorWrite', 'serial', 'dependsOn']);
     knownObject(unit, unitAllowed, 'Implementation Package.executionUnit');
     for (const field of ['unitId', 'moduleId', 'owner']) if (typeof unit[field] !== 'string' || !unit[field].trim()) fail(`实施单元.${field} 必须为非空字符串`);
     if (unitIds.has(unit.unitId)) fail(`实施单元 ID 重复：${unit.unitId}`);
@@ -419,7 +377,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
     }
     units.push({ ...unit, files: files.map(normalizePattern), formalEditorWrite, dependsOn: stringArray(unit.dependsOn, `实施单元 ${unit.unitId}.dependsOn`) });
   }
-  validateUnitDependencies(units);
+  validateUnitDependencies(units, { stringArray, fail });
   if (pkg.packageStatus === 'COMPLETE' && units.some((unit) => unit.status !== 'COMPLETE')) fail('packageStatus=COMPLETE 时所有实施单元必须为 COMPLETE', 2, { errorCode: 'PACKAGE_STATUS_INCONSISTENT' });
   const declaredOwnership = Object.entries(pkg.fileOwnership);
   for (const [file, owner] of declaredOwnership) {
@@ -437,6 +395,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
     if (pkg.editorWriter !== work.editorWriter) fail('Work Item.editorWriter 与 Implementation Package.editorWriter 不一致');
     if (editorOwners.size !== 1 || !editorOwners.has(work.editorWriter)) fail('Work Item.editorWriter 未覆盖唯一正式 Editor 写入者');
   }
+  assertVisibleContract(validateVisibleImplementationPackage(pkg, work, repo), fail);
   if (specialParallel.size) fail('共享设置、集成和发布单元不得使用并行组');
   validateUnityOwnership(pkg, files, packageAllowed.length ? allowedPaths : work.allowedPaths, packageForbidden);
   return { ...pkg, executionUnits: units, expectedFiles: files, allowedPaths, forbiddenPaths, fileOwners };
@@ -475,8 +434,8 @@ function validateUnityOwnership(pkg, files, allowedPaths, forbiddenPaths) {
 }
 
 /** 校验证据清单结构并绑定当前 Work Item 与实施包。 */
-export function validateEvidence(evidence, work, pkg = null) {
-  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'artifacts', 'approval', 'metadata']);
+export function validateEvidence(evidence, work, pkg = null, repo = process.cwd()) {
+  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'artifacts', 'approval', 'metadata']);
   knownObject(evidence, allowed, 'Evidence Manifest');
   schemaVersion(evidence, 'Evidence Manifest');
   for (const field of ['evidenceId', 'workItemId', 'packageId', 'baselineHash', 'recordedAt']) if (typeof evidence[field] !== 'string' || !evidence[field].trim()) fail(`Evidence Manifest.${field} 必须为非空字符串`);
@@ -495,6 +454,7 @@ export function validateEvidence(evidence, work, pkg = null) {
     const pending = approvalSnapshot(work);
     validateApprovalShape(evidence.approval, 'Evidence Manifest.approval', { ...work, actionType: pending.actionType, actionLevel: pending.actionLevel });
   }
+  assertVisibleContract(validateVisibleEvidenceContract(evidence, work, repo), fail);
   if (evidence.verdict === 'PASS' && GATES.slice(0, 4).some((gate) => gates[gate].status !== 'PASS')) fail('Evidence Manifest.verdict=PASS 必须使 F0-F3 全部 PASS');
   if (evidence.verdict === 'PASS' && gates.F4.status === 'FAIL') fail('Evidence Manifest.verdict=PASS 不能包含 FAIL 的 F4 门');
   if (evidence.verdict === 'PASS' && evidence.unityEvidence) {
@@ -592,7 +552,7 @@ export function inspect(args = {}, command = 'status') {
   if (pkg && ['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState) && !packageComplete(pkg)) blockers.push(blocker('IMPLEMENTATION_INCOMPLETE', '实施包仍有未完成单元', '完成当前实施单元并重新验证'));
   if (work.actionLevel === 'A4' && ['PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState) && (!pkg || !hasIntegrationUnit(pkg))) blockers.push(blocker('INTEGRATION_PACKAGE_MISSING', 'A4 集成或完成必须绑定含 INTEGRATION 单元的实施包', '冻结并绑定当前集成实施包'));
   if (evidencePath) {
-    try { evidence = validateEvidence(readJson(resolve(repo, String(evidencePath)), 'Evidence Manifest'), work, pkg); } catch (error) { blockers.push(errorBlock(error, 'Evidence Manifest 校验失败')); }
+    try { evidence = validateEvidence(readJson(resolve(repo, String(evidencePath)), 'Evidence Manifest'), work, pkg, repo); } catch (error) { blockers.push(errorBlock(error, 'Evidence Manifest 校验失败')); }
   }
   if (['VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING', 'COMPLETE'].includes(work.globalState) && !evidencePath) blockers.push(blocker('EVIDENCE_MISSING', '当前状态缺少 Evidence Manifest', '记录并绑定当前候选验证证据'));
   if (evidence && evidence.verdict !== 'PASS') blockers.push(blocker('EVIDENCE_NOT_PASS', 'Evidence Manifest verdict 不是 PASS', '按证据选择 repair 或 revalidate'));
@@ -951,7 +911,7 @@ function loadApproval(args, work) {
 /** Skill 自检：schema、入口文档、状态/风险标识和文件规模必须齐全。 */
 export function lint(args = {}) {
   const root = args.skill ? resolve(String(args.skill)) : resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs'];
+  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs'];
   const checked = [];
   for (const item of required) {
     const path = join(root, item);

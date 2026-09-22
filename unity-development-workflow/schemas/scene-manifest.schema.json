@@ -6,7 +6,7 @@
   "required": [
     "schemaVersion", "projectId", "sourceRevision", "projectStateVersion", "id", "version", "dimension", "purpose", "lifecycle", "decompositionPlan",
     "entryConditions", "exitConditions", "dependencies", "moduleDependencies",
-    "sharedCapabilities", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks",
+    "sharedCapabilities", "ownedAssets", "gameplayVisualTasks", "uiVisualTasks", "responsiveContractRef", "contractVersions",
     "prefabStructure", "highFidelityVisualReview", "assetMap", "prefabAssembly",
     "qualityGate", "status", "approvals", "qualityReportPaths", "editorCapturePaths",
     "qualityReports", "editorCaptures", "visualReviews", "evidence"
@@ -47,6 +47,15 @@
     "ownedAssets": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/projectRelativePath"}},
     "gameplayVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
     "uiVisualTasks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+    "responsiveContractRef": {"$ref": "common.schema.json#/$defs/responsiveContractRef"},
+    "contractVersions": {"$ref": "common.schema.json#/$defs/contractVersions"},
+    "runtimeMeasurement": {"$ref": "common.schema.json#/$defs/runtimeMeasurement"},
+    "runtimeVisualEvidence": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/evidence"},
+        {"properties": {"type": {"const": "runtime-visual-evidence"}}, "required": ["type", "subjectId", "subjectVersion"]}
+      ]
+    },
     "prefabStructure": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/evidence"},
@@ -111,13 +120,18 @@
     {
       "if": {"properties": {"status": {"const": "DONE"}}, "required": ["status"]},
       "then": {
-        "required": ["frozenAtUtc"],
+        "required": ["frozenAtUtc", "runtimeMeasurement", "runtimeVisualEvidence"],
         "properties": {
           "qualityReportPaths": {"minItems": 1},
           "editorCapturePaths": {"minItems": 1},
           "qualityReports": {"minItems": 1},
           "editorCaptures": {"minItems": 1},
           "evidence": {"minItems": 1},
+          "runtimeVisualEvidence": {"type": "object"},
+          "runtimeMeasurement": {
+            "required": ["runtimeMeasured"],
+            "properties": {"runtimeMeasured": {"const": true}, "verificationStatus": {"const": "PASS"}}
+          },
           "approvals": {
             "minItems": 12,
             "allOf": [

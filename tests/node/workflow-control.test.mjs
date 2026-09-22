@@ -35,6 +35,7 @@ function makePackage(workItemId, complete = false, owner = 'worker') {
     schemaVersion: '1.0',
     packageId: 'PKG-1',
     workItemId,
+    workItemType: 'FOUNDATION',
     baselineHash: HASH,
     packageStatus: complete ? 'COMPLETE' : 'FROZEN',
     fileOwnership: {
@@ -62,6 +63,7 @@ function makeWork(state = 'REVIEW', overrides = {}) {
     schemaVersion: '1.0',
     workItemId: 'WI-1',
     projectId: 'unity-test',
+    workItemType: 'FOUNDATION',
     moduleIds: ['core'],
     stageId: 'foundation-engineering',
     globalState: state,
@@ -86,6 +88,9 @@ function makeEvidence(workItemId = 'WI-1') {
     evidenceId: 'EV-1',
     workItemId,
     packageId: 'PKG-1',
+    workItemType: 'FOUNDATION',
+    visualStage: 'V0',
+    contractVersions: { responsiveContract: 'not-applicable' },
     baselineHash: HASH,
     recordedAt: '2026-09-10T00:00:00Z',
     verdict: 'PASS',
@@ -426,6 +431,7 @@ test('lint 校验 Skill 入口和严格 schema', () => {
   assert.equal(output.ok, true);
   assert.equal(output.status, 'READY');
   assert.ok(output.metadata.checked.includes('schemas/work-item.schema.json'));
+  assert.ok(output.metadata.checked.includes('scripts/runtime/visible-contract.mjs'));
 });
 
 /** 为测试覆盖准备一个相对路径字符串，避免在 fixture 创建前引用临时目录。 */

@@ -8,7 +8,10 @@
       "pattern": "^[a-z0-9][a-z0-9.-]{0,95}$"
     },
     "productionRoute": {
-      "enum": ["REUSE", "GENERATE", "REDRAW", "PROGRAMMATIC", "MODEL_3D", "MATERIAL", "VFX", "CODE", "BLOCKED"]
+      "enum": ["REUSE", "GENERATE", "REDRAW", "PROGRAMMATIC", "IMAGE_ASSET", "UNITY_NATIVE", "MODEL_3D", "MATERIAL", "VFX", "CODE", "BLOCKED"]
+    },
+    "visualSourceRoute": {
+      "enum": ["IMAGE_ASSET", "UNITY_NATIVE", "REUSE", "MODEL_3D", "MATERIAL", "VFX"]
     },
     "projectRelativePath": {
       "type": "string",
@@ -19,6 +22,330 @@
       "type": "string",
       "minLength": 1,
       "pattern": "^[^\\s@]+(?:@[A-Za-z0-9._-]+)?$"
+    },
+    "semanticGrouping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "rationale"],
+      "properties": {
+        "kind": {"enum": ["region", "component", "part", "standalone"]},
+        "rationale": {"type": "string", "minLength": 1}
+      },
+      "description": "语义归属必须由拆解阶段显式确认，不能根据距离、bounds 或组件类型猜测。"
+    },
+    "layoutBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parentElementId", "positionDependency", "coordinateSpace", "anchor", "pivot", "constraints"],
+      "properties": {
+        "parentElementId": {"type": "string", "minLength": 1},
+        "positionDependency": {"enum": ["PARENT_CHILD", "SAME_LEVEL"]},
+        "coordinateSpace": {"enum": ["SCENE_LOCAL", "PREFAB_LOCAL", "CANVAS_LOCAL", "UI_TOOLKIT_PANEL", "SCREEN_SAFE_AREA"]},
+        "anchor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["min", "max"],
+          "properties": {
+            "min": {"$ref": "#/$defs/vector2"},
+            "max": {"$ref": "#/$defs/vector2"}
+          }
+        },
+        "pivot": {"$ref": "#/$defs/vector2"},
+        "constraints": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "resizePolicy": {"enum": ["FIXED", "SCALE_WITH_PARENT", "LAYOUT_REBUILD", "SAFE_AREA_INSET", "CAMERA_RELATIVE"]}
+      },
+      "description": "父子关系由位置依赖显式决定；没有位置依赖的共同信息必须保持同组同级。"
+    },
+    "visualRouteAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "elementType", "distinctiveVisual", "selectedRoute", "routeReason", "sourceKind", "fullScreenCapture",
+        "nativeSuitability", "reuseSuitability", "productionMethod", "deliveryKind", "finalOwner"
+      ],
+      "properties": {
+        "elementType": {"type": "string", "minLength": 1},
+        "distinctiveVisual": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["isDistinctive", "observedFeatures", "assetFirstDecision"],
+          "properties": {
+            "isDistinctive": {"type": "boolean"},
+            "observedFeatures": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "assetFirstDecision": {"enum": ["ASSET_FIRST", "NATIVE_ALLOWED"]}
+          }
+        },
+        "selectedRoute": {"$ref": "#/$defs/visualSourceRoute"},
+        "routeReason": {"type": "string", "minLength": 1},
+        "sourceKind": {"const": "ATOMIC"},
+        "fullScreenCapture": {"const": false},
+        "nativeSuitability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["eligible", "primitiveBasis", "reason", "evidence"],
+          "properties": {
+            "eligible": {"type": "boolean"},
+            "primitiveBasis": {
+              "type": "array", "minItems": 1, "uniqueItems": true,
+              "items": {"enum": ["TEXT", "DYNAMIC_DATA", "LAYOUT", "BASIC_GEOMETRY", "PROGRESS", "PARTICLE", "SHADER"]}
+            },
+            "reason": {"type": "string", "minLength": 1},
+            "evidence": {"$ref": "#/$defs/evidence"}
+          }
+        },
+        "reuseSuitability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["eligible", "reason", "evidence"],
+          "properties": {
+            "eligible": {"type": "boolean"},
+            "reason": {"type": "string", "minLength": 1},
+            "evidence": {"$ref": "#/$defs/evidence"}
+          }
+        },
+        "reuseBinding": {"$ref": "#/$defs/reuseBinding"},
+        "productionMethod": {"enum": ["AUTHORED_RASTER", "GENERATED_RASTER", "REUSE", "UNITY_NATIVE", "MODEL_3D", "MATERIAL", "VFX"]},
+        "deliveryKind": {"enum": ["IMAGE_ASSET", "EXISTING_ASSET", "UNITY_COMPONENT", "MODEL", "MATERIAL", "VFX"]},
+        "finalOwner": {"enum": ["FIXED_PRODUCTION_VISUAL", "RUNTIME_DATA", "RUNTIME_RENDERED", "RUNTIME_PROGRAM"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"selectedRoute": {"const": "UNITY_NATIVE"}}, "required": ["selectedRoute"]},
+          "then": {
+            "properties": {
+              "nativeSuitability": {
+                "properties": {
+                  "eligible": {"const": true},
+                  "primitiveBasis": {"contains": {"enum": ["TEXT", "DYNAMIC_DATA", "LAYOUT", "BASIC_GEOMETRY", "PROGRESS", "PARTICLE", "SHADER"]}}
+                }
+              },
+              "distinctiveVisual": {"properties": {"isDistinctive": {"const": false}, "assetFirstDecision": {"const": "NATIVE_ALLOWED"}}},
+              "productionMethod": {"enum": ["UNITY_NATIVE", "VFX"]},
+              "deliveryKind": {"enum": ["UNITY_COMPONENT", "VFX"]},
+              "finalOwner": {"enum": ["RUNTIME_DATA", "RUNTIME_RENDERED", "RUNTIME_PROGRAM"]}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"selectedRoute": {"const": "REUSE"}}, "required": ["selectedRoute"]},
+          "then": {
+            "required": ["reuseBinding"],
+            "properties": {
+              "reuseSuitability": {"properties": {"eligible": {"const": true}}},
+              "productionMethod": {"const": "REUSE"},
+              "deliveryKind": {"const": "EXISTING_ASSET"},
+              "finalOwner": {"const": "FIXED_PRODUCTION_VISUAL"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"selectedRoute": {"const": "IMAGE_ASSET"}}, "required": ["selectedRoute"]},
+          "then": {
+            "properties": {
+              "productionMethod": {"enum": ["AUTHORED_RASTER", "GENERATED_RASTER"]},
+              "deliveryKind": {"const": "IMAGE_ASSET"},
+              "finalOwner": {"const": "FIXED_PRODUCTION_VISUAL"}
+            }
+          }
+        },
+        {
+          "if": {"properties": {"selectedRoute": {"const": "MODEL_3D"}}, "required": ["selectedRoute"]},
+          "then": {"properties": {"productionMethod": {"const": "MODEL_3D"}, "deliveryKind": {"const": "MODEL"}, "finalOwner": {"const": "FIXED_PRODUCTION_VISUAL"}}}
+        },
+        {
+          "if": {"properties": {"selectedRoute": {"const": "MATERIAL"}}, "required": ["selectedRoute"]},
+          "then": {"properties": {"productionMethod": {"const": "MATERIAL"}, "deliveryKind": {"const": "MATERIAL"}, "finalOwner": {"enum": ["FIXED_PRODUCTION_VISUAL", "RUNTIME_RENDERED"]}}}
+        },
+        {
+          "if": {"properties": {"selectedRoute": {"const": "VFX"}}, "required": ["selectedRoute"]},
+          "then": {"properties": {"productionMethod": {"const": "VFX"}, "deliveryKind": {"const": "VFX"}, "finalOwner": {"enum": ["RUNTIME_RENDERED", "RUNTIME_PROGRAM"]}}}
+        },
+        {
+          "if": {"properties": {"distinctiveVisual": {"properties": {"isDistinctive": {"const": true}}}}, "required": ["distinctiveVisual"]},
+          "then": {"not": {"properties": {"selectedRoute": {"const": "UNITY_NATIVE"}}, "required": ["selectedRoute"]}}
+        }
+      ]
+    },
+    "assemblyAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "unityAssetType", "nodeId", "parentNodeId", "layoutSystem", "fullScreenCapture", "evidence"],
+      "properties": {
+        "strategy": {"const": "STRUCTURED_UNITY_ASSEMBLY"},
+        "unityAssetType": {"enum": ["SCENE", "PREFAB", "UXML", "UIDOCUMENT", "CANVAS", "TRANSFORM"]},
+        "nodeId": {"type": "string", "minLength": 1},
+        "parentNodeId": {"type": "string", "minLength": 1},
+        "layoutSystem": {"enum": ["RECT_TRANSFORM", "UI_TOOLKIT", "CANVAS", "TRANSFORM", "NONE"]},
+        "fullScreenCapture": {"const": false},
+        "evidence": {"$ref": "#/$defs/evidence"}
+      },
+      "description": "只记录 Scene、Prefab、UXML、UIDocument、Canvas 或 Transform 的结构化装配事实。"
+    },
+    "responsiveContractRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractId", "version", "path", "sha256", "scope"],
+      "properties": {
+        "contractId": {"$ref": "#/$defs/taskId"},
+        "version": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/projectRelativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "scope": {"enum": ["PROJECT", "SCENE", "DISPLAY_LAYER", "MODULE"]}
+      }
+    },
+    "contractVersions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["responsive", "layout", "visualBaseline"],
+      "properties": {
+        "responsive": {"type": "string", "minLength": 1},
+        "layout": {"type": "string", "minLength": 1},
+        "visualBaseline": {"type": "string", "minLength": 1},
+        "schema": {"type": "string", "minLength": 1}
+      }
+    },
+    "runtimeMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtimeMeasured", "measuredAtUtc", "screen", "gameView", "camera", "canvas", "safeArea",
+        "orientation", "resize", "inputHitTests", "screenshot", "candidateSha256", "stateTrace", "verificationStatus"
+      ],
+      "properties": {
+        "runtimeMeasured": {"const": true},
+        "measuredAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
+        "screen": {"$ref": "#/$defs/size2d"},
+        "gameView": {"$ref": "#/$defs/size2d"},
+        "backbuffer": {"$ref": "#/$defs/size2d"},
+        "renderTexture": {"$ref": "#/$defs/size2d"},
+        "camera": {
+          "type": "object", "additionalProperties": false,
+          "required": ["pixelRect", "orthographicSize", "projection"],
+          "properties": {
+            "pixelRect": {"$ref": "#/$defs/rect"},
+            "orthographicSize": {"type": ["number", "null"], "exclusiveMinimum": 0},
+            "projection": {"enum": ["ORTHOGRAPHIC", "PERSPECTIVE"]}
+          }
+        },
+        "canvas": {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": {"enum": ["CANVAS_SCALER", "PANEL_SETTINGS"]},
+            "canvasScaler": {"type": "object", "minProperties": 1},
+            "panelSettings": {"type": "object", "minProperties": 1}
+          },
+          "anyOf": [{"required": ["canvasScaler"]}, {"required": ["panelSettings"]}]
+        },
+        "safeArea": {"$ref": "#/$defs/rect"},
+        "orientation": {"enum": ["PORTRAIT", "LANDSCAPE", "PORTRAIT_UPSIDE_DOWN", "LANDSCAPE_LEFT", "LANDSCAPE_RIGHT"]},
+        "resize": {
+          "type": "object", "additionalProperties": false,
+          "required": ["observed", "trajectory"],
+          "properties": {
+            "observed": {"type": "boolean"},
+            "trajectory": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/resizeStep"}}
+          }
+        },
+        "inputHitTests": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["system", "targetNodeId", "hit", "position"],
+            "properties": {
+              "system": {"enum": ["EVENT_SYSTEM", "INPUT_SYSTEM", "BOTH"]},
+              "targetNodeId": {"type": "string", "minLength": 1},
+              "hit": {"type": "boolean"},
+              "position": {"$ref": "#/$defs/vector2"}
+            }
+          }
+        },
+        "screenshot": {
+          "type": "object", "additionalProperties": false,
+          "required": ["path", "sha256", "width", "height", "capturedAtUtc"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1},
+            "capturedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"}
+          }
+        },
+        "candidateSha256": {"$ref": "#/$defs/sha256"},
+        "stateTrace": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["stateId", "action"],
+            "properties": {"stateId": {"type": "string", "minLength": 1}, "action": {"type": "string", "minLength": 1}}
+          }
+        },
+        "verificationStatus": {"enum": ["PASS", "NOT_RUN", "FAIL"]}
+      },
+      "anyOf": [{"required": ["backbuffer"]}, {"required": ["renderTexture"]}],
+      "allOf": [
+        {
+          "if": {"properties": {"canvas": {"properties": {"kind": {"const": "CANVAS_SCALER"}}, "required": ["kind"]}}},
+          "then": {"properties": {"canvas": {"required": ["canvasScaler"], "not": {"required": ["panelSettings"]}}}}
+        },
+        {
+          "if": {"properties": {"canvas": {"properties": {"kind": {"const": "PANEL_SETTINGS"}}, "required": ["kind"]}}},
+          "then": {"properties": {"canvas": {"required": ["panelSettings"], "not": {"required": ["canvasScaler"]}}}}
+        },
+        {
+          "if": {"properties": {"verificationStatus": {"const": "PASS"}}, "required": ["verificationStatus"]},
+          "then": {
+            "properties": {
+              "resize": {"properties": {"observed": {"const": true}}},
+              "inputHitTests": {"items": {"properties": {"hit": {"const": true}}}}
+            }
+          }
+        }
+      ],
+      "description": "V4/PASS 只能由 Unity Editor/Player 的真实运行测量产生，不能以推导值替代。"
+    },
+    "reuseBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assetGuid", "sourcePath", "sourceSha256", "importer", "consumerNodeIds"],
+      "properties": {
+        "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+        "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
+        "sourceSha256": {"$ref": "#/$defs/sha256"},
+        "importer": {
+          "type": "object", "additionalProperties": false,
+          "required": ["type", "settingsFingerprint"],
+          "properties": {"type": {"type": "string", "minLength": 1}, "settingsFingerprint": {"$ref": "#/$defs/sha256"}}
+        },
+        "consumerNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "vector2": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y"],
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+    },
+    "vector3": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y", "z"],
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "z": {"type": "number"}}
+    },
+    "size2d": {
+      "type": "object", "additionalProperties": false, "required": ["width", "height"],
+      "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}
+    },
+    "rect": {
+      "type": "object", "additionalProperties": false, "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number"}, "y": {"type": "number"},
+        "width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "resizeStep": {
+      "type": "object", "additionalProperties": false, "required": ["width", "height", "orientation"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1},
+        "orientation": {"enum": ["PORTRAIT", "LANDSCAPE", "PORTRAIT_UPSIDE_DOWN", "LANDSCAPE_LEFT", "LANDSCAPE_RIGHT"]}
+      }
     },
     "approval": {
       "type": "object",
@@ -77,7 +404,7 @@
     "splitPlanAnnotation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["elementIndex", "itemId", "coordinateSpace", "bounds", "label", "productionRoute", "brief"],
+      "required": ["elementIndex", "itemId", "coordinateSpace", "bounds", "label", "productionRoute", "brief", "parentElementId", "semanticGrouping", "visualRouteAnalysis", "assemblyAnalysis", "layoutBinding"],
       "properties": {
         "elementIndex": {"type": "integer", "minimum": 1},
         "itemId": {"$ref": "#/$defs/taskId"},
@@ -91,7 +418,12 @@
           }
         },
         "label": {"type": "string", "minLength": 1},
-        "brief": {"type": "string", "minLength": 1}
+        "brief": {"type": "string", "minLength": 1},
+        "parentElementId": {"type": "string", "minLength": 1},
+        "semanticGrouping": {"$ref": "#/$defs/semanticGrouping"},
+        "visualRouteAnalysis": {"$ref": "#/$defs/visualRouteAnalysis"},
+        "assemblyAnalysis": {"$ref": "#/$defs/assemblyAnalysis"},
+        "layoutBinding": {"$ref": "#/$defs/layoutBinding"}
       }
     },
     "splitPlanApprovalScope": {
