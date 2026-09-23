@@ -17,7 +17,7 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## Unity 原生执行约束
 
-- Unity 写入前发现实例，按规范化项目路径绑定唯一 Editor，并等待导入、编译和域重载稳定；写后复读目标对象、Console、Scene/Prefab、Importer、GUID 与登记结果。
+- Unity 写入前发现实例，按规范化项目路径绑定唯一 Editor，并等待导入、编译和域重载稳定；写后复读目标对象、Console、Scene/Prefab、Importer、GUID 与登记结果。场景写入、切换及 `editor.scene-dirty` 恢复按[场景保存与弹窗恢复](references/scene-save-recovery.md)执行。
 - `Assets/` 中由 Unity 管理的文件与 `.meta` 视为一个所有权单元。禁止脱离 AssetDatabase 生成或猜测 GUID；移动/重命名资源优先使用 Unity API，避免引用断裂。
 - `ProjectSettings/`、`Packages/`、Build Settings、Addressables 全局配置、共享 asmdef 与跨场景入口只能串行修改。同一物理 Unity 项目的正式 Editor 写入保持单写者。
 - Runtime 程序集不得引用 Editor 程序集；Scene、Prefab、ScriptableObject 与 UXML/USS 修改必须保存并在域重载后重新验证序列化引用。
