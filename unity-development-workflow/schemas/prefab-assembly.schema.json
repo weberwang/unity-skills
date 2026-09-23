@@ -73,7 +73,20 @@
                 "scale": {"$ref": "#/$defs/vector3"},
                 "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
                 "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"}
-              }
+              },
+              "allOf": [{
+                "if": {
+                  "properties": {
+                    "components": {"contains": {"enum": ["RectTransform", "UIDocument"]}}
+                  },
+                  "required": ["components"]
+                },
+                "then": {
+                  "properties": {
+                    "layoutBinding": {"required": ["uiLayout"]}
+                  }
+                }
+              }]
             }
           }
         }

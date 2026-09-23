@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 namespace Project.UnityWorkflow.Runtime
 {
     /// <summary>
-    /// 定义 2D 场景采用竖屏高度基准或横屏宽度基准。
+    /// 定义 2D 场景采用竖屏宽度基准或横屏高度基准。
     /// </summary>
     public enum Scene2DOrientation
     {
@@ -78,7 +78,7 @@ namespace Project.UnityWorkflow.Runtime
     }
 
     /// <summary>
-    /// 提供与 Unity 状态无关的 2D 高度/宽度基准计算。
+    /// 提供与 Unity 状态无关的 2D 方向基准适配计算。
     /// </summary>
     public static class Scene2DAdaptationCalculator
     {
@@ -108,11 +108,11 @@ namespace Project.UnityWorkflow.Runtime
 
             if (orientation == Scene2DOrientation.Portrait)
             {
-                // 固定垂直视体才能确保竖屏在任何宽高比下都严格按设计高度适配。
-                orthographicSize = contentHeight * 0.5f;
-                visibleHeight = contentHeight;
-                visibleWidth = visibleHeight * targetAspect;
-                bandThickness = Mathf.Max(0f, (visibleWidth - contentWidth) * 0.5f);
+                // 竖屏固定设计宽度；窄屏露出上下背景，宽屏裁掉设计内容的上下部分。
+                visibleWidth = contentWidth;
+                visibleHeight = visibleWidth / targetAspect;
+                orthographicSize = visibleHeight * 0.5f;
+                bandThickness = Mathf.Max(0f, (visibleHeight - contentHeight) * 0.5f);
                 outcome = ResolvePortraitOutcome(targetAspect, referenceAspect);
                 return new Scene2DAdaptationLayout(
                     orthographicSize,
@@ -121,15 +121,15 @@ namespace Project.UnityWorkflow.Runtime
                     contentWidth,
                     contentHeight,
                     bandThickness,
-                    1f,
+                    0f,
                     outcome);
             }
 
-            // 横屏固定水平视体；orthographicSize 必须随目标 aspect 反向变化。
-            visibleWidth = contentWidth;
-            visibleHeight = visibleWidth / targetAspect;
+            // 横屏固定设计高度；宽屏露出左右背景，窄屏裁掉设计内容的左右部分。
+            visibleHeight = contentHeight;
+            visibleWidth = visibleHeight * targetAspect;
             orthographicSize = visibleHeight * 0.5f;
-            bandThickness = Mathf.Max(0f, (visibleHeight - contentHeight) * 0.5f);
+            bandThickness = Mathf.Max(0f, (visibleWidth - contentWidth) * 0.5f);
             outcome = ResolveLandscapeOutcome(targetAspect, referenceAspect);
             return new Scene2DAdaptationLayout(
                 orthographicSize,
@@ -138,12 +138,12 @@ namespace Project.UnityWorkflow.Runtime
                 contentWidth,
                 contentHeight,
                 bandThickness,
-                0f,
+                1f,
                 outcome);
         }
 
         /// <summary>
-        /// 检查计算参数和参考分辨率方向，阻止错误配置静默产生错误画面。
+        /// 检查计算参数及方向对应的唯一参考分辨率，阻止错误配置静默产生错误画面。
         /// </summary>
         private static void ValidateArguments(
             Scene2DOrientation orientation,
@@ -162,19 +162,31 @@ namespace Project.UnityWorkflow.Runtime
                 throw new ArgumentOutOfRangeException(nameof(pixelsPerUnit), "PPU 与目标分辨率必须为正数。");
             }
 
-            if (orientation == Scene2DOrientation.Portrait && referenceResolution.x >= referenceResolution.y)
+            Vector2Int expectedReferenceResolution;
+            if (orientation == Scene2DOrientation.Portrait)
             {
-                throw new ArgumentException("竖屏参考分辨率必须高于宽。", nameof(referenceResolution));
+                expectedReferenceResolution = new Vector2Int(1080, 1920);
+            }
+            else if (orientation == Scene2DOrientation.Landscape)
+            {
+                expectedReferenceResolution = new Vector2Int(1920, 1080);
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(orientation), "2D 场景方向无效。");
             }
 
-            if (orientation == Scene2DOrientation.Landscape && referenceResolution.x <= referenceResolution.y)
+            if (referenceResolution != expectedReferenceResolution)
             {
-                throw new ArgumentException("横屏参考分辨率必须宽于高。", nameof(referenceResolution));
+                string direction = orientation == Scene2DOrientation.Portrait ? "竖屏" : "横屏";
+                throw new ArgumentException(
+                    $"{direction}参考分辨率必须为 {expectedReferenceResolution.x}x{expectedReferenceResolution.y}。",
+                    nameof(referenceResolution));
             }
         }
 
         /// <summary>
-        /// 根据目标比例判断竖屏是否需要左右边带或裁切外围。
+        /// 根据目标比例判断竖屏固定宽度后是否需要上下边带或裁切外围。
         /// </summary>
         private static Scene2DAdaptationOutcome ResolvePortraitOutcome(float targetAspect, float referenceAspect)
         {
@@ -183,13 +195,13 @@ namespace Project.UnityWorkflow.Runtime
                 return Scene2DAdaptationOutcome.Exact;
             }
 
-            return targetAspect > referenceAspect
-                ? Scene2DAdaptationOutcome.LeftRightBands
+            return targetAspect < referenceAspect
+                ? Scene2DAdaptationOutcome.TopBottomBands
                 : Scene2DAdaptationOutcome.Crop;
         }
 
         /// <summary>
-        /// 根据目标比例判断横屏是否需要上下边带或裁切外围。
+        /// 根据目标比例判断横屏固定高度后是否需要左右边带或裁切外围。
         /// </summary>
         private static Scene2DAdaptationOutcome ResolveLandscapeOutcome(float targetAspect, float referenceAspect)
         {
@@ -198,8 +210,8 @@ namespace Project.UnityWorkflow.Runtime
                 return Scene2DAdaptationOutcome.Exact;
             }
 
-            return targetAspect < referenceAspect
-                ? Scene2DAdaptationOutcome.TopBottomBands
+            return targetAspect > referenceAspect
+                ? Scene2DAdaptationOutcome.LeftRightBands
                 : Scene2DAdaptationOutcome.Crop;
         }
     }
@@ -487,7 +499,7 @@ namespace Project.UnityWorkflow.Runtime
         }
 
         /// <summary>
-        /// 写入 Unity 官方 Match Width or Height 口径：竖屏 1，横屏 0。
+        /// 写入 Unity 官方 Match Width or Height 口径：竖屏固定宽度为 0，横屏固定高度为 1。
         /// </summary>
         private void ApplyPanelSettings(float panelMatch)
         {

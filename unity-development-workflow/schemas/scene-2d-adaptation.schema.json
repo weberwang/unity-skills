@@ -122,15 +122,15 @@
       "if": {"properties": {"orientation": {"const": "PORTRAIT"}}, "required": ["orientation"]},
       "then": {
         "properties": {
-          "referenceResolution": {"properties": {"height": {"exclusiveMinimum": 1}}},
-          "worldCamera": {"properties": {"fitAxis": {"const": "HEIGHT"}}},
-          "uiToolkit": {"properties": {"match": {"const": 1}}},
+          "referenceResolution": {"properties": {"width": {"const": 1080}, "height": {"const": 1920}}},
+          "worldCamera": {"properties": {"fitAxis": {"const": "WIDTH"}}},
+          "uiToolkit": {"properties": {"match": {"const": 0}, "referenceResolution": {"properties": {"width": {"const": 1080}, "height": {"const": 1920}}}}},
           "decorativeBands": {
             "properties": {
               "assets": {
                 "allOf": [
-                  {"contains": {"properties": {"edge": {"const": "LEFT"}}, "required": ["edge"]}},
-                  {"contains": {"properties": {"edge": {"const": "RIGHT"}}, "required": ["edge"]}}
+                  {"contains": {"properties": {"edge": {"const": "TOP"}}, "required": ["edge"]}},
+                  {"contains": {"properties": {"edge": {"const": "BOTTOM"}}, "required": ["edge"]}}
                 ]
               }
             }
@@ -142,14 +142,15 @@
       "if": {"properties": {"orientation": {"const": "LANDSCAPE"}}, "required": ["orientation"]},
       "then": {
         "properties": {
-          "worldCamera": {"properties": {"fitAxis": {"const": "WIDTH"}}},
-          "uiToolkit": {"properties": {"match": {"const": 0}}},
+          "referenceResolution": {"properties": {"width": {"const": 1920}, "height": {"const": 1080}}},
+          "worldCamera": {"properties": {"fitAxis": {"const": "HEIGHT"}}},
+          "uiToolkit": {"properties": {"match": {"const": 1}, "referenceResolution": {"properties": {"width": {"const": 1920}, "height": {"const": 1080}}}}},
           "decorativeBands": {
             "properties": {
               "assets": {
                 "allOf": [
-                  {"contains": {"properties": {"edge": {"const": "TOP"}}, "required": ["edge"]}},
-                  {"contains": {"properties": {"edge": {"const": "BOTTOM"}}, "required": ["edge"]}}
+                  {"contains": {"properties": {"edge": {"const": "LEFT"}}, "required": ["edge"]}},
+                  {"contains": {"properties": {"edge": {"const": "RIGHT"}}, "required": ["edge"]}}
                 ]
               }
             }

@@ -124,7 +124,7 @@ annotatedPreview:
           sha256: "9292929292929292929292929292929292929292929292929292929292929292"
       layoutBinding:
         parentElementId: viewport
-        positionDependency: PARENT_CHILD
+        hierarchyRelation: PARENT_CHILD
         coordinateSpace: SCENE_LOCAL
         anchor:
           min: {x: 0, y: 0}
@@ -192,7 +192,7 @@ annotatedPreview:
           sha256: "9595959595959595959595959595959595959595959595959595959595959595"
       layoutBinding:
         parentElementId: node.arena-root
-        positionDependency: PARENT_CHILD
+        hierarchyRelation: PARENT_CHILD
         coordinateSpace: PREFAB_LOCAL
         anchor:
           min: {x: 0, y: 0}
@@ -252,7 +252,7 @@ annotatedPreview:
           sha256: "9898989898989898989898989898989898989898989898989898989898989898"
       layoutBinding:
         parentElementId: node.arena-root
-        positionDependency: PARENT_CHILD
+        hierarchyRelation: PARENT_CHILD
         coordinateSpace: SCENE_LOCAL
         anchor:
           min: {x: 0, y: 0}
@@ -350,7 +350,7 @@ items:
         sha256: "9292929292929292929292929292929292929292929292929292929292929292"
     layoutBinding:
       parentElementId: viewport
-      positionDependency: PARENT_CHILD
+      hierarchyRelation: PARENT_CHILD
       coordinateSpace: SCENE_LOCAL
       anchor:
         min: {x: 0, y: 0}
@@ -465,7 +465,7 @@ items:
         sha256: "9595959595959595959595959595959595959595959595959595959595959595"
     layoutBinding:
       parentElementId: node.arena-root
-      positionDependency: PARENT_CHILD
+      hierarchyRelation: PARENT_CHILD
       coordinateSpace: PREFAB_LOCAL
       anchor:
         min: {x: 0, y: 0}
@@ -536,7 +536,7 @@ items:
         sha256: "9898989898989898989898989898989898989898989898989898989898989898"
     layoutBinding:
       parentElementId: node.arena-root
-      positionDependency: PARENT_CHILD
+      hierarchyRelation: PARENT_CHILD
       coordinateSpace: SCENE_LOCAL
       anchor:
         min: {x: 0, y: 0}

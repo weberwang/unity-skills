@@ -10,7 +10,7 @@
 
 ## V2 拆解确认
 
-冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子只能由位置依赖显式决定；共同信息无位置依赖时保持同组同级。只有真实取舍才请求用户决定；已确认事实不重复询问。
+冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。只有真实取舍才请求用户决定；已确认事实不重复询问。
 
 ## V3 资源与组合验收
 

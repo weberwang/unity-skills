@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 namespace Project.UnityWorkflow.Tests.Editor
 {
     /// <summary>
-    /// 验证 2D 高度/宽度基准、边带布局和纯视觉约束。
+    /// 验证 2D 方向基准、边带布局和纯视觉约束。
     /// </summary>
     public sealed class Scene2DAdaptationTests
     {
@@ -30,44 +30,93 @@ namespace Project.UnityWorkflow.Tests.Editor
         }
 
         /// <summary>
-        /// 竖屏固定高度时，较宽窗口必须产生等宽左右边带且 UI match 为 1。
+        /// 竖屏固定宽度时，较窄窗口必须产生等高上下边带且 UI match 为 0。
         /// </summary>
         [Test]
-        public void Calculate_PortraitWiderScreen_CreatesLeftRightBands()
+        public void Calculate_PortraitNarrowerScreen_CreatesTopBottomBands()
         {
             Scene2DAdaptationLayout layout = Scene2DAdaptationCalculator.Calculate(
                 Scene2DOrientation.Portrait,
                 new Vector2Int(1080, 1920),
                 100f,
-                1280,
-                1920);
+                1080,
+                2400);
 
-            Assert.That(layout.OrthographicSize, Is.EqualTo(9.6f).Within(0.0001f));
-            Assert.That(layout.VisibleHeight, Is.EqualTo(19.2f).Within(0.0001f));
-            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.LeftRightBands));
-            Assert.That(layout.BandThicknessPerSide, Is.EqualTo(1f).Within(0.0001f));
-            Assert.That(layout.PanelMatch, Is.EqualTo(1f));
+            Assert.That(layout.VisibleWidth, Is.EqualTo(10.8f).Within(0.0001f));
+            Assert.That(layout.VisibleHeight, Is.EqualTo(24f).Within(0.0001f));
+            Assert.That(layout.OrthographicSize, Is.EqualTo(12f).Within(0.0001f));
+            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.TopBottomBands));
+            Assert.That(layout.BandThicknessPerSide, Is.EqualTo(2.4f).Within(0.0001f));
+            Assert.That(layout.PanelMatch, Is.EqualTo(0f));
         }
 
         /// <summary>
-        /// 横屏固定宽度时，较窄窗口必须产生等高上下边带且 UI match 为 0。
+        /// 横屏固定高度时，较宽窗口必须产生等宽左右边带且 UI match 为 1。
         /// </summary>
         [Test]
-        public void Calculate_LandscapeNarrowerScreen_CreatesTopBottomBands()
+        public void Calculate_LandscapeWiderScreen_CreatesLeftRightBands()
         {
             Scene2DAdaptationLayout layout = Scene2DAdaptationCalculator.Calculate(
                 Scene2DOrientation.Landscape,
                 new Vector2Int(1920, 1080),
                 100f,
-                1600,
-                1200);
+                2400,
+                1080);
 
-            Assert.That(layout.VisibleWidth, Is.EqualTo(19.2f).Within(0.0001f));
-            Assert.That(layout.VisibleHeight, Is.EqualTo(14.4f).Within(0.0001f));
-            Assert.That(layout.OrthographicSize, Is.EqualTo(7.2f).Within(0.0001f));
-            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.TopBottomBands));
-            Assert.That(layout.BandThicknessPerSide, Is.EqualTo(1.8f).Within(0.0001f));
-            Assert.That(layout.PanelMatch, Is.EqualTo(0f));
+            Assert.That(layout.VisibleWidth, Is.EqualTo(24f).Within(0.0001f));
+            Assert.That(layout.VisibleHeight, Is.EqualTo(10.8f).Within(0.0001f));
+            Assert.That(layout.OrthographicSize, Is.EqualTo(5.4f).Within(0.0001f));
+            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.LeftRightBands));
+            Assert.That(layout.BandThicknessPerSide, Is.EqualTo(2.4f).Within(0.0001f));
+            Assert.That(layout.PanelMatch, Is.EqualTo(1f));
+        }
+
+        /// <summary>
+        /// 目标比例与唯一设计参考比例一致时，不应产生边带或裁切。
+        /// </summary>
+        [TestCase(Scene2DOrientation.Portrait, 1080, 1920, 0f)]
+        [TestCase(Scene2DOrientation.Landscape, 1920, 1080, 1f)]
+        public void Calculate_ReferenceResolution_IsExact(
+            Scene2DOrientation orientation,
+            int width,
+            int height,
+            float expectedPanelMatch)
+        {
+            Scene2DAdaptationLayout layout = Scene2DAdaptationCalculator.Calculate(
+                orientation,
+                orientation == Scene2DOrientation.Portrait
+                    ? new Vector2Int(1080, 1920)
+                    : new Vector2Int(1920, 1080),
+                100f,
+                width,
+                height);
+
+            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.Exact));
+            Assert.That(layout.BandThicknessPerSide, Is.Zero);
+            Assert.That(layout.PanelMatch, Is.EqualTo(expectedPanelMatch));
+        }
+
+        /// <summary>
+        /// 竖屏较宽和横屏较窄时固定边长不变，超出设计范围的另一边应裁切。
+        /// </summary>
+        [TestCase(Scene2DOrientation.Portrait, 1280, 1920)]
+        [TestCase(Scene2DOrientation.Landscape, 1600, 1200)]
+        public void Calculate_OutsideBandSide_CropsWithoutBands(
+            Scene2DOrientation orientation,
+            int width,
+            int height)
+        {
+            Scene2DAdaptationLayout layout = Scene2DAdaptationCalculator.Calculate(
+                orientation,
+                orientation == Scene2DOrientation.Portrait
+                    ? new Vector2Int(1080, 1920)
+                    : new Vector2Int(1920, 1080),
+                100f,
+                width,
+                height);
+
+            Assert.That(layout.Outcome, Is.EqualTo(Scene2DAdaptationOutcome.Crop));
+            Assert.That(layout.BandThicknessPerSide, Is.Zero);
         }
 
         /// <summary>
@@ -85,20 +134,63 @@ namespace Project.UnityWorkflow.Tests.Editor
         }
 
         /// <summary>
-        /// 应用竖屏适配后，PanelSettings 和两张背景必须落在官方参数及对应边缘。
+        /// 方向正确但不符合规定值的设计分辨率也必须被拒绝。
+        /// </summary>
+        [TestCase(Scene2DOrientation.Portrait, 720, 1280)]
+        [TestCase(Scene2DOrientation.Landscape, 1280, 720)]
+        public void Calculate_NonStandardReferenceResolution_Throws(
+            Scene2DOrientation orientation,
+            int referenceWidth,
+            int referenceHeight)
+        {
+            Vector2Int referenceResolution = new Vector2Int(referenceWidth, referenceHeight);
+
+            Assert.Throws<System.ArgumentException>(() => Scene2DAdaptationCalculator.Calculate(
+                orientation,
+                referenceResolution,
+                100f,
+                referenceWidth,
+                referenceHeight));
+        }
+
+        /// <summary>
+        /// 应用竖屏适配后，PanelSettings 固定宽度并将两张背景放到上下边带。
         /// </summary>
         [Test]
         public void ApplyResolution_Portrait_ConfiguresPanelAndBands()
         {
             Adaptive2DViewport viewport = CreateViewport(Scene2DOrientation.Portrait, out Camera camera, out PanelSettings panel, out SpriteRenderer first, out SpriteRenderer second);
 
-            viewport.ApplyResolution(1280, 1920);
+            viewport.ApplyResolution(1080, 2400);
 
             Assert.That(camera.rect, Is.EqualTo(new Rect(0f, 0f, 1f, 1f)));
-            Assert.That(camera.orthographicSize, Is.EqualTo(9.6f).Within(0.0001f));
+            Assert.That(camera.orthographicSize, Is.EqualTo(12f).Within(0.0001f));
+            Assert.That(panel.scaleMode, Is.EqualTo(PanelScaleMode.ScaleWithScreenSize));
+            Assert.That(panel.screenMatchMode, Is.EqualTo(PanelScreenMatchMode.MatchWidthOrHeight));
+            Assert.That(panel.match, Is.EqualTo(0f));
+            Assert.That(panel.referenceResolution, Is.EqualTo(new Vector2Int(1080, 1920)));
+            Assert.That(first.gameObject.activeSelf, Is.True);
+            Assert.That(second.gameObject.activeSelf, Is.True);
+            Assert.That(first.transform.position.y, Is.GreaterThan(camera.transform.position.y));
+            Assert.That(second.transform.position.y, Is.LessThan(camera.transform.position.y));
+            Assert.That(viewport.TryValidateVisibleBands(out string visibilityError), Is.True, visibilityError);
+        }
+
+        /// <summary>
+        /// 应用横屏适配后，PanelSettings 固定高度并将两张背景放到左右边带。
+        /// </summary>
+        [Test]
+        public void ApplyResolution_Landscape_ConfiguresPanelAndBands()
+        {
+            Adaptive2DViewport viewport = CreateViewport(Scene2DOrientation.Landscape, out Camera camera, out PanelSettings panel, out SpriteRenderer first, out SpriteRenderer second);
+
+            viewport.ApplyResolution(2400, 1080);
+
+            Assert.That(camera.orthographicSize, Is.EqualTo(5.4f).Within(0.0001f));
             Assert.That(panel.scaleMode, Is.EqualTo(PanelScaleMode.ScaleWithScreenSize));
             Assert.That(panel.screenMatchMode, Is.EqualTo(PanelScreenMatchMode.MatchWidthOrHeight));
             Assert.That(panel.match, Is.EqualTo(1f));
+            Assert.That(panel.referenceResolution, Is.EqualTo(new Vector2Int(1920, 1080)));
             Assert.That(first.gameObject.activeSelf, Is.True);
             Assert.That(second.gameObject.activeSelf, Is.True);
             Assert.That(first.transform.position.x, Is.LessThan(camera.transform.position.x));

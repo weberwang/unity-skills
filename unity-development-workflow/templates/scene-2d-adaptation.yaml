@@ -11,11 +11,11 @@ referenceResolution:
 worldCamera:
   projection: ORTHOGRAPHIC
   pixelsPerUnit: 100
-  fitAxis: HEIGHT
+  fitAxis: WIDTH
 uiToolkit:
   scaleMode: ScaleWithScreenSize
   screenMatchMode: MatchWidthOrHeight
-  match: 1
+  match: 0
   referenceResolution:
     width: 1080
     height: 1920
@@ -32,14 +32,14 @@ decorativeBands:
   generationBasis: GLOBAL_VISUAL_BASELINE
   renderBehindGameplay: true
   assets:
-    - edge: LEFT
-      resourceId: art.arena-side-left
-      path: Assets/Art/Runtime/Backgrounds/ArenaSideLeft.png
+    - edge: TOP
+      resourceId: art.arena-side-top
+      path: Assets/Art/Runtime/Backgrounds/ArenaSideTop.png
       sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       interactive: false
-    - edge: RIGHT
-      resourceId: art.arena-side-right
-      path: Assets/Art/Runtime/Backgrounds/ArenaSideRight.png
+    - edge: BOTTOM
+      resourceId: art.arena-side-bottom
+      path: Assets/Art/Runtime/Backgrounds/ArenaSideBottom.png
       sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
       interactive: false
 testResolutions:
@@ -49,14 +49,14 @@ testResolutions:
     expectedOutcome: EXACT
     expectedBandEdges: []
     status: NOT_RUN
-  - id: portrait-wider
-    width: 1280
-    height: 1920
-    expectedOutcome: DECORATIVE_BANDS
-    expectedBandEdges: [LEFT, RIGHT]
-    status: NOT_RUN
   - id: portrait-narrower
     width: 900
+    height: 1920
+    expectedOutcome: DECORATIVE_BANDS
+    expectedBandEdges: [TOP, BOTTOM]
+    status: NOT_RUN
+  - id: portrait-wider
+    width: 1280
     height: 1920
     expectedOutcome: CROP
     expectedBandEdges: []

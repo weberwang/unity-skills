@@ -119,8 +119,8 @@ export function validateUnityResponsiveContract(contract, options = {}) {
   }
 
   for (const [name, allowed] of [
-    ['canvasScaler', new Set(['status', 'reason', 'enabled', 'mode', 'referenceResolution', 'matchWidthOrHeight'])],
-    ['panelSettings', new Set(['status', 'reason', 'enabled', 'scaleMode', 'referenceResolution', 'referenceDpi'])],
+    ['canvasScaler', new Set(['status', 'reason', 'enabled', 'mode', 'screenMatchMode', 'referenceResolution', 'matchWidthOrHeight'])],
+    ['panelSettings', new Set(['status', 'reason', 'enabled', 'scaleMode', 'screenMatchMode', 'referenceResolution', 'referenceDpi', 'match'])],
   ]) {
     const value = contract[name];
     if (!knownObject(value, allowed, `${scope}.${name}`, errors)) continue;
@@ -135,6 +135,22 @@ export function validateUnityResponsiveContract(contract, options = {}) {
     if (!validSize(value.referenceResolution, true)) errors.push(contractError(scope, `${name}.referenceResolution 必须是正整数尺寸`));
     if (name === 'canvasScaler' && (typeof value.matchWidthOrHeight !== 'number' || value.matchWidthOrHeight < 0 || value.matchWidthOrHeight > 1)) errors.push(contractError(scope, 'canvasScaler.matchWidthOrHeight 必须位于 0 到 1'));
     if (name === 'panelSettings' && (typeof value.referenceDpi !== 'number' || value.referenceDpi <= 0)) errors.push(contractError(scope, 'panelSettings.referenceDpi 必须为正数'));
+  }
+  if ((contract.uiSystem === 'UGUI' || contract.uiSystem === 'UI Toolkit') && contract.panel?.mode !== 'World') {
+    // 屏幕 UI 使用方向对应的唯一设计基准；实际输出像素仍由设备和相机决定。
+    const reference = logical?.referenceResolution;
+    const landscape = reference?.width === 1920 && reference?.height === 1080;
+    const portrait = reference?.width === 1080 && reference?.height === 1920;
+    if (!landscape && !portrait) errors.push(contractError(scope, '屏幕 UI 参考分辨率必须为横屏 1920×1080 或竖屏 1080×1920'));
+    const settings = contract.uiSystem === 'UGUI' ? contract.canvasScaler : contract.panelSettings;
+    if (settings?.status === 'configured') {
+      const expectedMode = contract.uiSystem === 'UGUI' ? 'Scale With Screen Size' : 'ScaleWithScreenSize';
+      if (settings.enabled !== true || (settings.mode ?? settings.scaleMode) !== expectedMode || settings.screenMatchMode !== 'MatchWidthOrHeight') errors.push(contractError(scope, '屏幕 UI 必须启用随屏幕尺寸缩放和 MatchWidthOrHeight 匹配模式'));
+      const actual = settings.referenceResolution;
+      if (actual?.width !== reference?.width || actual?.height !== reference?.height) errors.push(contractError(scope, 'UI 缩放参考分辨率必须与 logicalSpace 一致'));
+      const match = contract.uiSystem === 'UGUI' ? settings.matchWidthOrHeight : settings.match;
+      if ((landscape || portrait) && match !== (landscape ? 1 : 0)) errors.push(contractError(scope, '横屏必须适配高（Match=1），竖屏必须适配宽（Match=0）'));
+    }
   }
   if (['UGUI', 'World Space Canvas'].includes(contract.uiSystem) && contract.panelSettings?.status !== 'not-applicable') errors.push(contractError(scope, `${contract.uiSystem} 不得伪造 PanelSettings 资产，应声明 not-applicable`));
   if (['UGUI', 'World Space Canvas'].includes(contract.uiSystem) && contract.canvasScaler?.status !== 'configured') errors.push(contractError(scope, `${contract.uiSystem} 必须配置 CanvasScaler`));

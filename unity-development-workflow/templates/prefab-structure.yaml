@@ -46,7 +46,7 @@ prefabs:
           rationale: 竞技场根节点是场景的结构化视觉区域。
         layoutBinding:
           parentElementId: viewport
-          positionDependency: PARENT_CHILD
+          hierarchyRelation: PARENT_CHILD
           coordinateSpace: SCENE_LOCAL
           anchor:
             min: {x: 0, y: 0}
@@ -69,7 +69,7 @@ prefabs:
           rationale: 背景是竞技场根节点下的静态视觉部件。
         layoutBinding:
           parentElementId: node.arena-root
-          positionDependency: PARENT_CHILD
+          hierarchyRelation: PARENT_CHILD
           coordinateSpace: PREFAB_LOCAL
           anchor:
             min: {x: 0, y: 0}
@@ -92,7 +92,7 @@ sceneInstances:
       rationale: 场景实例承载竞技场结构化区域。
     layoutBinding:
       parentElementId: viewport
-      positionDependency: PARENT_CHILD
+      hierarchyRelation: PARENT_CHILD
       coordinateSpace: SCENE_LOCAL
       anchor:
         min: {x: 0, y: 0}

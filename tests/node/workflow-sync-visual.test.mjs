@@ -18,6 +18,7 @@ const TEMPLATE_SCHEMA_PAIRS = [
   ["templates/scene-manifest.yaml", "scene-manifest.schema.json"],
   ["templates/runtime-visual-evidence.yaml", "runtime-visual-evidence.schema.json"],
   ["templates/runtime-visual-evidence-mobile.yaml", "runtime-visual-evidence.schema.json"],
+  ["templates/scene-2d-adaptation.yaml", "scene-2d-adaptation.schema.json"],
 ];
 
 /** 返回最小的可追溯证据，所有合同 fixture 共用同一格式。 */
@@ -29,8 +30,17 @@ function evidence(type = "test-evidence") {
 function layoutBinding(parentElementId = "root") {
   return {
     parentElementId,
-    positionDependency: "PARENT_CHILD",
+    hierarchyRelation: "PARENT_CHILD",
     coordinateSpace: "CANVAS_LOCAL",
+    uiLayout: {
+      groupingBasis: ["POSITION", "LAYOUT"],
+      layoutOwner: "PARENT",
+      sizePolicy: "CONTENT",
+      overflowPolicy: "KEEP_VISIBLE",
+      safeAreaPolicy: "INSIDE_SAFE_AREA",
+      interactionPolicy: "NON_INTERACTIVE",
+      minimumSize: { width: 44, height: 44 },
+    },
     anchor: { min: { x: 0, y: 0 }, max: { x: 1, y: 1 } },
     pivot: { x: 0.5, y: 0.5 },
     constraints: ["safe-area"],
@@ -271,6 +281,40 @@ test("视觉合同 schema 可加载且合法拆解具备来源与装配证据", 
   assert.equal(scene.valid, true, JSON.stringify(scene.errors));
 });
 
+test("V2 布局绑定要求 UI 布局策略并拒绝重复分组依据", () => {
+  const ajv = createAjv();
+  const missingUiLayout = splitPlan();
+  delete missingUiLayout.items[0].layoutBinding.uiLayout;
+  assert.equal(validate(ajv, "split-plan.schema.json", missingUiLayout).valid, false);
+
+  const duplicatedGroupingBasis = splitPlan();
+  // 分组依据用于描述不同的父子组织原因，重复项不能提供额外布局语义。
+  duplicatedGroupingBasis.items[0].layoutBinding.uiLayout.groupingBasis = ["LAYOUT", "LAYOUT"];
+  assert.equal(validate(ajv, "split-plan.schema.json", duplicatedGroupingBasis).valid, false);
+
+  const sameLevel = splitPlan();
+  sameLevel.items[0].layoutBinding.hierarchyRelation = "SAME_LEVEL";
+  sameLevel.items[0].layoutBinding.uiLayout.groupingBasis = [];
+  assert.equal(validate(ajv, "split-plan.schema.json", sameLevel).valid, true);
+  sameLevel.items[0].layoutBinding.uiLayout.groupingBasis = ["POSITION"];
+  assert.equal(validate(ajv, "split-plan.schema.json", sameLevel).valid, false);
+
+  const uiItemWithPrefabCoordinates = splitPlan();
+  uiItemWithPrefabCoordinates.items[0].layoutBinding.coordinateSpace = "PREFAB_LOCAL";
+  delete uiItemWithPrefabCoordinates.items[0].layoutBinding.uiLayout;
+  assert.equal(validate(ajv, "split-plan.schema.json", uiItemWithPrefabCoordinates).valid, false);
+
+  const uiNodeWithPrefabCoordinates = prefabStructure();
+  uiNodeWithPrefabCoordinates.prefabs[0].nodes[0].layoutBinding.coordinateSpace = "PREFAB_LOCAL";
+  delete uiNodeWithPrefabCoordinates.prefabs[0].nodes[0].layoutBinding.uiLayout;
+  assert.equal(validate(ajv, "prefab-structure.schema.json", uiNodeWithPrefabCoordinates).valid, false);
+
+  const uiAssemblyWithPrefabCoordinates = prefabAssembly();
+  uiAssemblyWithPrefabCoordinates.prefabs[0].nodes[0].layoutBinding.coordinateSpace = "PREFAB_LOCAL";
+  delete uiAssemblyWithPrefabCoordinates.prefabs[0].nodes[0].layoutBinding.uiLayout;
+  assert.equal(validate(ajv, "prefab-assembly.schema.json", uiAssemblyWithPrefabCoordinates).valid, false);
+});
+
 test("视觉合同拒绝整屏来源、缺父级和缺 REUSE 精确绑定", () => {
   const ajv = createAjv();
   const invalidCapture = splitPlan();
@@ -328,7 +372,7 @@ test("V4/PASS 拒绝失败的 resize、输入命中和错误 Canvas 路线", () 
   }
 });
 
-test("六个视觉与响应式 YAML 模板均符合对应 AJV Schema", () => {
+test("七个视觉与响应式 YAML 模板均符合对应 AJV Schema", () => {
   const ajv = createAjv();
   for (const [templateFile, schemaFile] of TEMPLATE_SCHEMA_PAIRS) {
     const payload = YAML.parse(readFileSync(resolve(WORKFLOW, templateFile), "utf8"));

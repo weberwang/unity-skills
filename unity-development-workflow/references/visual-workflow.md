@@ -10,13 +10,15 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 
 ## V1 场景定义
 
-冻结场景功能契约、目标视口、相机、状态、输入轨迹和实际可查看的草图/灰盒；同时给出稳定节点 ID、`parentElementId`、语义分组、渲染顺序、Anchor、Pivot、安全区、遮罩、资源槽，以及适用的 UXML/USS/UIDocument、Canvas/RectTransform 或 GameObject/Component 结构。父子由位置依赖决定，没有位置依赖的共同信息保持同组同级。
+冻结场景功能契约、目标视口、相机、状态、输入轨迹和实际可查看的草图/灰盒；同时给出稳定节点 ID、`parentElementId`、语义分组、渲染顺序、Anchor、Pivot、安全区、遮罩、资源槽，以及适用的 UXML/USS/UIDocument、Canvas/RectTransform 或 GameObject/Component 结构。屏幕 UI 按[布局与节点树规则](ui-layout-and-hierarchy.md)区分全屏背景、安全区内容、常驻 HUD 和独立显示层；父子须有实际布局或行为依赖。
 
 如果场景基于参考图还原，明确 `usability` 或 `exact`。默认 `usability` 关注边界、裁切、遮挡、可读性、状态和交互；仅用户明确要求精确还原时使用像素容差和完整矩阵。
 
 ## V2 拆解确认
 
 只分析冻结的场景目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
+
+屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
 
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；

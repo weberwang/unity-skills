@@ -34,7 +34,7 @@ function makeContract(overrides = {}) {
     backbuffer: { source: 'Display', policy: 'platform-measured-display-size', measuredAtRuntime: true },
     panel: { mode: 'Overlay', panelId: 'MainCanvas', runtimePanel: false },
     renderTexture: { enabled: false, format: 'not-used', resolutionPolicy: 'camera-target-policy' },
-    canvasScaler: { status: 'configured', enabled: true, mode: 'Scale With Screen Size', referenceResolution: { width: 1920, height: 1080 }, matchWidthOrHeight: 0.5 },
+    canvasScaler: { status: 'configured', enabled: true, mode: 'Scale With Screen Size', screenMatchMode: 'MatchWidthOrHeight', referenceResolution: { width: 1920, height: 1080 }, matchWidthOrHeight: 1 },
     panelSettings: { status: 'not-applicable', reason: 'UGUI does not use UI Toolkit PanelSettings' },
     camera: { id: 'GameplayCamera', renderMode: 'ScreenSpaceCamera', viewport: { width: 1920, height: 1080 }, projection: 'Orthographic', measuredAtRuntime: true },
     safeArea: { source: 'Screen.safeArea', policy: 'inset-ui-root', measuredAtRuntime: true },
@@ -250,7 +250,7 @@ test('Unity UI 路线不伪造另一套原生资产，sourceScale 覆盖必须�
   const toolkit = makeContract({
     uiSystem: 'UI Toolkit',
     canvasScaler: { status: 'not-applicable', reason: 'UI Toolkit does not use CanvasScaler' },
-    panelSettings: { status: 'configured', enabled: true, scaleMode: 'Scale With Screen Size', referenceResolution: { width: 1920, height: 1080 }, referenceDpi: 96 },
+    panelSettings: { status: 'configured', enabled: true, scaleMode: 'ScaleWithScreenSize', screenMatchMode: 'MatchWidthOrHeight', referenceResolution: { width: 1920, height: 1080 }, referenceDpi: 96, match: 1 },
   });
   assert.deepEqual(validateUnityResponsiveContract(toolkit), []);
   const fakePanel = makeContract({ panelSettings: { status: 'configured', enabled: true, scaleMode: 'Scale With Screen Size', referenceResolution: { width: 1920, height: 1080 }, referenceDpi: 96 } });
@@ -261,6 +261,20 @@ test('Unity UI 路线不伪造另一套原生资产，sourceScale 覆盖必须�
   assert.deepEqual(validateUnityResponsiveContract(override), []);
   const missingRef = makeContract({ resourceResolution: { sourceScale: 1.5, runtimeScalePolicy: 'platform-measured', platformMeasured: true } });
   assert.match(validateUnityResponsiveContract(missingRef).join('\n'), /sourceScale|approvalRef|evidenceRef/);
+});
+
+test('屏幕 UI 使用固定设计分辨率和方向对应的 Match', () => {
+  const portraitReference = { width: 1080, height: 1920 };
+  const portrait = makeContract({
+    logicalSpace: { mode: 'Canvas', referenceResolution: portraitReference, unit: 'Unity logical units' },
+    canvasScaler: { ...makeContract().canvasScaler, referenceResolution: portraitReference, matchWidthOrHeight: 0 },
+  });
+  assert.deepEqual(validateUnityResponsiveContract(portrait), []);
+  assert.match(validateUnityResponsiveContract(makeContract({ canvasScaler: { ...makeContract().canvasScaler, matchWidthOrHeight: 0 } })).join('\n'), /Match=1/);
+  assert.match(validateUnityResponsiveContract(makeContract({ logicalSpace: { mode: 'Canvas', referenceResolution: { width: 1280, height: 720 }, unit: 'Unity logical units' } })).join('\n'), /1920×1080/);
+  assert.match(validateUnityResponsiveContract(makeContract({ canvasScaler: { ...makeContract().canvasScaler, mode: 'Constant Pixel Size' } })).join('\n'), /随屏幕尺寸缩放/);
+  assert.match(validateUnityResponsiveContract(makeContract({ canvasScaler: { ...makeContract().canvasScaler, enabled: false } })).join('\n'), /随屏幕尺寸缩放/);
+  assert.match(validateUnityResponsiveContract(makeContract({ canvasScaler: { ...makeContract().canvasScaler, screenMatchMode: 'Expand' } })).join('\n'), /MatchWidthOrHeight/);
 });
 
 test('响应式合同引用必须绑定当前 Work Item 的完整合同内容', () => {

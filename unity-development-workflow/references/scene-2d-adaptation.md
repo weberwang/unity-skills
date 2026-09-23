@@ -6,15 +6,15 @@
 
 ## 输入
 
-- 已确认的场景方向、参考分辨率、像素单位和交互安全区。
+- 已确认的场景方向、像素单位和交互安全区；横屏参考分辨率固定为 `1920×1080`，竖屏固定为 `1080×1920`。
 - 已批准的全局 Visual Bible、场景效果图与专门生成的边带背景资源。
 - 正交摄像机、UI Toolkit `PanelSettings`、目标分辨率矩阵和可写路径所有权。
 
 ## 不可变规则
 
-- 竖屏以设计高度为基准：`Camera.orthographicSize = referenceHeight / pixelsPerUnit / 2`；UI Toolkit `PanelSettings` 使用 `ScaleWithScreenSize`、`MatchWidthOrHeight`、`match = 1`。
-- 横屏以设计宽度为基准：`Camera.orthographicSize = referenceWidth / pixelsPerUnit / camera.aspect / 2`；UI Toolkit 使用相同缩放模式，但 `match = 0`。
-- 竖屏目标比参考画面更宽时，仅在 LEFT、RIGHT 区域显示两张无交互背景；横屏目标比参考画面更窄时，仅在 TOP、BOTTOM 区域显示两张无交互背景。
+- 竖屏固定设计宽度 `1080`：`Camera.orthographicSize = referenceWidth / pixelsPerUnit / camera.aspect / 2`；UI Toolkit `PanelSettings` 使用 `ScaleWithScreenSize`、`MatchWidthOrHeight`、`match = 0`。采用 uGUI 时，根 Canvas 的 `CanvasScaler` 使用 `Scale With Screen Size`、相同参考分辨率与 `Match = 0`。
+- 横屏固定设计高度 `1080`：`Camera.orthographicSize = referenceHeight / pixelsPerUnit / 2`；UI Toolkit 使用相同缩放模式，但 `match = 1`。采用 uGUI 时，根 Canvas 的 `CanvasScaler` 使用 `Scale With Screen Size`、相同参考分辨率与 `Match = 1`。
+- 竖屏目标比参考画面更窄时，仅在 TOP、BOTTOM 区域显示两张无交互背景；横屏目标比参考画面更宽时，仅在 LEFT、RIGHT 区域显示两张无交互背景。
 - 相反方向的比例变化会裁切设计画面的非安全外围，不得缩放或移动交互安全区来填满窗口。
 - 边带资源必须位于玩法和 UI 后方，不得含按钮、提示、可点击区域、Collider、Collider2D 或任何玩法信息。摄像机清屏色不能作为正式边带，任何目标分辨率都禁止黑边。
 - 边带图片必须依据已批准的全局视觉基线专门生成，并作为正式资源独立登记、审查和导入；不得拉伸游戏截图或 UI 截图充当背景。
@@ -46,10 +46,10 @@
 
 | 方向 | 基准轴 | 产生边带 | 裁切外围 | 边带位置 |
 | --- | --- | --- | --- | --- |
-| 竖屏 | 高度 | 目标比例更大 | 目标比例更小 | LEFT、RIGHT |
-| 横屏 | 宽度 | 目标比例更小 | 目标比例更大 | TOP、BOTTOM |
+| 竖屏 | 宽度 | 目标比例更小 | 目标比例更大 | TOP、BOTTOM |
+| 横屏 | 高度 | 目标比例更大 | 目标比例更小 | LEFT、RIGHT |
 
-边带厚度按世界空间计算。竖屏每侧为 `(visibleWidth - referenceWorldWidth) / 2`；横屏每侧为 `(visibleHeight - referenceWorldHeight) / 2`。小于等于浮点容差时按无边带处理。
+边带厚度按世界空间计算。竖屏每侧为 `(visibleHeight - referenceWorldHeight) / 2`；横屏每侧为 `(visibleWidth - referenceWorldWidth) / 2`。小于等于浮点容差时按无边带处理。
 
 ## 机器可读输出
 
@@ -62,7 +62,7 @@
 
 ## 通过条件
 
-- 竖屏固定设计高度且 UI match 为 1；横屏固定设计宽度且 UI match 为 0。
+- 竖屏固定 `1080×1920`、设计宽度且 UI match 为 0；横屏固定 `1920×1080`、设计高度且 UI match 为 1。
 - 参考、边带、裁切三类目标分辨率的数学结果与契约一致，交互安全区不进入装饰区域。
 - 所有需要的左右或上下边带均为已登记纯视觉资源，不含交互组件、玩法信息或黑边。
 - G3 的 EditMode、目标分辨率截图和各批准平台实机证据均引用所属平台当前候选主制品与场景版本；未运行项没有被推断为通过。

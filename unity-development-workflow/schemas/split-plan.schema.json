@@ -175,6 +175,10 @@
         },
         "allOf": [
           {
+            "if": {"properties": {"assemblyAnalysis": {"properties": {"layoutSystem": {"enum": ["RECT_TRANSFORM", "UI_TOOLKIT", "CANVAS"]}}, "required": ["layoutSystem"]}}, "required": ["assemblyAnalysis"]},
+            "then": {"properties": {"layoutBinding": {"required": ["uiLayout"]}}}
+          },
+          {
             "if": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}, "required": ["delivery"]},
             "then": {"not": {"anyOf": [{"required": ["targetSize"]}, {"required": ["alphaRequired"]}, {"required": ["pivot"]}, {"required": ["pixelsPerUnit"]}, {"required": ["border"]}]}},
             "else": {"required": ["targetSize", "alphaRequired", "pivot", "pixelsPerUnit"]}

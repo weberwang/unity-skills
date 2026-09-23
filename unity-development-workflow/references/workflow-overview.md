@@ -25,7 +25,7 @@
 
 ## 视觉来源与结构装配
 
-场景使用 V0-V4。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系只能由位置依赖和显式节点事实建立；没有位置依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。
+场景使用 V0-V4。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系必须有显式节点事实和真实的定位、布局、交互、状态、裁切或复用依赖；没有这些依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。屏幕 UI 的 V2 布局字段按[节点树规则](ui-layout-and-hierarchy.md)冻结。
 
 视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 必须绑定精确 GUID、源 SHA、Importer 指纹和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
 

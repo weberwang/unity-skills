@@ -17,7 +17,7 @@
 
 `ProjectSettings/`、`Packages/`、共享 asmdef、场景列表、输入资产和全局 Addressables 不能分配给并行单元。`Assets` 资源与 `.meta` 必须同属一个单元；Prefab Variant 与基础 Prefab、Scene 与其共享 SubScene/资源的并行修改要显式证明互斥。
 
-视觉拆解 item 和 Prefab/Scene 节点必须绑定 `parentElementId`、`semanticGrouping` 与 `layoutBinding`。父子仅由位置依赖建立；共同信息没有位置依赖时声明同组同级，禁止按距离、bounds 或组件类型推断父级。父级、分组或布局绑定改变时，V2 和所有下游结构/运行证据标记为 `stale`。
+视觉拆解 item 和 Prefab/Scene 节点必须绑定 `parentElementId`、`semanticGrouping` 与 `layoutBinding`。父子由定位、布局、交互、状态、裁切或复用依赖建立；共同信息没有这些依赖时声明同组同级，禁止按距离、bounds 或组件类型推断父级。屏幕 UI 额外遵守[节点树和 V2 布局字段](ui-layout-and-hierarchy.md)。父级、分组或布局绑定改变时，V2 和所有下游结构/运行证据标记为 `stale`。
 
 ## 依赖原则
 
