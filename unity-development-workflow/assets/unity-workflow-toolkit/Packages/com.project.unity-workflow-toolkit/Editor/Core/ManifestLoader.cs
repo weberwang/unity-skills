@@ -76,7 +76,7 @@ namespace Project.UnityWorkflow.Core
                 throw new InvalidDataException($"无法把工作流 JSON 反序列化为 {typeof(T).Name}。");
             }
 
-            if (value is IWorkflowJobDto job && value is IWorkflowJobIntegrityState integrityState)
+            if (value is IWorkflowJobDto job && value is WorkflowJobIntegrityState integrityState)
             {
                 ValidateCompiledJob(root, job);
                 integrityState.MarkIntegrityVerified();

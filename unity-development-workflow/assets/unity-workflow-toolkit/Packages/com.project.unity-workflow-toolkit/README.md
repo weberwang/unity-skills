@@ -5,7 +5,8 @@
 - Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
 - ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
-- Runtime：`Adaptive2DViewport` 为 2D 场景提供竖屏宽度适配、横屏高度适配、UI Toolkit match 配置和无交互装饰边带布局。
+- Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
+- FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
 - VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代任一目标平台 Player 实机视觉证据。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
 - PipelineCommands：把四项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
@@ -13,7 +14,7 @@
 
 ## 安装
 
-在目标项目的 `Packages/manifest.json` 中加入本包的本地地址，并固定官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0` 与 `com.unity.nuget.newtonsoft-json` `3.0.2`。也可在 Work Item 已授权修改 `Packages/manifest.json` 时运行 `unity pipeline install --project-path <项目路径>`。业务模块只依赖 Core；Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
+在目标项目的 `Packages/manifest.json` 中加入本包的本地地址，并固定官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0`、`com.unity.nuget.newtonsoft-json` `3.0.2`、`com.unity.ugui` `2.0.0` 与 `com.unity.localization` `1.5.9`。也可在 Work Item 已授权修改 `Packages/manifest.json` 时运行 `unity pipeline install --project-path <项目路径>`。Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
 
 ## 自定义 Pipeline 命令
 
@@ -51,6 +52,17 @@ unity test .\tests\UnityHost --mode EditMode --report-format junit --output .\Ar
 ```
 
 若环境未安装 Unity，只能完成文件结构、JSON 与 C# 静态检查，不能把 EditMode 测试标记为通过。
+
+## 屏幕 UI 安全区
+
+- uGUI：在全屏 Canvas 下建立直接子节点 `SafeAreaRoot`，挂载 `SafeAreaRectTransform`。HUD、页面和弹窗的关键内容放入该节点；背景、全屏遮罩与装饰保留在节点外。
+- UI Toolkit：在全屏 `UIDocument` 的根元素下建立名为 `SafeAreaRoot` 的直接子元素，并在同一 GameObject 挂载 `SafeAreaVisualElement`。如使用其他名称，在组件中设置 `Safe Area Element Name`。
+- 组件根据 `Screen.safeArea`、屏幕尺寸和 Panel 实际尺寸更新。仅用于主显示器的全屏屏幕 UI；World Space Canvas、RenderTexture 和局部 Panel 应按各自坐标空间单独设计。
+- 不要在嵌套的安全区容器上重复挂载组件。EditMode 的 `SafeAreaLayoutTests` 验证归一化计算；场景 V4 仍需实际检查设备安全区与命中区域。
+
+## TMP 多语言字形图集
+
+项目先导入有许可的 `.ttf/.otf` 完整源字体并建立 `en`、`zh-CN`、`ja`、`ru`、`es` String Tables。创建 `TmpFontAtlasPlan`，通常设置三组字体：`en/ru/es`、`zh-CN`、`ja`。需要随语言切换的 TMP 文本挂上 `LocalizedTmpFontBinder`；Prefab 绑定器放入计划的 `Targets`，已打开场景中的绑定器由生成器自动发现。选中计划资产执行 `Tools > Unity Workflow > Build TMP Font Atlases`；脚本从表格和可选额外字符文件生成静态图集并配置目标组件。计划中的 Dynamic 回退字体是可选项，只承接无法预知的动态文字；已知文案缺字会令生成失败。详情见工作流 `references/tmp-font-atlas-workflow.md`。
 
 ## 2D 场景适配
 

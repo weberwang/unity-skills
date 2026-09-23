@@ -4,7 +4,7 @@
 
 1. 以最小必要事实冻结需求、公开契约、状态所有权、资源依赖、验收和测试等级。
 2. A3 前冻结 Implementation Package。包只包含当前阶段需要的 `SHARED`、`MODULE`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION` 或 `RELEASE` 单元。
-3. `SHARED` 只承载启动、Composition Root、日志、时间/随机、输入抽象、存档接口和测试入口等真正共享能力；没有两个稳定消费者的代码不提前上移。
+3. `SHARED` 只承载启动、Composition Root、日志、时间/随机、输入抽象、存档接口、公共安全区和测试入口等真正共享能力；安全区由 HUD/页面与独立显示层共同消费。其他没有两个稳定消费者的代码不提前上移。
 4. `MODULE` 保持场景无关，纯规则与 Unity 表现分离；Runtime asmdef 不引用 Editor。
 5. `SCENE`/`DISPLAY_LAYER` 消费当前 V2/V3，按场景结构实现；跨场景导航、Build Settings、Addressables 全局配置和共享存档迁移留给 `INTEGRATION`。
 6. 实施后审计实际 diff，确认 `.meta` 配对、文件/对象所有权和计划一致；推荐并自动执行适用测试。

@@ -1,7 +1,7 @@
 {
   "name": "Project.UnityWorkflow.Runtime",
   "rootNamespace": "Project.UnityWorkflow.Runtime",
-  "references": [],
+  "references": ["Unity.TextMeshPro", "Unity.Localization"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

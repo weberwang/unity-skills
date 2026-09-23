@@ -9,7 +9,7 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## 最短流程
 
-1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](references/unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[屏幕 UI 布局与节点树](references/ui-layout-and-hierarchy.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
+1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](references/unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[屏幕 UI 布局与节点树](references/ui-layout-and-hierarchy.md)、[TMP 多语言字体图集](references/tmp-font-atlas-workflow.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前冻结 Implementation Package，明确基线、文件所有权、Unity 对象所有权、执行单元、验证命令和停止条件。任务内方案、路径或资源清单变化时更新包并重验受影响范围。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。

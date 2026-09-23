@@ -8,6 +8,7 @@
 
 - 横屏设计基准 `1920×1080`，CanvasScaler/PanelSettings 使用随屏幕尺寸缩放、Match Width Or Height、`Match = 1`；竖屏 `1080×1920`，`Match = 0`。设计基准不是实际输出分辨率。
 - 全屏背景可延伸到安全区之外并裁切边缘；关键文字、按钮、玩法信息以实时 `Screen.safeArea` 为边界。弹窗遮罩可覆盖全屏，弹窗内容必须留在安全区内。
+- 基础模块的 `SafeAreaRectTransform` 只挂在全屏 Canvas 的直接子节点 `SafeAreaRoot`；UI Toolkit 使用 `SafeAreaVisualElement` 作用于全屏 `UIDocument` 根节点的同名直接子节点。两者共享实时安全区换算；不得给背景或遮罩挂安全区组件，也不得在已经收缩的父节点内重复应用。
 - 常驻 HUD、当前页面和 modal/popup/drawer/toast 使用独立根节点；瞬态层属于独立 `DISPLAY_LAYER` Work Item，不能混入宿主 HUD 的所有权。
 - 背景填满可见区域；保持图片比例时按源图比例覆盖并接受装饰边缘裁切。窄屏空间不足时重排或滚动内容，不通过缩小关键控件或固定相机视口掩盖问题。
 

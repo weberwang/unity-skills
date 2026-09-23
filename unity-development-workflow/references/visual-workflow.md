@@ -45,7 +45,7 @@ modal、popup、drawer、toast 等显示层在自己的 `DISPLAY_LAYER` Work Ite
 
 ### 文本与响应式合同
 
-程序化文本必须覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`；逐语言声明 single-line 或 wrap，禁止截断。实测必须覆盖 TMP/UI Toolkit 字体回退、字形、基线、容器边界和命中区域，合同与证据通过 `responsiveContractRef` 和 `contractVersions` 绑定。
+程序化文本必须覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`；逐语言声明 single-line 或 wrap，禁止截断。uGUI/TMP 的源字体、String Tables、静态图集、绑定器及可选动态回退按[字体图集流程](tmp-font-atlas-workflow.md)接入。实测必须覆盖 TMP/UI Toolkit 字体回退、字形、基线、容器边界和命中区域，合同与证据通过 `responsiveContractRef` 和 `contractVersions` 绑定。
 
 ## 失效规则
 
