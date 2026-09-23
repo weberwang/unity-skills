@@ -4,7 +4,7 @@ Unity 的命令语法、Editor 连接、Safe Mode 恢复、项目创建、测试
 
 执行前必须把规范化项目绝对路径绑定到 Work Item，并从插件发现的实例与命令目录选择唯一目标。任何 `eval`、项目命令、包修改、测试或构建都受 Implementation Package 的路径、动作等级和单写者限制；插件不可达、目标不唯一、Safe Mode 或命令不存在时保持 `BLOCKED`，不得猜测或换用旧执行桥接。
 
-场景保存与模态弹窗按[场景保存与弹窗恢复](scene-save-recovery.md)处理。优先使用插件实际发现的保存能力；桌面 Unity 仅在命令被弹窗阻断且保存范围、来源与按钮均已核实时参与恢复。
+切换场景等可能触发保存提示的命令必须先通过[场景保存前置检查](scene-save-recovery.md)，仅使用插件当前发现的单场景命令保存并复读当前任务修改的场景，不等待或点击弹窗。
 
 `com.project.unity-workflow-toolkit` 通过 `com.unity.pipeline` 额外登记：
 
