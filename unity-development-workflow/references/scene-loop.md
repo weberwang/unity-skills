@@ -2,11 +2,11 @@
 
 ## V0 分流
 
-确定场景 ID、宿主 Scene、模块依赖、常驻 HUD、视觉模式、平台约束和验收轨迹。纯工程模块不伪装成场景；跨场景入口归 INTEGRATION。modal、popup、drawer、toast 等瞬态层另建 `DISPLAY_LAYER` Work Item，`hostSceneId` 只作运行上下文。
+确定场景 ID、宿主 Scene、模块依赖、常驻 HUD、视觉模式、平台约束和验收轨迹。新建且包含可见画面的场景或显示层在本阶段登记效果图任务。纯工程模块不伪装成场景；跨场景入口归 INTEGRATION。modal、popup、drawer、toast 等瞬态层另建 `DISPLAY_LAYER` Work Item，`hostSceneId` 只作运行上下文。
 
 ## V1 场景定义
 
-冻结玩家行为、状态、失败/恢复、输入、相机、UI、数据所有权与 Scene/Prefab/UXML 结构，并生成响应式合同。草图和灰盒只能承载布局与交互验证，不注册为正式资源。
+冻结玩家行为、状态、失败/恢复、输入、相机、UI、数据所有权与 Scene/Prefab/UXML 结构，并生成响应式合同。新建且包含可见画面的场景或显示层先生成至少一张完整效果图作为 V2 目标图；草图和灰盒只承载布局与交互验证，不能替代效果图，也不注册为正式资源。
 
 ## V2 拆解确认
 

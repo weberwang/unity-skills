@@ -17,8 +17,8 @@ description: 在 Unity 场景 V0-V4 中建立视觉基线、结构草图、资�
 
 ## V0-V4
 
-1. **V0 分流**：识别全局基线、场景、显示层、参考图使用边界和实际交付类型。场景只包含自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item。已有有效视觉规范时直接消费；需要方向探索时生成由任务决定数量的实质不同候选，并让用户选择。
-2. **V1 对象定义**：提交可查看草图/灰盒和 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。
+1. **V0 分流**：识别全局基线、场景、显示层、参考图使用边界和实际交付类型。场景只包含自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item。新建且包含可见画面的场景或显示层必须安排效果图任务；已有有效视觉规范时用它指导效果图，需要方向探索时生成由任务决定数量的实质不同候选，并让用户选择。
+2. **V1 对象定义**：为新建且包含可见画面的 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，作为 V2 拆解的目标图；同时提交草图/灰盒和 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图只用于设计与拆解，不注册为正式资源。
 3. **V2 拆解确认**：对可见元素建立稳定编号和组件×状态。先按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。
 4. **V3 资源与组合验收**：按编号独立生产、创作或复用，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID、Addressables 和宿主同屏组合。资源与 `.meta` 同属一个所有权单元。
 5. **V4 正式接入**：由单写者按冻结结构拼装 Scene、Prefab 或 UXML/USS，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。

@@ -4,19 +4,19 @@
 
 ## 全局视觉基线
 
-只有项目确实需要新视觉方向时才生成候选。候选数量由 Work Item 决定；需要探索时推荐三个实质不同的完整方向，用户选择后冻结 Visual Bible。已有有效品牌/视觉规范时直接验证并采用，不强制重新三选一。
+新建且包含可见画面的 `SCENE` 或 `DISPLAY_LAYER` Work Item 必须生成自身的完整效果图，即使已有有效品牌/视觉规范；此时按规范生成一个目标方案即可。只有项目确实需要新视觉方向时才生成多个方向候选，数量由 Work Item 决定；需要探索时推荐三个实质不同的完整方向，用户选择后冻结 Visual Bible。已有有效品牌/视觉规范时直接验证并采用，不强制重新三选一。
 
 Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并绑定来源版本与文件 SHA。方向变化只使真实依赖它的场景和资源失效。
 
 ## V1 场景定义
 
-冻结场景功能契约、目标视口、相机、状态、输入轨迹和实际可查看的草图/灰盒；同时给出稳定节点 ID、`parentElementId`、语义分组、渲染顺序、Anchor、Pivot、安全区、遮罩、资源槽，以及适用的 UXML/USS/UIDocument、Canvas/RectTransform 或 GameObject/Component 结构。屏幕 UI 按[布局与节点树规则](ui-layout-and-hierarchy.md)区分全屏背景、安全区内容、常驻 HUD 和独立显示层；父子须有实际布局或行为依赖。
+冻结场景或显示层的功能契约、目标视口、相机、状态、输入轨迹和实际可查看的草图/灰盒。新建且包含可见画面的 Work Item 先生成至少一张覆盖目标状态与主要视觉元素的完整效果图，并冻结为 V2 目标图；草图/灰盒用于验证结构与交互，不能替代效果图。同时给出稳定节点 ID、`parentElementId`、语义分组、渲染顺序、Anchor、Pivot、安全区、遮罩、资源槽，以及适用的 UXML/USS/UIDocument、Canvas/RectTransform 或 GameObject/Component 结构。屏幕 UI 按[布局与节点树规则](ui-layout-and-hierarchy.md)区分全屏背景、安全区内容、常驻 HUD 和独立显示层；父子须有实际布局或行为依赖。
 
 如果场景基于参考图还原，明确 `usability` 或 `exact`。默认 `usability` 关注边界、裁切、遮挡、可读性、状态和交互；仅用户明确要求精确还原时使用像素容差和完整矩阵。
 
 ## V2 拆解确认
 
-只分析冻结的场景目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
+只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
 
 屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
 

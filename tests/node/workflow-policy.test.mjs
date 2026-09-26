@@ -116,7 +116,14 @@ test("F0-F4 只保留全局质量门语义", () => {
 
 test("视觉流程使用 V0-V4 且不把动作等级当视觉阶段", () => {
   const text = orchestrationText("references/visual-workflow.md");
+  const sceneLoop = orchestrationText("references/scene-loop.md");
+  const visualAssets = skillText("unity-game-visual-assets");
   assert.match(text, /视觉生产嵌入场景 V0-V4/);
+  for (const policy of [text, sceneLoop, visualAssets]) {
+    assert.match(policy, /新建且包含可见画面.*效果图/);
+  }
+  assert.match(text, /草图\/灰盒用于验证结构与交互，不能替代效果图/);
+  assert.match(text, /只有项目确实需要新视觉方向时才生成多个方向候选/);
   assert.match(text, /A0-A6 只表示动作风险等级/);
   assert.doesNotMatch(text, /A0 全局视觉|A1 草图|A2 高保真|A3 资产地图|A4 Unity/);
   assert.match(text, /禁止裁切、抠取、放大或轻微修饰/);
