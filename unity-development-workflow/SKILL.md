@@ -17,6 +17,7 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## Unity 原生执行约束
 
+- 首次建立工程、规划模块或新增目录时遵守[项目结构约束](references/project-structure.md)，目录映射、asmdef、场景生命周期与所有权在 TDD 和实施包中保持一致。
 - Unity 写入前发现实例，按规范化项目路径绑定唯一 Editor，并等待导入、编译和域重载稳定；写后复读目标对象、Console、Scene/Prefab、Importer、GUID 与登记结果。切换场景及其他可能触发保存提示的命令之前，先按[场景保存前置检查](references/scene-save-recovery.md)只检查当前任务修改的场景，并通过 Unity 场景保存命令保存。
 - `Assets/` 中由 Unity 管理的文件与 `.meta` 视为一个所有权单元。禁止脱离 AssetDatabase 生成或猜测 GUID；移动/重命名资源优先使用 Unity API，避免引用断裂。
 - `ProjectSettings/`、`Packages/`、Build Settings、Addressables 全局配置、共享 asmdef 与跨场景入口只能串行修改。同一物理 Unity 项目的正式 Editor 写入保持单写者。

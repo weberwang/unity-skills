@@ -13,6 +13,8 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 
 ## 执行与交接
 
+首次建立工程、规划目录或评审模块边界时，读取[项目结构约束](../unity-development-workflow/references/project-structure.md)，在 TDD 固定目录映射、程序集依赖、场景生命周期与资源所有权；后续新增实现必须沿用该合同。
+
 项目创建与 Editor/构建操作交给 `unity:new-unity-project`、`unity:unity-cli`；UPM 交给 `unity:unity-package-management`；BiRP→URP 和 Render Graph 专项分别交给 `unity:migrate-birp-to-urp`、`unity:validate-urp-render-graph-renderer-feature`。本角色只决定架构、预算、依赖和验收边界，不重复维护插件操作步骤。
 
 1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建。
