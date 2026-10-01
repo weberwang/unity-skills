@@ -207,10 +207,11 @@ export function validateUnityResponsiveContract(contract, options = {}) {
   const resources = contract.resourceResolution;
   if (knownObject(resources, new Set(['sourceScale', 'runtimeScalePolicy', 'platformMeasured', 'override']), `${scope}.resourceResolution`, errors)) {
     if (typeof resources.sourceScale !== 'number' || !Number.isFinite(resources.sourceScale) || resources.sourceScale <= 0) errors.push(contractError(scope, 'resourceResolution.sourceScale 必须为正数'));
-    if (resources.sourceScale !== 2) {
+    // 源图按最大显示尺寸的 1 倍生产；偏离基线时保留可审计的预算依据。
+    if (resources.sourceScale !== 1) {
       const override = resources.override;
       if (!knownObject(override, new Set(['reason', 'approvalRef', 'evidenceRef']), `${scope}.resourceResolution.override`, errors)
-        || !nonEmptyString(override.reason) || (!nonEmptyString(override.approvalRef) && !nonEmptyString(override.evidenceRef))) errors.push(contractError(scope, '非 2x sourceScale 必须提供 reason 和 approvalRef/evidenceRef'));
+        || !nonEmptyString(override.reason) || (!nonEmptyString(override.approvalRef) && !nonEmptyString(override.evidenceRef))) errors.push(contractError(scope, '非 1x sourceScale 必须提供 reason 和 approvalRef/evidenceRef'));
     }
     if (!nonEmptyString(resources.runtimeScalePolicy) || resources.platformMeasured !== true) errors.push(contractError(scope, '资源运行时缩放必须按平台实测，不能使用运行时 DPR'));
   }

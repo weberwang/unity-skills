@@ -20,7 +20,7 @@ Manifest 同时记录 `workItemType`、`visualStage`、`contractVersions`、`res
 
 可见 Work Item 只有在 `visualStage=V4` 且所有响应式运行事实真实测量后才能提交 PASS。`responsiveEvidence` 必须绑定 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的 resize/orientation 轨迹、截图和候选 `candidateSha256`。控制器会限制工件路径在仓库内，回读文件并核对内容 SHA；候选 SHA 必须等于当前 Work Item 的正式候选。`productionContractAudit` 必须声明当前合同版本与候选 SHA，并明确 `staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`。
 
-静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=2` 只表示生产基线，不是运行时 DPR。
+静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=1` 只表示生产基线，不是运行时 DPR。
 
 ## 设备与发布
 

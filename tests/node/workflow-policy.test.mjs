@@ -102,7 +102,7 @@ test("弹窗、响应式与视觉拆解合同使用 Unity 原生语义", () => {
   assert.match(text, /hostSceneId.*上下文/);
   assert.match(text, /visualRouteAnalysis/);
   assert.match(text, /assemblyAnalysis/);
-  assert.match(text, /sourceScale=2/);
+  assert.match(text, /sourceScale=1/);
   for (const locale of ["en", "zh-CN", "ja", "ru", "es"]) assert.ok(text.includes(`\`${locale}\``), `缺少语言合同：${locale}`);
   assert.doesNotMatch(text, /devicePixelRatio|CSS 像素|deferred_layers/);
 });

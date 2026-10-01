@@ -52,7 +52,7 @@ function makeContract(overrides = {}) {
       locales: ['en', 'zh-CN', 'ja', 'ru', 'es'],
       localePolicies: Object.fromEntries(['en', 'zh-CN', 'ja', 'ru', 'es'].map((locale) => [locale, { singleLine: false, wrap: true, truncation: 'forbidden' }])),
     },
-    resourceResolution: { sourceScale: 2, runtimeScalePolicy: 'platform-canvas-panel-camera-measured', platformMeasured: true },
+    resourceResolution: { sourceScale: 1, runtimeScalePolicy: 'platform-canvas-panel-camera-measured', platformMeasured: true },
     performanceBudget: { frameTimeMs: 16.67, uiDrawCalls: 80, renderTexturePixels: 2000000, memoryMb: 512, degradationPolicy: 'explicit-quality-tier-after-measurement' },
     representativeViewports: [
       { id: 'portrait-phone', width: 1080, height: 1920, orientation: 'portrait' },
@@ -423,8 +423,12 @@ test('Unity UI 路线不伪造另一套原生资产，sourceScale 覆盖必须�
   assert.match(validateUnityResponsiveContract(missingScaler).join('\n'), /必须配置 CanvasScaler/);
   const override = makeContract({ resourceResolution: { sourceScale: 1.5, runtimeScalePolicy: 'platform-measured', platformMeasured: true, override: { reason: 'pixel-art source', evidenceRef: 'evidence/source-scale.json' } } });
   assert.deepEqual(validateUnityResponsiveContract(override), []);
-  const missingRef = makeContract({ resourceResolution: { sourceScale: 1.5, runtimeScalePolicy: 'platform-measured', platformMeasured: true } });
+  const validateSchema = schemaValidator('work-item.schema.json');
+  assert.equal(validateSchema(makeSceneWork({ responsiveContract: override })), true);
+  const missingRef = makeContract({ resourceResolution: { sourceScale: 2, runtimeScalePolicy: 'platform-measured', platformMeasured: true } });
   assert.match(validateUnityResponsiveContract(missingRef).join('\n'), /sourceScale|approvalRef|evidenceRef/);
+  // 旧两倍值不再是免审计默认值，Schema 与运行时必须同时拒绝无依据的覆盖。
+  assert.equal(validateSchema(makeSceneWork({ responsiveContract: missingRef })), false);
 });
 
 test('屏幕 UI 使用固定设计分辨率和方向对应的 Match', () => {
