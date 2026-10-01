@@ -5,13 +5,19 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
 import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 
 import {
+  check,
+  inspect,
+  run,
+  transitionWorkItem,
   validateEvidence,
   validateImplementationPackage,
   validateWorkItem,
 } from '../../unity-game-workflow-control/scripts/workflow-control.mjs';
 import { validateUnityResponsiveContract } from '../../unity-game-workflow-control/scripts/runtime/visible-contract.mjs';
+import { stageConfirmationBlockers } from '../../unity-game-workflow-control/scripts/runtime/stage-confirmation.mjs';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
 const CANDIDATE = `sha256:${'b'.repeat(64)}`;
@@ -168,7 +174,34 @@ function makeVisiblePackage(work, repo, overrides = {}) {
 /** 以 Ajv 校验指定控制面 schema，确保 schema 与 runtime 入口都覆盖新字段。 */
 function schemaValidator(name) {
   const ajv = new Ajv2020({ strict: false });
+  addFormats(ajv);
   return ajv.compile(JSON.parse(readFileSync(resolve(`unity-game-workflow-control/schemas/${name}`), 'utf8')));
+}
+
+/** 为某阶段构造绑定当前工作项、基线与交付摘要的测试确认记录。 */
+function makeStageReview(work, stage, options = {}) {
+  const current = work.workItemType === 'SCENE' ? work.scene.stage : work.displayLayer.stage;
+  const stageNumber = Number(stage.slice(1));
+  const deliverableSha256 = options.deliverableSha256 ?? (stage === current ? work.candidateSha256 : `sha256:${String(stageNumber + 1).repeat(64)}`);
+  const review = { stage, deliverableSha256 };
+  if (options.confirmation !== null) {
+    review.confirmation = {
+      workItemId: work.workItemId,
+      baselineHash: work.baselineHash,
+      stage,
+      deliverableSha256,
+      confirmedBy: 'project-owner',
+      confirmedAt: '2026-09-30T10:00:00+08:00',
+      userMessageRef: `user-message:${work.workItemId}:${stage}`,
+      ...options.confirmation,
+    };
+  }
+  return review;
+}
+
+/** 按给定阶段生成独立记录；历史阶段摘要与当前候选摘要可不同。 */
+function makeStageReviews(work, stages) {
+  return stages.map((stage) => makeStageReview(work, stage));
 }
 
 test('合法 SCENE/DISPLAY_LAYER Work Item 必须具备独立身份和 Unity 响应式合同', () => {
@@ -179,6 +212,137 @@ test('合法 SCENE/DISPLAY_LAYER Work Item 必须具备独立身份和 Unity 响
   assert.deepEqual(validateUnityResponsiveContract(scene.responsiveContract, { scope: scene.workItemId }), []);
   assert.equal(schemaValidator('work-item.schema.json')(scene), true);
   assert.equal(schemaValidator('work-item.schema.json')(layer), true);
+});
+
+test('stageReviews 严格拒绝重复阶段、错误时间和非可见工作项', () => {
+  const work = makeSceneWork();
+  const review = makeStageReview(work, 'V0');
+  const valid = { ...work, stageReviews: [review] };
+  assert.doesNotThrow(() => validateWorkItem(valid));
+  assert.equal(schemaValidator('work-item.schema.json')(valid), true);
+
+  const duplicateStages = { ...work, stageReviews: [review, structuredClone(review)] };
+  assert.throws(() => validateWorkItem(duplicateStages), /不能重复阶段/);
+  assert.equal(schemaValidator('work-item.schema.json')(duplicateStages), false);
+  const invalidTime = { ...work, stageReviews: [{ ...review, confirmation: { ...review.confirmation, confirmedAt: '2026-02-30T25:00:00Z' } }] };
+  assert.throws(() => validateWorkItem(invalidTime), /有效 ISO 8601/);
+  assert.equal(schemaValidator('work-item.schema.json')(invalidTime), false);
+  const nonVisible = { ...work, workItemType: 'FOUNDATION', stageId: 'foundation-engineering' };
+  delete nonVisible.scene;
+  delete nonVisible.responsiveContract;
+  delete nonVisible.candidateSha256;
+  assert.throws(() => validateWorkItem({ ...nonVisible, stageReviews: [] }), /只有 SCENE 和 DISPLAY_LAYER/);
+  assert.equal(schemaValidator('work-item.schema.json')({ ...nonVisible, stageReviews: [] }), false);
+  assert.doesNotThrow(() => validateWorkItem(nonVisible));
+});
+
+test('阶段门要求全部前序人工确认，并允许当前 V0 继续进行', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-stage-history-'));
+  try {
+    const work = makeSceneWork({
+      scene: { sceneId: 'MainScene', stage: 'V2', status: 'IN_PROGRESS' },
+      actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    });
+    work.stageReviews = [makeStageReview(work, 'V0')];
+    const workPath = join(repo, 'work.json');
+    writeJson(workPath, work);
+    const inspection = inspect({ repo, 'work-item': workPath });
+    assert.ok(inspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_PENDING' && item.message === '等待 V1 人工确认'));
+
+    const initial = makeSceneWork({
+      globalState: 'REVIEW', scene: { sceneId: 'MainScene', stage: 'V0', status: 'IN_PROGRESS' },
+      actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    });
+    assert.deepEqual(stageConfirmationBlockers(initial), []);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('当前 PASS 证据不能替代人工确认，run/check 阻断后确认齐备才能完成', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-stage-current-'));
+  try {
+    const work = makeSceneWork({
+      actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    });
+    work.stageReviews = makeStageReviews(work, ['V0', 'V1', 'V2', 'V3']);
+    const workPath = join(repo, 'work.json');
+    const evidencePath = join(repo, 'evidence.json');
+    writeJson(workPath, work);
+    writeJson(evidencePath, makeVisibleEvidence(work, {}, repo));
+    const args = { repo, 'work-item': workPath, evidence: evidencePath };
+
+    const checked = check(args);
+    assert.equal(checked.status, 'BLOCKED');
+    assert.ok(checked.blocking.includes('等待 V4 人工确认'));
+    const blockedRun = run(args);
+    assert.equal(blockedRun.status, 'BLOCKED');
+    assert.deepEqual(blockedRun.changed, []);
+
+    work.stageReviews.push(makeStageReview(work, 'V4'));
+    writeJson(workPath, work);
+    const completed = run(args);
+    assert.equal(completed.status, 'COMPLETE');
+    assert.deepEqual(completed.changed, ['VALIDATING → PASSED', 'PASSED → COMPLETE']);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('直接迁移重算阶段门；F4 或 userDecisionRequired=false 不能绕过，RETURN/BLOCKED 可进入修复', () => {
+  const work = makeSceneWork({
+    globalState: 'REVIEW', scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' },
+    actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    userDecisionRequired: false, gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' },
+  });
+  const forgedInspection = { work, blockers: [], evidence: null, pkg: null };
+  assert.throws(() => transitionWorkItem(forgedInspection, 'VALIDATING'), /等待 V0 人工确认/);
+
+  const returned = transitionWorkItem(forgedInspection, 'RETURN', {
+    'return-category': 'scope-changed', 'return-reason': '需重新确认', 'affected-scope': 'scene:MainScene',
+  });
+  assert.equal(returned.globalState, 'RETURN');
+  assert.equal(transitionWorkItem(forgedInspection, 'BLOCKED', { reason: '待用户确认' }).globalState, 'BLOCKED');
+});
+
+test('COMPLETE 必须处于 V4；候选 SHA 更新会使当前阶段确认失效', () => {
+  const v3 = makeSceneWork({
+    globalState: 'INTEGRATING', scene: { sceneId: 'MainScene', stage: 'V3', status: 'PASS' },
+    actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+  });
+  v3.stageReviews = makeStageReviews(v3, ['V0', 'V1', 'V2', 'V3']);
+  assert.throws(() => transitionWorkItem({ work: v3, blockers: [], evidence: null, pkg: null }, 'COMPLETE'), /必须到达 V4/);
+
+  const changedCandidate = makeSceneWork({
+    globalState: 'VALIDATING', scene: { sceneId: 'MainScene', stage: 'V0', status: 'PASS' },
+    actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+  });
+  changedCandidate.stageReviews = [makeStageReview(changedCandidate, 'V0')];
+  changedCandidate.candidateSha256 = HASH;
+  assert.ok(stageConfirmationBlockers(changedCandidate).some((item) => item.code === 'STAGE_CANDIDATE_STALE'));
+  assert.throws(() => transitionWorkItem({ work: changedCandidate, blockers: [], evidence: null, pkg: null }, 'PASSED'), /未绑定当前 candidateSha256/);
+});
+
+test('确认绑定工作项和基线；DISPLAY_LAYER 不继承宿主 SCENE 的确认身份', () => {
+  const scene = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
+  scene.stageReviews = [makeStageReview(scene, 'V0')];
+  const layer = makeDisplayLayerWork({
+    displayLayer: { displayLayerId: 'PauseModal', hostSceneId: 'MainScene', type: 'modal', stage: 'V1', status: 'IN_PROGRESS' },
+    stageReviews: scene.stageReviews,
+  });
+  const layerPath = join(mkdtempSync(join(tmpdir(), 'unity-layer-review-')), 'work.json');
+  writeJson(layerPath, layer);
+  const inspection = inspect({ repo: resolve(layerPath, '..'), 'work-item': layerPath });
+  assert.ok(inspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_STALE'));
+
+  const staleBaseline = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
+  staleBaseline.stageReviews = [makeStageReview(staleBaseline, 'V0')];
+  staleBaseline.baselineHash = `sha256:${'c'.repeat(64)}`;
+  const stalePath = join(resolve(layerPath, '..'), 'stale.json');
+  writeJson(stalePath, staleBaseline);
+  const staleInspection = inspect({ repo: resolve(stalePath, '..'), 'work-item': stalePath });
+  assert.ok(staleInspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_STALE'));
+  rmSync(resolve(layerPath, '..'), { recursive: true, force: true });
 });
 
 test('缺失 workItemType、场景身份或 DISPLAY_LAYER 宿主身份时 fail closed', () => {

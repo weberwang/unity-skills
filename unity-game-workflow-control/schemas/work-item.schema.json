@@ -27,6 +27,17 @@
     "displayLayer": {"$ref": "#/$defs/displayLayer"},
     "responsiveContract": {"$ref": "#/$defs/responsiveContract"},
     "candidateSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "stageReviews": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/stageReview"},
+      "allOf": [
+        {"not": {"contains": {"properties": {"stage": {"const": "V0"}}, "required": ["stage"]}, "minContains": 2}},
+        {"not": {"contains": {"properties": {"stage": {"const": "V1"}}, "required": ["stage"]}, "minContains": 2}},
+        {"not": {"contains": {"properties": {"stage": {"const": "V2"}}, "required": ["stage"]}, "minContains": 2}},
+        {"not": {"contains": {"properties": {"stage": {"const": "V3"}}, "required": ["stage"]}, "minContains": 2}},
+        {"not": {"contains": {"properties": {"stage": {"const": "V4"}}, "required": ["stage"]}, "minContains": 2}}
+      ]
+    },
     "baselineId": {"type": "string", "minLength": 1},
     "baselineVersion": {"type": "string", "minLength": 1},
     "baselineHash": {"type": "string", "minLength": 1},
@@ -81,9 +92,33 @@
   "allOf": [
     {"if": {"properties": {"workItemType": {"const": "SCENE"}}, "required": ["workItemType"]}, "then": {"required": ["scene", "responsiveContract", "candidateSha256"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["displayLayer"]}}},
     {"if": {"properties": {"workItemType": {"const": "DISPLAY_LAYER"}}, "required": ["workItemType"]}, "then": {"required": ["displayLayer", "responsiveContract", "candidateSha256"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["scene"]}}},
-    {"if": {"properties": {"workItemType": {"enum": ["PROJECT", "FOUNDATION", "INTEGRATION", "RELEASE"]}}, "required": ["workItemType"]}, "then": {"not": {"anyOf": [{"required": ["scene"]}, {"required": ["displayLayer"]}, {"required": ["responsiveContract"]}]}}}
+    {"if": {"properties": {"workItemType": {"enum": ["PROJECT", "FOUNDATION", "INTEGRATION", "RELEASE"]}}, "required": ["workItemType"]}, "then": {"not": {"anyOf": [{"required": ["scene"]}, {"required": ["displayLayer"]}, {"required": ["responsiveContract"]}, {"required": ["stageReviews"]}]}}}
   ],
   "$defs": {
+    "stageReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "deliverableSha256"],
+      "properties": {
+        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+        "deliverableSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "confirmation": {"$ref": "#/$defs/stageConfirmation"}
+      }
+    },
+    "stageConfirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workItemId", "baselineHash", "stage", "deliverableSha256", "confirmedBy", "confirmedAt", "userMessageRef"],
+      "properties": {
+        "workItemId": {"type": "string", "minLength": 1},
+        "baselineHash": {"type": "string", "minLength": 1},
+        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+        "deliverableSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "confirmedBy": {"type": "string", "minLength": 1},
+        "confirmedAt": {"type": "string", "format": "date-time"},
+        "userMessageRef": {"type": "string", "minLength": 1}
+      }
+    },
     "displayLayer": {
       "type": "object",
       "additionalProperties": false,

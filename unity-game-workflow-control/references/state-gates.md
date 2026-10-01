@@ -30,6 +30,7 @@ COMPLETE                  → (无)
 
 ## 迁移门
 
+- `SCENE`、`DISPLAY_LAYER` 的 V0–V4 每阶段均须[人工确认](stage-confirmation.md)。所有前序阶段确认有效后才能开展当前阶段；当前交付 PASS 后仍须确认，V4 未确认不能进入 COMPLETE。`run` 与显式正常迁移都不得绕过，阶段确认不替代 F0–F4 或运行证据。
 - 离开 `INTAKE` 必须通过 F0；离开 `BASELINE`/`PROPOSAL` 必须通过 F1；进入生产实施前必须通过 F2。
 - 进入 `IMPLEMENTING` 必须绑定当前 Work Item 的实施包；A3 不能只靠一句“已完成”跳过实施包。
 - 进入 `VALIDATING` 前，实施包所有单元必须为 `COMPLETE`，共享设置与集成单元必须按声明顺序闭合。

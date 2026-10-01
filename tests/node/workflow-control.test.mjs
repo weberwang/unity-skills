@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import test from 'node:test';
 import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 
 import {
   packageComplete,
@@ -356,6 +357,7 @@ test('Work Item 拒绝旧版未声明字段', () => {
 
 test('schema 与 runtime 对 unityOwnership、packageStatus、dependsOn 保持一致', () => {
   const ajv = new Ajv2020({ strict: false });
+  addFormats(ajv);
   const readSchema = (name) => JSON.parse(readFileSync(resolve(`unity-game-workflow-control/schemas/${name}`), 'utf8'));
   const work = makeWork();
   const pkg = makePackage('WI-1');

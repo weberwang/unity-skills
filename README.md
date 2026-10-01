@@ -22,6 +22,8 @@
 
 Unity 写入遵循原生约束：唯一 Editor 实例、编译/导入/域重载稳定、单写者、AssetDatabase、资源与 `.meta` 配对、GUID/Importer/序列化回读，以及 EditMode/PlayMode/构建证据。未经用户明确要求，不启动 Standalone/Player 或真机，不签名、上传或发布。
 
+场景和独立显示层的 V0–V4 每个阶段都必须先展示交付并获得用户明确确认，才能进入下一阶段；V4 确认后才完成工作项。确认通过 `stageReviews` 绑定工作项、基线、阶段交付摘要和用户消息引用；测试通过不能代替人工确认，具体见[阶段人工确认约束](unity-game-workflow-control/references/stage-confirmation.md)。
+
 ## 安装
 
 需要 Node.js 22.20 或更高版本。在目标 Unity 项目根目录执行：

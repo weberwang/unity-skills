@@ -26,6 +26,8 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## 场景 V0-V4
 
+每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0–V4 均按[阶段人工确认](../unity-game-workflow-control/references/stage-confirmation.md)逐阶段提交可查看产物，取得用户明确确认后才进入下一阶段；V4 确认后才闭合。`stageReviews` 绑定工作项、基线和交付摘要，不能用技术 PASS、初始授权或沉默替代人工确认。
+
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 
 - V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹。

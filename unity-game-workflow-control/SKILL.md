@@ -16,6 +16,7 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 5. 实施后记录候选变更和 Evidence Manifest，证据必须绑定相同的 Work Item、基线和实施包；V4 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程 resize/orientation、截图和候选 SHA。
 6. 失败只选择 `repair`、`revalidate` 或显式 `RETURN`；控制面不会自动回退、扩大范围或伪造设备/发布证据。
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
+8. `SCENE` 与 `DISPLAY_LAYER` 每个 V0–V4 阶段结束时按[阶段人工确认](references/stage-confirmation.md)展示可查看交付并等待用户确认；通过 `stageReviews` 保存工作项、基线、阶段、交付摘要与用户消息引用。未确认不推进下一阶段，V4 未确认不完成工作项。
 
 用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V0-V4，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。
 
@@ -29,13 +30,14 @@ node <skill-dir>/scripts/workflow-control.mjs transition --repo <repo> --work-it
 node <skill-dir>/scripts/workflow-control.mjs lint
 ```
 
-`status` 和 `check` 绝不写文件。`run` 只沿合法的安全前向状态迁移，并在 `IMPLEMENTING`、`RETURN`、用户决定、缺少证据、实施包未完成或带副作用的 A4-A6 精确审批处停止。`transition` 是唯一的显式迁移入口，禁止跳过实施包、验证证据或 `RETURN` 记录。
+`status` 和 `check` 绝不写文件。`run` 只沿合法的安全前向状态迁移，并在 `IMPLEMENTING`、`RETURN`、阶段人工确认、用户决定、缺少证据、实施包未完成或带副作用的 A4-A6 精确审批处停止。`transition` 是唯一的显式全局状态迁移入口，禁止跳过阶段人工确认、实施包、验证证据或 `RETURN` 记录。
 
 所有稳定输出都包含 `status`、`stage`、`changed`、`blocking`、`next`、`metadata` 六个字段。执行结果是诊断记录，不代表 Unity Editor、真机或发布系统已经运行。
 
 ## 参考资料
 
 - [简化六阶段与场景视图](references/simplified-workflow.md)：用户可理解的项目阶段和 V0-V4 场景阶段。
+- [阶段人工确认](references/stage-confirmation.md)：V0–V4 逐阶段交付、确认来源、版本绑定与失效规则。
 - [控制模型](references/control-model.md)：A0-A6、F0-F4、动作和实施包边界。
 - [状态门禁](references/state-gates.md)：合法迁移、停止条件和 repair/revalidate/return。
 - [Unity 证据](references/unity-evidence.md)：Editor、编译、域重载、Console、测试、资源和构建证据要求。

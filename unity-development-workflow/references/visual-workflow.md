@@ -2,6 +2,8 @@
 
 视觉生产嵌入场景 V0-V4，不使用独立 A0-A4 流程。A0-A6 只表示动作风险等级，F0-F4 只表示全局质量门。
 
+V0–V4 每个阶段完成后均按[阶段人工确认](../../unity-game-workflow-control/references/stage-confirmation.md)展示交付并等待明确确认，不能因已有视觉规范或技术验证通过跳过。V1 效果图、V2 拆解、V3 组合分别经确认后进入下一阶段，V4 运行交付经确认后闭合。
+
 ## 全局视觉基线
 
 新建且包含可见画面的 `SCENE` 或 `DISPLAY_LAYER` Work Item 必须生成自身的完整效果图，即使已有有效品牌/视觉规范；此时按规范生成一个目标方案即可。只有项目确实需要新视觉方向时才生成多个方向候选，数量由 Work Item 决定；需要探索时推荐三个实质不同的完整方向，用户选择后冻结 Visual Bible。已有有效品牌/视觉规范时直接验证并采用，不强制重新三选一。
@@ -27,7 +29,7 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 - Scene/Prefab/UXML/UIDocument/Canvas/Transform 的结构化装配；单区域不得使用 `COMPOSITE` 或整屏截图，`fullScreenCapture` 必须为 `false`；
 - annotated preview、完整覆盖说明和生产/验证责任。
 
-存在实质视觉取舍、来源授权或外部生成成本时请求精确 `USER_DECISION`。未确认生产边界前，不导入正式资源或写入正式 Scene/Prefab/UI。禁止裁切、抠取、放大或轻微修饰参考图/高保真图充当 Sprite/纹理，禁止整图铺底冒充结构化实现。
+存在实质视觉取舍、来源授权或外部生成成本时另行请求精确 `USER_DECISION`；无此类取舍也必须取得 V2 阶段人工确认。未确认生产边界前，不导入正式资源或写入正式 Scene/Prefab/UI。禁止裁切、抠取、放大或轻微修饰参考图/高保真图充当 Sprite/纹理，禁止整图铺底冒充结构化实现。
 
 ## V3 正式资源与组合验收
 

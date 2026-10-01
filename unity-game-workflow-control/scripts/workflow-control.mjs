@@ -6,6 +6,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { canonicalizePosixPath as canonicalizePosixPathRuntime, commitWithLock } from './runtime/io.mjs';
+import { assertStageConfirmationGate, stageConfirmationBlockers, validateStageReviewsShape } from './runtime/stage-confirmation.mjs';
 import { assertVisibleContract, validateUnitDependencies, validateUnityOwnershipShape, validateVisibleEvidenceContract, validateVisibleImplementationPackage, validateVisibleWorkItemContract } from './runtime/visible-contract.mjs';
 /** 唯一接受的数据合同版本；旧字段不会被迁移或解释。 */
 export const SCHEMA_VERSION = '1.0';
@@ -201,7 +202,7 @@ function approvalSnapshot(work) {
 
 /** 校验并返回 Work Item 的只读规范化视图。 */
 export function validateWorkItem(work) {
-  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'workItemType', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'displayLayer', 'responsiveContract', 'candidateSha256', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'workItemType', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'displayLayer', 'responsiveContract', 'candidateSha256', 'stageReviews', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata']);
   knownObject(work, allowed, 'Work Item');
   schemaVersion(work, 'Work Item');
   for (const field of ['workItemId', 'projectId', 'baselineHash', 'objective']) if (typeof work[field] !== 'string' || !work[field].trim()) fail(`Work Item.${field} 必须为非空字符串`);
@@ -232,6 +233,8 @@ export function validateWorkItem(work) {
     enumValue(work.scene.stage, SCENE_STAGES, 'Work Item.scene.stage');
     if (work.scene.status !== undefined) enumValue(work.scene.status, ['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'], 'Work Item.scene.status');
   }
+  const stageReviewErrors = validateStageReviewsShape(work);
+  if (stageReviewErrors.length) fail(stageReviewErrors[0], 2, { errorCode: 'STAGE_REVIEW_INVALID' });
   assertVisibleContract(validateVisibleWorkItemContract(work), fail);
   const approvalContext = { ...work, actionType: snapshot.actionType, actionLevel: snapshot.actionLevel };
   if (work.pendingApproval !== undefined) validateApprovalShape(work.pendingApproval, 'Work Item.pendingApproval', approvalContext, { pending: true });
@@ -557,6 +560,7 @@ export function inspect(args = {}, command = 'status') {
   if (['VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING', 'COMPLETE'].includes(work.globalState) && !evidencePath) blockers.push(blocker('EVIDENCE_MISSING', '当前状态缺少 Evidence Manifest', '记录并绑定当前候选验证证据'));
   if (evidence && evidence.verdict !== 'PASS') blockers.push(blocker('EVIDENCE_NOT_PASS', 'Evidence Manifest verdict 不是 PASS', '按证据选择 repair 或 revalidate'));
   if (evidence && work.globalState !== 'RETURN' && !gatePassed(evidence, 'F3') && ['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState)) blockers.push(blocker('F3_NOT_PASS', 'F3 工程验证证据未通过', '补齐编译、域重载、Console、测试、资源和构建证据'));
+  blockers.push(...stageConfirmationBlockers(work, evidence));
   if (work.userDecisionRequired) blockers.push(blocker('USER_DECISION_REQUIRED', '存在未决用户选择，控制面不会替用户决定', '澄清选择并更新 Work Item'));
   const releaseApprovalPending = ['PASSED', 'INTEGRATING'].includes(work.globalState) && ['A5', 'A6'].includes(work.actionLevel);
   if (requiresExactApproval(work) && !releaseApprovalPending && !approvalMatches(work, evidence?.approval)) blockers.push(blocker('EXACT_APPROVAL_REQUIRED', '当前 A4-A6 副作用缺少与对象、影响、目标和基线精确匹配的 F4 批准', '展示当前精确审批点并等待用户批准'));
@@ -596,7 +600,7 @@ function gatePassed(inspectionOrEvidence, gate) {
 
 /** 返回动作、证据和审批绑定的稳定摘要指纹；不含时间和绝对路径。 */
 function stableFingerprint(work, pkg, evidence) {
-  const value = JSON.stringify({ workItemId: work.workItemId, state: work.globalState, stage: work.stageId, baselineHash: work.baselineHash, packageId: pkg?.packageId ?? null, evidenceId: evidence?.evidenceId ?? null });
+  const value = JSON.stringify({ workItemId: work.workItemId, state: work.globalState, stage: work.stageId, baselineHash: work.baselineHash, stageReviews: work.stageReviews ?? [], packageId: pkg?.packageId ?? null, evidenceId: evidence?.evidenceId ?? null });
   let hash = 2166136261;
   for (const char of value) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
   return `fnv1a:${(hash >>> 0).toString(16).padStart(8, '0')}`;
@@ -770,6 +774,8 @@ export function transitionWorkItem(inspection, target, args = {}) {
   enumValue(target, STATES, 'transition target');
   const from = work.globalState;
   if (target === from) fail('transition 不接受同状态迁移');
+  // RETURN/BLOCKED 保留为修复入口；其余直接调用必须重算阶段确认，不能依赖调用方传入的 blockers。
+  if (!['RETURN', 'BLOCKED'].includes(target)) assertStageConfirmationGate(work, inspection.evidence ?? null, target, fail);
   if (target === 'RETURN') {
     if (!TRANSITIONS[from]?.includes('RETURN')) fail(`非法 RETURN 迁移：${from} → RETURN`, 2, { errorCode: 'RETURN_NOT_ALLOWED' });
     const next = nextRevision(work, { ...work, globalState: 'RETURN', returnRecord: returnRecord(from, args) });
@@ -911,7 +917,7 @@ function loadApproval(args, work) {
 /** Skill 自检：schema、入口文档、状态/风险标识和文件规模必须齐全。 */
 export function lint(args = {}) {
   const root = args.skill ? resolve(String(args.skill)) : resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs'];
+  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'references/stage-confirmation.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs', 'scripts/runtime/stage-confirmation.mjs'];
   const checked = [];
   for (const item of required) {
     const path = join(root, item);

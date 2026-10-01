@@ -1,5 +1,7 @@
 # 场景 V0-V4 闭环
 
+每个场景与独立显示层均遵守[阶段人工确认](../../unity-game-workflow-control/references/stage-confirmation.md)：完成 V0、V1、V2、V3 后分别展示当前交付并等待用户明确确认，再开始下一阶段；V4 完成验证后仍须用户确认才能闭合。技术 PASS 不代替人工确认，确认只绑定当前工作项、基线与交付版本。
+
 ## V0 分流
 
 确定场景 ID、宿主 Scene、模块依赖、常驻 HUD、视觉模式、平台约束和验收轨迹。新建且包含可见画面的场景或显示层在本阶段登记效果图任务。纯工程模块不伪装成场景；跨场景入口归 INTEGRATION。modal、popup、drawer、toast 等瞬态层另建 `DISPLAY_LAYER` Work Item，`hostSceneId` 只作运行上下文。
@@ -10,7 +12,7 @@
 
 ## V2 拆解确认
 
-冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。只有真实取舍才请求用户决定；已确认事实不重复询问。
+冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。仅对真实取舍额外提问，不重复询问已确认事实；阶段交付人工确认始终执行。
 
 ## V3 资源与组合验收
 
