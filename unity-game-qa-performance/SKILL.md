@@ -19,7 +19,7 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 2. 按 `unity:unity-cli` 当前规则运行测试并等待任务终态；记录版本、用例数、失败详情与原始日志。
 3. G2 前只做 Editor Profiler 趋势、静态预算、资源统计和构建日志检查，不产生目标设备性能 `PASS`。G2 `PASS` 后在 G3 按批准的平台工具链与候选制品采集帧时间、CPU/GPU、内存、GC、Draw Call、纹理、加载和包体。
 4. 缺陷记录版本、场景、设备、复现步骤、预期/实际、证据、P0-P3、所有者和回归状态。
-5. 2D/UI 小循环至少覆盖窄/标准竖屏、横屏、桌面宽屏、代表性安全区和连续 resize/orientation 轨迹。逐例实测 Screen/Game View/backbuffer 或 RenderTexture、Camera `pixelRect`/投影、CanvasScaler 或 PanelSettings、`Screen.safeArea`、输入命中、关键 UI 矩形、状态、语言、稳定帧和截图；只存在组件、构建成功、单张截图或静态配置不能证明响应式通过。缺少真实测量时标记 `NOT_RUN` 或 `unverified`。
+5. 2D/UI 小循环仅覆盖已批准方向内的代表性比例：横屏无需验证竖屏，竖屏无需验证横屏；双方向项目分别覆盖两种方向并验证切换。单方向覆盖该方向的参考、较窄和较宽比例、代表性安全区及连续 resize 轨迹，不要求跨方向旋转；桌面宽屏仅在批准范围内覆盖。逐例实测 Screen/Game View/backbuffer 或 RenderTexture、Camera `pixelRect`/投影、CanvasScaler 或 PanelSettings、`Screen.safeArea`、输入命中、关键 UI 矩形、状态、语言、稳定帧和截图；只存在组件、构建成功、单张截图或静态配置不能证明响应式通过。缺少真实测量时标记 `NOT_RUN` 或 `unverified`。
 6. 对 `$unity-game-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、蒙皮/骨骼/BlendShape、Collider、挂点、Prefab 引用和架构预算；模型生产代理的自检不能替代 QA。
 7. 对 `$unity-game-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
 8. 研发期 3D 验收使用 Unity Editor 覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形与目标场景光照；批准平台实机转台、设备性能和稳定性只在 G2 `PASS` 后的 G3 执行。

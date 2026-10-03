@@ -38,7 +38,7 @@ COMPLETE                  → (无)
 - `PASSED` 没有证据时仍是未闭环状态；`status`/`run` 必须返回阻断，不能自动进入 `COMPLETE`。
 - A4-A6 的副作用必须通过 F4 精确批准；批准不继承到下一个对象、阶段、基线或发布批次。
 - 可见 Work Item 必须先通过 Unity 原生 `responsiveContract` 合同；可见包必须通过 `responsiveContractRef.path/version/sha256` 文件绑定，且 `SCENE` 与 `DISPLAY_LAYER` 不能混包。
-- V4 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程 resize/orientation 轨迹、截图和候选 SHA 共同证明；静态声明、构建成功或单图均不得替代。
+- V4 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程连续 resize 轨迹、截图和候选 SHA 共同证明；单方向仅验证已批准方向，双方向或自动方向合同另须 orientation 切换轨迹。静态声明、构建成功或单图均不得替代。
 
 ## 三级处置
 

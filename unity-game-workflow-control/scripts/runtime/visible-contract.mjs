@@ -380,7 +380,10 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   const input = evidence.inputHit;
   if (!knownObject(input, new Set(['system', 'eventSystem', 'hit', 'coordinates']), `${scope}.inputHit`, errors) || input.system !== 'InputSystem' || input.eventSystem !== 'EventSystem' || input.hit !== true || !hasFact(input.coordinates)) errors.push(contractError(scope, 'inputHit 必须证明 InputSystem/EventSystem 命中'));
   const trajectory = evidence.resizeOrientationTrajectory;
-  if (!knownObject(trajectory, new Set(['sameProcess', 'events']), `${scope}.resizeOrientationTrajectory`, errors) || trajectory.sameProcess !== true || !Array.isArray(trajectory.events) || !trajectory.events.some((item) => item.type === 'resize') || !trajectory.events.some((item) => item.type === 'orientation')) errors.push(contractError(scope, 'resizeOrientationTrajectory 必须记录同进程 resize 和 orientation'));
+  const supported = work?.responsiveContract?.orientation?.supported ?? [];
+  // 仅双方向或自动方向合同需要切换证据；单方向仍保留连续尺寸变化验证。
+  const requiresOrientationChange = supported.includes('auto') || (supported.includes('portrait') && supported.includes('landscape'));
+  if (!knownObject(trajectory, new Set(['sameProcess', 'events']), `${scope}.resizeOrientationTrajectory`, errors) || trajectory.sameProcess !== true || !Array.isArray(trajectory.events) || trajectory.events.length < 2 || !trajectory.events.some((item) => item?.type === 'resize') || (requiresOrientationChange && !trajectory.events.some((item) => item?.type === 'orientation'))) errors.push(contractError(scope, requiresOrientationChange ? 'resizeOrientationTrajectory 必须记录同进程 resize 和 orientation' : 'resizeOrientationTrajectory 必须记录同进程连续 resize'));
   measuredArtifact(evidence.screenshot, 'Screenshot', scope, 'screenshot', errors, options.repo);
   if (!isSha256(evidence.candidateSha256)) errors.push(contractError(scope, 'candidateSha256 必须为候选身份 SHA'));
   if (options.candidateSha256 && evidence.candidateSha256 !== options.candidateSha256) errors.push(contractError(scope, 'candidateSha256 未绑定当前候选'));

@@ -13,7 +13,7 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 2. 按当前阶段读取对应 reference，使用 `status`/`check` 诊断；缺少事实时先完成只读调查。
 3. 实施前冻结 Implementation Package。每个单元必须有类型、所有者、路径、顺序和 Unity 序列化资源所有权；`SCENE` 与 `DISPLAY_LAYER` 不得混包，身份字段必须精确绑定。
 4. 可见 `SCENE`/`DISPLAY_LAYER` 必须冻结 Unity 原生 `responsiveContract`；可见实施包必须绑定合同文件 `path/version/sha256`，不使用 CSS、DOM 或运行时 DPR 语义。
-5. 实施后记录候选变更和 Evidence Manifest，证据必须绑定相同的 Work Item、基线和实施包；V4 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程 resize/orientation、截图和候选 SHA。
+5. 实施后记录候选变更和 Evidence Manifest，证据必须绑定相同的 Work Item、基线和实施包；V4 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize、截图和候选 SHA。布局仅验证已批准方向，横屏无需验证竖屏，竖屏无需验证横屏；双方向或自动方向合同另须 orientation 切换轨迹。
 6. 失败只选择 `repair`、`revalidate` 或显式 `RETURN`；控制面不会自动回退、扩大范围或伪造设备/发布证据。
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
 8. `SCENE` 与 `DISPLAY_LAYER` 每个 V0–V4 阶段结束时按[阶段人工确认](references/stage-confirmation.md)展示可查看交付并等待用户确认；通过 `stageReviews` 保存工作项、基线、阶段、交付摘要与用户消息引用。未确认不推进下一阶段，V4 未确认不完成工作项。

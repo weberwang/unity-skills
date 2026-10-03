@@ -472,6 +472,33 @@ test('V4 响应式证据候选 SHA 必须绑定当前 Work Item', () => {
   }
 });
 
+test('V4 单方向布局无需跨方向事件，双方向和自动方向仍需切换证据', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-sync-orientation-'));
+  try {
+    // 同进程两次 resize 保留连续适配覆盖，不能用单张静态视口替代。
+    for (const supported of [['landscape'], ['portrait'], ['portrait', 'landscape'], ['auto']]) {
+      const work = makeSceneWork({ responsiveContract: makeContract({ orientation: { supported, runtimeReflow: true } }) });
+      const evidence = makeVisibleEvidence(work, {}, repo);
+      evidence.responsiveEvidence.resizeOrientationTrajectory.events = [{ type: 'resize' }, { type: 'resize' }];
+      assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), true);
+      if (supported.length === 1 && supported[0] !== 'auto') {
+        assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+        evidence.responsiveEvidence.resizeOrientationTrajectory.sameProcess = false;
+        assert.throws(() => validateEvidence(evidence, work, null, repo), /同进程/);
+        evidence.responsiveEvidence.resizeOrientationTrajectory.sameProcess = true;
+        evidence.responsiveEvidence.resizeOrientationTrajectory.events = [{ type: 'resize' }];
+        assert.throws(() => validateEvidence(evidence, work, null, repo), /连续 resize/);
+      } else {
+        assert.throws(() => validateEvidence(evidence, work, null, repo), /resize 和 orientation/);
+        evidence.responsiveEvidence.resizeOrientationTrajectory.events.push({ type: 'orientation' });
+        assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+      }
+    }
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test('V4 响应式证据必须回读真实工件并校验内容 SHA', () => {
   const repo = mkdtempSync(join(tmpdir(), 'unity-sync-artifact-'));
   try {

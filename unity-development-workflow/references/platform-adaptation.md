@@ -25,6 +25,8 @@ G0 确定目标平台、S00/G1 选择主开发平台、G2 完成各平台适配�
 
 ## Unity 原生响应式合同
 
+布局验证按每个平台已批准的方向限定：横屏无需验证竖屏，竖屏无需验证横屏；单方向覆盖同方向的尺寸、比例、安全区与连续 resize，双方向分别覆盖两种方向并验证切换。下述横竖屏检查均按此范围执行。
+
 每个场景和独立 `DISPLAY_LAYER` 绑定 `responsiveContractRef` 与 `contractVersions`。运行时读取真实 Unity 事实：Screen/GameView、backbuffer 或 RenderTexture 尺寸，Camera `pixelRect`/`orthographicSize`/projection，CanvasScaler 或 PanelSettings，`Screen.safeArea`，方向与连续 resize，EventSystem/InputSystem 命中，截图、候选 SHA 和状态轨迹。缺少任一合同要求的实测时，V4/PASS 必须失败或保持 `NOT_RUN`。
 
 UI/2D 位图生产默认 `sourceScale=1`，不把固定 Web DPR 带入运行时；运行时按平台、Canvas/Panel、Camera 与动态分辨率实际值布局。程序化文本覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 single-line/wrap，禁止截断，并验证 TMP/UI Toolkit 的字体回退、字形、基线和容器边界。
