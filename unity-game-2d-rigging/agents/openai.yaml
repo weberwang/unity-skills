@@ -1,0 +1,7 @@
+interface:
+  display_name: "Unity 2D 骨骼制作"
+  short_description: "按项目视角制作原生 Unity 2D 骨骼、动画和角色 Prefab"
+  default_prompt: "使用 $unity-game-2d-rigging 根据项目视角和动作需求制作 Unity 原生 2D 骨骼角色。"
+
+policy:
+  allow_implicit_invocation: true

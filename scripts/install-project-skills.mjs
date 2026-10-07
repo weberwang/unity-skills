@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// 固定可安装技能范围，避免把仓库中的研究文档或临时目录复制到目标项目。
 const SKILL_NAMES = Object.freeze([
   "unity-game-workflow-control",
   "unity-development-workflow",
@@ -19,6 +20,7 @@ const SKILL_NAMES = Object.freeze([
   "unity-game-release",
   "unity-game-visual-assets",
   "unity-game-spine-reskin",
+  "unity-game-2d-rigging",
   "unity-gameplay-development",
 ]);
 
@@ -82,7 +84,7 @@ function rejectSymbolicLink(path, label) {
 }
 
 /**
- * 校验 npm 包中固定的十四个 Skill 完整存在。
+ * 校验 npm 包白名单中的 Skill 完整存在。
  *
  * @returns {Array<{ name: string, source: string }>} 已验证的安装源。
  */

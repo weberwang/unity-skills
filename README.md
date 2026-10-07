@@ -38,7 +38,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器把十四个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
+安装器把十五个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
 
 ```powershell
 node .\scripts\install-project-skills.mjs D:\Projects\my-game
@@ -98,6 +98,7 @@ npm run remove:background -- --source .\art\hero.raw.png --output .\art\hero.png
 - `$unity-development-workflow`：六阶段和 V0-V4 Unity 领域编排。
 - `$unity-game-production`、`$unity-game-architecture`、`$unity-gameplay-development`：制作、架构与玩法。
 - `$unity-game-visual-assets`、`$unity-game-3d-modeling`、`$unity-game-3d-texturing`、`$unity-game-spine-reskin`：视觉与资产生产。
+- [`$unity-game-2d-rigging`](unity-game-2d-rigging/SKILL.md)：Unity 原生 2D 骨骼与动画制作；按项目选择侧视、正面、四分之三、俯视、等距斜视或组合视角，交付 Sprite Skin 角色 Prefab 与动画接口。拆件方案及代表性动画分别确认，玩法代码由玩法角色负责。
 - `$unity-game-audio`、`$unity-game-balance`：音频与数值。
 - `$unity-game-qa-performance`、`$unity-game-release`：质量、性能、候选与发布。
 - `$unity-game-grilling`：仅在事实无法消除且确需用户作实质取舍时提问和记录决定。

@@ -60,3 +60,18 @@ rtk python -X utf8 C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/qu
 - 未执行发布、商店、设备安装、外部系统写入或其他 A5/A6 副作用。
 
 上述项目保持 `NOT_RUN`，不能由 Node.js 或静态检查推断为 `PASS`。实际 Unity 项目使用本控制面时，必须把适用的编译、Console、Scene、Prefab、GUID/meta、EditMode、PlayMode、构建和设备证据写入 Evidence Manifest，才允许通过对应门禁。
+
+## 2026 年 10 月 7 日原生 2D 骨骼技能验证
+
+新增 `unity-game-2d-rigging` 入口、中文代理元数据和两份制作参考，接入 Unity 领域编排、视觉资产、玩法和独立 QA。npm 白名单与安装器同步扩充到十五个技能。规格位于 `docs/superpowers/specs/2026-10-07-unity-2d-rigging-skill-spec.md`。
+
+实际执行 T2，覆盖技能结构、领域接入、打包与安装完整性：
+
+- `rtk npm test`：101 项通过，0 项失败，0 项跳过。新增安装副本链接检查，既有安装测试逐文件核对新技能及参考产物。
+- `rtk node unity-game-workflow-control/scripts/workflow-control.mjs lint --repository .`：通过。
+- `rtk node --check`：安装器及两个修改后的安装测试文件通过语法检查。
+- `rtk python -X utf8 C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py <技能目录>`：新骨骼技能及编排、视觉资产、玩法、QA 五个入口均通过。
+- `npm pack --dry-run --ignore-scripts --json`：新技能入口、代理元数据、制作合同和能力验证参考全部包含，未生成或发布安装包。
+- 独立只读审查与两个制作请求推演：无阻断问题；复用已批准视角，拆件确认前不生产正式部件，实际重导入失败回到骨骼修复，独立验收后正式交接玩法。
+
+本次未启动 Unity Editor、安装 UPM 包或制作真实角色，骨架/网格/权重、Sprite Skin、Clip、Prefab 的目标项目链路仍为 `NOT_RUN`。未启动 Standalone/Player 或真机，未执行付费、上传、发布或其他外部写入；T2 结果只证明技能与安装交付检查通过。

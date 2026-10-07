@@ -13,6 +13,8 @@ description: 在 Unity 场景 V0-V4 中建立视觉基线、结构草图、资�
 
 生产级 3D 模型与 PBR 贴图分别交给 `$unity-game-3d-modeling` 和 `$unity-game-3d-texturing`。现有 Spine 角色仅换皮且 Bone、Slot、Attachment、Mesh、约束与动画固定时交给 `$unity-game-spine-reskin`。
 
+Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)；本角色消费其已确认的视角与拆件合同，独立生产部件、遮挡补全和连接区，不直接裁切完整效果图充当 Sprite。交付稳定部件 ID、视角/方向、画布与 Pivot、角色局部位置、层叠、源图 SHA、导入规格和资源身份；骨架、网格、权重与动画由骨骼角色负责，图片生成或编辑委派给图片子代理。
+
 具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；本地化/TMP、URP 后处理和 Shader Graph 分别使用对应 `unity:*` Skill。本角色只维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
 
 ## V0-V4

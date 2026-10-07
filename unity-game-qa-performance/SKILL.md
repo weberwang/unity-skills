@@ -27,3 +27,5 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 10. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。
+
+对 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md) 的交付，读取其[制作与验收合同](../unity-game-2d-rigging/references/production-contract.md)，独立检查部件与骨骼映射、网格/权重和 Sprite Skin 状态、极端姿势、视角/方向/镜像、动画循环/过渡/中断/事件、挂点、Prefab 保存与重导入、多实例及实际对象池生命周期。确认记录、来源版本、资源引用和预算必须对应当前候选；未在目标 Editor 实测的 API 能力或设备性能保留 `NOT_RUN`，不由静态检查推断通过。

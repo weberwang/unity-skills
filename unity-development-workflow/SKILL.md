@@ -39,6 +39,8 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 制作、架构、玩法、视觉、3D、音频、数值、QA 和发布 Skill 只提交领域提议、实施结果或证据。现有 Spine 角色仅换皮时调用 `$unity-game-spine-reskin`。开发者不得审查自己的交付；F2 领域质量审查和 F3 工程验证分开记录。并行规则见[多代理执行](references/multi-agent-execution.md)。
 
+Unity 原生 2D 骨骼、蒙皮和角色动画交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)：拆件前确定项目视角和方向合同，由视觉资产角色生产部件，骨骼角色交付 Prefab、动画与 Animator 接口，玩法角色消费，QA 独立验收。拆件和代表性动画分别取得当前版本确认；沿用现有工作项及实施单元，不新增角色资产状态机或非法工作项类型。
+
 ## 工具入口
 
 项目文档与 JSON Job 仍由最小文件工具处理；控制状态由 `unity-game-workflow-control` 处理，Unity 事实由 [@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与随附 Toolkit 处理：

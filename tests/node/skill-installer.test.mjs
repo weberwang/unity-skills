@@ -7,8 +7,9 @@ import test from "node:test";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const INSTALLER_PATH = resolve(ROOT, "scripts/install-project-skills.mjs");
+// 逐项核对实际安装集合，防止新增技能仅能在仓库中发现而遗漏安装交付。
 const EXPECTED_SKILL_NAMES = [
-  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-gameplay-development",
+  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-gameplay-development",
 ];
 
 /** 创建短生命周期的临时项目目录，并在测试回调结束后清理。 */
