@@ -30,7 +30,7 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 
-- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹。
+- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹。按[布局参照规则](references/ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
 - V2 先冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
 - V3 验证正式资源、Prefab/Scene/UXML 组合、序列化引用与宿主同屏效果；不得以灰盒或整张效果图冒充正式资源。
 - V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。

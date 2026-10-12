@@ -20,7 +20,7 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 
 只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
 
-屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
+屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，并确定布局参照：场景 UI 相对场景内容区域大小停靠，弹窗内部有底板时相对底板布局，无底板时相对屏幕布局。将参照节点、边界来源与尺寸变化策略写入 `layoutBinding.constraints` 和 `resizePolicy`，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
 
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；
