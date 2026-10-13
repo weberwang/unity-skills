@@ -22,11 +22,11 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 ## Unity 原生响应式合同
 
-可见 `SCENE`/`DISPLAY_LAYER` 必须携带 `responsiveContract` 和当前正式候选的 `candidateSha256`。合同只描述 Unity 原生事实：版本、UI 系统、Unity logical units、backbuffer、Panel、RenderTexture、CanvasScaler、PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 坐标转换、同进程 resize、方向重排、文本/本地化、资源分辨率、性能预算、代表性视口和所需运行证据。
+可见 `SCENE`/`DISPLAY_LAYER` 实施前携带 `responsiveContract` 明确目标与边界。合同只描述 Unity 原生事实：版本、UI 系统、Unity logical units、backbuffer、Panel、RenderTexture、CanvasScaler、PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 坐标转换、同进程 resize、方向重排、文本/本地化、资源分辨率、性能预算、代表性视口和所需运行证据。验收以实际实现是否满足用户要求为准，中途调整无需回改合同。
 
-布局验证以 `orientation.supported` 为范围：单横屏无需验证竖屏，单竖屏无需验证横屏；单方向保留同方向尺寸变化后的重排验证，双方向或 `auto` 才要求方向切换证据。
+布局验证以运行证据的 `supportedOrientations` 记录实际支持方向，并核对用户要求：单横屏无需验证竖屏，单竖屏无需验证横屏；单方向保留同方向尺寸变化后的重排验证，双方向或 `auto` 才要求方向切换证据。
 
-Implementation Package 的 `responsiveContractRef.path/version/sha256` 必须指向仓库内合同文件；控制器会回读文件、重新计算 SHA，并规范化比较合同完整内容，不能用同版本的另一份合同替代当前 Work Item 合同。
+Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内合同来源；控制器检查路径、文件存在及 JSON 格式，不比较合同内容、版本或 SHA。实际完成情况及调整记录在交付和验收证据中。
 
 程序化文本为 `programmatic=true` 时，`locales` 必须精确为 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`；非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=1`，非 1 的正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
 
@@ -35,7 +35,7 @@ Implementation Package 的 `responsiveContractRef.path/version/sha256` 必须指
 | 门 | 语义 | 核心问题 |
 | --- | --- | --- |
 | `F0` | 范围流程 | 用户目标、阶段、A 等级、允许路径和停止门是否明确 |
-| `F1` | 规格一致性 | 候选是否符合批准需求、模块契约、场景契约和基线 |
+| `F1` | 规格一致性 | 实际交付是否满足用户要求、批准范围和完成条件；合同实现细节差异不单独阻断 |
 | `F2` | Unity 领域质量 | Scene、Prefab、资源、动画、音频、玩法、视觉和架构质量是否达标 |
 | `F3` | 工程验证 | 编译、域重载、Console、EditMode、PlayMode、资源绑定和构建证据是否闭合 |
 | `F4` | 高影响精确批准 | A4-A6 的当前对象、影响、目标、路径和副作用是否已逐项批准 |

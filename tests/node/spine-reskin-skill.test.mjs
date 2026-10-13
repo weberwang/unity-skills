@@ -55,18 +55,20 @@ test("V3 分批必须依赖完整 V2 地图并维护追加式 JSON 台账", () =
   assert.match(SKILL_TEXT, /Artifacts\/Spine\/<characterId>\/batch-ledger\.json/);
   for (const field of [
     "taskId", "skinId", "batchId", "ordinal", "assetIds", "dependsOnBatchIds",
-    "inputVersion", "inputSha256", "outputVersion", "outputSha256", "owner", "singleWriter",
-    "status", "assetMapVersion", "assetMapSha256", "sourceRevision", "recoveryPoint",
+    "inputVersion", "outputVersion", "owner", "singleWriter",
+    "status", "assetMapVersion", "sourceRevision", "recoveryPoint",
     "unityVersion", "spineEditorVersion", "spineRuntimeVersion", "exportFormat",
   ]) assert.ok(SKILL_TEXT.includes("`" + field + "`"), "台账缺少字段：" + field);
+  assert.match(SKILL_TEXT, /实际输入位置/);
+  assert.match(SKILL_TEXT, /实际输出位置/);
   assert.match(SKILL_TEXT, /且只能在一个当前有效批次中出现/);
   assert.match(SKILL_TEXT, /禁止遗漏、重复、空批次或依赖循环/);
   assert.match(SKILL_TEXT, /PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED/);
   assert.match(SKILL_TEXT, /FAILED` 或 `BLOCKED`/);
   assert.match(SKILL_TEXT, /追加式 `events`/);
   assert.match(SKILL_TEXT, /禁止覆盖旧事件、旧证据或用聊天记录补写历史/);
-  assert.match(SKILL_TEXT, /重新读取并核对当前 V2 地图\/Visual Bible 哈希、输入\/输出哈希、依赖批次状态/);
-  assert.match(SKILL_TEXT, /`supersedes`\/`supersededBy`/);
+  assert.match(SKILL_TEXT, /事件记录时间、执行者、状态、实际输入\/输出位置和证据路径/);
+  assert.match(SKILL_TEXT, /恢复批次前读取实际输入\/输出、依赖批次状态/);
 });
 
 test("批次全部完成后仍需整角色全量回归", () => {

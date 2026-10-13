@@ -33,11 +33,11 @@ unity command uwt_validate_project --project-path D:\Projects\my-game --job_path
 
 ## 图片导入边界
 
-源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有匹配的 SHA-256 与用户批准记录。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
+源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有该对象的用户批准记录。按实际图片质量、资源身份与授权验收，不校验 SHA，实现调整无需回改合同。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
 
-正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，复核暂存字节哈希，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
+正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
 
-成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 摘要。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、源哈希、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；集成阶段审查并合并这些记录。
+成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 设置。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、实际源路径、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；集成阶段审查并合并这些记录。
 
 ## 交付边界
 

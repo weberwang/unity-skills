@@ -14,7 +14,6 @@
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
     "moduleId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9.]{0,95}$"},
     "platformId": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
-    "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "buildArtifact": {"$ref": "#/$defs/buildArtifact"},
     "platformAdaptation": {"$ref": "#/$defs/platformAdaptation"},
     "deviceAcceptance": {"$ref": "#/$defs/deviceAcceptance"},
@@ -140,12 +139,11 @@
     "buildArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "platform", "path", "sha256"],
+      "required": ["artifactType", "platform", "path"],
       "properties": {
         "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA"]},
         "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
-        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"}
       },
       "allOf": [
         {
@@ -218,14 +216,13 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "id", "deviceProfileId", "sceneId", "artifactSha256", "width", "height",
+              "id", "deviceProfileId", "sceneId", "width", "height",
               "windowMode", "inputMode", "checks", "status", "evidence"
             ],
             "properties": {
               "id": {"$ref": "common.schema.json#/$defs/taskId"},
               "deviceProfileId": {"$ref": "common.schema.json#/$defs/taskId"},
               "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
-              "artifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
               "width": {"type": "integer", "minimum": 1},
               "height": {"type": "integer", "minimum": 1},
               "windowMode": {"enum": ["WINDOWED", "FULLSCREEN_WINDOW", "FULLSCREEN"]},
@@ -461,7 +458,7 @@
         "required": ["checks"]
       },
       "then": {
-        "required": ["projectStateVersion", "sceneId", "platformId", "buildArtifactSha256", "buildArtifact"],
+        "required": ["projectStateVersion", "sceneId", "platformId", "buildArtifact"],
         "properties": {
           "checks": {
             "contains": {

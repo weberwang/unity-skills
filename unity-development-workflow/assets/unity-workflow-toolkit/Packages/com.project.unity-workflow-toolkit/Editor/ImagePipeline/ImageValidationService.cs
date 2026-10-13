@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Security.Cryptography;
 using Project.UnityWorkflow.Core;
 using Project.UnityWorkflow.Core.Models;
 using UnityEngine;
@@ -57,6 +56,32 @@ namespace Project.UnityWorkflow.ImagePipeline
             return result;
         }
 
+        /// <summary>按相同规格规则校验已复制到事务暂存区的实际图片文件。</summary>
+        /// <param name="request">已完成请求级身份、批准和路径检查的图片请求。</param>
+        /// <param name="stagedPath">当前导入事务独占的暂存文件绝对路径。</param>
+        /// <returns>基于暂存文件实际字节生成的图像技术校验结果。</returns>
+        internal static ImageValidationResult ValidateStagedSourceFile(
+            ImageImportRequest request,
+            string stagedPath)
+        {
+            var result = new ImageValidationResult { IsValid = true };
+            if (request == null)
+            {
+                result.AddIssue("request.missing", "图片导入请求不能为空。");
+                return result;
+            }
+
+            if (string.IsNullOrWhiteSpace(stagedPath) || !File.Exists(stagedPath))
+            {
+                result.AddIssue("source.not-found", "暂存图片不存在。");
+                return result;
+            }
+
+            ValidateSourceFile(request, stagedPath, result);
+            result.IsValid = result.Issues.Count == 0;
+            return result;
+        }
+
         /// <summary>校验资源身份、版本和用户批准记录。</summary>
         private static void ValidateIdentityAndApproval(ImageImportRequest request, ImageValidationResult result)
         {
@@ -90,10 +115,9 @@ namespace Project.UnityWorkflow.ImagePipeline
                 if (approval == null || string.IsNullOrWhiteSpace(approval.ApprovalType) ||
                     string.IsNullOrWhiteSpace(approval.Authority) || string.IsNullOrWhiteSpace(approval.SubjectId) ||
                     string.IsNullOrWhiteSpace(approval.SubjectVersion) || string.IsNullOrWhiteSpace(approval.ApprovedBy) ||
-                    string.IsNullOrWhiteSpace(approval.ApprovedAtUtc) || string.IsNullOrWhiteSpace(approval.EvidencePath) ||
-                    string.IsNullOrWhiteSpace(approval.EvidenceSha256))
+                    string.IsNullOrWhiteSpace(approval.ApprovedAtUtc) || string.IsNullOrWhiteSpace(approval.EvidencePath))
                 {
-                    result.AddIssue("approval.incomplete", "批准记录缺少类型、权限、主体、版本、责任人、时间或证据完整性字段。");
+                    result.AddIssue("approval.incomplete", "批准记录缺少类型、权限、主体、版本、责任人、时间或证据路径。");
                     break;
                 }
 
@@ -148,12 +172,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                     break;
                 }
 
-                if (!IsSha256(approval.EvidenceSha256))
-                {
-                    result.AddIssue("approval.evidence-hash-invalid", "批准证据 SHA-256 格式无效。");
-                    break;
-                }
-
                 string evidencePath;
                 try
                 {
@@ -173,24 +191,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                     break;
                 }
 
-                try
-                {
-                    using SHA256 sha256 = SHA256.Create();
-                    using FileStream stream = File.OpenRead(evidencePath);
-                    string actualHash = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", string.Empty);
-                    if (!string.Equals(actualHash, approval.EvidenceSha256, StringComparison.OrdinalIgnoreCase))
-                    {
-                        result.AddIssue("approval.evidence-hash-mismatch", "批准证据 SHA-256 与实际文件不一致。");
-                        break;
-                    }
-                }
-                catch (Exception exception) when (
-                    exception is IOException ||
-                    exception is UnauthorizedAccessException)
-                {
-                    result.AddIssue("approval.evidence-unreadable", "批准证据文件无法读取。");
-                    break;
-                }
             }
 
             if (!hasUserApproval)
@@ -228,25 +228,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                    discipline == "UX_READABILITY" || discipline == "QA" || discipline == "RELEASE";
         }
 
-        /// <summary>判断字符串是否是 64 位十六进制 SHA-256。</summary>
-        private static bool IsSha256(string value)
-        {
-            if (string.IsNullOrEmpty(value) || value.Length != 64)
-            {
-                return false;
-            }
-
-            foreach (char character in value)
-            {
-                if (!Uri.IsHexDigit(character))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         /// <summary>验证日期时间带有显式 UTC 标记，避免无时区文本随运行机器而改变语义。</summary>
         private static bool IsUtcDateTime(string value)
         {
@@ -262,11 +243,11 @@ namespace Project.UnityWorkflow.ImagePipeline
                    timestamp.Offset == TimeSpan.Zero;
         }
 
-        /// <summary>验证最终视觉审查证据是项目内真实存在且哈希匹配的文件。</summary>
+        /// <summary>验证最终视觉审查证据是项目内真实存在的文件。</summary>
         private static void ValidateFinalVisualReview(EvidenceDto evidence, ImageValidationResult result)
         {
             if (evidence == null || !string.Equals(evidence.Type, "visual-review", StringComparison.Ordinal) ||
-                string.IsNullOrWhiteSpace(evidence.Path) || !IsSha256(evidence.Sha256))
+                string.IsNullOrWhiteSpace(evidence.Path))
             {
                 result.AddIssue("final-review.incomplete", "APPROVED 图片任务必须包含完整的最终视觉审查证据。");
                 return;
@@ -291,22 +272,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                 return;
             }
 
-            try
-            {
-                using SHA256 sha256 = SHA256.Create();
-                using FileStream stream = File.OpenRead(absolutePath);
-                string actualHash = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", string.Empty);
-                if (!string.Equals(actualHash, evidence.Sha256, StringComparison.OrdinalIgnoreCase))
-                {
-                    result.AddIssue("final-review.hash-mismatch", "最终视觉审查证据 SHA-256 与实际文件不一致。");
-                }
-            }
-            catch (Exception exception) when (
-                exception is IOException ||
-                exception is UnauthorizedAccessException)
-            {
-                result.AddIssue("final-review.unreadable", "最终视觉审查证据文件无法读取。");
-            }
         }
 
         /// <summary>解析并限制源图片只能位于当前任务 processed 目录。</summary>
@@ -403,7 +368,7 @@ namespace Project.UnityWorkflow.ImagePipeline
             }
         }
 
-        /// <summary>校验源格式签名、哈希、尺寸与目标扩展名。</summary>
+        /// <summary>校验源格式签名、尺寸与目标扩展名。</summary>
         private static void ValidateSourceFile(
             ImageImportRequest request,
             string sourcePath,
@@ -452,7 +417,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                 result.AddIssue("source.format-mismatch", "源文件扩展名与实际图片格式不一致。");
             }
 
-            ValidateSha256(request.SourceSha256, bytes, result);
             DecodeAndValidateDimensions(request, bytes, actualFormat, result);
 
             var targetExtension = Path.GetExtension(request.FileName ?? string.Empty).ToLowerInvariant();
@@ -462,27 +426,6 @@ namespace Project.UnityWorkflow.ImagePipeline
             if (!targetMatches)
             {
                 result.AddIssue("target.format-mismatch", "目标扩展名必须与源图片实际格式一致。");
-            }
-        }
-
-        /// <summary>比较源文件实际 SHA-256 与批准候选哈希。</summary>
-        private static void ValidateSha256(string expectedHash, byte[] bytes, ImageValidationResult result)
-        {
-            if (string.IsNullOrWhiteSpace(expectedHash) || expectedHash.Length != 64)
-            {
-                result.AddIssue("source.hash-missing", "selectedCandidate.sha256 必须是 64 位 SHA-256。");
-                return;
-            }
-
-            string actualHash;
-            using (var algorithm = SHA256.Create())
-            {
-                actualHash = BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
-
-            if (!string.Equals(expectedHash, actualHash, StringComparison.OrdinalIgnoreCase))
-            {
-                result.AddIssue("source.hash-mismatch", "源图片 SHA-256 与已批准候选不一致。");
             }
         }
 

@@ -6,7 +6,6 @@ projectStateVersion: project-state-v1
 candidateSnapshot:
   type: grilling-subject-snapshot
   path: Artifacts/Candidates/visual-bible.visual-v1.yaml
-  sha256: "2222222222222222222222222222222222222222222222222222222222222222"
   projectId: starfall-arena
   subjectId: starfall-arena
   subjectVersion: visual-v1
@@ -15,7 +14,6 @@ candidateSnapshot:
 grillingEvidence:
   type: grilling-record
   path: Artifacts/Grilling/visual-bible.visual-v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   projectId: starfall-arena
   subjectId: grilling.visual-bible.visual-v1
   subjectVersion: grilling-v1
@@ -65,19 +63,16 @@ assetRegeneration:
 directionCandidates:
   - type: global-direction
     path: Artifacts/Visual/Global/direction-a.png
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     subjectId: global-direction.a
     subjectVersion: direction-a-v1
     sourceRevision: working-tree-snapshot-20260727
   - type: global-direction
     path: Artifacts/Visual/Global/direction-b.png
-    sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     subjectId: global-direction.b
     subjectVersion: direction-b-v1
     sourceRevision: working-tree-snapshot-20260727
   - type: global-direction
     path: Artifacts/Visual/Global/direction-c.png
-    sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
     subjectId: global-direction.c
     subjectVersion: direction-c-v1
     sourceRevision: working-tree-snapshot-20260727

@@ -18,7 +18,6 @@ namespace Project.UnityWorkflow.ImagePipeline
         [SerializeField] private string useCase;
         [SerializeField] private string sourceVersion;
         [SerializeField] private string sourcePath;
-        [SerializeField] private string sourceSha256;
         [SerializeField] private string visualVersion;
         [SerializeField] private string status;
         [SerializeField] private EvidenceDto finalVisualReview;
@@ -64,9 +63,6 @@ namespace Project.UnityWorkflow.ImagePipeline
 
         /// <summary>获取或设置 selectedCandidate.path 对应的 processed 区路径。</summary>
         public string SourcePath { get => sourcePath; set => sourcePath = value; }
-
-        /// <summary>获取或设置 selectedCandidate.sha256。</summary>
-        public string SourceSha256 { get => sourceSha256; set => sourceSha256 = value; }
 
         /// <summary>获取或设置 selectedCandidate.visualVersion。</summary>
         public string VisualVersion { get => visualVersion; set => visualVersion = value; }
@@ -145,7 +141,7 @@ namespace Project.UnityWorkflow.ImagePipeline
         public string ReportPath { get => reportPath; set => reportPath = value; }
 
         /// <summary>
-        /// 从已批准图片任务创建导入请求，源路径和哈希严格取自 selectedCandidate。
+        /// 从已批准图片任务创建导入请求，源路径和视觉版本取自 selectedCandidate。
         /// </summary>
         /// <param name="task">已由 Schema 校验的图片任务。</param>
         /// <returns>尚可补充尺寸限制和报告路径的导入请求。</returns>
@@ -168,7 +164,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                 UseCase = task.UseCase,
                 SourceVersion = task.SourceVersion,
                 SourcePath = candidate?.Path,
-                SourceSha256 = candidate?.Sha256,
                 VisualVersion = candidate?.VisualVersion,
                 Status = task.Status,
                 FinalVisualReview = task.FinalVisualReview,

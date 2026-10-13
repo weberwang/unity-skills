@@ -231,12 +231,11 @@
     "responsiveContractRef": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["contractId", "version", "path", "sha256", "scope"],
+      "required": ["contractId", "version", "path", "scope"],
       "properties": {
         "contractId": {"$ref": "#/$defs/taskId"},
         "version": {"type": "string", "minLength": 1},
         "path": {"$ref": "#/$defs/projectRelativePath"},
-        "sha256": {"$ref": "#/$defs/sha256"},
         "scope": {"enum": ["PROJECT", "SCENE", "DISPLAY_LAYER", "MODULE"]}
       }
     },
@@ -256,7 +255,7 @@
       "additionalProperties": false,
       "required": [
         "runtimeMeasured", "measuredAtUtc", "screen", "gameView", "camera", "canvas", "safeArea",
-        "orientation", "resize", "inputHitTests", "screenshot", "candidateSha256", "stateTrace", "verificationStatus"
+        "orientation", "resize", "inputHitTests", "screenshot", "stateTrace", "verificationStatus"
       ],
       "properties": {
         "runtimeMeasured": {"const": true},
@@ -309,16 +308,14 @@
         },
         "screenshot": {
           "type": "object", "additionalProperties": false,
-          "required": ["path", "sha256", "width", "height", "capturedAtUtc"],
+          "required": ["path", "width", "height", "capturedAtUtc"],
           "properties": {
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"},
             "width": {"type": "integer", "minimum": 1},
             "height": {"type": "integer", "minimum": 1},
             "capturedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"}
           }
         },
-        "candidateSha256": {"$ref": "#/$defs/sha256"},
         "stateTrace": {
           "type": "array", "minItems": 1,
           "items": {
@@ -354,20 +351,18 @@
     "reuseBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["assetGuid", "sourcePath", "sourceSha256", "importer", "consumerNodeIds"],
+      "required": ["assetGuid", "sourcePath", "importer", "consumerNodeIds"],
       "properties": {
         "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
         "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
-        "sourceSha256": {"$ref": "#/$defs/sha256"},
         "importer": {
           "type": "object", "additionalProperties": false,
           "required": ["type", "settingsFingerprint"],
-          "properties": {"type": {"type": "string", "minLength": 1}, "settingsFingerprint": {"$ref": "#/$defs/sha256"}}
+          "properties": {"type": {"type": "string", "minLength": 1}, "settingsFingerprint": {"type": "string", "minLength": 1}}
         },
         "consumerNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
       }
     },
-    "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "vector2": {
       "type": "object", "additionalProperties": false, "required": ["x", "y"],
       "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
@@ -399,7 +394,7 @@
       "additionalProperties": false,
       "required": [
         "approvalType", "authority", "subjectId", "subjectVersion",
-        "approvedBy", "approvedAtUtc", "evidencePath", "evidenceSha256"
+        "approvedBy", "approvedAtUtc", "evidencePath"
       ],
       "properties": {
         "approvalType": {
@@ -415,7 +410,6 @@
         "approvedBy": {"type": "string", "minLength": 1},
         "approvedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
         "evidencePath": {"$ref": "#/$defs/projectRelativePath"},
-        "evidenceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "approvalScope": {"$ref": "#/$defs/splitPlanApprovalScope"},
         "reviewTaskId": {"$ref": "#/$defs/taskId"},
         "reviewDiscipline": {
@@ -434,7 +428,7 @@
       "additionalProperties": false,
       "required": [
         "approvalType", "authority", "subjectId", "subjectVersion",
-        "approvedBy", "approvedAtUtc", "evidencePath", "evidenceSha256", "approvalScope"
+        "approvedBy", "approvedAtUtc", "evidencePath", "approvalScope"
       ],
       "properties": {
         "approvalType": {"const": "ASSET_MAP"},
@@ -444,7 +438,6 @@
         "approvedBy": {"type": "string", "minLength": 1},
         "approvedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
         "evidencePath": {"$ref": "#/$defs/projectRelativePath"},
-        "evidenceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "approvalScope": {"$ref": "#/$defs/splitPlanApprovalScope"}
       }
     },
@@ -485,13 +478,11 @@
         "annotatedPreview": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["type", "path", "sha256", "sourcePath", "sourceSha256", "sourceVersion", "width", "height", "annotations"],
+          "required": ["type", "path", "sourcePath", "sourceVersion", "width", "height", "annotations"],
           "properties": {
             "type": {"const": "annotated-split-preview"},
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
             "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
-            "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
             "sourceVersion": {"type": "string", "minLength": 1},
             "width": {"type": "integer", "minimum": 1},
             "height": {"type": "integer", "minimum": 1},
@@ -501,12 +492,11 @@
         "sourceHighFidelity": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["subjectId", "subjectVersion", "path", "sha256"],
+          "required": ["subjectId", "subjectVersion", "path"],
           "properties": {
             "subjectId": {"$ref": "#/$defs/taskId"},
             "subjectVersion": {"type": "string", "minLength": 1},
-            "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+            "path": {"$ref": "#/$defs/projectRelativePath"}
           }
         },
         "items": {
@@ -517,14 +507,13 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "id", "resourceId", "itemVersion", "itemSpecSha256", "elementIndex", "assetType", "purpose",
+              "id", "resourceId", "itemVersion", "elementIndex", "assetType", "purpose",
               "generationBrief", "bounds", "stateVariants", "targetPrefabNodeIds", "targetPath", "delivery", "action", "splitRationale"
             ],
             "properties": {
               "id": {"$ref": "#/$defs/taskId"},
               "resourceId": {"$ref": "#/$defs/taskId"},
               "itemVersion": {"type": "string", "minLength": 1},
-              "itemSpecSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
               "elementIndex": {"type": "integer", "minimum": 1},
               "assetType": {"type": "string", "minLength": 1},
               "purpose": {"type": "string", "minLength": 1},
@@ -600,11 +589,10 @@
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256"],
+      "required": ["type", "path"],
       "properties": {
         "type": {"type": "string", "minLength": 1},
         "path": {"$ref": "#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "projectId": {"$ref": "#/$defs/taskId"},
         "subjectId": {"$ref": "#/$defs/taskId"},
         "subjectVersion": {"type": "string", "minLength": 1},

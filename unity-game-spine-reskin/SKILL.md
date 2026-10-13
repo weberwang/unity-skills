@@ -26,7 +26,7 @@ description: 在固定 Spine Skeleton、Slot、Attachment、Mesh、约束、动�
 1. 只读发现 `.spine` 源工程、原始纹理、导出 JSON/Binary、Atlas、Unity `SkeletonDataAsset`、AtlasAsset、材质和运行时代码入口。
 2. 记录 Spine 源工程版本、实际导出所用 Spine Editor 版本、JSON/Binary 格式、`spine-unity`/Spine Runtime 包版本、Unity/URP 版本和当前导出设置。核对官方兼容矩阵或现有成功导出基线；版本不匹配时保持 `BLOCKED`，不得猜测兼容或擅自升级源工程。
 3. 没有可写、可由正确 Spine Editor 打开的源工程时立即 `BLOCKED`。禁止直接篡改导出 JSON、Binary 或 Atlas 来伪造 Skin，也禁止以 Unity 运行时拼接替代正式源工程 Skin。
-4. 核对现有 Skin、Slot、Attachment、网格、约束、动画、碰撞/挂点和 Unity 引用清单，形成冻结清单及 SHA-256。开始前确认目标输出目录和单写者，禁止覆盖唯一有效源或当前稳定导出。
+4. 核对现有 Skin、Slot、Attachment、网格、约束、动画、碰撞/挂点和 Unity 引用清单，记录实际资源位置与状态，不要求或校验 SHA。开始前确认目标输出目录和单写者，禁止覆盖唯一有效源或当前稳定导出；验收以实际完成情况满足用户要求为准，中途调整无需回改合同。
 
 ## 嵌入 V0-V4 执行
 
@@ -51,6 +51,8 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 
 ### V2 编号资产地图
 
+向用户只展示在冻结高保真原图上框选并附图内中文标注的资产地图，不输出文本拆解段落、表格或清单。图中稳定编号对应内部资产映射，标明部件用途、连接区、层叠关系和生产边界；密集部件另附同编号的局部放大标注图。遵守[图片框选与标注交付](../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)，以下映射与规格仅作为内部生产和校验记录。
+
 1. 只分析已冻结的高保真原图，完整编号所有可见部件和明确无需生产项；漏标、重号或无映射项均阻塞。
 2. 每项固定记录 `skinId → slotName → attachmentName → sourceImage → atlasRegion`，并记录相同画布、Pivot/原点、连接区、完整遮挡补全、用途、朝向、像素尺寸、Alpha、PMA 策略和验收姿势。
 3. 资产地图生产边界冻结后，才按编号逐项独立生成或重绘。禁止裁切、抠取、放大或轻微修饰高保真效果图充当源图；禁止整张角色效果图进入 Atlas。
@@ -62,11 +64,11 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 只有完整 V2 资产地图与生产边界冻结后才可拆批。分批只是执行调度，不能替代 V0-V2 任何门禁；所有资产仍必须先完成全量编号、分类、映射和地图确认。
 
 1. 在项目内建立机器可读 JSON 台账：`Artifacts/Spine/<characterId>/batch-ledger.json`。路径必须是项目根内的 POSIX 相对路径，不得使用绝对路径、项目外路径、符号链接段或临时聊天附件；台账和证据写入由一个单写者维护。
-2. 台账根对象至少记录 `ledgerVersion`、`projectId`、`characterId`、`sourceRevision`、`assetMapVersion`、`assetMapSha256`、`visualBibleVersion`、`visualBibleSha256`、完整 `assetIds`、`batches`、追加式 `events` 和 `overallStatus`。`assetIds` 必须与当前 V2 地图逐项相同。
-3. 每个批次至少记录：`taskId`、`skinId`、`batchId`、从 1 开始且不重复的 `ordinal`、唯一 `assetIds`、`dependsOnBatchIds`、`inputVersion`/`inputSha256`、`outputVersion`/`outputSha256`、`owner`、`singleWriter`、`status`、创建/开工/更新时间、验证/审核/用户决定证据、失败与阻塞原因、`recoveryPoint`、`unityVersion`、`spineEditorVersion`、`spineRuntimeVersion`、`exportFormat`、`supersedes` 和 `supersededBy`。
+2. 台账根对象至少记录 `ledgerVersion`、`projectId`、`characterId`、`sourceRevision`、`assetMapVersion`、`visualBibleVersion`、实际交付的完整 `assetIds`、`batches`、追加式 `events` 和 `overallStatus`。核对实际资源覆盖已确认角色要求，不要求回改 V2 地图或计算摘要。
+3. 每个批次至少记录：`taskId`、`skinId`、`batchId`、从 1 开始且不重复的 `ordinal`、唯一 `assetIds`、`dependsOnBatchIds`、`inputVersion` 与实际输入位置、`outputVersion` 与实际输出位置、`owner`、`singleWriter`、`status`、创建/开工/更新时间、验证/审核/用户决定证据、失败与阻塞原因、`recoveryPoint`、`unityVersion`、`spineEditorVersion`、`spineRuntimeVersion`、`exportFormat`、`supersedes` 和 `supersededBy`。
 4. 每个 V2 `assetId` 必须在且只能在一个当前有效批次中出现；建批时校验集合与 V2 地图完全相等，禁止遗漏、重复、空批次或依赖循环。失败批次仍保留原资产归属，修订时建立新 `batchId` 并记录 supersedes 关系。
-5. 状态只能按 `PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED` 推进；异常进入 `FAILED` 或 `BLOCKED`，不得写 `PASS` 或伪造完成。建批、开工、每次产物生成、审核、Unity 集成和验证完成后立即向 `events` 追加事件，事件记录时间、执行者、状态、输入/输出哈希和证据路径；禁止覆盖旧事件、旧证据或用聊天记录补写历史。
-6. 恢复批次前重新读取并核对当前 V2 地图/Visual Bible 哈希、输入/输出哈希、依赖批次状态、Spine/Unity 导出版本和单写者；任一不匹配即作废并重开受影响批次，记录 `supersedes`/`supersededBy`，不得凭对话记忆续做。
+5. 状态只能按 `PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED` 推进；异常进入 `FAILED` 或 `BLOCKED`，不得写 `PASS` 或伪造完成。建批、开工、每次产物生成、审核、Unity 集成和验证完成后立即向 `events` 追加事件，事件记录时间、执行者、状态、实际输入/输出位置和证据路径；禁止覆盖旧事件、旧证据或用聊天记录补写历史。
+6. 恢复批次前读取实际输入/输出、依赖批次状态、Spine/Unity 导出版本和单写者，判断是否满足已确认要求；实际资源错误或依赖未完成时修复对应批次，不因合同、版本或文件内容变化自动作废批次，不校验 SHA，不得凭对话记忆续做。
 7. 全部批次达到 `VALIDATED`、整批映射无遗漏且 V4 集成完成后，仍必须做一次整角色全量回归：完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射、Atlas/材质/PMA/Draw Call/纹理内存、全部动画与 Attachment Timeline、默认/新 Skin、多实例隔离、极端姿势、Clipping 和遮挡。只有全量回归实际 `PASS`，才可写整体 `COMPLETE`；任何失败或阻塞都保留台账并回到对应批次。
 
 ### V4 Spine 源工程与 Unity 接入

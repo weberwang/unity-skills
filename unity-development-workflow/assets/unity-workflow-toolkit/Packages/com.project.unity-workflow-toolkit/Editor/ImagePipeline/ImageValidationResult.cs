@@ -95,7 +95,6 @@ namespace Project.UnityWorkflow.ImagePipeline
         [SerializeField] private string resourceId;
         [SerializeField] private string sourceVersion;
         [SerializeField] private string visualVersion;
-        [SerializeField] private string sourceSha256;
         [SerializeField] private string assetPath;
         [SerializeField] private string assetGuid;
         [SerializeField] private ImageImporterSummary importerSummary;
@@ -121,9 +120,6 @@ namespace Project.UnityWorkflow.ImagePipeline
 
         /// <summary>获取或设置批准候选视觉版本。</summary>
         public string VisualVersion { get => visualVersion; set => visualVersion = value; }
-
-        /// <summary>获取或设置批准候选 SHA-256。</summary>
-        public string SourceSha256 { get => sourceSha256; set => sourceSha256 = value; }
 
         /// <summary>获取或设置 Unity 资产相对路径。</summary>
         public string AssetPath { get => assetPath; set => assetPath = value; }

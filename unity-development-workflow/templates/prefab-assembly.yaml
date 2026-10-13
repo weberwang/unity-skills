@@ -6,13 +6,11 @@ version: prefab-assembly-v1
 prefabStructureEvidence:
   type: prefab-structure
   path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: prefab-structure.scene-arena-intro.v1
   subjectVersion: prefab-structure-v1
 splitPlanEvidence:
   type: split-plan
   path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: split.scene-arena-intro.game-v1
   subjectVersion: game-v1
 assetBindings:
@@ -23,7 +21,6 @@ assetBindings:
     productionEvidence:
       type: image-task
       path: Artifacts/Visual/Items/asset.arena-background.yaml
-      sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
       subjectId: visual.arena-background
       subjectVersion: arena-background-v1
     assetPath: Assets/Art/Runtime/Arena/background.png

@@ -10,7 +10,6 @@ import YAML from "yaml";
 const ROOT = resolve(import.meta.dirname, "../..");
 const WORKFLOW = resolve(ROOT, "unity-development-workflow");
 const SCHEMA_DIR = resolve(WORKFLOW, "schemas");
-const SHA = "a".repeat(64);
 const TEMPLATE_SCHEMA_PAIRS = [
   ["templates/split-plan.yaml", "split-plan.schema.json"],
   ["templates/prefab-structure.yaml", "prefab-structure.schema.json"],
@@ -23,7 +22,7 @@ const TEMPLATE_SCHEMA_PAIRS = [
 
 /** 返回最小的可追溯证据，所有合同 fixture 共用同一格式。 */
 function evidence(type = "test-evidence") {
-  return { type, path: "Artifacts/test.json", sha256: SHA };
+  return { type, path: "Artifacts/test.json" };
 }
 
 /** 创建显式的 Unity 布局绑定；测试禁止依靠几何字段推断父子关系。 */
@@ -98,7 +97,6 @@ function responsiveContracts() {
       contractId: "scene-responsive",
       version: "1.0",
       path: "Artifacts/Contracts/responsive-ui.json",
-      sha256: SHA,
       scope: "SCENE",
     },
     contractVersions: { responsive: "1.0", layout: "1.0", visualBaseline: "1.0", schema: "2.0" },
@@ -125,12 +123,10 @@ function runtimeMeasurement() {
     inputHitTests: [{ system: "BOTH", targetNodeId: "hud-title", hit: true, position: { x: 100, y: 100 } }],
     screenshot: {
       path: "Artifacts/Visual/Runtime/scene.png",
-      sha256: SHA,
       width: 1920,
       height: 1080,
       capturedAtUtc: "2026-09-22T12:00:00Z",
     },
-    candidateSha256: SHA,
     stateTrace: [{ stateId: "menu", action: "open" }],
     verificationStatus: "PASS",
   };
@@ -184,20 +180,20 @@ function splitPlan() {
     prefabStructureEvidence: { ...evidence("prefab-structure"), subjectId: "prefab-structure", subjectVersion: "1" },
     highFidelityGenerationEvidence: {
       ...evidence("image-generation"), subjectId: "source", subjectVersion: "1", candidateId: "candidate-1",
-      candidatePath: "Artifacts/Visual/candidate.png", candidateSha256: SHA, candidateVisualVersion: "1",
+      candidatePath: "Artifacts/Visual/candidate.png", candidateVisualVersion: "1",
     },
     highFidelityReviewEvidence: { ...evidence("visual-review"), subjectId: "visual-review", subjectVersion: "1" },
     sourceImage: { ...evidence("confirmed-high-fidelity-visual"), subjectId: "source", subjectVersion: "1" },
     sourceDimensions: { width: 1920, height: 1080 },
     annotatedPreview: {
-      type: "annotated-split-preview", path: "Artifacts/Visual/annotated.png", sha256: SHA,
-      sourcePath: "Artifacts/Visual/source.png", sourceSha256: SHA, sourceVersion: "1", width: 1920, height: 1080,
+      type: "annotated-split-preview", path: "Artifacts/Visual/annotated.png",
+      sourcePath: "Artifacts/Visual/source.png", sourceVersion: "1", width: 1920, height: 1080,
       annotations: [annotation],
     },
     coverageDeclaration: { allRequiredVisualElementsMapped: true, declaredItemCount: 1, excludedElements: [] },
     splitQuestions: [{ id: "q1", question: "标题是否动态？", answer: "是", decisionImpact: "使用 Unity 原生文本" }],
     items: [{
-      id: "menu-title-item", resourceId: "menu-title-resource", itemVersion: "1", itemSpecSha256: SHA,
+      id: "menu-title-item", resourceId: "menu-title-resource", itemVersion: "1",
       elementIndex: 1, assetType: "TEXT", purpose: "菜单标题", generationBrief: "动态标题", splitRationale: "数据驱动文本",
       targetPrefabNodeIds: ["hud-title"], targetPath: "Assets/UI/MenuTitle.uxml", stateVariants: [{ id: "default", description: "默认" }],
       bounds: { x: 0, y: 0, width: 320, height: 64 }, delivery: "NOT_APPLICABLE", action: "PROGRAMMATIC",
@@ -337,21 +333,29 @@ test("V4/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", ()
     projectStateVersion: "state-1", platformId: "WINDOWS", developmentCompletionEvidence: {
       ...evidence("quality-gates"), projectId: "demo-game", subjectId: "g2.development-complete", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1",
     },
-    buildArtifactSha256: SHA, candidateSha256: SHA, captureSource: "WINDOWS_STANDALONE",
-    screenshot: { path: "Artifacts/Visual/Runtime/scene.png", sha256: SHA, width: 1920, height: 1080, capturedAtUtc: "2026-09-22T12:00:00Z" },
+    captureSource: "WINDOWS_STANDALONE",
+    screenshot: { path: "Artifacts/Visual/Runtime/scene.png", width: 1920, height: 1080, capturedAtUtc: "2026-09-22T12:00:00Z" },
     ...responsiveContracts(), runtimeMeasurement: runtimeMeasurement(), v4Status: "PASS", status: "APPROVED",
     candidateSnapshot: { ...evidence("grilling-subject-snapshot"), projectId: "demo-game", subjectId: "menu", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1" },
     grillingEvidence: { ...evidence("grilling-record"), projectId: "demo-game", subjectId: "menu", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1" },
     reviews: ["VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"].map((discipline) => ({
       approvalType: "RUNTIME_VISUAL", authority: "INDEPENDENT_REVIEWER", subjectId: "menu", subjectVersion: "1", approvedBy: "reviewer",
-      approvedAtUtc: "2026-09-22T12:00:00Z", evidencePath: "Artifacts/review.json", evidenceSha256: SHA, reviewTaskId: "review-menu", reviewDiscipline: discipline,
+      approvedAtUtc: "2026-09-22T12:00:00Z", evidencePath: "Artifacts/review.json", reviewTaskId: "review-menu", reviewDiscipline: discipline,
     })),
-    userApprovals: [{ approvalType: "RUNTIME_VISUAL", authority: "USER", subjectId: "menu", subjectVersion: "1", approvedBy: "user", approvedAtUtc: "2026-09-22T12:00:00Z", evidencePath: "Artifacts/approval.json", evidenceSha256: SHA }],
+    userApprovals: [{ approvalType: "RUNTIME_VISUAL", authority: "USER", subjectId: "menu", subjectVersion: "1", approvedBy: "user", approvedAtUtc: "2026-09-22T12:00:00Z", evidencePath: "Artifacts/approval.json" }],
   };
   assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", payload).valid, true);
   const missingMeasurement = structuredClone(payload);
   delete missingMeasurement.runtimeMeasurement;
   assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", missingMeasurement).valid, false);
+
+  const missingCompletionEvidence = structuredClone(payload);
+  delete missingCompletionEvidence.developmentCompletionEvidence;
+  assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", missingCompletionEvidence).valid, false);
+
+  const missingUserApproval = structuredClone(payload);
+  missingUserApproval.userApprovals = [];
+  assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", missingUserApproval).valid, false);
 });
 
 test("V4/PASS 拒绝失败的 resize、输入命中和错误 Canvas 路线", () => {

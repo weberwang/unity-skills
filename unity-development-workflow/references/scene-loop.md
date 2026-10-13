@@ -12,6 +12,8 @@
 
 ## V2 拆解确认
 
+用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单；在冻结的 V1 效果图上标出稳定编号、来源、关系、装配与生产边界。详细展示规则见[视觉工作流](visual-workflow.md#图片框选与标注交付)，以下结构化字段作为内部合同保存并与图中编号同步。
+
 冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。仅对真实取舍额外提问，不重复询问已确认事实；阶段交付人工确认始终执行。
 
 ## V3 资源与组合验收
@@ -20,6 +22,6 @@
 
 ## V4 正式实现与运行验收
 
-正式实现绑定当前 V2/V3，完成玩法、视觉、音频、输入、生命周期和清理；在 Editor/PlayMode 中按响应式合同采集 Screen/GameView、backbuffer 或 RenderTexture、Camera、Canvas/PanelSettings、安全区、方向/resize、输入命中、截图、候选 SHA 和状态轨迹。缺少真实 Unity 测量时 V4 只能为 `NOT_RUN` 或失败。场景 V4 不等待独立瞬态层。
+正式实现满足已确认要求，完成玩法、视觉、音频、输入、生命周期和清理；在 Editor/PlayMode 中按实际实现采集 Screen/GameView、backbuffer 或 RenderTexture、Camera、Canvas/PanelSettings、安全区、方向/resize、输入命中、截图和状态轨迹。中途调整无需回改 V2/V3 合同，不校验 SHA；实际完成情况记录在交付和验收报告。缺少真实 Unity 测量时 V4 只能为 `NOT_RUN` 或失败。场景 V4 不等待独立瞬态层。
 
 不同场景可并行只读准备；正式 Unity Editor 写入受单写者约束。完成一个场景不是切换下一个场景的强制前提，只有共享资源、入口或状态所有权存在依赖时才串行。

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using NUnit.Framework;
 using Project.UnityWorkflow.Core.Models;
@@ -72,7 +71,6 @@ namespace Project.UnityWorkflow.Core.Tests
 
             var job = ManifestLoader.Load<WorkflowJobDto<ProjectProfileDto>>(relativePath);
 
-            Assert.IsTrue(job.IntegrityVerified);
             Assert.AreEqual("project-profile", job.Kind);
             Assert.AreEqual("core-test", job.Payload.ProjectId);
             Assert.AreEqual("6", job.Payload.Unity.Version);
@@ -80,33 +78,35 @@ namespace Project.UnityWorkflow.Core.Tests
         }
 
         /// <summary>
-        /// payload 被修改而未重新编译时，ManifestLoader 必须拒绝 Job。
+        /// payload 内容已由编译 Job 固定，ManifestLoader 应按 Job 当前内容执行。
         /// </summary>
         [Test]
-        public void ManifestLoader_TamperedPayload_IsRejected()
+        public void ManifestLoader_ChangedPayload_LoadsCurrentSnapshot()
         {
             const string relativePath = TestRoot + "/tampered-payload.job.json";
             var absolutePath = WriteTrustedProjectJob(relativePath);
             var json = File.ReadAllText(absolutePath, Encoding.UTF8).Replace("core-test", "tampered");
             File.WriteAllText(absolutePath, json, new UTF8Encoding(false));
 
-            Assert.Throws<InvalidDataException>(
-                () => ManifestLoader.Load<WorkflowJobDto<ProjectProfileDto>>(relativePath));
+            var job = ManifestLoader.Load<WorkflowJobDto<ProjectProfileDto>>(relativePath);
+
+            Assert.AreEqual("tampered", job.Payload.ProjectId);
         }
 
         /// <summary>
-        /// 源 YAML 被修改后，已有 Job 的 sourceSha256 必须失效。
+        /// 源 YAML 后续修订不改变已有 Job 中的执行快照。
         /// </summary>
         [Test]
-        public void ManifestLoader_ModifiedSource_IsRejected()
+        public void ManifestLoader_ModifiedSource_DoesNotInvalidateJob()
         {
             const string relativePath = TestRoot + "/modified-source.job.json";
             WriteTrustedProjectJob(relativePath);
             var sourcePath = WorkflowPaths.ResolveProjectRelative(TestRoot + "/project-profile.yaml");
             File.AppendAllText(sourcePath, "# modified\n", new UTF8Encoding(false));
 
-            Assert.Throws<InvalidDataException>(
-                () => ManifestLoader.Load<WorkflowJobDto<ProjectProfileDto>>(relativePath));
+            var job = ManifestLoader.Load<WorkflowJobDto<ProjectProfileDto>>(relativePath);
+
+            Assert.AreEqual("core-test", job.Payload.ProjectId);
         }
 
         /// <summary>
@@ -155,7 +155,6 @@ namespace Project.UnityWorkflow.Core.Tests
                                 "\"subjectId\":\"visual.player\",\"subjectVersion\":\"visual-v2\"," +
                                 "\"approvedBy\":\"reviewer\",\"approvedAtUtc\":\"2026-07-27T00:00:00Z\"," +
                                 "\"evidencePath\":\"Artifacts/Approvals/review.json\"," +
-                                "\"evidenceSha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"," +
                                 "\"reviewTaskId\":\"review.visual-player\",\"reviewDiscipline\":\"UNITY_FEASIBILITY\"}";
 
             ApprovalDto approval = JsonUtility.FromJson<ApprovalDto>(json);
@@ -164,7 +163,6 @@ namespace Project.UnityWorkflow.Core.Tests
             Assert.AreEqual("INDEPENDENT_REVIEWER", approval.Authority);
             Assert.AreEqual("visual.player", approval.SubjectId);
             Assert.AreEqual("visual-v2", approval.SubjectVersion);
-            Assert.AreEqual(new string('a', 64), approval.EvidenceSha256);
             Assert.AreEqual("review.visual-player", approval.ReviewTaskId);
             Assert.AreEqual("UNITY_FEASIBILITY", approval.ReviewDiscipline);
         }
@@ -291,7 +289,7 @@ namespace Project.UnityWorkflow.Core.Tests
             };
         }
 
-        /// <summary>写入带有效源哈希与规范化 payload 哈希的项目画像 Job。</summary>
+        /// <summary>写入带现有源契约路径和编译 payload 的项目画像 Job。</summary>
         private static string WriteTrustedProjectJob(string relativePath)
         {
             const string sourceRelativePath = TestRoot + "/project-profile.yaml";
@@ -302,8 +300,6 @@ namespace Project.UnityWorkflow.Core.Tests
                                    "\"unity\":{\"renderPipeline\":\"URP\",\"version\":\"6\"}}";
             var json = "{\"schemaVersion\":\"1.0\",\"kind\":\"project-profile\"," +
                        $"\"sourcePath\":\"{sourceRelativePath}\"," +
-                       $"\"sourceSha256\":\"{ComputeSha256(sourceBytes)}\"," +
-                       $"\"payloadSha256\":\"{ComputeSha256(Encoding.UTF8.GetBytes(payload))}\"," +
                        "\"compiledAtUtc\":\"2026-07-27T00:00:00Z\"," +
                        $"\"payload\":{payload}}}";
             var absolutePath = WorkflowPaths.ResolveProjectRelative(relativePath);
@@ -311,13 +307,5 @@ namespace Project.UnityWorkflow.Core.Tests
             return absolutePath;
         }
 
-        /// <summary>计算测试信任链使用的小写 SHA-256。</summary>
-        private static string ComputeSha256(byte[] bytes)
-        {
-            using (var algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
-        }
     }
 }

@@ -5,39 +5,13 @@ using UnityEngine;
 namespace Project.UnityWorkflow.Core.Models
 {
     /// <summary>
-    /// 暴露已编译 Job 的完整性字段与只读验证状态。
+    /// 暴露已编译 Job 的来源契约路径。
     /// </summary>
     public interface IWorkflowJobDto
     {
         /// <summary>获取源契约项目相对路径。</summary>
         string SourcePath { get; }
 
-        /// <summary>获取源契约 SHA-256。</summary>
-        string SourceSha256 { get; }
-
-        /// <summary>获取规范化 payload SHA-256。</summary>
-        string PayloadSha256 { get; }
-
-        /// <summary>获取该实例是否已由 ManifestLoader 完成完整性验证。</summary>
-        bool IntegrityVerified { get; }
-    }
-
-    /// <summary>
-    /// 保存只读完整性状态，并仅允许 Core 程序集在验证后标记。
-    /// </summary>
-    [Serializable]
-    public abstract class WorkflowJobIntegrityState
-    {
-        [NonSerialized] private bool integrityVerified;
-
-        /// <summary>获取源文件和 payload 是否均已通过完整性验证。</summary>
-        public bool IntegrityVerified => integrityVerified;
-
-        /// <summary>由 ManifestLoader 在全部哈希通过后设置可信状态。</summary>
-        internal void MarkIntegrityVerified()
-        {
-            integrityVerified = true;
-        }
     }
 
     /// <summary>
@@ -53,7 +27,6 @@ namespace Project.UnityWorkflow.Core.Models
         [SerializeField] private string approvedBy;
         [SerializeField] private string approvedAtUtc;
         [SerializeField] private string evidencePath;
-        [SerializeField] private string evidenceSha256;
         [SerializeField] private string reviewTaskId;
         [SerializeField] private string reviewDiscipline;
 
@@ -78,9 +51,6 @@ namespace Project.UnityWorkflow.Core.Models
         /// <summary>获取或设置项目内批准证据路径。</summary>
         public string EvidencePath { get => evidencePath; set => evidencePath = value; }
 
-        /// <summary>获取或设置批准证据文件 SHA-256。</summary>
-        public string EvidenceSha256 { get => evidenceSha256; set => evidenceSha256 = value; }
-
         /// <summary>获取或设置独立审查任务 ID；用户批准时允许为空。</summary>
         public string ReviewTaskId { get => reviewTaskId; set => reviewTaskId = value; }
 
@@ -89,14 +59,13 @@ namespace Project.UnityWorkflow.Core.Models
     }
 
     /// <summary>
-    /// 表示带 SHA-256 的工作流证据文件。
+    /// 表示一个项目内的工作流证据文件。
     /// </summary>
     [Serializable]
     public sealed class EvidenceDto
     {
         [SerializeField] private string type;
         [SerializeField] private string path;
-        [SerializeField] private string sha256;
         [SerializeField] private string subjectId;
         [SerializeField] private string subjectVersion;
         [SerializeField] private string sourceRevision;
@@ -107,9 +76,6 @@ namespace Project.UnityWorkflow.Core.Models
 
         /// <summary>获取或设置项目相对路径。</summary>
         public string Path { get => path; set => path = value; }
-
-        /// <summary>获取或设置文件 SHA-256。</summary>
-        public string Sha256 { get => sha256; set => sha256 = value; }
 
         /// <summary>获取或设置证据绑定的主体 ID。</summary>
         public string SubjectId { get => subjectId; set => subjectId = value; }
@@ -129,13 +95,11 @@ namespace Project.UnityWorkflow.Core.Models
     /// </summary>
     /// <typeparam name="TPayload">Job 中 payload 的 DTO 类型。</typeparam>
     [Serializable]
-    public sealed class WorkflowJobDto<TPayload> : WorkflowJobIntegrityState, IWorkflowJobDto
+    public sealed class WorkflowJobDto<TPayload> : IWorkflowJobDto
     {
         [SerializeField] private string schemaVersion;
         [SerializeField] private string kind;
         [SerializeField] private string sourcePath;
-        [SerializeField] private string sourceSha256;
-        [SerializeField] private string payloadSha256;
         [SerializeField] private string compiledAtUtc;
         [SerializeField] private TPayload payload;
 
@@ -147,12 +111,6 @@ namespace Project.UnityWorkflow.Core.Models
 
         /// <summary>获取或设置源 JSON 路径。</summary>
         public string SourcePath { get => sourcePath; set => sourcePath = value; }
-
-        /// <summary>获取或设置源 JSON SHA-256。</summary>
-        public string SourceSha256 { get => sourceSha256; set => sourceSha256 = value; }
-
-        /// <summary>获取或设置规范化 payload SHA-256。</summary>
-        public string PayloadSha256 { get => payloadSha256; set => payloadSha256 = value; }
 
         /// <summary>获取或设置编译时间。</summary>
         public string CompiledAtUtc { get => compiledAtUtc; set => compiledAtUtc = value; }

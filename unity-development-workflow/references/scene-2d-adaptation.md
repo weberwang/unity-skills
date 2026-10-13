@@ -57,7 +57,7 @@
 - `scene-2d-adaptation.yaml`：使用 `schemas/scene-2d-adaptation.schema.json` 校验，并绑定项目、源码修订、项目状态、场景和场景版本。
 - `unity-2d-adaptation-config`：证明 Adaptive2DViewport、正交摄像机、PanelSettings、相机 Culling Mask、边带 Alpha 与后景 Sorting Layer/Order 均有效。
 - `unity-editmode-test-report`：必须来自 `Scene2DAdaptationTests`，测试总数与通过数一致且失败数为零。
-- `runtime-2d-adaptation-screenshot`：G3 中每个设备档位与声明分辨率的最终运行证据，记录候选构建版本、截图 SHA-256、无黑边、边带可见与交互安全检查结果。
+- `runtime-2d-adaptation-screenshot`：G3 中每个设备档位与声明分辨率的最终运行证据，记录实际构建版本、截图位置、无黑边、边带可见与交互安全检查结果；不校验 SHA，显示效果由用户人工检查。
 
 `scene-manifest` 的 `dimension: 2D` 必须引用上述 `VERIFIED` 契约；`dimension: 3D` 不得伪造该引用。G2 的场景与模块验收可消费这一技术验证，但不能产生最终设备验收结论。G3 的 `scenes.2d-adaptation-verified` 必须提交当前拆分中全部已批准场景的 manifest，逐项深验其中的 2D 适配；没有 2D 场景时仍核对场景全集，但不要求 3D 场景伪造适配证据。最终跨设备结果由同门的 `devices.acceptance-verified` 独立证明。
 

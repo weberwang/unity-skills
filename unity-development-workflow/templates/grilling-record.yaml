@@ -10,7 +10,6 @@ subject:
   version: scope-v1
   evidenceType: grilling-subject-snapshot
   path: Artifacts/Planning/starfall-arena.scope-v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 triggerReason: 新项目进入设计阶段，必须先消除会改变范围、架构、视觉和交付方案的高影响歧义。
 facts:
   - 示例候选把 Windows 作为待确认目标平台；最终平台集合仍由用户批准。

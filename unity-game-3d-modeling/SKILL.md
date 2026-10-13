@@ -29,7 +29,7 @@ description: 通过 @Unity 插件、Unity CLI、ProBuilder 与项目 Pipeline �
 1. 冻结模型 brief、Visual Bible 版本、资源 ID 和验收矩阵。
 2. 生成 blockout，在固定机位输出轮廓、比例和尺度证据，交由视觉与玩法审查。
 3. 用户确认后完善几何、拓扑、法线、UV、材质槽、LOD 与碰撞；改变已批准轮廓或交互边界时退回确认。
-4. 记录模型配方、工具/供应商版本、提示词、参数、源文件哈希和派生关系。
+4. 记录模型配方、工具/供应商版本、提示词、参数、实际源文件位置和派生关系。
 5. 串行接入 Unity：外部模型检查 ModelImporter、比例、轴向和 Pivot；ProBuilder 原生 Mesh/Prefab 不伪造 ModelImporter 证据。两条路径都检查材质槽、LODGroup、Collider、Prefab 引用和运行时警告。
 6. 输出转台、线框、碰撞、LOD 与目标场景截图；自检通过后交给纹理角色或独立 QA，不自批。
 
@@ -43,4 +43,4 @@ description: 通过 @Unity 插件、Unity CLI、ProBuilder 与项目 Pipeline �
 
 ## 交付
 
-交付版本化源文件、运行时模型、Prefab、模型配方、SHA-256、许可、UV 哈希、导入设置、LOD/Collider 指标和 Unity 证据。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。
+交付版本化源文件、运行时模型、Prefab、模型配方、许可、实际 UV 位置与报告、导入设置、LOD/Collider 指标和 Unity 证据。以实际模型满足用户要求为验收依据，中途调整无需回改合同，不校验 SHA。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。

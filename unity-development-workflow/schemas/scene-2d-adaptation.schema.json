@@ -70,12 +70,11 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["edge", "resourceId", "path", "sha256", "interactive"],
+            "required": ["edge", "resourceId", "path", "interactive"],
             "properties": {
               "edge": {"enum": ["LEFT", "RIGHT", "TOP", "BOTTOM"]},
               "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
               "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-              "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
               "interactive": {"const": false}
             }
           }
@@ -226,11 +225,10 @@
     "unityConfigurationEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "unityVersion", "componentPath"],
+      "required": ["type", "path", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "unityVersion", "componentPath"],
       "properties": {
         "type": {"const": "unity-2d-adaptation-config"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
         "sceneVersion": {"type": "string", "minLength": 1},
         "sourceRevision": {"type": "string", "minLength": 1},
@@ -242,11 +240,10 @@
     "editModeEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "testSuite", "totalTests", "passedTests", "failedTests"],
+      "required": ["type", "path", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "testSuite", "totalTests", "passedTests", "failedTests"],
       "properties": {
         "type": {"const": "unity-editmode-test-report"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
         "sceneVersion": {"type": "string", "minLength": 1},
         "sourceRevision": {"type": "string", "minLength": 1},
@@ -260,11 +257,10 @@
     "runtimeScreenshotEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "resolutionId", "width", "height", "buildVersion", "blackBarsStatus", "bandVisibilityStatus", "interactionSafetyStatus"],
+      "required": ["type", "path", "sceneId", "sceneVersion", "sourceRevision", "projectStateVersion", "resolutionId", "width", "height", "buildVersion", "blackBarsStatus", "bandVisibilityStatus", "interactionSafetyStatus"],
       "properties": {
         "type": {"const": "runtime-2d-adaptation-screenshot"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
         "sceneVersion": {"type": "string", "minLength": 1},
         "sourceRevision": {"type": "string", "minLength": 1},

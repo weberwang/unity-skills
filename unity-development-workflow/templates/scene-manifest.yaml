@@ -10,7 +10,6 @@ lifecycle: GAMEPLAY
 decompositionPlan:
   type: decomposition-plan
   path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
-  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   subjectId: decomposition.starfall-arena.v1
   subjectVersion: decomposition-v1
   sourceRevision: working-tree-snapshot-20260727
@@ -18,7 +17,6 @@ decompositionPlan:
 adaptation2D:
   type: scene-2d-adaptation
   path: Artifacts/Scenes/scene.arena-intro/adaptation-2d.yaml
-  sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
   subjectId: scene.arena-intro
   subjectVersion: scene-v1
   sourceRevision: working-tree-snapshot-20260727
@@ -43,7 +41,6 @@ responsiveContractRef:
   contractId: scene-arena-intro-responsive
   version: responsive-v1
   path: Artifacts/Contracts/Scenes/scene.arena-intro/responsive-v1.yaml
-  sha256: "1111111111111111111111111111111111111111111111111111111111111111"
   scope: SCENE
 contractVersions:
   responsive: responsive-v1
@@ -53,25 +50,21 @@ contractVersions:
 prefabStructure:
   type: prefab-structure
   path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
-  sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
   subjectId: prefab-structure.scene-arena-intro.v1
   subjectVersion: prefab-structure-v1
 highFidelityVisualReview:
   type: visual-review
   path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: imagegen.scene-arena-intro.game-v1
   subjectVersion: game-v1
 assetMap:
   type: split-plan
   path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: split.scene-arena-intro.game-v1
   subjectVersion: game-v1
 prefabAssembly:
   type: prefab-assembly
   path: Artifacts/Visual/Assembly/scene.arena-intro.v1.yaml
-  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
   subjectId: prefab-assembly.scene-arena-intro.v1
   subjectVersion: prefab-assembly-v1
 qualityGate:
@@ -87,19 +80,16 @@ visualReviews:
   game:
     type: visual-review
     path: Artifacts/Visual/Reviews/scene.arena-intro/game-final.yaml
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     subjectId: scene.arena-intro
     subjectVersion: scene-v1
   ui:
     type: visual-review
     path: Artifacts/Visual/Reviews/scene.arena-intro/ui-final.yaml
-    sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
     subjectId: scene.arena-intro
     subjectVersion: scene-v1
   runtime:
     type: visual-review
     path: Artifacts/Visual/Reviews/scene.arena-intro/runtime-final.yaml
-    sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     subjectId: scene.arena-intro
     subjectVersion: scene-v1
 evidence: []

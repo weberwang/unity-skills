@@ -5,7 +5,6 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 import {
-  canonicalizeJson,
   compileJsonJob,
   initializeDocs,
   main,
@@ -36,7 +35,7 @@ test("SHA-256 使用文件原始字节", () => withProject((root) => {
   assert.equal(sha256File(file), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 }));
 
-test("JSON Job 绑定源文件与规范化 payload", () => withProject((root) => {
+test("JSON Job 保存来源路径和实际执行快照，不要求 SHA", () => withProject((root) => {
   const source = resolve(root, "Artifacts/input.json");
   const output = resolve(root, "Artifacts/output.job.json");
   mkdirSync(resolve(root, "Artifacts"));
@@ -44,9 +43,8 @@ test("JSON Job 绑定源文件与规范化 payload", () => withProject((root) =>
   compileJsonJob({ projectRoot: root, kind: "image-task", source, output });
   const job = JSON.parse(readFileSync(output, "utf8"));
   assert.equal(job.sourcePath, "Artifacts/input.json");
-  assert.equal(canonicalizeJson(job.payload), '{"a":{"b":1},"z":2}');
-  assert.match(job.sourceSha256, /^[a-f0-9]{64}$/);
-  assert.match(job.payloadSha256, /^[a-f0-9]{64}$/);
+  assert.deepEqual(job.payload, { z: 2, a: { b: 1 } });
+  assert.equal(Object.keys(job).some((key) => /sha256/i.test(key)), false);
 }));
 
 test("子命令拒绝未知参数", () => {

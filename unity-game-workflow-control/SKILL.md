@@ -7,16 +7,18 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 
 本 Skill 是 Unity 项目的唯一流程状态、风险门、范围和证据控制面。它只负责读取与校验 Work Item、Implementation Package、Evidence Manifest，以及在门禁满足时推进控制状态；它不启动 Unity Editor、服务、设备或发布流程。
 
+验收以用户要求、实际完成情况、当前运行证据和人工确认是否满足完成条件为准。合同用于实施前明确目标与边界；已授权范围内的实现调整无需回改合同，也不因合同内容、版本或文件变化要求重新确认。验收不计算、不要求、不比对 SHA；只有实际需求未满足、证据缺失或失效、范围改变及授权不足才阻断。
+
 ## 主闭环
 
 1. 创建或读取 Work Item，冻结用户目标、范围、基线、阶段、`workItemType`、允许路径和验收边界；`SCENE` 与 `DISPLAY_LAYER` 必须在 `scene-production` 独立闭环。
 2. 按当前阶段读取对应 reference，使用 `status`/`check` 诊断；缺少事实时先完成只读调查。
 3. 实施前冻结 Implementation Package。每个单元必须有类型、所有者、路径、顺序和 Unity 序列化资源所有权；`SCENE` 与 `DISPLAY_LAYER` 不得混包，身份字段必须精确绑定。
-4. 可见 `SCENE`/`DISPLAY_LAYER` 必须冻结 Unity 原生 `responsiveContract`；可见实施包必须绑定合同文件 `path/version/sha256`，不使用 CSS、DOM 或运行时 DPR 语义。
-5. 实施后记录候选变更和 Evidence Manifest，证据必须绑定相同的 Work Item、基线和实施包；V4 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize、截图和候选 SHA。布局仅验证已批准方向，横屏无需验证竖屏，竖屏无需验证横屏；双方向或自动方向合同另须 orientation 切换轨迹。
+4. 可见 `SCENE`/`DISPLAY_LAYER` 实施前明确 Unity 原生 `responsiveContract`；可见实施包用合同文件 `path/version` 记录来源，不强制与当前实现逐字段一致，不使用 CSS、DOM 或运行时 DPR 语义。
+5. 实施后记录实际完成情况和 Evidence Manifest，证据必须属于相同的 Work Item、基线和实施包；V4 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize 和截图。`responsiveEvidence.supportedOrientations` 记录实际支持方向，验收核对其满足用户要求；横屏无需验证竖屏，竖屏无需验证横屏，实际双方向或自动方向另须 orientation 切换轨迹。
 6. 失败只选择 `repair`、`revalidate` 或显式 `RETURN`；控制面不会自动回退、扩大范围或伪造设备/发布证据。
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
-8. `SCENE` 与 `DISPLAY_LAYER` 每个 V0–V4 阶段结束时按[阶段人工确认](references/stage-confirmation.md)展示可查看交付并等待用户确认；通过 `stageReviews` 保存工作项、基线、阶段、交付摘要与用户消息引用。未确认不推进下一阶段，V4 未确认不完成工作项。
+8. `SCENE` 与 `DISPLAY_LAYER` 每个 V0–V4 阶段结束时按[阶段人工确认](references/stage-confirmation.md)展示可查看交付并等待用户确认；通过 `stageReviews` 保存工作项、阶段、确认人、时间与用户消息引用。未确认不推进下一阶段，V4 未确认不完成工作项。
 
 用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V0-V4，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。
 

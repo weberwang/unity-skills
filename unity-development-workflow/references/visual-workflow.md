@@ -8,7 +8,7 @@ V0–V4 每个阶段完成后均按[阶段人工确认](../../unity-game-workflo
 
 新建且包含可见画面的 `SCENE` 或 `DISPLAY_LAYER` Work Item 必须生成自身的完整效果图，即使已有有效品牌/视觉规范；此时按规范生成一个目标方案即可。只有项目确实需要新视觉方向时才生成多个方向候选，数量由 Work Item 决定；需要探索时推荐三个实质不同的完整方向，用户选择后冻结 Visual Bible。已有有效品牌/视觉规范时直接验证并采用，不强制重新三选一。
 
-Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并绑定来源版本与文件 SHA。方向变化只使真实依赖它的场景和资源失效。
+Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并记录来源版本与位置。验收按实际画面和已确认要求判断，中途调整无需回改合同；方向真正变化时只重验实际受影响的场景和资源。
 
 ## V1 场景定义
 
@@ -18,16 +18,24 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 
 ## V2 拆解确认
 
-只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
+### 图片框选与标注交付
+
+向用户展示的 V2 拆解说明只输出可直接查看的图片：在冻结的 V1 完整效果图上逐项框选，以稳定编号对应 `componentId`，用引线连接图内中文标注。标注说明元素用途、资源来源、父子/同组关系、装配方式和生产边界；无需生产的项也须明确标出。框选只表示目标图中的位置，不作为推断父子关系或裁切正式资源的依据。
+
+说明、图例、工作项、阶段、交付版本、验证结果和待确认范围均放在图内；不另行输出文本段落、表格、编号清单或代码块作为拆解说明。图片须直接展示，不能仅交付图片路径或链接。标注不得遮挡关键画面或相互重叠；内容过密时使用总览图加局部放大标注图，沿用同一套编号。不同状态或独立显示层分别标注，覆盖全部拆解项后再提交 V2 确认。
+
+### 内部拆解合同
+
+结构化合同用于规划生产目标与边界，内部保存且与标注图使用相同编号，不作为用户侧文本拆解输出。实际生产调整在交付或验收记录说明，无需回改合同或校验内容摘要。只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
 
 屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，并确定布局参照：场景 UI 相对场景内容区域大小停靠，弹窗内部有底板时相对底板布局，无底板时相对屏幕布局。将参照节点、边界来源与尺寸变化策略写入 `layoutBinding.constraints` 和 `resizePolicy`，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
 
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；
 - 资源来源、许可、Unity GUID、复用理由和替换策略；
-- 静态特色外观的独立生产结论；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持；`REUSE` 的精确 GUID、源 SHA、Importer 指纹和消费节点；
+- 静态特色外观的独立生产结论；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持；`REUSE` 的精确 GUID、源路径、实际 Importer 设置和消费节点；
 - Scene/Prefab/UXML/UIDocument/Canvas/Transform 的结构化装配；单区域不得使用 `COMPOSITE` 或整屏截图，`fullScreenCapture` 必须为 `false`；
-- annotated preview、完整覆盖说明和生产/验证责任。
+- 图片框选与图内中文标注的 annotated preview、内部完整覆盖记录和生产/验证责任。
 
 存在实质视觉取舍、来源授权或外部生成成本时另行请求精确 `USER_DECISION`；无此类取舍也必须取得 V2 阶段人工确认。未确认生产边界前，不导入正式资源或写入正式 Scene/Prefab/UI。禁止裁切、抠取、放大或轻微修饰参考图/高保真图充当 Sprite/纹理，禁止整图铺底冒充结构化实现。
 
@@ -35,13 +43,13 @@ Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效�
 
 按拆解计划逐项独立生产或复用。位图、模型、材质、字体、音频和 VFX 使用其真实 Importer 与平台设置；Unity 管理资源与 `.meta` 同步进入所有权和证据。UI/2D 位图生产默认 `sourceScale=1`，平台预算或像素美术合同另有明确批准值时才改变；运行时不使用固定 Web DPR，而读取 Unity 平台、Canvas/PanelSettings、Camera 和动态分辨率事实。SpriteAtlas、压缩、MipMap 和 Addressables 由 Unity 预算决定。
 
-生成式透明位图可采用“生成不透明单一纯色背景 PNG → `unity-game-visual-assets/scripts/remove-background-local.mjs` → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、SHA、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
+生成式透明位图可采用“生成不透明单一纯色背景 PNG → `unity-game-visual-assets/scripts/remove-background-local.mjs` → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。工具自行生成的 SHA 不参与验收。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
 
 在宿主 Scene/Prefab/UXML 中完成正式资源同屏组合预验收，核对 GUID、序列化引用、Prefab Variant/Override、布局、状态、遮罩、渲染排序与 Console。V3 通过前不把正式场景实现声明为可验收候选。
 
 ## V4 正式实现与运行验收
 
-单写者完成正式 Scene/Prefab/UI/玩法接入，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用。随后在编译、导入和域重载稳定后运行 EditMode/PlayMode、Game View 多分辨率、交互轨迹、视觉、性能和资源消费验证；真实记录 Screen/GameView/backbuffer 或 RenderTexture、Camera pixelRect/orthographicSize/projection、CanvasScaler 或 PanelSettings、Screen.safeArea、方向/resize、EventSystem/InputSystem 命中、截图、候选 SHA 和状态轨迹。
+单写者完成正式 Scene/Prefab/UI/玩法接入，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用。随后在编译、导入和域重载稳定后运行 EditMode/PlayMode、Game View 多分辨率、交互轨迹、性能和资源消费验证；真实记录 Screen/GameView/backbuffer 或 RenderTexture、Camera pixelRect/orthographicSize/projection、CanvasScaler 或 PanelSettings、Screen.safeArea、方向/resize、EventSystem/InputSystem 命中、截图和状态轨迹。截图交由用户检查显示效果；除非用户明确要求自动视觉验证，代理不分析截图或判定视觉通过。
 
 modal、popup、drawer、toast 等显示层在自己的 `DISPLAY_LAYER` Work Item 中验证打开、交互、关闭，以及焦点、输入、时间缩放和底层状态恢复；`hostSceneId` 只作上下文，显示层不阻断场景 V4。研发期不自动启动 Standalone/Player 或真机；设备证据仅在独立发布 Work Item 获明确授权后产生。
 

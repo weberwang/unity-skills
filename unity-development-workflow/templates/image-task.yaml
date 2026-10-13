@@ -22,25 +22,21 @@ referenceDeclarations:
 visualBibleEvidence:
   type: visual-bible
   path: Artifacts/Visual/Global/visual-v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: starfall-arena
   subjectVersion: visual-v1
 itemGenerationEvidence:
   type: image-generation
   path: Artifacts/Visual/Generation/asset.player-portrait.scout.v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: imagegen.asset.player-portrait.scout.v1
   subjectVersion: visual-v1
 splitPlanEvidence:
   type: split-plan
   path: Artifacts/Visual/Split/player-select.visual-v1.yaml
-  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
   subjectId: split.player-select.visual-v1
   subjectVersion: visual-v1
   itemId: ui.player-portrait.scout
   itemElementIndex: 1
   itemVersion: visual-v1
-  itemSpecSha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   resourceId: ui.player-portrait.scout
 splitPlanApproval:
   approvalType: ASSET_MAP
@@ -50,14 +46,11 @@ splitPlanApproval:
   approvedBy: user
   approvedAtUtc: 2026-07-27T09:00:00Z
   evidencePath: Artifacts/Visual/Approvals/split.player-select.visual-v1-user.yaml
-  evidenceSha256: "1111111111111111111111111111111111111111111111111111111111111111"
   approvalScope:
     annotatedPreview:
       type: annotated-split-preview
       path: Artifacts/Visual/Split/player-select.visual-v1-annotated.png
-      sha256: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
       sourcePath: ArtSource/Approved/player-select/visual-v1.png
-      sourceSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       sourceVersion: visual-v1
       width: 1024
       height: 1024
@@ -69,6 +62,22 @@ splitPlanApproval:
           label: "[01][GENERATE] 侦察员头像"
           productionRoute: GENERATE
           brief: 框选角色半身像区域，作为独立透明头像资源
+          parentElementId: node.player-select-root
+          semanticGrouping: {kind: part, rationale: 角色头像是玩家选择区域内可独立复用的视觉部件。}
+          visualRouteAnalysis:
+            elementType: character-portrait
+            distinctiveVisual: {isDistinctive: true, observedFeatures: [深蓝装甲、侦察员轮廓、柔和侧光], assetFirstDecision: ASSET_FIRST}
+            selectedRoute: IMAGE_ASSET
+            routeReason: 角色头像具有独立且不可由基础几何等价表达的识别外观。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability: {eligible: false, primitiveBasis: [BASIC_GEOMETRY], reason: 角色外观需要独立图像资源。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-portrait.yaml}}
+            reuseSuitability: {eligible: false, reason: 当前没有满足角色身份和风格要求的已登记头像。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-portrait-reuse.yaml}}
+            productionMethod: GENERATED_RASTER
+            deliveryKind: IMAGE_ASSET
+            finalOwner: FIXED_PRODUCTION_VISUAL
+          assemblyAnalysis: {strategy: STRUCTURED_UNITY_ASSEMBLY, unityAssetType: PREFAB, nodeId: node.player-portrait, parentNodeId: node.player-select-root, layoutSystem: TRANSFORM, fullScreenCapture: false, evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/player-portrait.yaml}}
+          layoutBinding: {parentElementId: node.player-select-root, hierarchyRelation: PARENT_CHILD, coordinateSpace: PREFAB_LOCAL, anchor: {min: {x: 0, y: 0}, max: {x: 1, y: 1}}, pivot: {x: 0.5, y: 0.5}, constraints: [portrait-frame], resizePolicy: SCALE_WITH_PARENT}
         - elementIndex: 2
           itemId: ui.player-select.frame
           coordinateSpace: EFFECT_IMAGE_PIXELS
@@ -76,6 +85,27 @@ splitPlanApproval:
           label: "[02][REUSE] 角色选择框"
           productionRoute: REUSE
           brief: 框选已登记角色选择框，复用现有资源文件而不取效果图像素
+          parentElementId: node.player-select-root
+          semanticGrouping: {kind: part, rationale: 选择框是包围角色头像的独立界面装饰部件。}
+          visualRouteAnalysis:
+            elementType: player-select-frame
+            distinctiveVisual: {isDistinctive: true, observedFeatures: [角色选择框轮廓、透明边缘、选中区域], assetFirstDecision: ASSET_FIRST}
+            selectedRoute: REUSE
+            routeReason: 已登记选择框具有兼容风格和已验证的 Unity 身份。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability: {eligible: false, primitiveBasis: [BASIC_GEOMETRY], reason: 装饰框外观需保持已登记资源的视觉样式。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-select-frame.yaml}}
+            reuseSuitability: {eligible: true, reason: 复用已登记且经过验证的角色选择框。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-select-frame-reuse.yaml}}
+            reuseBinding:
+              assetGuid: fedcba9876543210fedcba9876543210
+              sourcePath: Assets/Art/Library/PlayerSelect/Frame.png
+              importer: {type: TextureImporter, settingsFingerprint: "MaxSize=2048; Compression=Normal; MipMaps=Disabled"}
+              consumerNodeIds: [node.player-select-frame]
+            productionMethod: REUSE
+            deliveryKind: EXISTING_ASSET
+            finalOwner: FIXED_PRODUCTION_VISUAL
+          assemblyAnalysis: {strategy: STRUCTURED_UNITY_ASSEMBLY, unityAssetType: PREFAB, nodeId: node.player-select-frame, parentNodeId: node.player-select-root, layoutSystem: TRANSFORM, fullScreenCapture: false, evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/player-select-frame.yaml}}
+          layoutBinding: {parentElementId: node.player-select-root, hierarchyRelation: PARENT_CHILD, coordinateSpace: PREFAB_LOCAL, anchor: {min: {x: 0, y: 0}, max: {x: 1, y: 1}}, pivot: {x: 0.5, y: 0.5}, constraints: [selection-frame], resizePolicy: SCALE_WITH_PARENT}
         - elementIndex: 3
           itemId: ui.player-select.selection-glow
           coordinateSpace: EFFECT_IMAGE_PIXELS
@@ -83,16 +113,30 @@ splitPlanApproval:
           label: "[03][PROGRAMMATIC] 选中光晕"
           productionRoute: PROGRAMMATIC
           brief: 框选选中光晕区域，交由 UI 图元、Shader 或代码实现
+          parentElementId: node.player-select-root
+          semanticGrouping: {kind: part, rationale: 光晕由运行时选中状态控制并作为独立叠加部件装配。}
+          visualRouteAnalysis:
+            elementType: selection-glow
+            distinctiveVisual: {isDistinctive: false, observedFeatures: [规则外发光、随选中状态变化], assetFirstDecision: NATIVE_ALLOWED}
+            selectedRoute: UNITY_NATIVE
+            routeReason: 选中光晕可由 Unity UI 图元或 Shader 按状态实时绘制。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability: {eligible: true, primitiveBasis: [BASIC_GEOMETRY, SHADER], reason: 规则光晕由已确认的程序绘制边界实现。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-selection-glow.yaml}}
+            reuseSuitability: {eligible: false, reason: 当前没有要求精确复用的光晕资产。, evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/player-selection-glow-reuse.yaml}}
+            productionMethod: UNITY_NATIVE
+            deliveryKind: UNITY_COMPONENT
+            finalOwner: RUNTIME_RENDERED
+          assemblyAnalysis: {strategy: STRUCTURED_UNITY_ASSEMBLY, unityAssetType: PREFAB, nodeId: node.player-selection-glow, parentNodeId: node.player-select-root, layoutSystem: TRANSFORM, fullScreenCapture: false, evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/player-selection-glow.yaml}}
+          layoutBinding: {parentElementId: node.player-select-root, hierarchyRelation: PARENT_CHILD, coordinateSpace: PREFAB_LOCAL, anchor: {min: {x: 0, y: 0}, max: {x: 1, y: 1}}, pivot: {x: 0.5, y: 0.5}, constraints: [selection-glow], resizePolicy: SCALE_WITH_PARENT}
     sourceHighFidelity:
       subjectId: imagegen.player-select.visual-v1
       subjectVersion: visual-v1
       path: ArtSource/Approved/player-select/visual-v1.png
-      sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     items:
       - id: ui.player-portrait.scout
         resourceId: ui.player-portrait.scout
         itemVersion: visual-v1
-        itemSpecSha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
         elementIndex: 1
         assetType: character-portrait
         purpose: 玩家选择界面的角色头像
@@ -114,7 +158,6 @@ splitPlanApproval:
       - id: ui.player-select.frame
         resourceId: ui.player-select.frame
         itemVersion: visual-v1
-        itemSpecSha256: "1212121212121212121212121212121212121212121212121212121212121212"
         elementIndex: 2
         assetType: player-select-frame
         purpose: 玩家选择界面的角色选择框
@@ -140,34 +183,27 @@ splitPlanApproval:
           reuseMode: REGISTERED_ASSET
           effectImagePixelReuse: FORBIDDEN
           sourcePath: Assets/Art/Library/PlayerSelect/Frame.png
-          sourceSha256: "2323232323232323232323232323232323232323232323232323232323232323"
           unityGuid: fedcba9876543210fedcba9876543210
           assetRegisterEvidence:
             recordId: asset-register.player-select-frame-v1
             path: Artifacts/AssetRegister/player-select-frame-v1.yaml
-            sha256: "3434343434343434343434343434343434343434343434343434343434343434"
           licenseEvidence:
             rightsStatus: APPROVED
             path: Artifacts/Licenses/player-select-frame-v1.yaml
-            sha256: "4545454545454545454545454545454545454545454545454545454545454545"
           visualBibleStyleReview:
             subjectId: starfall-arena
             subjectVersion: visual-v1
             decision: COMPATIBLE
             path: Artifacts/Visual/Reviews/player-select-frame-style-v1.yaml
-            sha256: "5656565656565656565656565656565656565656565656565656565656565656"
           importerEvidence:
             path: Artifacts/Imports/player-select-frame-v1.yaml
-            sha256: "6767676767676767676767676767676767676767676767676767676767676767"
           unityValidationEvidence:
             status: PASS
             path: Artifacts/UnityValidation/player-select-frame-v1.yaml
-            sha256: "7878787878787878787878787878787878787878787878787878787878787878"
         splitRationale: 选择框已有可复用登记资源，避免重复生产和像素漂移
       - id: ui.player-select.selection-glow
         resourceId: ui.player-select.selection-glow
         itemVersion: visual-v1
-        itemSpecSha256: "8989898989898989898989898989898989898989898989898989898989898989"
         elementIndex: 3
         assetType: selection-glow
         purpose: 玩家选择界面的选中光晕
@@ -184,7 +220,6 @@ splitPlanApproval:
     excludedElements: []
 selectedCandidate:
   path: ArtSource/Generated/visual.player-portrait/processed/player-scout.png
-  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   visualVersion: player-scout-v1
 output:
   candidateCount: 4

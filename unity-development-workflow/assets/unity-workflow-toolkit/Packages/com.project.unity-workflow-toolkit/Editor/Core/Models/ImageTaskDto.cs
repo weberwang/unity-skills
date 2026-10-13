@@ -117,20 +117,16 @@ namespace Project.UnityWorkflow.Core.Models
     }
 
     /// <summary>
-    /// 表示用户已批准的单个候选图片及其不可变版本信息。
+    /// 表示用户已批准的单个候选图片及其视觉版本信息。
     /// </summary>
     [Serializable]
     public sealed class SelectedImageCandidateDto
     {
         [SerializeField] private string path;
-        [SerializeField] private string sha256;
         [SerializeField] private string visualVersion;
 
         /// <summary>获取或设置 processed 区源路径。</summary>
         public string Path { get => path; set => path = value; }
-
-        /// <summary>获取或设置源图片 SHA-256。</summary>
-        public string Sha256 { get => sha256; set => sha256 = value; }
 
         /// <summary>获取或设置候选视觉版本。</summary>
         public string VisualVersion { get => visualVersion; set => visualVersion = value; }

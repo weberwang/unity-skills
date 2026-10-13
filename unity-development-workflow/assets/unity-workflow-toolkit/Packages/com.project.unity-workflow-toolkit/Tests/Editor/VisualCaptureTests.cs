@@ -103,7 +103,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(result.Width, Is.EqualTo(1920));
             Assert.That(result.Height, Is.EqualTo(1080));
             Assert.That(result.CameraPath, Is.EqualTo("VisualRig/CaptureCamera"));
-            Assert.That(result.Sha256, Has.Length.EqualTo(64));
+            Assert.That(File.Exists(WorkflowPaths.ResolveProjectRelative(result.OutputPath)), Is.True);
             Assert.That(result.CaptureScope, Is.EqualTo("EDITOR_CAMERA_REFERENCE"));
             Assert.That(result.UiCoverage, Is.EqualTo("CAMERA_AND_CAMERA_SPACE_ONLY"));
             Assert.That(result.ScenePath, Is.Not.Empty);
@@ -210,6 +210,8 @@ namespace Project.UnityWorkflow.Tests.Editor
             CreateCamera("VisualRig", "CaptureCamera");
             GameObject dirtyMarker = new GameObject("DirtyMarker");
             dirtyMarker.transform.SetParent(cameraRoot.transform, false);
+            EditorSceneManager.MarkSceneDirty(cameraRoot.scene);
+            Assert.That(cameraRoot.scene.isDirty, Is.True, "必须显式标记隔离场景为未保存状态。");
             string taskId = CreateUniqueTaskId();
             string relativePath = CreateRelativePath(taskId, "dirty-scene.png");
             string absolutePath = WorkflowPaths.ResolveProjectRelative(relativePath);

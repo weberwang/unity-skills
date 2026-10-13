@@ -4,23 +4,21 @@
   "title": "Unity 视觉领域审查",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "reviewId", "subject", "baselineHash", "authorId", "reviewers", "checks", "verdict", "recordedAtUtc"],
+  "required": ["schemaVersion", "reviewId", "subject", "authorId", "reviewers", "checks", "verdict", "recordedAtUtc"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "reviewId": {"type": "string", "minLength": 1},
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "subjectId", "subjectVersion", "sha256", "sourceRevision"],
+      "required": ["type", "subjectId", "subjectVersion", "sourceRevision"],
       "properties": {
         "type": {"enum": ["GLOBAL_DIRECTION", "SCENE_TARGET", "ASSET_MAP", "RUNTIME_CAPTURE"]},
         "subjectId": {"type": "string", "minLength": 1},
         "subjectVersion": {"type": "string", "minLength": 1},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "sourceRevision": {"type": "string", "minLength": 1}
       }
     },
-    "baselineHash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "authorId": {"type": "string", "minLength": 1},
     "reviewers": {
       "type": "array",

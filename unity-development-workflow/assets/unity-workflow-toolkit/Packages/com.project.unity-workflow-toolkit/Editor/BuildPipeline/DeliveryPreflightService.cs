@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Project.UnityWorkflow.Core;
 using UnityEditor;
@@ -288,8 +288,7 @@ namespace Project.UnityWorkflow.BuildPipeline
         {
             if (!TryParseBoundDocument(json, request, out JObject document) ||
                 !IsText(document, "status", "APPROVED") ||
-                !IsText(document, "captureSource", "WINDOWS_STANDALONE") ||
-                !IsSha256(document["buildArtifactSha256"]?.Value<string>()))
+                !IsText(document, "captureSource", "WINDOWS_STANDALONE"))
             {
                 return false;
             }
@@ -300,7 +299,7 @@ namespace Project.UnityWorkflow.BuildPipeline
             if (string.IsNullOrWhiteSpace(sceneId) || screenshot == null ||
                 !screenshotPath.StartsWith("Artifacts/Visual/Runtime/", StringComparison.Ordinal) ||
                 !screenshotPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-                !ValidateEvidenceReference(screenshot, "path", "sha256") ||
+                !ValidateEvidenceReference(screenshot, "path") ||
                 (screenshot["width"]?.Value<int>() ?? 0) <= 0 ||
                 (screenshot["height"]?.Value<int>() ?? 0) <= 0 ||
                 !IsUtcDateTime(screenshot["capturedAtUtc"]?.Value<string>()))
@@ -340,7 +339,7 @@ namespace Project.UnityWorkflow.BuildPipeline
 
             try
             {
-                document = JObject.Parse(json);
+                document = ParseJsonObject(json);
                 return IsText(document, "schemaVersion", "1.0") &&
                        IsText(document, "projectId", request.ProjectId) &&
                        IsText(document, "sourceRevision", request.SourceRevision) &&
@@ -353,25 +352,43 @@ namespace Project.UnityWorkflow.BuildPipeline
             }
         }
 
+        /// <summary>关闭日期自动转换，避免解析过程丢失 UTC 字符串中的时区标记。</summary>
+        private static JObject ParseJsonObject(string json)
+        {
+            using (var textReader = new StringReader(json))
+            using (var jsonReader = new JsonTextReader(textReader)
+            {
+                DateParseHandling = DateParseHandling.None
+            })
+            {
+                JToken token = JToken.ReadFrom(jsonReader);
+                if (token is JObject root)
+                {
+                    return root;
+                }
+
+                throw new JsonReaderException("交付证据 JSON 根必须是对象。");
+            }
+        }
+
         /// <summary>
-        /// 验证证据数组至少包含一个真实存在且哈希匹配的项目内文件。
+        /// 验证证据数组至少包含一个真实存在的项目内文件。
         /// </summary>
         private static bool ValidateEvidenceArray(JArray evidence)
         {
             return evidence != null && evidence.Count > 0 && evidence.All(item =>
                 item is JObject record &&
                 !string.IsNullOrWhiteSpace(record["type"]?.Value<string>()) &&
-                ValidateEvidenceReference(record, "path", "sha256"));
+                ValidateEvidenceReference(record, "path"));
         }
 
         /// <summary>
-        /// 验证项目相对证据路径与实际文件 SHA-256，防止只伪造状态字段放行。
+        /// 验证项目相对证据路径指向实际存在的项目文件。
         /// </summary>
-        private static bool ValidateEvidenceReference(JObject document, string pathField, string hashField)
+        private static bool ValidateEvidenceReference(JObject document, string pathField)
         {
             string path = document[pathField]?.Value<string>() ?? string.Empty;
-            string expectedHash = document[hashField]?.Value<string>() ?? string.Empty;
-            if (expectedHash.Length != 64 || expectedHash.Any(character => !Uri.IsHexDigit(character)))
+            if (string.IsNullOrWhiteSpace(path))
             {
                 return false;
             }
@@ -379,15 +396,7 @@ namespace Project.UnityWorkflow.BuildPipeline
             try
             {
                 string absolutePath = WorkflowPaths.ResolveProjectRelative(Normalize(path));
-                if (!File.Exists(absolutePath))
-                {
-                    return false;
-                }
-
-                using SHA256 sha256 = SHA256.Create();
-                using FileStream stream = File.OpenRead(absolutePath);
-                string actualHash = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", string.Empty);
-                return string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase);
+                return File.Exists(absolutePath);
             }
             catch
             {
@@ -421,7 +430,7 @@ namespace Project.UnityWorkflow.BuildPipeline
                 return false;
             }
 
-            return ValidateEvidenceReference(approval, "evidencePath", "evidenceSha256");
+            return ValidateEvidenceReference(approval, "evidencePath");
         }
 
         /// <summary>
@@ -439,13 +448,6 @@ namespace Project.UnityWorkflow.BuildPipeline
                        DateTimeStyles.AllowWhiteSpaces,
                        out DateTimeOffset timestamp) &&
                    timestamp.Offset == TimeSpan.Zero;
-        }
-
-        /// <summary>验证字符串是 64 位十六进制 SHA-256。</summary>
-        private static bool IsSha256(string value)
-        {
-            return !string.IsNullOrEmpty(value) && value.Length == 64 &&
-                   value.All(Uri.IsHexDigit);
         }
 
         /// <summary>验证独立审查专业属于公共批准契约允许值。</summary>

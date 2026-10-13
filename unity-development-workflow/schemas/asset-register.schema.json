@@ -22,7 +22,6 @@
           "source": {"type": "string", "minLength": 1},
           "sourceVersion": {"type": "string", "minLength": 1},
           "visualVersion": {"type": "string", "minLength": 1},
-          "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "address": {"type": "string", "minLength": 1},
           "guid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
@@ -39,7 +38,7 @@
         "allOf": [
           {
             "if": {"properties": {"status": {"enum": ["IMPORTED", "VALIDATED"]}}, "required": ["status"]},
-            "then": {"required": ["sourceSha256", "guid", "importerReportPath", "registrationRecordPath", "importer"]}
+            "then": {"required": [ "guid", "importerReportPath", "registrationRecordPath", "importer"]}
           },
           {
             "if": {"properties": {"status": {"const": "VALIDATED"}}, "required": ["status"]},

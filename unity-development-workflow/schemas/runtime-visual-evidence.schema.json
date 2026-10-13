@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion", "projectId", "sceneId", "buildVersion", "sourceRevision", "projectStateVersion",
-    "platformId", "developmentCompletionEvidence", "buildArtifactSha256", "candidateSha256", "captureSource", "screenshot", "responsiveContractRef", "contractVersions", "status", "reviews", "userApprovals"
+    "platformId", "developmentCompletionEvidence", "captureSource", "screenshot", "responsiveContractRef", "contractVersions", "status", "reviews", "userApprovals"
   ],
   "properties": {
     "schemaVersion": {"const": "1.0"},
@@ -29,13 +29,11 @@
     },
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},
     "grillingEvidence": {"$ref": "common.schema.json#/$defs/grillingEvidence"},
-    "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-    "candidateSha256": {"$ref": "common.schema.json#/$defs/sha256"},
     "captureSource": {"enum": ["WINDOWS_STANDALONE", "ANDROID_PLAYER", "IOS_PLAYER", "IPADOS_PLAYER"]},
     "screenshot": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "sha256", "width", "height", "capturedAtUtc"],
+      "required": ["path", "width", "height", "capturedAtUtc"],
       "properties": {
         "path": {
           "allOf": [
@@ -43,7 +41,6 @@
             {"pattern": "^Artifacts/Visual/Runtime/.+\\.png$"}
           ]
         },
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "width": {"type": "integer", "minimum": 1},
         "height": {"type": "integer", "minimum": 1},
         "capturedAtUtc": {

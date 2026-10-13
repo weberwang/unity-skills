@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using Project.UnityWorkflow.Core;
 using UnityEditor;
 using UnityEngine;
@@ -36,7 +35,6 @@ namespace Project.UnityWorkflow.VisualQA
         public int Width;
         public int Height;
         public long SizeBytes;
-        public string Sha256 = string.Empty;
         public string CaptureScope = "EDITOR_CAMERA_REFERENCE";
         public string UiCoverage = "CAMERA_AND_CAMERA_SPACE_ONLY";
         public string ScenePath = string.Empty;
@@ -130,7 +128,6 @@ namespace Project.UnityWorkflow.VisualQA
                 Width = request.Width,
                 Height = request.Height,
                 SizeBytes = pngBytes.LongLength,
-                Sha256 = ComputeSha256(pngBytes),
                 ScenePath = camera.gameObject.scene.path,
                 SceneGuid = AssetDatabase.AssetPathToGUID(camera.gameObject.scene.path),
                 CameraPosition = camera.transform.position,
@@ -366,17 +363,6 @@ namespace Project.UnityWorkflow.VisualQA
             }
 
             return taskId != "." && taskId != "..";
-        }
-
-        /// <summary>
-        /// 计算截图字节的小写 SHA-256，使审查记录可绑定不可覆盖的具体图片。
-        /// </summary>
-        private static string ComputeSha256(byte[] bytes)
-        {
-            using (SHA256 algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
         }
 
         /// <summary>

@@ -15,7 +15,7 @@
 - A0-A6：Unity 生命周期动作风险；仅带外部写入、付费、真机、破坏性删除、签名、上传或发布副作用的 A4-A6 需要精确批准。
 - F0-F4：范围流程、规格一致性、领域质量、工程验证、高影响操作批准。
 - A3 前冻结 Implementation Package，记录基线、路径/Unity 对象所有权、执行单元、验证与停止条件。
-- 证据绑定 Work Item、基线、候选摘要、命令、环境、文件 SHA 和门禁结果。
+- 证据记录 Work Item、基线、实际交付位置、命令、环境和门禁结果。验收以用户要求和实际完成情况为准，中途实施调整无需回改合同，不要求或校验 SHA。
 - 可见对象在 V1 冻结 Unity 原生响应式合同；V2 先确认位置依赖、语义分组与父子关系，再分别冻结视觉来源和 Scene/Prefab/UI 装配；V4 PASS 必须绑定 Screen/Game View、Camera、CanvasScaler/PanelSettings、安全区、输入命中、resize/orientation、截图和候选身份的真实运行测量。
 - 失败优先 `repair`，候选未变时 `revalidate`；只有上游事实失效、范围变化或硬门将被绕过时显式 `return`。
 

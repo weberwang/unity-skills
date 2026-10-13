@@ -9,7 +9,7 @@ description: 通过 @Unity 插件、Unity CLI 与经批准的本地 DCC MCP，�
 
 ## 输入与职责
 
-- 要求 Visual Bible、冻结的模型和 UV 哈希、材质槽、观看距离、纹理预算、透明需求、目标 Shader、许可与唯一 Unity 项目目标。
+- 要求 Visual Bible、实际模型和 UV 来源位置、材质槽、观看距离、纹理预算、透明需求、目标 Shader、许可与唯一 Unity 项目目标。
 - 建模角色拥有几何、拓扑与 UV；本角色只读校验。发现 UV、法线、材质槽或顶点顺序问题时退回 `$unity-game-3d-modeling`，不静默修改。
 - 负责烘焙、PBR 主通道、URP 打包、TextureImporter、Material、自检与交接；最终 QA 由独立角色执行。
 - 纹理 brief、材质外观、贴图集合/通道、透明方案、外部供应商或 DCC、上传与付费、UV 或顶点顺序变化都必须先交给 `$unity-game-grilling`，生成绑定当前候选的批准记录；未批准时禁止受影响写入或外部调用。
@@ -24,11 +24,11 @@ description: 通过 @Unity 插件、Unity CLI 与经批准的本地 DCC MCP，�
 
 ## 纹理小循环
 
-1. 冻结任务 brief、模型/UV 哈希、材质槽、贴图集合、分辨率、Texel Density、Padding、透明和性能预算。
+1. 明确任务 brief、实际模型/UV 来源、材质槽、贴图集合、分辨率、Texel Density、Padding、透明和性能预算。
 2. 只读审计 UV、法线、切线、高低模对应、硬边、材质槽、蒙皮和 BlendShape；不合格即退回建模。
 3. 配置 Cage、射线距离和匹配规则，烘焙 Normal、AO、Curvature、Thickness、ID 等中间图并检查接缝、偏斜和穿透。
 4. 依据 Visual Bible 制作 BaseColor、Tangent-space Normal、Metallic、Roughness、AO，以及按需的 Emission、Height、Opacity。
-5. 保留独立主通道，再生成 URP 运行时打包图；记录通道语义、转换公式、工具版本和哈希。
+5. 保留独立主通道，再生成 URP 运行时打包图；记录通道语义、转换公式、工具版本和实际输出位置。
 6. 串行导入 Unity，配置 sRGB、NormalMap、MipMap、Streaming、压缩与平台覆盖，创建 Material 并接入 Renderer/Prefab。
 7. 在中性光、掠射光、旋转光、目标场景、近景、远景和 LOD 切换下取证；自检后交由视觉角色和 `$unity-game-qa-performance` 独立审查。
 
@@ -41,4 +41,4 @@ description: 通过 @Unity 插件、Unity CLI 与经批准的本地 DCC MCP，�
 
 ## 交付
 
-交付烘焙中间图、独立主通道、URP 打包图、Material、Importer 记录、模型/UV 绑定哈希、许可、SHA-256、转台与目标场景证据。分别列出每个阻断原因；缺 Visual Bible、缺模型/UV 哈希、未发现 DCC 能力、缺 Unity 环境、结构化证据或类型化登记契约时使用 `BLOCKED`，不得推断 `PASS`。
+交付烘焙中间图、独立主通道、URP 打包图、Material、Importer 记录、实际模型/UV 来源、许可、转台与目标场景证据。验收以实际贴图及材质满足用户要求为准，中途调整无需回改合同，不校验 SHA。分别列出每个阻断原因；缺 Visual Bible、实际模型/UV 来源、DCC 能力、Unity 环境、必要证据或类型化登记契约时使用 `BLOCKED`，不得推断 `PASS`。

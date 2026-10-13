@@ -18,7 +18,7 @@
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "id", "version", "evidenceType", "path", "sha256"],
+      "required": ["type", "id", "version", "evidenceType", "path"],
       "properties": {
         "type": {
           "enum": [
@@ -30,8 +30,7 @@
         "id": {"$ref": "common.schema.json#/$defs/taskId"},
         "version": {"type": "string", "minLength": 1},
         "evidenceType": {"const": "grilling-subject-snapshot"},
-        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+        "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"}
       }
     },
     "triggerReason": {"type": "string", "minLength": 1},

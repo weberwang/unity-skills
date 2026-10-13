@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 
 /** Unity 可见工作项的机器枚举；SCENE 与 DISPLAY_LAYER 必须独立闭环。 */
@@ -8,7 +7,7 @@ export const WORK_ITEM_TYPES = Object.freeze(['PROJECT', 'FOUNDATION', 'SCENE', 
 /** Unity 瞬态显示层允许的语义类型。 */
 export const DISPLAY_LAYER_TYPES = Object.freeze(['modal', 'popup', 'drawer', 'toast']);
 
-/** Unity 原生响应式合同的唯一版本；版本变化会使运行证据重新测量。 */
+/** 当前 Unity 原生响应式合同格式的版本标识。 */
 export const UNITY_RESPONSIVE_CONTRACT_VERSION = 'unity-responsive/1.0';
 
 /** 程序化文本必须覆盖且只能覆盖的语言集合。 */
@@ -20,7 +19,7 @@ export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
 /** V4 必须由真实 Unity 运行事实覆盖的证据槽位。 */
 export const UNITY_RESPONSIVE_EVIDENCE_FIELDS = Object.freeze([
   'gameView', 'screen', 'backbuffer', 'canvasScalerOrPanelSettings', 'camera',
-  'screenSafeArea', 'inputHit', 'resizeOrientationTrajectory', 'screenshot', 'candidateSha256',
+  'screenSafeArea', 'inputHit', 'resizeOrientationTrajectory', 'screenshot', 'supportedOrientations',
 ]);
 
 /** 判断是否为不含数组的结构化对象。 */
@@ -31,11 +30,6 @@ function isObject(value) {
 /** 判断字符串是否具有可审计内容。 */
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-/** 判断是否为标准 sha256 身份。 */
-function isSha256(value) {
-  return typeof value === 'string' && /^sha256:[a-f0-9]{64}$/i.test(value);
 }
 
 /** 返回稳定的合同错误消息，供 CLI 和测试共享。 */
@@ -66,13 +60,6 @@ function validSize(value, integer = false) {
     && Number.isFinite(value.width) && value.width > 0
     && Number.isFinite(value.height) && value.height > 0
     && (!integer || Number.isInteger(value.width) && Number.isInteger(value.height));
-}
-
-/** 生成按键名稳定排序的 JSON，用于比较合同语义而不依赖属性书写顺序。 */
-function canonicalJson(value) {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  if (isObject(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
-  return JSON.stringify(value);
 }
 
 /** 校验 Unity 原生响应式合同，禁止把浏览器 CSS/DPR 语义带入 Unity。 */
@@ -264,7 +251,6 @@ export function validateVisibleWorkItemContract(work) {
     errors.push(`${type} Work Item 不得携带 SCENE/DISPLAY_LAYER 身份字段`);
   }
   if (['SCENE', 'DISPLAY_LAYER'].includes(type)) {
-    if (!isSha256(work.candidateSha256)) errors.push(`${type} Work Item 必须绑定 candidateSha256`);
     const contractErrors = validateUnityResponsiveContract(work.responsiveContract, { scope: work.workItemId });
     errors.push(...contractErrors);
   } else if (work.responsiveContract !== undefined) {
@@ -273,12 +259,11 @@ export function validateVisibleWorkItemContract(work) {
   return [...new Set(errors)];
 }
 
-/** 校验响应式合同引用，绑定仓库内文件的版本和内容 SHA。 */
+/** 校验响应式合同引用的仓库内路径和 JSON 来源记录。 */
 export function validateResponsiveContractReference(reference, work, repo) {
   const errors = [];
-  if (!knownObject(reference, new Set(['path', 'version', 'sha256']), 'Implementation Package.responsiveContractRef', errors)) return errors;
-  if (!nonEmptyString(reference.path) || !nonEmptyString(reference.version) || !isSha256(reference.sha256)) errors.push('responsiveContractRef 必须包含 path、version 和 sha256');
-  if (reference.version !== work.responsiveContract?.version) errors.push('responsiveContractRef.version 未绑定 Work Item.responsiveContract.version');
+  if (!knownObject(reference, new Set(['path', 'version']), 'Implementation Package.responsiveContractRef', errors)) return errors;
+  if (!nonEmptyString(reference.path) || !nonEmptyString(reference.version)) errors.push('responsiveContractRef 必须包含 path 和 version');
   if (!nonEmptyString(reference.path)) return errors;
   const root = resolve(repo);
   const target = resolve(root, reference.path);
@@ -288,12 +273,9 @@ export function validateResponsiveContractReference(reference, work, repo) {
     if (!existsSync(target)) errors.push('responsiveContractRef.path 指向的合同文件不存在');
     return [...new Set(errors)];
   }
-  const actual = `sha256:${createHash('sha256').update(readFileSync(target)).digest('hex')}`;
-  if (actual !== reference.sha256) errors.push('responsiveContractRef.sha256 与合同文件内容不一致');
   try {
     const parsed = JSON.parse(readFileSync(target, 'utf8'));
-    if (parsed.version !== reference.version) errors.push('responsiveContractRef.version 与合同文件不一致');
-    if (canonicalJson(parsed) !== canonicalJson(work.responsiveContract)) errors.push('responsiveContractRef.path 内容未绑定当前 Work Item.responsiveContract');
+    if (!isObject(parsed)) errors.push('responsiveContractRef.path 合同文件必须是 JSON 对象');
   } catch (error) {
     errors.push(`responsiveContractRef.path 不是有效 JSON：${error.message}`);
   }
@@ -331,7 +313,7 @@ export function validateVisibleImplementationPackage(pkg, work, repo) {
   return [...new Set(errors)];
 }
 
-/** 校验证据路径位于仓库内，且声明 SHA 与文件原始字节一致。 */
+/** 校验证据路径位于仓库内且运行工件确实存在。 */
 function validateMeasuredFile(value, repo, scope, field, errors) {
   if (!nonEmptyString(repo)) {
     errors.push(contractError(scope, `${field} 缺少仓库上下文，无法验证真实工件`));
@@ -348,14 +330,17 @@ function validateMeasuredFile(value, repo, scope, field, errors) {
     errors.push(contractError(scope, `${field}.path 指向的运行工件不存在`));
     return;
   }
-  const actual = `sha256:${createHash('sha256').update(readFileSync(target)).digest('hex')}`;
-  if (actual !== value.sha256) errors.push(contractError(scope, `${field}.sha256 与运行工件内容不一致`));
+  try {
+    if (!statSync(target).isFile()) errors.push(contractError(scope, `${field}.path 必须指向运行工件文件`));
+  } catch (error) {
+    errors.push(contractError(scope, `${field}.path 无法读取运行工件：${error.message}`));
+  }
 }
 
 /** 判断一项运行证据是否为结构化且可回读的 Unity 工件。 */
 function measuredArtifact(value, source, scope, field, errors, repo) {
-  if (!knownObject(value, new Set(['source', 'measured', 'path', 'sha256', 'size', 'orientation']), `${scope}.${field}`, errors)) return;
-  if (value.source !== source || value.measured !== true || !nonEmptyString(value.path) || !isSha256(value.sha256)) errors.push(contractError(scope, `${field} 必须是带来源、路径、SHA 的真实运行测量`));
+  if (!knownObject(value, new Set(['source', 'measured', 'path', 'size', 'orientation']), `${scope}.${field}`, errors)) return;
+  if (value.source !== source || value.measured !== true || !nonEmptyString(value.path)) errors.push(contractError(scope, `${field} 必须是带来源和路径的真实运行测量`));
   else validateMeasuredFile(value, repo, scope, field, errors);
 }
 
@@ -380,30 +365,35 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   const input = evidence.inputHit;
   if (!knownObject(input, new Set(['system', 'eventSystem', 'hit', 'coordinates']), `${scope}.inputHit`, errors) || input.system !== 'InputSystem' || input.eventSystem !== 'EventSystem' || input.hit !== true || !hasFact(input.coordinates)) errors.push(contractError(scope, 'inputHit 必须证明 InputSystem/EventSystem 命中'));
   const trajectory = evidence.resizeOrientationTrajectory;
-  const supported = work?.responsiveContract?.orientation?.supported ?? [];
-  // 仅双方向或自动方向合同需要切换证据；单方向仍保留连续尺寸变化验证。
-  const requiresOrientationChange = supported.includes('auto') || (supported.includes('portrait') && supported.includes('landscape'));
+  const supported = evidence.supportedOrientations;
+  const validSupportedOrientations = Array.isArray(supported)
+    && supported.length > 0
+    && supported.every((item) => ['landscape', 'portrait', 'auto'].includes(item))
+    && new Set(supported).size === supported.length;
+  if (!validSupportedOrientations) {
+    errors.push(contractError(scope, 'supportedOrientations 必须是无重复的非空方向数组'));
+  }
+  // 以本次运行证据声明的实际支持方向决定是否需要方向切换轨迹。
+  const actualOrientations = validSupportedOrientations ? supported : [];
+  const requiresOrientationChange = actualOrientations.includes('auto') || (actualOrientations.includes('portrait') && actualOrientations.includes('landscape'));
   if (!knownObject(trajectory, new Set(['sameProcess', 'events']), `${scope}.resizeOrientationTrajectory`, errors) || trajectory.sameProcess !== true || !Array.isArray(trajectory.events) || trajectory.events.length < 2 || !trajectory.events.some((item) => item?.type === 'resize') || (requiresOrientationChange && !trajectory.events.some((item) => item?.type === 'orientation'))) errors.push(contractError(scope, requiresOrientationChange ? 'resizeOrientationTrajectory 必须记录同进程 resize 和 orientation' : 'resizeOrientationTrajectory 必须记录同进程连续 resize'));
   measuredArtifact(evidence.screenshot, 'Screenshot', scope, 'screenshot', errors, options.repo);
-  if (!isSha256(evidence.candidateSha256)) errors.push(contractError(scope, 'candidateSha256 必须为候选身份 SHA'));
-  if (options.candidateSha256 && evidence.candidateSha256 !== options.candidateSha256) errors.push(contractError(scope, 'candidateSha256 未绑定当前候选'));
   return [...new Set(errors)];
 }
 
-/** 校验 Evidence Manifest 的可见类型、阶段、版本和 V4 生产合同审计。 */
+/** 校验 Evidence Manifest 的可见类型、阶段、来源记录和 V4 生产合同审计。 */
 export function validateVisibleEvidenceContract(evidence, work, repo) {
   const errors = [];
   if (evidence.workItemType !== work.workItemType) errors.push('Evidence Manifest.workItemType 必须与 Work Item 一致');
   if (!VISUAL_STAGES.includes(evidence.visualStage)) errors.push('Evidence Manifest.visualStage 必须是 V0-V4');
-  const contractVersion = work.responsiveContract?.version;
-  if (!isObject(evidence.contractVersions) || evidence.contractVersions.responsiveContract !== (contractVersion ?? 'not-applicable')) errors.push('Evidence Manifest.contractVersions.responsiveContract 未绑定当前合同版本');
+  if (!isObject(evidence.contractVersions) || !nonEmptyString(evidence.contractVersions.responsiveContract)) errors.push('Evidence Manifest.contractVersions.responsiveContract 必须记录来源');
   const visible = ['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType);
   const stage = work.workItemType === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
   if (visible && evidence.visualStage !== stage) errors.push('Evidence Manifest.visualStage 未绑定当前可见 Work Item 阶段');
   if (visible && evidence.visualStage === 'V4' && evidence.verdict === 'PASS') {
-    errors.push(...validateUnityResponsiveEvidence(evidence.responsiveEvidence, work, { candidateSha256: work.candidateSha256, repo }));
+    errors.push(...validateUnityResponsiveEvidence(evidence.responsiveEvidence, work, { repo }));
     const audit = evidence.productionContractAudit;
-    if (!isObject(audit) || audit.status !== 'PASS' || audit.contractVersion !== contractVersion || audit.candidateSha256 !== evidence.responsiveEvidence?.candidateSha256 || audit.staticDeclarationOnly !== false || audit.buildOnly !== false || audit.singleScreenshotOnly !== false) errors.push('V4 PASS 必须有真实 productionContractAudit，静态声明/构建成功/单图不能替代运行证据');
+    if (!isObject(audit) || audit.status !== 'PASS' || !nonEmptyString(audit.contractVersion) || audit.staticDeclarationOnly !== false || audit.buildOnly !== false || audit.singleScreenshotOnly !== false) errors.push('V4 PASS 必须有真实 productionContractAudit，静态声明/构建成功/单图不能替代运行证据');
   }
   return [...new Set(errors)];
 }

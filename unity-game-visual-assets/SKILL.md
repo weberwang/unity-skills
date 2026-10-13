@@ -13,7 +13,7 @@ description: 在 Unity 场景 V0-V4 中建立视觉基线、结构草图、资�
 
 生产级 3D 模型与 PBR 贴图分别交给 `$unity-game-3d-modeling` 和 `$unity-game-3d-texturing`。现有 Spine 角色仅换皮且 Bone、Slot、Attachment、Mesh、约束与动画固定时交给 `$unity-game-spine-reskin`。
 
-Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)；本角色消费其已确认的视角与拆件合同，独立生产部件、遮挡补全和连接区，不直接裁切完整效果图充当 Sprite。交付稳定部件 ID、视角/方向、画布与 Pivot、角色局部位置、层叠、源图 SHA、导入规格和资源身份；骨架、网格、权重与动画由骨骼角色负责，图片生成或编辑委派给图片子代理。
+Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)；本角色消费其已确认的视角与拆件合同，独立生产部件、遮挡补全和连接区，不直接裁切完整效果图充当 Sprite。交付稳定部件 ID、视角/方向、画布与 Pivot、角色局部位置、层叠、源图位置、导入规格和资源身份；骨架、网格、权重与动画由骨骼角色负责，图片生成或编辑委派给图片子代理。
 
 具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；本地化/TMP、URP 后处理和 Shader Graph 分别使用对应 `unity:*` Skill。本角色只维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
 
@@ -27,9 +27,10 @@ Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-r
 
 ## 生产规则
 
+- V2 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单。在冻结的 V1 效果图上逐项框选并绑定稳定编号，用引线说明用途、来源、关系、装配和生产边界；结构化合同内部保存。遵守[图片框选与标注交付](../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)。
 - 参考图和高保真图只用于内容、构图和信息层级；禁止裁切、抠取、放大或轻微修饰后充当 Sprite/纹理，也禁止整图铺底冒充结构化实现。
-- 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用 `scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景；显式记录背景色、容差、源/输出 SHA、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
-- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容。`REUSE` 必须绑定源路径/SHA、Unity GUID、许可、Importer、消费节点和最近验证证据，不能以“看起来相似”代替身份。
+- 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用 `scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景；显式记录背景色、容差、源/输出位置、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。工具自行生成的 SHA 不参与验收。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
+- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，不能以“看起来相似”代替身份。验收以实际完成情况满足用户要求为准，实现调整无需回改合同，不校验 SHA。
 - UI/2D 位图默认以目标最大显示尺寸的 `sourceScale=1` 规划源像素密度，像素美术或已批准平台预算可明确覆盖。它不是浏览器 DPR；运行时缩放必须读取 CanvasScaler、PanelSettings、Camera、Screen、动态分辨率和 Importer 的真实配置。SpriteAtlas、压缩、MipMap、Read/Write、色彩空间和 Addressables 仍由 Unity 平台预算决定。
 - 程序化文本必须覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `single-line` 或 `wrap`，验证 TMP/UI Toolkit 字体回退、真实字形宽度、基线和容器；禁止截断。
 - 独立 DISPLAY_LAYER 在宿主上下文中验证打开、交互、关闭和焦点/输入/底层状态恢复；其失败或延期不回写为宿主场景未完成。

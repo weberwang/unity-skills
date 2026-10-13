@@ -25,11 +25,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["artifactType", "path", "sha256", "sizeBytes"],
+        "required": ["artifactType", "path", "sizeBytes"],
         "properties": {
           "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA", "UNITY_DATA", "MANAGED_ASSEMBLY", "DEBUG_SYMBOLS", "SUPPORT_FILE"]},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "sizeBytes": {"type": "integer", "minimum": 0}
         },
         "allOf": [

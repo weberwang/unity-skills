@@ -73,7 +73,6 @@ namespace Project.UnityWorkflow.ImagePipeline
         [SerializeField] private string sourceVersion;
         [SerializeField] private string visualVersion;
         [SerializeField] private string sourcePath;
-        [SerializeField] private string sourceSha256;
         [SerializeField] private string assetPath;
         [SerializeField] private string address;
         [SerializeField] private string assetGuid;
@@ -116,9 +115,6 @@ namespace Project.UnityWorkflow.ImagePipeline
         /// <summary>获取或设置 processed 源路径。</summary>
         public string SourcePath { get => sourcePath; set => sourcePath = value; }
 
-        /// <summary>获取或设置批准候选 SHA-256。</summary>
-        public string SourceSha256 { get => sourceSha256; set => sourceSha256 = value; }
-
         /// <summary>获取或设置正式 Unity 资产路径。</summary>
         public string AssetPath { get => assetPath; set => assetPath = value; }
 
@@ -131,7 +127,7 @@ namespace Project.UnityWorkflow.ImagePipeline
         /// <summary>获取或设置 Unity 实际 Importer 摘要。</summary>
         public ImageImporterSummary Importer { get => importer; set => importer = value; }
 
-        /// <summary>获取或设置完整批准记录，供汇总登记时复核主体、版本、权限和证据哈希。</summary>
+        /// <summary>获取或设置完整批准记录，供汇总登记时复核主体、版本、权限和证据路径。</summary>
         public List<ApprovalDto> Approvals
         {
             get => approvals;

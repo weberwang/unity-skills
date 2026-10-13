@@ -2,9 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Project.UnityWorkflow.BuildPipeline;
@@ -136,14 +134,16 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>确认命令拒绝 payload 被修改但 payloadSha256 未更新的 Job。</summary>
+        /// <summary>确认命令按 Job 中修改后的 payload 当前内容执行。</summary>
         [Test]
-        public void Execute_WithTamperedPayload_ReturnsFailureResult()
+        public void Execute_WithChangedPayload_UsesCurrentSnapshot()
         {
             string jobPath = WriteJob("project-profile", new JObject
             {
                 ["schemaVersion"] = "1.0",
-                ["projectId"] = "before-tamper"
+                ["projectId"] = "before-tamper",
+                ["unity"] = new JObject { ["version"] = "6", ["renderPipeline"] = "URP" },
+                ["delivery"] = new JObject { ["platform"] = "Windows", ["distributionChannel"] = "local" }
             });
             try
             {
@@ -153,8 +153,9 @@ namespace Project.UnityWorkflow.Tests
                 File.WriteAllText(absolutePath, job.ToString());
 
                 PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
+                QualityReportDto report = GetData<QualityReportDto>(result);
 
-                Assert.That(result.Success, Is.False);
+                Assert.That(report.ProjectId, Is.EqualTo("after-tamper"));
             }
             finally
             {
@@ -162,9 +163,9 @@ namespace Project.UnityWorkflow.Tests
             }
         }
 
-        /// <summary>确认命令拒绝源契约被修改而 sourceSha256 未更新的 Job。</summary>
+        /// <summary>确认源契约后续修订不使编译 Job 的当前 payload 失效。</summary>
         [Test]
-        public void Execute_WithModifiedSource_ReturnsFailureResult()
+        public void Execute_WithModifiedSource_UsesCompiledPayload()
         {
             string jobPath = WriteJob("project-profile", new JObject
             {
@@ -177,8 +178,9 @@ namespace Project.UnityWorkflow.Tests
                 File.AppendAllText(WorkflowPaths.ResolveProjectRelative(sourcePath), "# tampered\n");
 
                 PipelineCommandResult result = ValidateProjectCommand.Execute(jobPath);
+                QualityReportDto report = GetData<QualityReportDto>(result);
 
-                Assert.That(result.Success, Is.False);
+                Assert.That(report.ProjectId, Is.EqualTo("source-test"));
             }
             finally
             {
@@ -345,8 +347,6 @@ namespace Project.UnityWorkflow.Tests
                 ["schemaVersion"] = "1.0",
                 ["kind"] = kind,
                 ["sourcePath"] = sourcePath,
-                ["sourceSha256"] = ComputeSha256(sourceBytes),
-                ["payloadSha256"] = ComputeSha256(Encoding.UTF8.GetBytes(Canonicalize(payload))),
                 ["compiledAtUtc"] = "2026-07-27T00:00:00Z",
                 ["payload"] = payload
             };
@@ -371,57 +371,6 @@ namespace Project.UnityWorkflow.Tests
         {
             DeleteProjectFile(Path.ChangeExtension(jobPath, ".source.yaml").Replace('\\', '/'));
             DeleteProjectFile(jobPath);
-        }
-
-        /// <summary>按序数递归排序对象属性并生成无空白 JSON。</summary>
-        /// <param name="token">待规范化的 JSON 节点。</param>
-        /// <returns>规范化后的 JSON 文本。</returns>
-        private static string Canonicalize(JToken token)
-        {
-            return SortToken(token).ToString(Formatting.None);
-        }
-
-        /// <summary>复制 JSON，同时保持数组顺序并排序所有对象键。</summary>
-        /// <param name="token">待排序的 JSON 节点。</param>
-        /// <returns>排序后的 JSON 节点。</returns>
-        private static JToken SortToken(JToken token)
-        {
-            if (token is JObject sourceObject)
-            {
-                JObject ordered = new JObject();
-                foreach (JProperty property in sourceObject.Properties().OrderBy(
-                             item => item.Name,
-                             StringComparer.Ordinal))
-                {
-                    ordered.Add(property.Name, SortToken(property.Value));
-                }
-
-                return ordered;
-            }
-
-            if (token is JArray sourceArray)
-            {
-                JArray ordered = new JArray();
-                foreach (JToken item in sourceArray)
-                {
-                    ordered.Add(SortToken(item));
-                }
-
-                return ordered;
-            }
-
-            return token.DeepClone();
-        }
-
-        /// <summary>计算小写十六进制 SHA-256。</summary>
-        /// <param name="bytes">待计算的字节序列。</param>
-        /// <returns>小写 SHA-256 文本。</returns>
-        private static string ComputeSha256(byte[] bytes)
-        {
-            using (SHA256 algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
         }
 
         /// <summary>删除指定项目相对路径的测试文件，不递归删除目录。</summary>

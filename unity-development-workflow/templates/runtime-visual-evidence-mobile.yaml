@@ -8,7 +8,6 @@ platformId: ANDROID
 developmentCompletionEvidence:
   type: quality-gates
   path: Artifacts/Quality/quality-gates.g2.yaml
-  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   projectId: starfall-arena
   subjectId: g2.development-complete
   subjectVersion: project-state-v1
@@ -17,7 +16,6 @@ developmentCompletionEvidence:
 candidateSnapshot:
   type: grilling-subject-snapshot
   path: Artifacts/Candidates/runtime.android.scene-arena-intro.0.1.0-dev.1.yaml
-  sha256: "6666666666666666666666666666666666666666666666666666666666666666"
   projectId: starfall-arena
   subjectId: scene.arena-intro
   subjectVersion: 0.1.0-dev.1
@@ -26,18 +24,14 @@ candidateSnapshot:
 grillingEvidence:
   type: grilling-record
   path: Artifacts/Grilling/runtime.android.scene-arena-intro.0.1.0-dev.1.yaml
-  sha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
   projectId: starfall-arena
   subjectId: grilling.runtime.android.scene-arena-intro.0.1.0-dev.1
   subjectVersion: grilling-v1
   sourceRevision: working-tree-snapshot-20260727
   projectStateVersion: project-state-v1
-buildArtifactSha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-candidateSha256: "6666666666666666666666666666666666666666666666666666666666666666"
 captureSource: ANDROID_PLAYER
 screenshot:
   path: Artifacts/Visual/Runtime/Android/scene.arena-intro/0.1.0-dev.1.png
-  sha256: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
   width: 1080
   height: 2400
   capturedAtUtc: "2026-08-02T12:00:00Z"
@@ -45,7 +39,6 @@ responsiveContractRef:
   contractId: scene-arena-intro-responsive-mobile
   version: responsive-mobile-v1
   path: Artifacts/Contracts/Scenes/scene.arena-intro/responsive-mobile-v1.yaml
-  sha256: "2222222222222222222222222222222222222222222222222222222222222222"
   scope: SCENE
 contractVersions:
   responsive: responsive-mobile-v1

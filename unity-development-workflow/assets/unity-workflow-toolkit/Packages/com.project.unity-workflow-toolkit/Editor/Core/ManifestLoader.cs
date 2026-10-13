@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -11,7 +9,7 @@ using UnityEngine;
 namespace Project.UnityWorkflow.Core
 {
     /// <summary>
-    /// 读取 JSON Manifest，并为已编译 Job 验证源文件与 payload 完整性。
+    /// 读取 JSON Manifest，并验证已编译 Job 的来源路径与当前 payload 结构。
     /// </summary>
     public static class ManifestLoader
     {
@@ -76,16 +74,15 @@ namespace Project.UnityWorkflow.Core
                 throw new InvalidDataException($"无法把工作流 JSON 反序列化为 {typeof(T).Name}。");
             }
 
-            if (value is IWorkflowJobDto job && value is WorkflowJobIntegrityState integrityState)
+            if (value is IWorkflowJobDto job)
             {
                 ValidateCompiledJob(root, job);
-                integrityState.MarkIntegrityVerified();
             }
 
             return value;
         }
 
-        /// <summary>关闭日期自动转换后解析根对象，避免规范化哈希改变时间字符串。</summary>
+        /// <summary>关闭日期自动转换后解析根对象，保留原始日期字符串。</summary>
         private static JObject ParseJsonObject(string json)
         {
             using (var textReader = new StringReader(json))
@@ -101,17 +98,12 @@ namespace Project.UnityWorkflow.Core
             }
         }
 
-        /// <summary>验证源契约路径、源字节哈希和规范化 payload 哈希。</summary>
+        /// <summary>验证源契约路径、对象 payload 与源文件存在性。</summary>
         private static void ValidateCompiledJob(JObject root, IWorkflowJobDto job)
         {
             if (string.IsNullOrWhiteSpace(job.SourcePath))
             {
                 throw new InvalidDataException("编译 Job 缺少 sourcePath。");
-            }
-
-            if (!IsSha256(job.SourceSha256) || !IsSha256(job.PayloadSha256))
-            {
-                throw new InvalidDataException("编译 Job 缺少有效的完整性哈希。");
             }
 
             var payload = root["payload"];
@@ -120,72 +112,12 @@ namespace Project.UnityWorkflow.Core
                 throw new InvalidDataException("编译 Job 缺少对象类型 payload。");
             }
 
-            var actualPayloadHash = ComputeSha256(Encoding.UTF8.GetBytes(Canonicalize(payload)));
-            if (!string.Equals(job.PayloadSha256, actualPayloadHash, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidDataException("编译 Job 的 payloadSha256 与 payload 不一致。");
-            }
-
             var sourceAbsolutePath = WorkflowPaths.ResolveProjectRelative(job.SourcePath);
             if (!File.Exists(sourceAbsolutePath))
             {
                 throw new FileNotFoundException("编译 Job 的源契约文件不存在。");
             }
 
-            var actualSourceHash = ComputeSha256(File.ReadAllBytes(sourceAbsolutePath));
-            if (!string.Equals(job.SourceSha256, actualSourceHash, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidDataException("编译 Job 的 sourceSha256 与当前源文件不一致。");
-            }
-        }
-
-        /// <summary>按键名递归排序并生成与 Node 文件工具一致的无空白 JSON。</summary>
-        private static string Canonicalize(JToken token)
-        {
-            return SortToken(token).ToString(Formatting.None);
-        }
-
-        /// <summary>递归复制 JSON，并按序数规则排序所有对象属性。</summary>
-        private static JToken SortToken(JToken token)
-        {
-            if (token is JObject sourceObject)
-            {
-                var ordered = new JObject();
-                foreach (var property in sourceObject.Properties().OrderBy(item => item.Name, StringComparer.Ordinal))
-                {
-                    ordered.Add(property.Name, SortToken(property.Value));
-                }
-
-                return ordered;
-            }
-
-            if (token is JArray sourceArray)
-            {
-                var ordered = new JArray();
-                foreach (var item in sourceArray)
-                {
-                    ordered.Add(SortToken(item));
-                }
-
-                return ordered;
-            }
-
-            return token.DeepClone();
-        }
-
-        /// <summary>计算小写十六进制 SHA-256。</summary>
-        private static string ComputeSha256(byte[] bytes)
-        {
-            using (var algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
-        }
-
-        /// <summary>检查文本是否为完整的 64 位十六进制 SHA-256。</summary>
-        private static bool IsSha256(string value)
-        {
-            return !string.IsNullOrWhiteSpace(value) && value.Length == 64 && value.All(Uri.IsHexDigit);
         }
     }
 }

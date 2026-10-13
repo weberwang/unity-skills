@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Project.UnityWorkflow.BuildPipeline;
@@ -113,21 +112,27 @@ namespace Project.UnityWorkflow.Tests.Editor
                 DeliveryPreflightService.IsApprovedVisualRecord(document.ToString(), request),
                 Is.True);
 
-            ((JObject)document["screenshot"])["sha256"] = new string('0', 64);
+            File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(screenshotPath), new byte[] { 9, 8, 7 });
             Assert.That(
                 DeliveryPreflightService.IsApprovedVisualRecord(document.ToString(), request),
-                Is.False);
+                Is.True,
+                "项目内截图内容变更后无需回填摘要即可按现有批准记录验收。");
+
+            ((JObject)document["screenshot"])["path"] = EvidenceRoot + "/missing.png";
+            Assert.That(
+                DeliveryPreflightService.IsApprovedVisualRecord(document.ToString(), request),
+                Is.False,
+                "缺失的截图文件仍必须拒绝。");
 
             string nonRuntimePath = WriteEvidence("runtime.txt", new byte[] { 1, 2, 3 });
             ((JObject)document["screenshot"])["path"] = nonRuntimePath;
-            ((JObject)document["screenshot"])["sha256"] = ComputeFileSha256(nonRuntimePath);
             Assert.That(
                 DeliveryPreflightService.IsApprovedVisualRecord(document.ToString(), request),
                 Is.False);
         }
 
         /// <summary>
-        /// 质量报告的顶层证据和每项检查证据都必须存在、匹配哈希并绑定当前交付。
+        /// 质量报告的顶层证据和每项检查证据都必须实际存在并绑定当前交付。
         /// </summary>
         [Test]
         public void IsPassingQualityReport_BoundEvidenceForReportAndChecks_Passes()
@@ -159,6 +164,12 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(
                 DeliveryPreflightService.IsPassingQualityReport(document.ToString(), request),
                 Is.True);
+
+            File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(evidencePath), new byte[] { 13, 14, 15 });
+            Assert.That(
+                DeliveryPreflightService.IsPassingQualityReport(document.ToString(), request),
+                Is.True,
+                "项目内证据内容变化后无需更新摘要字段。");
 
             request.SourceRevision = "UNBOUND";
             document["sourceRevision"] = "UNBOUND";
@@ -236,12 +247,10 @@ namespace Project.UnityWorkflow.Tests.Editor
                 ["sceneId"] = sceneId,
                 ["buildVersion"] = request.Version,
                 ["sourceRevision"] = request.SourceRevision,
-                ["buildArtifactSha256"] = new string('a', 64),
                 ["captureSource"] = "WINDOWS_STANDALONE",
                 ["screenshot"] = new JObject
                 {
                     ["path"] = screenshotPath,
-                    ["sha256"] = ComputeFileSha256(screenshotPath),
                     ["width"] = 1920,
                     ["height"] = 1080,
                     ["capturedAtUtc"] = "2026-07-27T00:00:00Z"
@@ -254,7 +263,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             };
         }
 
-        /// <summary>创建绑定主体、版本和真实证据哈希的视觉批准记录。</summary>
+        /// <summary>创建绑定主体、版本和项目内证据路径的视觉批准记录。</summary>
         private static JObject Approval(
             string authority,
             string subjectId,
@@ -269,8 +278,7 @@ namespace Project.UnityWorkflow.Tests.Editor
                 ["subjectVersion"] = subjectVersion,
                 ["approvedBy"] = authority == "USER" ? "user" : "reviewer",
                 ["approvedAtUtc"] = "2026-07-27T00:00:00Z",
-                ["evidencePath"] = evidencePath,
-                ["evidenceSha256"] = ComputeFileSha256(evidencePath)
+                ["evidencePath"] = evidencePath
             };
             if (authority == "INDEPENDENT_REVIEWER")
             {
@@ -287,8 +295,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             return new JObject
             {
                 ["type"] = "test",
-                ["path"] = path,
-                ["sha256"] = ComputeFileSha256(path)
+                ["path"] = path
             };
         }
 
@@ -300,14 +307,6 @@ namespace Project.UnityWorkflow.Tests.Editor
             Directory.CreateDirectory(Path.GetDirectoryName(absolutePath) ?? string.Empty);
             File.WriteAllBytes(absolutePath, bytes);
             return relativePath;
-        }
-
-        /// <summary>计算项目内测试证据的 SHA-256。</summary>
-        private static string ComputeFileSha256(string projectRelativePath)
-        {
-            using SHA256 sha256 = SHA256.Create();
-            using FileStream stream = File.OpenRead(WorkflowPaths.ResolveProjectRelative(projectRelativePath));
-            return BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", string.Empty).ToLowerInvariant();
         }
 
         /// <summary>

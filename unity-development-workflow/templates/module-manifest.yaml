@@ -5,7 +5,6 @@ projectStateVersion: project-state-v1
 decompositionPlan:
   type: decomposition-plan
   path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
-  sha256: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   subjectId: decomposition.starfall-arena.v1
   subjectVersion: decomposition-v1
   sourceRevision: working-tree-snapshot-20260727

@@ -4,9 +4,7 @@ subject:
   type: SCENE_TARGET
   subjectId: scene.main
   subjectVersion: v1
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   sourceRevision: working-tree-snapshot
-baselineHash: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 authorId: visual-author
 reviewers:
   - reviewerId: independent-visual-reviewer

@@ -27,7 +27,6 @@ checks:
     evidence:
       - type: platform-adaptation-test-report
         path: Artifacts/Quality/Platforms/android.json
-        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         platform: ANDROID
         projectId: starfall-arena
         subjectId: qa.platform.android
@@ -39,7 +38,6 @@ status: PASS
 evidence:
   - type: platform-adaptation-test-report
     path: Artifacts/Quality/Platforms/android.json
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     platform: ANDROID
     projectId: starfall-arena
     subjectId: qa.platform.android

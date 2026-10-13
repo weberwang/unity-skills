@@ -14,9 +14,7 @@ checks:
     evidence:
       - type: module-acceptance-test-report
         path: Artifacts/Quality/Modules/Foundation.Core.xml
-        sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 status: PASS
 evidence:
   - type: module-acceptance-test-report
     path: Artifacts/Quality/Modules/Foundation.Core.xml
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

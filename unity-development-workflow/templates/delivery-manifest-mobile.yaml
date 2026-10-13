@@ -14,7 +14,6 @@ buildResult:
 artifacts:
   - artifactType: ANDROID_APP_BUNDLE
     path: Artifacts/Builds/Android/StarfallArena.aab
-    sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     sizeBytes: 0
 launchCheck:
   status: NOT_RUN

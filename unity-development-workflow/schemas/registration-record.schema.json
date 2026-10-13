@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion", "recordId", "taskId", "resourceId", "module", "type", "purpose",
-    "sourceVersion", "visualVersion", "sourcePath", "sourceSha256", "assetPath", "address",
+    "sourceVersion", "visualVersion", "sourcePath", "assetPath", "address",
     "assetGuid", "importer", "approvals", "approvalEvidencePaths", "importReportPath", "status",
     "licenseStatus", "unityValidation", "generatedAtUtc"
   ],
@@ -20,7 +20,6 @@
     "sourceVersion": {"type": "string", "minLength": 1},
     "visualVersion": {"type": "string", "minLength": 1},
     "sourcePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-    "sourceSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "assetPath": {"allOf": [{"$ref": "common.schema.json#/$defs/projectRelativePath"}, {"pattern": "^Assets/Art/Runtime(?:/|$)"}]},
     "address": {"type": "string", "minLength": 1},
     "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},

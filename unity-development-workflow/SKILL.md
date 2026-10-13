@@ -7,11 +7,13 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 以 [`unity-game-workflow-control`](../unity-game-workflow-control/SKILL.md) 为唯一全局状态、风险门、任务范围和证据权威。本 Skill 负责 Unity 领域拆分、交接物冻结、Editor 写入编排和证据收敛；不维护第二套状态机，不代替用户批准有副作用的操作。
 
+验收以用户要求和实际完成情况为准，合同作为目标与实施边界的参考。已授权范围内的方案、结构或资源调整无需为了验收回改合同；在实际交付记录或验收报告说明调整及其验证即可。不要求、不计算、不比对 SHA，也不因合同版本或内容差异重开已完成阶段。实际需求变化、质量问题、证据缺失和外部授权仍按对应规则处理。
+
 ## 最短流程
 
 1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](references/unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[屏幕 UI 布局与节点树](references/ui-layout-and-hierarchy.md)、[TMP 多语言字体图集](references/tmp-font-atlas-workflow.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
-3. A3 生产实现前冻结 Implementation Package，明确基线、文件所有权、Unity 对象所有权、执行单元、验证命令和停止条件。任务内方案、路径或资源清单变化时更新包并重验受影响范围。
+3. A3 生产实现前明确 Implementation Package 的基线、文件所有权、Unity 对象所有权、执行单元、验证命令和停止条件。任务内方案或资源清单调整记录实际交付并重验受影响行为；路径或所有权越出授权边界时先更新执行范围。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。
 5. 阶段完成后回到控制面运行 `check`/`run`。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
 
@@ -26,7 +28,7 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## 场景 V0-V4
 
-每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0–V4 均按[阶段人工确认](../unity-game-workflow-control/references/stage-confirmation.md)逐阶段提交可查看产物，取得用户明确确认后才进入下一阶段；V4 确认后才闭合。`stageReviews` 绑定工作项、基线和交付摘要，不能用技术 PASS、初始授权或沉默替代人工确认。
+每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0–V4 均按[阶段人工确认](../unity-game-workflow-control/references/stage-confirmation.md)逐阶段提交可查看产物，取得用户明确确认后才进入下一阶段；V4 确认后才闭合。`stageReviews` 绑定工作项、阶段和真实用户消息，不能用技术 PASS、初始授权或沉默替代人工确认。
 
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 

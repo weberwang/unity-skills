@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
+using System.Reflection;
 using NUnit.Framework;
 using Project.UnityWorkflow.Core;
 using Project.UnityWorkflow.Core.Models;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Project.UnityWorkflow.ImagePipeline.Tests
 {
@@ -82,7 +83,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
         }
 
         /// <summary>
-        /// 从任务创建请求时必须使用 selectedCandidate 的路径、哈希和视觉版本。
+        /// 从任务创建请求时必须使用 selectedCandidate 的路径和视觉版本。
         /// </summary>
         [Test]
         public void FromTask_UsesSelectedCandidateProvenance()
@@ -96,13 +97,11 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
                 FinalVisualReview = new EvidenceDto
                 {
                     Type = "visual-review",
-                    Path = ReportRoot + "/approval.png",
-                    Sha256 = new string('b', 64)
+                    Path = ReportRoot + "/approval.png"
                 },
                 SelectedCandidate = new SelectedImageCandidateDto
                 {
                     Path = SourceRoot + "/selected.png",
-                    Sha256 = new string('a', 64),
                     VisualVersion = "candidate-v3"
                 }
             };
@@ -110,7 +109,6 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             var request = ImageImportRequest.FromTask(task);
 
             Assert.AreEqual(task.SelectedCandidate.Path, request.SourcePath);
-            Assert.AreEqual(task.SelectedCandidate.Sha256, request.SourceSha256);
             Assert.AreEqual(task.SelectedCandidate.VisualVersion, request.VisualVersion);
             Assert.AreSame(task.FinalVisualReview, request.FinalVisualReview);
         }
@@ -156,21 +154,18 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
         }
 
         /// <summary>
-        /// 批准主体、版本和证据哈希必须与当前图片任务及实际证据文件完全绑定。
+        /// 批准主体和版本必须与当前图片任务绑定。
         /// </summary>
         [Test]
-        public void Validate_ApprovalBindingAndHashMismatch_AreRejected()
+        public void Validate_ApprovalBindingMismatch_IsRejected()
         {
             var wrongSubject = CreatePngRequest("approval-subject.png", 64, 64);
             wrongSubject.Approvals[0].SubjectId = "visual.other-task";
             var wrongVersion = CreatePngRequest("approval-version.png", 64, 64);
             wrongVersion.Approvals[0].SubjectVersion = "old-visual-version";
-            var wrongHash = CreatePngRequest("approval-hash.png", 64, 64);
-            wrongHash.Approvals[0].EvidenceSha256 = new string('0', 64);
 
             AssertIssue(ImageValidationService.Validate(wrongSubject), "approval.subject-mismatch");
             AssertIssue(ImageValidationService.Validate(wrongVersion), "approval.version-mismatch");
-            AssertIssue(ImageValidationService.Validate(wrongHash), "approval.evidence-hash-mismatch");
         }
 
         /// <summary>
@@ -207,10 +202,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
                 stream.SetLength(ImageValidationService.MaximumSourceFileBytes + 1);
             }
 
-            var request = CreateBaseRequest(
-                "oversized.png",
-                relativePath,
-                new string('0', 64));
+            var request = CreateBaseRequest("oversized.png", relativePath);
 
             var result = ImageValidationService.Validate(request);
 
@@ -218,17 +210,52 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
         }
 
         /// <summary>
-        /// selectedCandidate.sha256 与源文件不一致时必须拒绝导入。
+        /// 源图片在请求创建后变化时，仍按当前内容重新校验并允许通过。
         /// </summary>
         [Test]
-        public void Validate_HashMismatch_IsRejected()
+        public void Validate_ChangedSourceContent_UsesCurrentImage()
         {
-            var request = CreatePngRequest("hash.png", 64, 64);
-            request.SourceSha256 = new string('0', 64);
+            var request = CreatePngRequest("changed.png", 64, 64);
+            File.WriteAllBytes(
+                WorkflowPaths.ResolveProjectRelative(request.SourcePath),
+                CreateImageBytes(32, 32, true));
 
             var result = ImageValidationService.Validate(request);
 
-            AssertIssue(result, "source.hash-mismatch");
+            Assert.IsTrue(result.IsValid, string.Join(" | ", result.Issues.Select(issue => issue.Code)));
+            Assert.AreEqual(32, result.Width);
+            Assert.AreEqual(32, result.Height);
+        }
+
+        /// <summary>预检后复制出的暂存图片仍须按当前字节满足尺寸和 Alpha 约束。</summary>
+        [Test]
+        public void ValidateStagedSourceFile_ChangedImage_FailsCurrentConstraints()
+        {
+            var request = CreatePngRequest("staged-source.png", 64, 64);
+            request.MinimumWidth = 40;
+            request.MinimumHeight = 40;
+            request.AlphaRequired = true;
+            string stagingDirectory = WorkflowPaths.ResolveProjectRelative(
+                "Library/UnityWorkflow/Staging/Images/__UWTImageTests-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(stagingDirectory);
+            string stagedPath = Path.Combine(stagingDirectory, request.FileName);
+            File.WriteAllBytes(stagedPath, CreateImageBytes(32, 32, false));
+
+            try
+            {
+                MethodInfo validator = typeof(ImageValidationService).GetMethod(
+                    "ValidateStagedSourceFile",
+                    BindingFlags.NonPublic | BindingFlags.Static);
+                Assert.IsNotNull(validator, "导入服务必须保留暂存文件的实际图像校验入口。");
+                var result = (ImageValidationResult)validator.Invoke(null, new object[] { request, stagedPath });
+
+                AssertIssue(result, "source.too-small");
+                AssertIssue(result, "source.alpha-missing");
+            }
+            finally
+            {
+                Directory.Delete(stagingDirectory, true);
+            }
         }
 
         /// <summary>
@@ -240,7 +267,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             const string relativePath = SourceRoot + "/invalid.gif";
             var bytes = new byte[] { 1, 2, 3, 4 };
             File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(relativePath), bytes);
-            var request = CreateBaseRequest("invalid.gif", relativePath, ComputeSha256(bytes));
+            var request = CreateBaseRequest("invalid.gif", relativePath);
 
             var result = ImageValidationService.Validate(request);
 
@@ -273,7 +300,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             const string relativePath = SourceRoot + "/opaque.jpg";
             var bytes = CreateImageBytes(64, 64, false);
             File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(relativePath), bytes);
-            var request = CreateBaseRequest("opaque.jpg", relativePath, ComputeSha256(bytes));
+            var request = CreateBaseRequest("opaque.jpg", relativePath);
             request.AlphaRequired = true;
             request.AlphaIsTransparency = true;
 
@@ -293,7 +320,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             const string foreignPath = ForeignSourceRoot + "/foreign.png";
             var bytes = CreateImageBytes(64, 64, true);
             File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(foreignPath), bytes);
-            var request = CreateBaseRequest("foreign.png", foreignPath, ComputeSha256(bytes));
+            var request = CreateBaseRequest("foreign.png", foreignPath);
             request.TargetDirectory = "Assets/Editor/Generated";
 
             var result = ImageValidationService.Validate(request);
@@ -344,6 +371,9 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
         public void Import_Sprite_AppliesAndVerifiesImporterSettings()
         {
             var request = CreatePngRequest("sprite.png", 64, 64);
+            File.WriteAllBytes(
+                WorkflowPaths.ResolveProjectRelative(request.SourcePath),
+                CreateImageBytes(32, 32, true));
             request.FilterMode = "Point";
             request.Compression = "None";
             request.ReadWriteEnabled = true;
@@ -352,7 +382,10 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             var importer = AssetImporter.GetAtPath(result.AssetPath) as TextureImporter;
 
             Assert.IsTrue(result.Success, string.Join(" | ", result.Errors.Select(error => error.Code)));
+            Texture2D importedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(result.AssetPath);
             Assert.IsNotNull(importer);
+            Assert.IsNotNull(importedTexture);
+            Assert.AreEqual(32, importedTexture.width, "导入应使用验收时源文件的实际内容。");
             Assert.AreEqual(TextureImporterType.Sprite, importer.textureType);
             Assert.AreEqual(SpriteImportMode.Single, importer.spriteImportMode);
             Assert.AreEqual(FilterMode.Point, importer.filterMode);
@@ -380,7 +413,6 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             Assert.AreEqual(request.TaskId, record.Approvals[0].SubjectId);
             Assert.AreEqual(request.VisualVersion, record.Approvals[0].SubjectVersion);
             Assert.AreEqual(request.Approvals[0].EvidencePath, record.Approvals[0].EvidencePath);
-            Assert.AreEqual(request.Approvals[0].EvidenceSha256, record.Approvals[0].EvidenceSha256);
             Assert.That(record.ApprovalEvidencePaths, Does.Contain(request.Approvals[0].EvidencePath));
             var stagingRoot = WorkflowPaths.ResolveProjectRelative("Library/UnityWorkflow/Staging/Images");
             if (Directory.Exists(stagingRoot))
@@ -423,6 +455,8 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             request.ReportPath = "../outside-report.json";
             var target = WorkflowPaths.ResolveProjectRelative(TargetRoot + "/rollback.png");
 
+            // 此用例主动触发报告路径越界，导入失败日志属于预期结果。
+            LogAssert.Expect(LogType.Error, "Unity Workflow Toolkit 图片导入失败（ArgumentException / import.exception）。");
             var result = new ImageImportService().Import(request);
 
             Assert.IsFalse(result.Success);
@@ -433,17 +467,17 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             Assert.IsTrue(File.Exists(WorkflowPaths.ResolveProjectRelative(request.SourcePath)));
         }
 
-        /// <summary>创建源文件和与其哈希匹配的 PNG 导入请求。</summary>
+        /// <summary>创建源文件和引用该项目内路径的 PNG 导入请求。</summary>
         private static ImageImportRequest CreatePngRequest(string fileName, int width, int height)
         {
             var relativePath = SourceRoot + "/" + fileName;
             var bytes = CreateImageBytes(width, height, true);
             File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(relativePath), bytes);
-            return CreateBaseRequest(fileName, relativePath, ComputeSha256(bytes));
+            return CreateBaseRequest(fileName, relativePath);
         }
 
         /// <summary>创建具备用户批准与完整 Importer 参数的请求。</summary>
-        private static ImageImportRequest CreateBaseRequest(string fileName, string sourcePath, string sha256)
+        private static ImageImportRequest CreateBaseRequest(string fileName, string sourcePath)
         {
             return new ImageImportRequest
             {
@@ -454,14 +488,12 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
                 UseCase = "图片管线自动化测试",
                 SourceVersion = "visual-v1",
                 SourcePath = sourcePath,
-                SourceSha256 = sha256,
                 VisualVersion = "candidate-v1",
                 Status = "APPROVED",
                 FinalVisualReview = new EvidenceDto
                 {
                     Type = "visual-review",
-                    Path = ReportRoot + "/approval.png",
-                    Sha256 = ComputeFileSha256(ReportRoot + "/approval.png")
+                    Path = ReportRoot + "/approval.png"
                 },
                 Approvals = new List<ApprovalDto>
                 {
@@ -506,7 +538,6 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
                 ApprovedBy = independent ? "reviewer-" + discipline : "test-owner",
                 ApprovedAtUtc = "2026-07-27T00:00:00Z",
                 EvidencePath = ReportRoot + "/approval.png",
-                EvidenceSha256 = ComputeFileSha256(ReportRoot + "/approval.png"),
                 ReviewTaskId = independent ? "review." + discipline.ToLowerInvariant() : string.Empty,
                 ReviewDiscipline = independent ? discipline : string.Empty
             };
@@ -532,21 +563,6 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             {
                 UnityEngine.Object.DestroyImmediate(texture);
             }
-        }
-
-        /// <summary>计算测试源文件 SHA-256。</summary>
-        private static string ComputeSha256(byte[] bytes)
-        {
-            using (var algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
-            }
-        }
-
-        /// <summary>计算项目内测试证据文件的 SHA-256。</summary>
-        private static string ComputeFileSha256(string projectRelativePath)
-        {
-            return ComputeSha256(File.ReadAllBytes(WorkflowPaths.ResolveProjectRelative(projectRelativePath)));
         }
 
         /// <summary>断言结构化校验结果包含指定稳定代码。</summary>

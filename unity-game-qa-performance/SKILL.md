@@ -11,6 +11,8 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 
 读取 Work Item、验收、相关实现、测试、项目配置、GDD/TDD、当前候选包及已创建的数值、资源、音频与发行文档。性能预算、验收阈值、严重度、风险豁免或放行存在实质取舍时交给 `$unity-game-grilling`；未定义阈值时只报告实测结果，不自定 PASS。
 
+按总控规则以用户要求和实际完成情况验收；合同提供目标与边界，中途实现调整无需回改合同，不校验 SHA。实际行为变化只重验受影响部分，并保留真实证据与用户人工确认。
+
 ## 执行与交接
 
 测试、构建、Editor/Player 日志和 Profiler 入口使用 `unity:unity-cli`；Web、音频、TMP 与具体渲染问题分别路由到 `unity:optimize-web`、`unity:optimize-audio`、`unity:optimize-text-mesh-pro` 及适用的 URP 专项 Skill。本角色负责测试矩阵、证据真实性、预算判定和独立放行，不复制专项调优教程。

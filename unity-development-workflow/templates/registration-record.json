@@ -9,7 +9,6 @@
   "sourceVersion": "source-v1",
   "visualVersion": "visual-v1",
   "sourcePath": "ArtSource/Generated/arena-background/processed/background.png",
-  "sourceSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "assetPath": "Assets/Art/Runtime/Arena/background.png",
   "address": "Assets/Art/Runtime/Arena/background.png",
   "assetGuid": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -37,8 +36,7 @@
       "subjectVersion": "visual-v1",
       "approvedBy": "visual-owner",
       "approvedAtUtc": "2026-07-27T12:00:00Z",
-      "evidencePath": "Artifacts/Approvals/image.arena-background.json",
-      "evidenceSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      "evidencePath": "Artifacts/Approvals/image.arena-background.json"
     }
   ],
   "importReportPath": "Artifacts/Imports/image.arena-background.json",

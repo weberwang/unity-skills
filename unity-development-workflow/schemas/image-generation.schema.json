@@ -34,16 +34,14 @@
     "splitPlanEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "path", "sha256", "subjectId", "subjectVersion", "itemId", "itemVersion", "itemSpecSha256", "resourceId"],
+      "required": ["type", "path", "subjectId", "subjectVersion", "itemId", "itemVersion", "resourceId"],
       "properties": {
         "type": {"const": "split-plan"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
         "subjectVersion": {"type": "string", "minLength": 1},
         "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
         "itemVersion": {"type": "string", "minLength": 1},
-        "itemSpecSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
       }
     },
@@ -70,11 +68,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["referenceType", "path", "sha256", "allowedUses", "styleTransfer"],
+        "required": ["referenceType", "path", "allowedUses", "styleTransfer"],
         "properties": {
           "referenceType": {"enum": ["SCREENSHOT", "BRAND_ASSET", "CONTENT_REFERENCE", "ART_REFERENCE"]},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "allowedUses": {
             "type": "array", "minItems": 1, "uniqueItems": true,
             "items": {"enum": ["CONTENT", "COMPOSITION", "INFORMATION_HIERARCHY"]}
@@ -104,11 +101,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "path", "sha256", "visualVersion", "width", "height"],
+        "required": ["id", "path", "visualVersion", "width", "height"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-          "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
           "visualVersion": {"type": "string", "minLength": 1},
           "width": {"type": "integer", "minimum": 1},
           "height": {"type": "integer", "minimum": 1}

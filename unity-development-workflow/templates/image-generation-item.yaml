@@ -11,19 +11,16 @@ visualBibleVersion: visual-v1
 visualBibleEvidence:
   type: visual-bible
   path: Artifacts/Visual/Global/visual-v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: starfall-arena
   subjectVersion: visual-v1
 styleAuthority: APPROVED_VISUAL_BIBLE
 splitPlanEvidence:
   type: split-plan
   path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: split.scene-arena-intro.game-v1
   subjectVersion: game-v1
   itemId: asset.arena-intro.background
   itemVersion: arena-background-spec-v1
-  itemSpecSha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
   resourceId: asset.arena-background
 splitPlanApproval:
   approvalType: ASSET_MAP
@@ -33,14 +30,11 @@ splitPlanApproval:
   approvedBy: user
   approvedAtUtc: 2026-07-27T09:00:00Z
   evidencePath: Artifacts/Visual/Approvals/split.scene-arena-intro.game-v1-user.yaml
-  evidenceSha256: "1111111111111111111111111111111111111111111111111111111111111111"
   approvalScope:
     annotatedPreview:
       type: annotated-split-preview
       path: Artifacts/Visual/Split/scene.arena-intro/game-v1-annotated.png
-      sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
       sourcePath: ArtSource/Approved/scene.arena-intro/game-v1.png
-      sourceSha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       sourceVersion: game-v1
       width: 1920
       height: 1080
@@ -52,6 +46,48 @@ splitPlanApproval:
           label: "[01][GENERATE] 竞技场背景"
           productionRoute: GENERATE
           brief: 框选整张竞技场开场背景，作为独立不透明背景资源
+          parentElementId: viewport
+          semanticGrouping:
+            kind: region
+            rationale: 背景是场景视口的独立视觉区域。
+          visualRouteAnalysis:
+            elementType: background
+            distinctiveVisual:
+              isDistinctive: true
+              observedFeatures: [竞技场身份、纵深和独立色彩]
+              assetFirstDecision: ASSET_FIRST
+            selectedRoute: IMAGE_ASSET
+            routeReason: 静态特色背景必须作为独立生产资产交付。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability:
+              eligible: false
+              primitiveBasis: [BASIC_GEOMETRY]
+              reason: 特色外观不能由基础几何等价表达。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-background.yaml}
+            reuseSuitability:
+              eligible: false
+              reason: 没有精确匹配的已登记背景资产。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-background-reuse.yaml}
+            productionMethod: GENERATED_RASTER
+            deliveryKind: IMAGE_ASSET
+            finalOwner: FIXED_PRODUCTION_VISUAL
+          assemblyAnalysis:
+            strategy: STRUCTURED_UNITY_ASSEMBLY
+            unityAssetType: PREFAB
+            nodeId: node.arena-background
+            parentNodeId: node.arena-root
+            layoutSystem: TRANSFORM
+            fullScreenCapture: false
+            evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/arena-background.yaml}
+          layoutBinding:
+            parentElementId: viewport
+            hierarchyRelation: PARENT_CHILD
+            coordinateSpace: SCENE_LOCAL
+            anchor: {min: {x: 0, y: 0}, max: {x: 1, y: 1}}
+            pivot: {x: 0.5, y: 0.5}
+            constraints: [safe-area-background]
+            resizePolicy: CAMERA_RELATIVE
         - elementIndex: 2
           itemId: asset.arena-intro.logo
           coordinateSpace: EFFECT_IMAGE_PIXELS
@@ -59,6 +95,55 @@ splitPlanApproval:
           label: "[02][REUSE] 竞技场徽标"
           productionRoute: REUSE
           brief: 框选已登记竞技场徽标，复用现有资源文件而不取效果图像素
+          parentElementId: node.arena-root
+          semanticGrouping:
+            kind: part
+            rationale: 徽标是竞技场根节点的独立静态部件。
+          visualRouteAnalysis:
+            elementType: logo
+            distinctiveVisual:
+              isDistinctive: true
+              observedFeatures: [竞技场徽标、透明背景、品牌字形]
+              assetFirstDecision: ASSET_FIRST
+            selectedRoute: REUSE
+            routeReason: 已登记资源身份、Importer 和风格验证均精确匹配。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability:
+              eligible: false
+              primitiveBasis: [TEXT]
+              reason: 徽标静态外观不满足 Unity 原生资格。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-logo.yaml}
+            reuseSuitability:
+              eligible: true
+              reason: 复用现有登记资源并保留精确身份绑定。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-logo-reuse.yaml}
+            reuseBinding:
+              assetGuid: 0123456789abcdef0123456789abcdef
+              sourcePath: Assets/Art/Library/Arena/ArenaLogo.png
+              importer:
+                type: TextureImporter
+                settingsFingerprint: "MaxSize=2048; Compression=Normal; MipMaps=Disabled"
+              consumerNodeIds: [node.arena-logo]
+            productionMethod: REUSE
+            deliveryKind: EXISTING_ASSET
+            finalOwner: FIXED_PRODUCTION_VISUAL
+          assemblyAnalysis:
+            strategy: STRUCTURED_UNITY_ASSEMBLY
+            unityAssetType: PREFAB
+            nodeId: node.arena-logo
+            parentNodeId: node.arena-root
+            layoutSystem: TRANSFORM
+            fullScreenCapture: false
+            evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/arena-logo.yaml}
+          layoutBinding:
+            parentElementId: node.arena-root
+            hierarchyRelation: PARENT_CHILD
+            coordinateSpace: PREFAB_LOCAL
+            anchor: {min: {x: 0, y: 0}, max: {x: 0, y: 0}}
+            pivot: {x: 0.5, y: 0.5}
+            constraints: [logo-safe-margin]
+            resizePolicy: SCALE_WITH_PARENT
         - elementIndex: 3
           itemId: asset.arena-intro.grid-overlay
           coordinateSpace: EFFECT_IMAGE_PIXELS
@@ -66,16 +151,56 @@ splitPlanApproval:
           label: "[03][PROGRAMMATIC] 网格叠加"
           productionRoute: PROGRAMMATIC
           brief: 框选网格叠加区域，交由 Unity 图元或 Shader/代码实现
+          parentElementId: node.arena-root
+          semanticGrouping:
+            kind: part
+            rationale: 网格是竞技场根节点下随状态更新的程序视觉部件。
+          visualRouteAnalysis:
+            elementType: shader
+            distinctiveVisual:
+              isDistinctive: false
+              observedFeatures: [规则线条、动态叠加、可随相机变化]
+              assetFirstDecision: NATIVE_ALLOWED
+            selectedRoute: UNITY_NATIVE
+            routeReason: 规则网格属于基础几何和 Shader 可表达的程序视觉。
+            sourceKind: ATOMIC
+            fullScreenCapture: false
+            nativeSuitability:
+              eligible: true
+              primitiveBasis: [BASIC_GEOMETRY, SHADER]
+              reason: 由 Unity Mesh/Shader 实时生成，不依赖静态特色位图。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-grid-overlay.yaml}
+            reuseSuitability:
+              eligible: false
+              reason: 没有需要精确复用的现有图像资产。
+              evidence: {type: visual-route-analysis, path: Artifacts/Visual/Routes/arena-grid-reuse.yaml}
+            productionMethod: UNITY_NATIVE
+            deliveryKind: UNITY_COMPONENT
+            finalOwner: RUNTIME_RENDERED
+          assemblyAnalysis:
+            strategy: STRUCTURED_UNITY_ASSEMBLY
+            unityAssetType: PREFAB
+            nodeId: node.arena-grid-overlay
+            parentNodeId: node.arena-root
+            layoutSystem: TRANSFORM
+            fullScreenCapture: false
+            evidence: {type: assembly-analysis, path: Artifacts/Visual/Assembly/arena-grid-overlay.yaml}
+          layoutBinding:
+            parentElementId: node.arena-root
+            hierarchyRelation: PARENT_CHILD
+            coordinateSpace: SCENE_LOCAL
+            anchor: {min: {x: 0, y: 0}, max: {x: 1, y: 1}}
+            pivot: {x: 0.5, y: 0.5}
+            constraints: [camera-relative-grid]
+            resizePolicy: CAMERA_RELATIVE
     sourceHighFidelity:
       subjectId: imagegen.scene-arena-intro.game-v1
       subjectVersion: game-v1
       path: ArtSource/Approved/scene.arena-intro/game-v1.png
-      sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     items:
       - id: asset.arena-intro.background
         resourceId: asset.arena-background
         itemVersion: arena-background-spec-v1
-        itemSpecSha256: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
         elementIndex: 1
         assetType: background-sprite
         purpose: 竞技场开场背景
@@ -97,7 +222,6 @@ splitPlanApproval:
       - id: asset.arena-intro.logo
         resourceId: asset.arena-logo
         itemVersion: arena-logo-spec-v1
-        itemSpecSha256: "1212121212121212121212121212121212121212121212121212121212121212"
         elementIndex: 2
         assetType: arena-logo-sprite
         purpose: 竞技场标题徽标
@@ -123,34 +247,27 @@ splitPlanApproval:
           reuseMode: REGISTERED_ASSET
           effectImagePixelReuse: FORBIDDEN
           sourcePath: Assets/Art/Library/Arena/ArenaLogo.png
-          sourceSha256: "2323232323232323232323232323232323232323232323232323232323232323"
           unityGuid: 0123456789abcdef0123456789abcdef
           assetRegisterEvidence:
             recordId: asset-register.arena-logo-v1
             path: Artifacts/AssetRegister/arena-logo-v1.yaml
-            sha256: "3434343434343434343434343434343434343434343434343434343434343434"
           licenseEvidence:
             rightsStatus: APPROVED
             path: Artifacts/Licenses/arena-logo-v1.yaml
-            sha256: "4545454545454545454545454545454545454545454545454545454545454545"
           visualBibleStyleReview:
             subjectId: starfall-arena
             subjectVersion: visual-v1
             decision: COMPATIBLE
             path: Artifacts/Visual/Reviews/arena-logo-style-v1.yaml
-            sha256: "5656565656565656565656565656565656565656565656565656565656565656"
           importerEvidence:
             path: Artifacts/Imports/arena-logo-v1.yaml
-            sha256: "6767676767676767676767676767676767676767676767676767676767676767"
           unityValidationEvidence:
             status: PASS
             path: Artifacts/UnityValidation/arena-logo-v1.yaml
-            sha256: "7878787878787878787878787878787878787878787878787878787878787878"
         splitRationale: 徽标已有可复用登记资源，避免重复生产和像素漂移
       - id: asset.arena-intro.grid-overlay
         resourceId: asset.arena-grid-overlay
         itemVersion: arena-grid-overlay-spec-v1
-        itemSpecSha256: "8989898989898989898989898989898989898989898989898989898989898989"
         elementIndex: 3
         assetType: grid-overlay
         purpose: 竞技场网格叠加

@@ -11,14 +11,12 @@ visualBibleVersion: visual-v1
 visualBibleEvidence:
   type: visual-bible
   path: Artifacts/Visual/Global/visual-v1.yaml
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   subjectId: starfall-arena
   subjectVersion: visual-v1
 styleAuthority: APPROVED_VISUAL_BIBLE
 prefabStructureEvidence:
   type: prefab-structure
   path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
-  sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
   subjectId: prefab-structure.scene-arena-intro.v1
   subjectVersion: prefab-structure-v1
 referencePolicy:

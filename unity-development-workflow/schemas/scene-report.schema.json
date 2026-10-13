@@ -17,7 +17,6 @@
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
     "buildVersion": {"type": "string", "minLength": 1},
-    "buildArtifactSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
     "generatedAtUtc": {"type": "string", "format": "date-time"},
     "sceneManifest": {"$ref": "common.schema.json#/$defs/evidence"},
     "greybox": {"$ref": "common.schema.json#/$defs/checkResult"},
@@ -54,7 +53,7 @@
         "required": ["reportPurpose", "status"]
       },
       "then": {
-        "required": ["buildArtifactSha256"],
+        "required": [],
         "properties": {
           "tests": {
             "properties": {

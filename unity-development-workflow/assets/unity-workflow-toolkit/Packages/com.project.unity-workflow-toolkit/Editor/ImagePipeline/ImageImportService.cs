@@ -68,7 +68,25 @@ namespace Project.UnityWorkflow.ImagePipeline
                 var sourcePath = WorkflowPaths.ResolveProjectRelative(request.SourcePath);
                 var assetPath = (request.TargetDirectory.TrimEnd('/', '\\') + "/" + request.FileName).Replace('\\', '/');
                 var targetPath = WorkflowPaths.ResolveProjectRelative(assetPath);
-                var stagedPath = StageSource(sourcePath, request.SourceSha256, request.FileName, out stagingDirectory);
+                var stagedPath = StageSource(sourcePath, request.FileName, out stagingDirectory);
+
+                // 预检与复制之间源文件可能变化；必须以事务中实际待落位的字节重新执行图像规格校验。
+                var stagedValidation = ImageValidationService.ValidateStagedSourceFile(request, stagedPath);
+                foreach (var issue in stagedValidation.Issues)
+                {
+                    result.Validation.AddIssue(issue.Code, issue.Message);
+                }
+
+                result.Validation.Width = stagedValidation.Width;
+                result.Validation.Height = stagedValidation.Height;
+                result.Validation.Format = stagedValidation.Format;
+                result.Validation.HasAlpha = stagedValidation.HasAlpha;
+                if (!stagedValidation.IsValid)
+                {
+                    throw new ImageImportOperationException(
+                        "staging.validation-failed",
+                        "暂存图片未通过实际格式、尺寸或 Alpha 校验。");
+                }
 
                 targetLock = AssetTargetLock.Acquire(assetPath);
                 EnsureTargetStillAvailable(targetPath);
@@ -158,15 +176,13 @@ namespace Project.UnityWorkflow.ImagePipeline
                 TaskId = request?.TaskId,
                 ResourceId = request?.ResourceId,
                 SourceVersion = request?.SourceVersion,
-                VisualVersion = request?.VisualVersion,
-                SourceSha256 = request?.SourceSha256
+                VisualVersion = request?.VisualVersion
             };
         }
 
-        /// <summary>把源文件复制到唯一 Library 目录，并再次验证暂存字节哈希。</summary>
+        /// <summary>把已完成图像技术校验的源文件复制到唯一 Library 暂存目录。</summary>
         private static string StageSource(
             string sourcePath,
-            string expectedSha256,
             string fileName,
             out string stagingDirectory)
         {
@@ -177,14 +193,6 @@ namespace Project.UnityWorkflow.ImagePipeline
             stagingDirectory = WorkflowPaths.ResolveProjectRelative(stagingRelativeDirectory);
             var stagedPath = Path.Combine(stagingDirectory, Path.GetFileName(fileName));
             File.Copy(sourcePath, stagedPath, false);
-
-            if (!string.Equals(ComputeFileSha256(stagedPath), expectedSha256, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ImageImportOperationException(
-                    "source.changed-during-staging",
-                    "源图片在校验与暂存之间发生变化，未写入正式资产区。");
-            }
-
             return stagedPath;
         }
 
@@ -289,7 +297,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                 request.ResourceId,
                 request.SourceVersion,
                 request.VisualVersion,
-                request.SourceSha256,
                 result.AssetGuid
             });
             var evidencePaths = new List<string>();
@@ -312,7 +319,6 @@ namespace Project.UnityWorkflow.ImagePipeline
                 SourceVersion = request.SourceVersion,
                 VisualVersion = request.VisualVersion,
                 SourcePath = request.SourcePath,
-                SourceSha256 = request.SourceSha256,
                 AssetPath = result.AssetPath,
                 Address = result.AssetPath,
                 AssetGuid = result.AssetGuid,
@@ -526,16 +532,6 @@ namespace Project.UnityWorkflow.ImagePipeline
             catch (Exception exception)
             {
                 Debug.LogWarning($"Unity Workflow Toolkit 暂存清理失败（{exception.GetType().Name} / staging.cleanup-failed）。");
-            }
-        }
-
-        /// <summary>计算文件小写 SHA-256。</summary>
-        private static string ComputeFileSha256(string path)
-        {
-            using (var stream = File.OpenRead(path))
-            using (var algorithm = SHA256.Create())
-            {
-                return BitConverter.ToString(algorithm.ComputeHash(stream)).Replace("-", string.Empty).ToLowerInvariant();
             }
         }
 

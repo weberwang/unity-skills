@@ -33,27 +33,22 @@ namespace Project.UnityWorkflow.PipelineCommands
     }
 
     /// <summary>
-    /// 为四个 Pipeline 命令复用 Job 完整性、项目边界和错误脱敏逻辑。
+    /// 为四个 Pipeline 命令复用 Job 结构、项目边界和错误脱敏逻辑。
     /// </summary>
     internal static class PipelineCommandSupport
     {
         /// <summary>
-        /// 读取并验证命令对应的编译 Job，只返回已经通过完整性校验的 payload。
+        /// 读取并验证命令对应的编译 Job，只返回类型匹配且结构有效的当前 payload。
         /// </summary>
         /// <typeparam name="TPayload">Job 负载 DTO 类型。</typeparam>
         /// <param name="jobPath">项目相对 Job 路径。</param>
         /// <param name="expectedKind">命令允许处理的契约类型。</param>
-        /// <returns>通过完整性和类型检查的 Job 负载。</returns>
+        /// <returns>通过结构和类型检查的 Job 负载。</returns>
         public static TPayload LoadPayload<TPayload>(string jobPath, string expectedKind)
             where TPayload : class
         {
             string normalizedJobPath = RequireJobPath(jobPath);
             WorkflowJobDto<TPayload> job = ManifestLoader.Load<WorkflowJobDto<TPayload>>(normalizedJobPath);
-            if (!job.IntegrityVerified)
-            {
-                throw new InvalidDataException("Job 未通过完整性验证。");
-            }
-
             if (!string.Equals(job.Kind, expectedKind, StringComparison.Ordinal))
             {
                 throw new InvalidDataException($"Job kind 必须为 {expectedKind}。");

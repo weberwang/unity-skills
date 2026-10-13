@@ -71,6 +71,46 @@ test("Newtonsoft 引用真实预编译程序集", () => {
   }
 });
 
+test("Job、验收和图片导入不依赖验收 SHA 字段", () => {
+  const readPackage = (relative) => readText(resolve(PACKAGE_ROOT, relative));
+  const manifestLoader = readPackage("Editor/Core/ManifestLoader.cs");
+  assert.doesNotMatch(manifestLoader, /SHA256|Sha256|Canonicalize|IntegrityVerified/);
+  assert.match(manifestLoader, /ResolveProjectRelative\(job\.SourcePath\)/);
+  assert.match(manifestLoader, /JTokenType\.Object/);
+
+  const dtoFiles = [
+    "Editor/Core/Models/CommonDtos.cs",
+    "Editor/Core/Models/ImageTaskDto.cs",
+    "Editor/ImagePipeline/ImageImportRequest.cs",
+    "Editor/ImagePipeline/ImageValidationResult.cs",
+    "Editor/ImagePipeline/ResourceRegistrationRecord.cs",
+    "Editor/VisualQA/VisualCaptureService.cs",
+  ];
+  for (const relative of dtoFiles) {
+    assert.doesNotMatch(readPackage(relative), /SourceSha256|PayloadSha256|EvidenceSha256|Sha256|sha256/,
+      `DTO 或结果仍暴露验收 SHA 字段：${relative}`);
+  }
+
+  for (const relative of [
+    "Editor/BuildPipeline/DeliveryPreflightService.cs",
+    "Editor/ImagePipeline/ImageValidationService.cs",
+  ]) {
+    assert.doesNotMatch(readPackage(relative), /SHA256|Sha256|sha256|hash-mismatch/,
+      `验收仍要求证据摘要：${relative}`);
+  }
+
+  const importer = readPackage("Editor/ImagePipeline/ImageImportService.cs");
+  assert.doesNotMatch(importer, /SourceSha256|expectedSha256|ComputeFileSha256|changed-during-staging/);
+  assert.match(importer, /RecordId\s*=\s*ComputeSha256/);
+  assert.match(readPackage("Editor/ImagePipeline/AssetTargetLock.cs"), /ComputeSha256/);
+  assert.match(readPackage("Editor/ImagePipeline/ImageValidationService.cs"),
+    /ValidateStagedSourceFile\s*\(/);
+  assert.ok(
+    importer.indexOf("ValidateStagedSourceFile(request, stagedPath)") < importer.indexOf("AtomicPlace(stagedPath, targetPath)"),
+    "正式落位前必须重新校验事务暂存文件的实际图片内容",
+  );
+});
+
 test("Unity 测试宿主固定官方 Pipeline 和本地 Toolkit", () => {
   const manifest = JSON.parse(readText(UNITY_HOST_MANIFEST));
   const dependencies = manifest.dependencies;

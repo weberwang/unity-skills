@@ -41,14 +41,14 @@ test("两个 3D Skill 具备有效入口和代理界面", () => {
 
 test("建模 Skill 定义几何交付和验证", () => {
   const text = readText(resolve(MODELING_DIR, "SKILL.md"));
-  for (const term of ["Visual Bible", "DCC MCP", "拓扑", "UV", "LOD", "Collider", "ModelImporter", "SHA-256", "BLOCKED", "$unity-game-3d-texturing", "$unity-game-qa-performance"]) assert.match(text, new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `建模 Skill 缺少职责或证据约束：${term}`);
+  for (const term of ["Visual Bible", "DCC MCP", "拓扑", "UV", "LOD", "Collider", "ModelImporter", "实际源文件位置", "实际 UV 位置与报告", "BLOCKED", "$unity-game-3d-texturing", "$unity-game-qa-performance"]) assert.match(text, new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `建模 Skill 缺少职责或证据约束：${term}`);
   assert.match(text, /不负责 PBR 纹理/);
   assert.match(text, /不自批/);
 });
 
 test("贴图 Skill 定义 PBR 交付和验证", () => {
   const text = readText(resolve(TEXTURING_DIR, "SKILL.md"));
-  for (const term of ["Visual Bible", "DCC MCP", "模型/UV 哈希", "PBR", "BaseColor", "Normal", "Metallic", "AO", "Smoothness", "sRGB", "URP", "TextureImporter", "Material", "BLOCKED", "$unity-game-3d-modeling"]) assert.match(text, new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `贴图 Skill 缺少职责或证据约束：${term}`);
+  for (const term of ["Visual Bible", "DCC MCP", "实际模型/UV 来源", "实际输出位置", "PBR", "BaseColor", "Normal", "Metallic", "AO", "Smoothness", "sRGB", "URP", "TextureImporter", "Material", "BLOCKED", "$unity-game-3d-modeling"]) assert.match(text, new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `贴图 Skill 缺少职责或证据约束：${term}`);
   assert.match(text, /不静默修改/);
   assert.match(text, /独立/);
   assert.match(text, /QA/);

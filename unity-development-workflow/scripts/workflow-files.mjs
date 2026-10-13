@@ -93,15 +93,6 @@ export function sha256File(path) {
   return createHash("sha256").update(readFileSync(absolute)).digest("hex");
 }
 
-/** 将 JSON 对象按键排序，生成与 Toolkit 一致的稳定哈希输入。 */
-export function canonicalizeJson(value) {
-  if (Array.isArray(value)) return "[" + value.map(canonicalizeJson).join(",") + "]";
-  if (value !== null && typeof value === "object") {
-    return "{" + Object.keys(value).sort().map((key) => JSON.stringify(key) + ":" + canonicalizeJson(value[key])).join(",") + "}";
-  }
-  return JSON.stringify(value);
-}
-
 /** 原子写入文本；临时文件严格位于目标目录。 */
 function writeAtomic(path, text) {
   mkdirSync(dirname(path), { recursive: true });
@@ -144,7 +135,7 @@ export function initializeDocs({ projectRoot, projectId, include, force = false 
   return targets;
 }
 
-/** 将项目内 JSON 契约封装成 Toolkit 可校验的 JSON Job。 */
+/** 将项目内 JSON 封装为执行快照；来源合同后续调整不通过摘要阻断执行。 */
 export function compileJsonJob({ projectRoot, kind, source, output }) {
   const root = validateProjectRoot(projectRoot);
   const sourcePath = ensureInsideProject(source, root, "源 JSON");
@@ -161,8 +152,6 @@ export function compileJsonJob({ projectRoot, kind, source, output }) {
     schemaVersion: "1.0",
     kind,
     sourcePath: relative(root, sourcePath).split(sep).join("/"),
-    sourceSha256: createHash("sha256").update(sourceBytes).digest("hex"),
-    payloadSha256: createHash("sha256").update(canonicalizeJson(payload), "utf8").digest("hex"),
     compiledAtUtc: new Date().toISOString(),
     payload,
   };

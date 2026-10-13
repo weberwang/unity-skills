@@ -26,7 +26,6 @@
     },
     "displayLayer": {"$ref": "#/$defs/displayLayer"},
     "responsiveContract": {"$ref": "#/$defs/responsiveContract"},
-    "candidateSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
     "stageReviews": {
       "type": "array",
       "items": {"$ref": "#/$defs/stageReview"},
@@ -90,30 +89,27 @@
     "metadata": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}}
   },
   "allOf": [
-    {"if": {"properties": {"workItemType": {"const": "SCENE"}}, "required": ["workItemType"]}, "then": {"required": ["scene", "responsiveContract", "candidateSha256"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["displayLayer"]}}},
-    {"if": {"properties": {"workItemType": {"const": "DISPLAY_LAYER"}}, "required": ["workItemType"]}, "then": {"required": ["displayLayer", "responsiveContract", "candidateSha256"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["scene"]}}},
+    {"if": {"properties": {"workItemType": {"const": "SCENE"}}, "required": ["workItemType"]}, "then": {"required": ["scene", "responsiveContract"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["displayLayer"]}}},
+    {"if": {"properties": {"workItemType": {"const": "DISPLAY_LAYER"}}, "required": ["workItemType"]}, "then": {"required": ["displayLayer", "responsiveContract"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["scene"]}}},
     {"if": {"properties": {"workItemType": {"enum": ["PROJECT", "FOUNDATION", "INTEGRATION", "RELEASE"]}}, "required": ["workItemType"]}, "then": {"not": {"anyOf": [{"required": ["scene"]}, {"required": ["displayLayer"]}, {"required": ["responsiveContract"]}, {"required": ["stageReviews"]}]}}}
   ],
   "$defs": {
     "stageReview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage", "deliverableSha256"],
+      "required": ["stage"],
       "properties": {
         "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "deliverableSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
         "confirmation": {"$ref": "#/$defs/stageConfirmation"}
       }
     },
     "stageConfirmation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["workItemId", "baselineHash", "stage", "deliverableSha256", "confirmedBy", "confirmedAt", "userMessageRef"],
+      "required": ["workItemId", "stage", "confirmedBy", "confirmedAt", "userMessageRef"],
       "properties": {
         "workItemId": {"type": "string", "minLength": 1},
-        "baselineHash": {"type": "string", "minLength": 1},
         "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "deliverableSha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
         "confirmedBy": {"type": "string", "minLength": 1},
         "confirmedAt": {"type": "string", "format": "date-time"},
         "userMessageRef": {"type": "string", "minLength": 1}
@@ -162,7 +158,7 @@
         "resourceResolution": {"$ref": "#/$defs/resourceResolution"},
         "performanceBudget": {"$ref": "#/$defs/performanceBudget"},
         "representativeViewports": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/representativeViewport"}},
-        "requiredRuntimeEvidence": {"type": "array", "minItems": 10, "uniqueItems": true, "items": {"enum": ["gameView", "screen", "backbuffer", "canvasScalerOrPanelSettings", "camera", "screenSafeArea", "inputHit", "resizeOrientationTrajectory", "screenshot", "candidateSha256"]}}
+        "requiredRuntimeEvidence": {"type": "array", "minItems": 10, "uniqueItems": true, "items": {"enum": ["gameView", "screen", "backbuffer", "canvasScalerOrPanelSettings", "camera", "screenSafeArea", "inputHit", "resizeOrientationTrajectory", "screenshot", "supportedOrientations"]}}
       },
       "allOf": [
         {"if": {"properties": {"uiSystem": {"enum": ["UGUI", "World Space Canvas"]}}}, "then": {"properties": {"canvasScaler": {"properties": {"status": {"const": "configured"}}}, "panelSettings": {"properties": {"status": {"const": "not-applicable"}}}}}},

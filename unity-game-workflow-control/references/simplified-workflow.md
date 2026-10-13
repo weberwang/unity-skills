@@ -21,7 +21,7 @@
 | --- | --- | --- |
 | `V0` | 分流 | 判断是否需要场景 Work Item，并记录场景入口和范围 |
 | `V1` | 场景定义 | 场景目标、入口、持久化对象和功能契约 |
-| `V2` | 拆解确认 | 组件、资源、脚本、状态和所有权拆解 |
+| `V2` | 拆解确认 | 图片框选与图内中文标注展示组件、资源、脚本、状态和所有权拆解；不输出文本拆解说明 |
 | `V3` | 正式资源与组合验收 | 正式资源、Importer 设置、Prefab 组合和同屏预验收 |
 | `V4` | 正式实现与运行验收 | 正式 Scene、运行轨迹、功能/视觉/性能联合证据 |
 
@@ -31,7 +31,7 @@ V0-V4 是场景和独立显示层证据的顺序，不是绕过全局状态的�
 
 场景 Work Item 只负责自身玩法、场景画面和场景自有常驻 HUD。`modal`、`popup`、`drawer`、`toast` 等瞬态层建立独立 `DISPLAY_LAYER` Work Item，携带 `displayLayerId` 和 `hostSceneId`，并独立完成资源、接线、输入、关闭、恢复和 V4 运行轨迹。`hostSceneId` 是上下文，不是宿主场景完成依赖。
 
-可见 Work Item 必须冻结 Unity 原生 `responsiveContract`；它覆盖 Unity UI 系统、逻辑空间、backbuffer/Panel/RenderTexture、CanvasScaler/PanelSettings/Camera、安全区、InputSystem/EventSystem、resize/方向、文本本地化、资源源密度、性能预算、代表性视口和所需运行证据。实施包通过 `responsiveContractRef` 的 `path`、`version`、`sha256` 绑定同一合同文件；包含 `SCENE` 与 `DISPLAY_LAYER` 的包拒绝执行。
+可见 Work Item 实施前用 Unity 原生 `responsiveContract` 明确目标；它覆盖 Unity UI 系统、逻辑空间、backbuffer/Panel/RenderTexture、CanvasScaler/PanelSettings/Camera、安全区、InputSystem/EventSystem、resize/方向、文本本地化、资源源密度、性能预算、代表性视口和所需运行证据。实施包通过 `responsiveContractRef` 的 `path`、`version` 记录合同来源；包含 `SCENE` 与 `DISPLAY_LAYER` 的包拒绝执行。验收依据用户要求和实际完成情况，中途调整无需回改合同，不校验 SHA。
 
 ## 输出投影
 

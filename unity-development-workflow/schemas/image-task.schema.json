@@ -56,19 +56,17 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "type", "path", "sha256", "subjectId", "subjectVersion",
-        "itemId", "itemElementIndex", "itemVersion", "itemSpecSha256", "resourceId"
+        "type", "path", "subjectId", "subjectVersion",
+        "itemId", "itemElementIndex", "itemVersion", "resourceId"
       ],
       "properties": {
         "type": {"const": "split-plan"},
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "subjectId": {"$ref": "common.schema.json#/$defs/taskId"},
         "subjectVersion": {"type": "string", "minLength": 1},
         "itemId": {"$ref": "common.schema.json#/$defs/taskId"},
         "itemElementIndex": {"type": "integer", "minimum": 1},
         "itemVersion": {"type": "string", "minLength": 1},
-        "itemSpecSha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "resourceId": {"$ref": "common.schema.json#/$defs/taskId"}
       }
     },
@@ -88,10 +86,9 @@
     "selectedCandidate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "sha256", "visualVersion"],
+      "required": ["path", "visualVersion"],
       "properties": {
         "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
         "visualVersion": {"type": "string", "minLength": 1}
       }
     },

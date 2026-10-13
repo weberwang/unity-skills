@@ -35,12 +35,10 @@ decorativeBands:
     - edge: TOP
       resourceId: art.arena-side-top
       path: Assets/Art/Runtime/Backgrounds/ArenaSideTop.png
-      sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       interactive: false
     - edge: BOTTOM
       resourceId: art.arena-side-bottom
       path: Assets/Art/Runtime/Backgrounds/ArenaSideBottom.png
-      sha256: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
       interactive: false
 testResolutions:
   - id: portrait-reference

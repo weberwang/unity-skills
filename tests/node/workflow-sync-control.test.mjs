@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,10 +19,9 @@ import { validateUnityResponsiveContract } from '../../unity-game-workflow-contr
 import { stageConfirmationBlockers } from '../../unity-game-workflow-control/scripts/runtime/stage-confirmation.mjs';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
-const CANDIDATE = `sha256:${'b'.repeat(64)}`;
 const REQUIRED_EVIDENCE = [
   'gameView', 'screen', 'backbuffer', 'canvasScalerOrPanelSettings', 'camera',
-  'screenSafeArea', 'inputHit', 'resizeOrientationTrajectory', 'screenshot', 'candidateSha256',
+  'screenSafeArea', 'inputHit', 'resizeOrientationTrajectory', 'screenshot', 'supportedOrientations',
 ];
 
 /** 写入 JSON 工件，保证合同文件和临时测试仓库可复现。 */
@@ -75,7 +73,6 @@ function makeSceneWork(overrides = {}) {
     globalState: 'VALIDATING',
     scene: { sceneId: 'MainScene', stage: 'V4', status: 'IN_PROGRESS' },
     responsiveContract: makeContract(),
-    candidateSha256: CANDIDATE,
     baselineHash: HASH,
     revision: 0,
     objective: '验证场景响应式闭环',
@@ -108,8 +105,7 @@ function makeResponsiveEvidence(repo = null) {
     const path = `${source}.evidence`;
     const bytes = `runtime-evidence:${source}`;
     if (repo) writeFileSync(join(repo, path), bytes, 'utf8');
-    const sha256 = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-    return { source, measured: true, path, sha256, size: { width: 1920, height: 1080 }, orientation: 'landscape' };
+    return { source, measured: true, path, size: { width: 1920, height: 1080 }, orientation: 'landscape' };
   };
   return {
     gameView: artifact('GameView'),
@@ -121,7 +117,7 @@ function makeResponsiveEvidence(repo = null) {
     inputHit: { system: 'InputSystem', eventSystem: 'EventSystem', hit: true, coordinates: { screen: { x: 20, y: 20 }, local: { x: 20, y: 20 } } },
     resizeOrientationTrajectory: { sameProcess: true, events: [{ type: 'resize', path: 'evidence/resize.json' }, { type: 'orientation', path: 'evidence/orientation.json' }] },
     screenshot: artifact('Screenshot'),
-    candidateSha256: CANDIDATE,
+    supportedOrientations: ['portrait', 'landscape'],
   };
 }
 
@@ -141,7 +137,7 @@ function makeVisibleEvidence(work, overrides = {}, repo = null) {
     gateResults: { F0: { status: 'PASS' }, F1: { status: 'PASS' }, F2: { status: 'PASS' }, F3: { status: 'PASS' }, F4: { status: 'NOT_RUN' } },
     unityEvidence: { editorStable: 'PASS', compile: 'PASS', domainReload: 'PASS', console: 'PASS', editMode: 'PASS', playMode: 'PASS', scenePrefabImporterGuid: 'PASS', build: 'PASS', device: 'NOT_RUN', release: 'NOT_RUN' },
     responsiveEvidence: makeResponsiveEvidence(repo),
-    productionContractAudit: { status: 'PASS', contractVersion: work.responsiveContract.version, candidateSha256: CANDIDATE, staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false },
+    productionContractAudit: { status: 'PASS', contractVersion: work.responsiveContract.version, staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false },
     ...overrides,
   };
 }
@@ -150,7 +146,6 @@ function makeVisibleEvidence(work, overrides = {}, repo = null) {
 function makeVisiblePackage(work, repo, overrides = {}) {
   const contractPath = join(repo, 'responsive-contract.json');
   writeJson(contractPath, work.responsiveContract);
-  const sha256 = `sha256:${createHash('sha256').update(readFileSync(contractPath)).digest('hex')}`;
   return {
     schemaVersion: '1.0',
     packageId: 'PKG-VISIBLE',
@@ -158,7 +153,7 @@ function makeVisiblePackage(work, repo, overrides = {}) {
     workItemType: work.workItemType,
     baselineHash: work.baselineHash,
     packageStatus: 'FROZEN',
-    responsiveContractRef: { path: 'responsive-contract.json', version: work.responsiveContract.version, sha256 },
+    responsiveContractRef: { path: 'responsive-contract.json', version: work.responsiveContract.version },
     fileOwnership: { 'Assets/UI/Main.cs': 'ui-worker', 'Assets/UI/Main.cs.meta': 'ui-worker' },
     unityOwnership: { metaPairs: [{ asset: 'Assets/UI/Main.cs', meta: 'Assets/UI/Main.cs.meta' }], guidImporter: ['Assets/UI/Main.cs'] },
     executionUnits: [{
@@ -178,18 +173,13 @@ function schemaValidator(name) {
   return ajv.compile(JSON.parse(readFileSync(resolve(`unity-game-workflow-control/schemas/${name}`), 'utf8')));
 }
 
-/** 为某阶段构造绑定当前工作项、基线与交付摘要的测试确认记录。 */
+/** 为某阶段构造绑定当前工作项和人工确认记录的测试数据。 */
 function makeStageReview(work, stage, options = {}) {
-  const current = work.workItemType === 'SCENE' ? work.scene.stage : work.displayLayer.stage;
-  const stageNumber = Number(stage.slice(1));
-  const deliverableSha256 = options.deliverableSha256 ?? (stage === current ? work.candidateSha256 : `sha256:${String(stageNumber + 1).repeat(64)}`);
-  const review = { stage, deliverableSha256 };
+  const review = { stage };
   if (options.confirmation !== null) {
     review.confirmation = {
       workItemId: work.workItemId,
-      baselineHash: work.baselineHash,
       stage,
-      deliverableSha256,
       confirmedBy: 'project-owner',
       confirmedAt: '2026-09-30T10:00:00+08:00',
       userMessageRef: `user-message:${work.workItemId}:${stage}`,
@@ -230,7 +220,6 @@ test('stageReviews 严格拒绝重复阶段、错误时间和非可见工作项'
   const nonVisible = { ...work, workItemType: 'FOUNDATION', stageId: 'foundation-engineering' };
   delete nonVisible.scene;
   delete nonVisible.responsiveContract;
-  delete nonVisible.candidateSha256;
   assert.throws(() => validateWorkItem({ ...nonVisible, stageReviews: [] }), /只有 SCENE 和 DISPLAY_LAYER/);
   assert.equal(schemaValidator('work-item.schema.json')({ ...nonVisible, stageReviews: [] }), false);
   assert.doesNotThrow(() => validateWorkItem(nonVisible));
@@ -305,7 +294,7 @@ test('直接迁移重算阶段门；F4 或 userDecisionRequired=false 不能绕�
   assert.equal(transitionWorkItem(forgedInspection, 'BLOCKED', { reason: '待用户确认' }).globalState, 'BLOCKED');
 });
 
-test('COMPLETE 必须处于 V4；候选 SHA 更新会使当前阶段确认失效', () => {
+test('COMPLETE 必须处于 V4；实现调整不使既有阶段确认失效', () => {
   const v3 = makeSceneWork({
     globalState: 'INTEGRATING', scene: { sceneId: 'MainScene', stage: 'V3', status: 'PASS' },
     actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
@@ -318,12 +307,12 @@ test('COMPLETE 必须处于 V4；候选 SHA 更新会使当前阶段确认失效
     actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
   });
   changedCandidate.stageReviews = [makeStageReview(changedCandidate, 'V0')];
-  changedCandidate.candidateSha256 = HASH;
-  assert.ok(stageConfirmationBlockers(changedCandidate).some((item) => item.code === 'STAGE_CANDIDATE_STALE'));
-  assert.throws(() => transitionWorkItem({ work: changedCandidate, blockers: [], evidence: null, pkg: null }, 'PASSED'), /未绑定当前 candidateSha256/);
+  // 阶段完成后允许实现和预算细节继续微调，既有用户确认仍按工作项身份和阶段有效。
+  changedCandidate.responsiveContract.performanceBudget.memoryMb += 128;
+  assert.deepEqual(stageConfirmationBlockers(changedCandidate), []);
 });
 
-test('确认绑定工作项和基线；DISPLAY_LAYER 不继承宿主 SCENE 的确认身份', () => {
+test('确认绑定工作项和阶段身份；不绑定基线摘要，DISPLAY_LAYER 不继承宿主 SCENE 确认', () => {
   const scene = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
   scene.stageReviews = [makeStageReview(scene, 'V0')];
   const layer = makeDisplayLayerWork({
@@ -335,13 +324,10 @@ test('确认绑定工作项和基线；DISPLAY_LAYER 不继承宿主 SCENE 的�
   const inspection = inspect({ repo: resolve(layerPath, '..'), 'work-item': layerPath });
   assert.ok(inspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_STALE'));
 
-  const staleBaseline = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
-  staleBaseline.stageReviews = [makeStageReview(staleBaseline, 'V0')];
-  staleBaseline.baselineHash = `sha256:${'c'.repeat(64)}`;
-  const stalePath = join(resolve(layerPath, '..'), 'stale.json');
-  writeJson(stalePath, staleBaseline);
-  const staleInspection = inspect({ repo: resolve(stalePath, '..'), 'work-item': stalePath });
-  assert.ok(staleInspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_STALE'));
+  const changedBaseline = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
+  changedBaseline.stageReviews = [makeStageReview(changedBaseline, 'V0')];
+  changedBaseline.baselineHash = `sha256:${'c'.repeat(64)}`;
+  assert.deepEqual(stageConfirmationBlockers(changedBaseline), []);
   rmSync(resolve(layerPath, '..'), { recursive: true, force: true });
 });
 
@@ -387,7 +373,7 @@ test('合法 DISPLAY_LAYER 包绑定 displayLayerId/hostSceneId 和合同引用'
   }
 });
 
-test('V4 PASS 缺少真实响应式证据或候选 SHA 时 fail closed', () => {
+test('V4 PASS 缺少真实响应式证据时 fail closed，SHA 字段不再是验收输入', () => {
   const repo = mkdtempSync(join(tmpdir(), 'unity-sync-evidence-'));
   try {
     const work = makeSceneWork();
@@ -445,28 +431,51 @@ test('屏幕 UI 使用固定设计分辨率和方向对应的 Match', () => {
   assert.match(validateUnityResponsiveContract(makeContract({ canvasScaler: { ...makeContract().canvasScaler, screenMatchMode: 'Expand' } })).join('\n'), /MatchWidthOrHeight/);
 });
 
-test('响应式合同引用必须绑定当前 Work Item 的完整合同内容', () => {
+test('响应式合同引用记录来源版本，合同内容和版本变动不阻塞实施', () => {
   const repo = mkdtempSync(join(tmpdir(), 'unity-sync-contract-'));
   try {
     const work = makeSceneWork();
     const pkg = makeVisiblePackage(work, repo);
     const drifted = { ...work.responsiveContract, performanceBudget: { ...work.responsiveContract.performanceBudget, memoryMb: 256 } };
+    drifted.version = 'unity-responsive/2.0';
     writeJson(join(repo, 'responsive-contract.json'), drifted);
-    pkg.responsiveContractRef.sha256 = `sha256:${createHash('sha256').update(readFileSync(join(repo, 'responsive-contract.json'))).digest('hex')}`;
-    assert.throws(() => validateImplementationPackage(pkg, work, repo), /未绑定当前 Work Item/);
+    pkg.responsiveContractRef.version = 'unity-responsive/legacy-source';
+    assert.doesNotThrow(() => validateImplementationPackage(pkg, work, repo));
+
+    writeFileSync(join(repo, 'responsive-contract.json'), '{invalid json', 'utf8');
+    assert.throws(() => validateImplementationPackage(pkg, work, repo), /不是有效 JSON/);
+    writeJson(join(repo, 'responsive-contract.json'), null);
+    assert.throws(() => validateImplementationPackage(pkg, work, repo), /必须是 JSON 对象/);
+    writeJson(join(repo, 'responsive-contract.json'), ['not', 'a', 'contract']);
+    assert.throws(() => validateImplementationPackage(pkg, work, repo), /必须是 JSON 对象/);
+    pkg.responsiveContractRef.path = '../outside.json';
+    assert.throws(() => validateImplementationPackage(pkg, work, repo), /必须位于仓库内/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
 });
 
-test('V4 响应式证据候选 SHA 必须绑定当前 Work Item', () => {
-  const repo = mkdtempSync(join(tmpdir(), 'unity-sync-candidate-'));
+test('V4 真实工件无需 SHA，内容变化可继续验收，缺失或越界工件仍失败', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-sync-artifact-'));
   try {
     const work = makeSceneWork();
     const evidence = makeVisibleEvidence(work, {}, repo);
-    evidence.responsiveEvidence.candidateSha256 = HASH;
-    evidence.productionContractAudit.candidateSha256 = HASH;
-    assert.throws(() => validateEvidence(evidence, work, null, repo), /未绑定当前候选/);
+    assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), true);
+    assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+    evidence.contractVersions.responsiveContract = 'historical-source-version';
+    evidence.productionContractAudit.contractVersion = 'different-audit-source';
+    assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+    delete evidence.productionContractAudit.contractVersion;
+    assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), false);
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /productionContractAudit/);
+    evidence.productionContractAudit.contractVersion = 'different-audit-source';
+    writeFileSync(join(repo, evidence.responsiveEvidence.screenshot.path), 'tampered content', 'utf8');
+    assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+
+    evidence.responsiveEvidence.screenshot.path = 'missing.evidence';
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /指向的运行工件不存在/);
+    evidence.responsiveEvidence.screenshot.path = '../outside.evidence';
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /必须位于仓库内/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -479,6 +488,7 @@ test('V4 单方向布局无需跨方向事件，双方向和自动方向仍需�
     for (const supported of [['landscape'], ['portrait'], ['portrait', 'landscape'], ['auto']]) {
       const work = makeSceneWork({ responsiveContract: makeContract({ orientation: { supported, runtimeReflow: true } }) });
       const evidence = makeVisibleEvidence(work, {}, repo);
+      evidence.responsiveEvidence.supportedOrientations = supported;
       evidence.responsiveEvidence.resizeOrientationTrajectory.events = [{ type: 'resize' }, { type: 'resize' }];
       assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), true);
       if (supported.length === 1 && supported[0] !== 'auto') {
@@ -499,13 +509,26 @@ test('V4 单方向布局无需跨方向事件，双方向和自动方向仍需�
   }
 });
 
-test('V4 响应式证据必须回读真实工件并校验内容 SHA', () => {
+test('V4 响应式证据按本次支持方向决定是否要求方向切换轨迹', () => {
   const repo = mkdtempSync(join(tmpdir(), 'unity-sync-artifact-'));
   try {
     const work = makeSceneWork();
+    work.responsiveContract = makeContract({ orientation: { supported: ['landscape'], runtimeReflow: true } });
     const evidence = makeVisibleEvidence(work, {}, repo);
-    writeFileSync(join(repo, evidence.responsiveEvidence.screenshot.path), 'tampered', 'utf8');
-    assert.throws(() => validateEvidence(evidence, work, null, repo), /screenshot\.sha256/);
+    evidence.responsiveEvidence.supportedOrientations = ['landscape'];
+    evidence.responsiveEvidence.resizeOrientationTrajectory.events = [{ type: 'resize' }, { type: 'resize' }];
+    assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+    // 即使合同只记载横屏，本次运行显示支持双方向时仍必须记录方向切换。
+    evidence.responsiveEvidence.supportedOrientations = ['landscape', 'portrait'];
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /resize 和 orientation/);
+    evidence.responsiveEvidence.resizeOrientationTrajectory.events.push({ type: 'orientation' });
+    assert.doesNotThrow(() => validateEvidence(evidence, work, null, repo));
+    evidence.responsiveEvidence.supportedOrientations = ['landscape', 'landscape'];
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /supportedOrientations/);
+    assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), false);
+    delete evidence.responsiveEvidence.supportedOrientations;
+    assert.equal(schemaValidator('evidence-manifest.schema.json')(evidence), false);
+    assert.throws(() => validateEvidence(evidence, work, null, repo), /supportedOrientations/);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

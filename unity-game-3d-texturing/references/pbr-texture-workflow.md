@@ -41,4 +41,4 @@ DCC 能力发现至少逐项记录连接标识、活动源文件、允许的输�
 
 ## 交接与失败
 
-每个纹理版本绑定模型和 UV SHA-256，记录 DCC、Unity Editor、Unity CLI、Pipeline 与 Toolkit 版本、提示词、烘焙参数、主通道、打包语义、Importer、Material GUID、来源与许可。发现模型或 UV 变化后立即使旧烘焙和贴图证据失效并退回重做。缺少 Visual Bible、模型/UV 哈希、DCC 能力证据、UV 报告、通道定义、Unity 证据或许可时，逐项记录阻断原因，不得通过。
+每个纹理版本记录实际模型和 UV 来源位置，以及 DCC、Unity Editor、Unity CLI、Pipeline 与 Toolkit 版本、提示词、烘焙参数、主通道、打包语义、Importer、Material GUID、来源与许可。模型或 UV 调整后验证实际贴图映射与烘焙结果，只修复受影响部分；无需回改合同或比对 SHA。缺少 Visual Bible、实际模型/UV 来源、DCC 能力证据、UV 报告、通道定义、Unity 证据或许可时，逐项记录阻断原因，不得通过。

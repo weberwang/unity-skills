@@ -4,11 +4,10 @@ import { VISUAL_STAGES } from './visible-contract.mjs';
 
 export { VISUAL_STAGES };
 
-const HASH_PATTERN = /^sha256:[a-f0-9]{64}$/;
 const VISIBLE_TYPES = new Set(['SCENE', 'DISPLAY_LAYER']);
-const REVIEW_FIELDS = new Set(['stage', 'deliverableSha256', 'confirmation']);
+const REVIEW_FIELDS = new Set(['stage', 'confirmation']);
 const CONFIRMATION_FIELDS = new Set([
-  'workItemId', 'baselineHash', 'stage', 'deliverableSha256', 'confirmedBy', 'confirmedAt', 'userMessageRef',
+  'workItemId', 'stage', 'confirmedBy', 'confirmedAt', 'userMessageRef',
 ]);
 
 /** 判断值是否为不含数组的普通记录。 */
@@ -43,7 +42,7 @@ function isValidIsoTimestamp(value) {
   return true;
 }
 
-/** 检查阶段确认字段的严格形状；绑定当前工作项的语义由门禁单独检查。 */
+/** 检查阶段确认字段的严格形状；确认只绑定工作项身份、阶段和用户确认记录。 */
 export function validateStageReviewsShape(work) {
   const errors = [];
   if (work.stageReviews === undefined) return errors;
@@ -60,7 +59,6 @@ export function validateStageReviewsShape(work) {
     if (!VISUAL_STAGES.includes(review.stage)) errors.push(`${label}.stage 必须是 V0-V4`);
     else if (seenStages.has(review.stage)) errors.push(`Work Item.stageReviews 不能重复阶段：${review.stage}`);
     else seenStages.add(review.stage);
-    if (!HASH_PATTERN.test(review.deliverableSha256 ?? '')) errors.push(`${label}.deliverableSha256 必须是 sha256 摘要`);
     if (review.confirmation !== undefined) {
       const confirmation = review.confirmation;
       if (!isRecord(confirmation)) {
@@ -68,11 +66,10 @@ export function validateStageReviewsShape(work) {
         continue;
       }
       for (const key of Object.keys(confirmation)) if (!CONFIRMATION_FIELDS.has(key)) errors.push(`${label}.confirmation 含未声明字段：${key}`);
-      for (const field of ['workItemId', 'baselineHash', 'confirmedBy', 'userMessageRef']) {
+      for (const field of ['workItemId', 'confirmedBy', 'userMessageRef']) {
         if (!isNonEmptyString(confirmation[field])) errors.push(`${label}.confirmation.${field} 必须为非空字符串`);
       }
       if (!VISUAL_STAGES.includes(confirmation.stage)) errors.push(`${label}.confirmation.stage 必须是 V0-V4`);
-      if (!HASH_PATTERN.test(confirmation.deliverableSha256 ?? '')) errors.push(`${label}.confirmation.deliverableSha256 必须是 sha256 摘要`);
       if (!isValidIsoTimestamp(confirmation.confirmedAt)) errors.push(`${label}.confirmation.confirmedAt 必须是有效 ISO 8601 时间`);
     }
   }
@@ -104,16 +101,9 @@ export function stageConfirmationBlockers(work, evidence = null, targetState = w
       continue;
     }
     const confirmation = review.confirmation;
-    const bindingsMatch = confirmation.workItemId === work.workItemId
-      && confirmation.baselineHash === work.baselineHash
-      && confirmation.stage === stage
-      && confirmation.deliverableSha256 === review.deliverableSha256;
+    const bindingsMatch = confirmation.workItemId === work.workItemId && confirmation.stage === stage;
     if (!bindingsMatch) {
-      blockers.push({ code: 'STAGE_CONFIRMATION_STALE', message: `${stage} 人工确认与当前 Work Item、基线或阶段摘要不匹配`, next: `取得当前 ${stage} 摘要的用户确认并更新 stageReviews` });
-      continue;
-    }
-    if (stage === currentStage && currentNeedsConfirmation && review.deliverableSha256 !== work.candidateSha256) {
-      blockers.push({ code: 'STAGE_CANDIDATE_STALE', message: `${stage} 人工确认未绑定当前 candidateSha256`, next: `取得当前候选摘要的用户确认并更新 ${stage} stageReviews` });
+      blockers.push({ code: 'STAGE_CONFIRMATION_STALE', message: `${stage} 人工确认与当前 Work Item 或阶段不匹配`, next: `由原确认人确认当前 ${stage} 阶段，或记录对应阶段的用户确认` });
     }
   }
   return blockers;

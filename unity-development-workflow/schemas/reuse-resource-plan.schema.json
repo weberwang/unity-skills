@@ -12,16 +12,12 @@
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9.-]{0,95}$"
     },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[a-fA-F0-9]{64}$"
-    },
     "reuseResourcePlan": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "existingAssetId", "reuseReason", "reuseMode", "effectImagePixelReuse",
-        "sourcePath", "sourceSha256", "unityGuid", "assetRegisterEvidence",
+        "sourcePath", "unityGuid", "assetRegisterEvidence",
         "licenseEvidence", "visualBibleStyleReview", "importerEvidence", "unityValidationEvidence"
       ],
       "properties": {
@@ -30,35 +26,31 @@
         "reuseMode": {"enum": ["REGISTERED_ASSET", "APPROVED_LIBRARY_ASSET", "EXISTING_RUNTIME_ASSET"]},
         "effectImagePixelReuse": {"const": "FORBIDDEN"},
         "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
-        "sourceSha256": {"$ref": "#/$defs/sha256"},
         "unityGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
         "assetRegisterEvidence": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path", "sha256", "recordId"],
+          "required": ["path", "recordId"],
           "properties": {
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"},
             "recordId": {"$ref": "#/$defs/taskId"}
           }
         },
         "licenseEvidence": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path", "sha256", "rightsStatus"],
+          "required": ["path", "rightsStatus"],
           "properties": {
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"},
             "rightsStatus": {"const": "APPROVED"}
           }
         },
         "visualBibleStyleReview": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path", "sha256", "subjectId", "subjectVersion", "decision"],
+          "required": ["path", "subjectId", "subjectVersion", "decision"],
           "properties": {
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"},
             "subjectId": {"$ref": "#/$defs/taskId"},
             "subjectVersion": {"type": "string", "minLength": 1},
             "decision": {"const": "COMPATIBLE"}
@@ -67,19 +59,17 @@
         "importerEvidence": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path", "sha256"],
+          "required": ["path"],
           "properties": {
-            "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"}
+            "path": {"$ref": "#/$defs/projectRelativePath"}
           }
         },
         "unityValidationEvidence": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path", "sha256", "status"],
+          "required": ["path", "status"],
           "properties": {
             "path": {"$ref": "#/$defs/projectRelativePath"},
-            "sha256": {"$ref": "#/$defs/sha256"},
             "status": {"const": "PASS"}
           }
         }
