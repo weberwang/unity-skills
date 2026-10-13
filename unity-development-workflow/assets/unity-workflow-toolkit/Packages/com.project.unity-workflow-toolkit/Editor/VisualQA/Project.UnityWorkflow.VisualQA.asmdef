@@ -2,7 +2,9 @@
   "name": "Project.UnityWorkflow.VisualQA",
   "rootNamespace": "Project.UnityWorkflow.VisualQA",
   "references": [
-    "Project.UnityWorkflow.Core"
+    "Project.UnityWorkflow.Core",
+    "Project.UnityWorkflow.Runtime",
+    "Unity.ugui"
   ],
   "includePlatforms": [
     "Editor"

@@ -550,28 +550,161 @@
               "existingAssetId": {"$ref": "#/$defs/taskId"},
               "reuseReason": {"type": "string", "minLength": 1},
               "reuseResourcePlan": {"$ref": "reuse-resource-plan.schema.json#/$defs/reuseResourcePlan"},
-              "splitRationale": {"type": "string", "minLength": 1}
+              "splitRationale": {"type": "string", "minLength": 1},
+              "nineSlice": {
+                "$ref": "#/$defs/nineSlice"
+              }
             },
             "allOf": [
-              {
-                "if": {"properties": {"action": {"const": "REUSE"}}, "required": ["action"]},
-                "then": {"required": ["existingAssetId", "reuseReason", "reuseResourcePlan"]},
-                "else": {"not": {"required": ["reuseResourcePlan"]}}
-              },
-              {
-                "if": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}, "required": ["delivery"]},
-                "then": {"not": {"anyOf": [{"required": ["targetSize"]}, {"required": ["alphaRequired"]}, {"required": ["pivot"]}, {"required": ["pixelsPerUnit"]}, {"required": ["border"]}]}},
-                "else": {"required": ["targetSize", "alphaRequired", "pivot", "pixelsPerUnit", "border"]}
-              },
-              {
-                "if": {"properties": {"action": {"enum": ["MODEL_3D", "MATERIAL", "VFX", "CODE", "PROGRAMMATIC"]}}, "required": ["action"]},
-                "then": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}}
-              },
-              {
-                "if": {"properties": {"action": {"enum": ["GENERATE", "REDRAW", "REUSE"]}}, "required": ["action"]},
-                "then": {"properties": {"delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE"]}}}
-              }
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "const": "REUSE"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "required": [
+        "existingAssetId",
+        "reuseReason",
+        "reuseResourcePlan"
+      ]
+    },
+    "else": {
+      "not": {
+        "required": [
+          "reuseResourcePlan"
+        ]
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "delivery": {
+          "const": "NOT_APPLICABLE"
+        }
+      },
+      "required": [
+        "delivery"
+      ]
+    },
+    "then": {
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "targetSize"
             ]
+          },
+          {
+            "required": [
+              "alphaRequired"
+            ]
+          },
+          {
+            "required": [
+              "pivot"
+            ]
+          },
+          {
+            "required": [
+              "pixelsPerUnit"
+            ]
+          },
+          {
+            "required": [
+              "border"
+            ]
+          }
+        ]
+      }
+    },
+    "else": {
+      "required": [
+        "targetSize",
+        "alphaRequired",
+        "pivot",
+        "pixelsPerUnit",
+        "border"
+      ]
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "enum": [
+            "MODEL_3D",
+            "MATERIAL",
+            "VFX",
+            "CODE",
+            "PROGRAMMATIC"
+          ]
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "properties": {
+        "delivery": {
+          "const": "NOT_APPLICABLE"
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "enum": [
+            "GENERATE",
+            "REDRAW",
+            "REUSE"
+          ]
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "properties": {
+        "delivery": {
+          "enum": [
+            "SINGLE_SPRITE",
+            "SPRITE_SHEET",
+            "ATLAS",
+            "UI_TEXTURE"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "assetType": {
+          "const": "UI_SKIN"
+        }
+      },
+      "required": [
+        "assetType"
+      ]
+    },
+    "then": {
+      "required": [
+        "nineSlice"
+      ]
+    }
+  }
+]
           }
         },
         "excludedElements": {
@@ -600,7 +733,10 @@
         "projectStateVersion": {"type": "string", "minLength": 1},
         "buildVersion": {"type": "string", "minLength": 1},
         "artifactType": {"enum": ["WINDOWS_EXECUTABLE", "ANDROID_APK", "ANDROID_APP_BUNDLE", "IOS_IPA"]},
-        "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]}
+        "platform": {"enum": ["WINDOWS", "ANDROID", "IOS", "IPADOS"]},
+        "qualityResults": {
+          "$ref": "#/$defs/artQualityResults"
+        }
       },
       "allOf": [
         {
@@ -677,6 +813,216 @@
           "then": {"required": ["failureReason"]}
         }
       ]
+    },
+    "nineSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "reason"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "stretch",
+            "not-applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceSize": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "border": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "description": "Unity 源像素顺序：left,bottom,right,top；不可与显示框尺寸混用。"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "stretch"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "sourceSize",
+              "border"
+            ],
+            "properties": {
+              "border": {
+                "contains": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "sourceSize"
+                  ]
+                },
+                {
+                  "required": [
+                    "border"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "artQualityResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "themeFit",
+        "audienceFit",
+        "gameplayReadability",
+        "viewingComfort",
+        "artCompletion"
+      ],
+      "properties": {
+        "themeFit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "PASS",
+                "FAIL",
+                "NOT_RUN"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "audienceFit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "PASS",
+                "FAIL",
+                "NOT_RUN"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "gameplayReadability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "PASS",
+                "FAIL",
+                "NOT_RUN"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "viewingComfort": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "PASS",
+                "FAIL",
+                "NOT_RUN"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "artCompletion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "PASS",
+                "FAIL",
+                "NOT_RUN"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
     }
   }
 }

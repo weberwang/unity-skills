@@ -4,11 +4,32 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "projectId", "version", "sourceRevision", "projectStateVersion", "status", "designPillars", "artDirection",
-    "worldLanguage", "assetLanguage", "palette", "lighting", "materials", "camera",
-    "uiLanguage", "typography", "iconography", "motionLanguage", "readabilityRules",
-    "avoid", "referencePolicy", "assetRegeneration", "directionCandidates", "reviews"
-  ],
+  "schemaVersion",
+  "projectId",
+  "version",
+  "sourceRevision",
+  "projectStateVersion",
+  "status",
+  "designPillars",
+  "artDirection",
+  "worldLanguage",
+  "assetLanguage",
+  "palette",
+  "lighting",
+  "materials",
+  "camera",
+  "uiLanguage",
+  "typography",
+  "iconography",
+  "motionLanguage",
+  "readabilityRules",
+  "avoid",
+  "referencePolicy",
+  "assetRegeneration",
+  "directionCandidates",
+  "reviews",
+  "artBrief"
+],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -68,7 +89,7 @@
         "layeredSourceStrategy": {"const": "SEPARATE_FILES_AND_MASKS"}
       }
     },
-    "directionCandidates": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/directionEvidence"}},
+    "directionCandidates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/directionEvidence"}},
     "selectedDirection": {"$ref": "#/$defs/directionEvidence"},
     "finalVisualReview": {
       "allOf": [
@@ -77,40 +98,199 @@
       ]
     },
     "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},
-    "approval": {"$ref": "common.schema.json#/$defs/approval"}
+    "approval": {"$ref": "common.schema.json#/$defs/approval"},
+    "artBrief": {
+      "$ref": "game-art-brief.schema.json"
+    }
   },
   "allOf": [
-    {
-      "if": {"properties": {"status": {"const": "APPROVED"}}, "required": ["status"]},
-      "then": {
-        "required": ["candidateSnapshot", "grillingEvidence", "selectedDirection", "finalVisualReview", "approval"],
-        "properties": {
-          "directionCandidates": {"minItems": 3, "maxItems": 3},
-          "approval": {
-            "allOf": [
-              {"$ref": "common.schema.json#/$defs/approval"},
-              {"properties": {"approvalType": {"const": "VISUAL_BASELINE"}, "authority": {"const": "USER"}}}
-            ]
-          },
-          "reviews": {
-            "minItems": 3,
-            "allOf": [
-              {"contains": {"properties": {"approvalType": {"const": "VISUAL_BASELINE"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "VISUAL_CONSISTENCY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"approvalType": {"const": "VISUAL_BASELINE"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UNITY_FEASIBILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}},
-              {"contains": {"properties": {"approvalType": {"const": "VISUAL_BASELINE"}, "authority": {"const": "INDEPENDENT_REVIEWER"}, "reviewDiscipline": {"const": "UX_READABILITY"}}, "required": ["approvalType", "authority", "reviewDiscipline"]}}
-            ]
+  {
+    "if": {
+      "properties": {
+        "status": {
+          "const": "APPROVED"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "then": {
+      "required": [
+        "candidateSnapshot",
+        "grillingEvidence",
+        "selectedDirection",
+        "finalVisualReview",
+        "approval"
+      ],
+      "properties": {
+        "directionCandidates": {
+          "minItems": 1
+        },
+        "approval": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/approval"
+            },
+            {
+              "properties": {
+                "approvalType": {
+                  "const": "VISUAL_BASELINE"
+                },
+                "authority": {
+                  "const": "USER"
+                }
+              }
+            }
+          ]
+        },
+        "reviews": {
+          "minItems": 3,
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "approvalType": {
+                    "const": "VISUAL_BASELINE"
+                  },
+                  "authority": {
+                    "const": "INDEPENDENT_REVIEWER"
+                  },
+                  "reviewDiscipline": {
+                    "const": "VISUAL_CONSISTENCY"
+                  }
+                },
+                "required": [
+                  "approvalType",
+                  "authority",
+                  "reviewDiscipline"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "approvalType": {
+                    "const": "VISUAL_BASELINE"
+                  },
+                  "authority": {
+                    "const": "INDEPENDENT_REVIEWER"
+                  },
+                  "reviewDiscipline": {
+                    "const": "UNITY_FEASIBILITY"
+                  }
+                },
+                "required": [
+                  "approvalType",
+                  "authority",
+                  "reviewDiscipline"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "approvalType": {
+                    "const": "VISUAL_BASELINE"
+                  },
+                  "authority": {
+                    "const": "INDEPENDENT_REVIEWER"
+                  },
+                  "reviewDiscipline": {
+                    "const": "UX_READABILITY"
+                  }
+                },
+                "required": [
+                  "approvalType",
+                  "authority",
+                  "reviewDiscipline"
+                ]
+              }
+            }
+          ]
+        },
+        "selectedDirection": {
+          "required": [
+            "qualityResults"
+          ],
+          "properties": {
+            "qualityResults": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/artQualityResults"
+                },
+                {
+                  "properties": {
+                    "themeFit": {
+                      "properties": {
+                        "status": {
+                          "const": "PASS"
+                        }
+                      }
+                    },
+                    "audienceFit": {
+                      "properties": {
+                        "status": {
+                          "const": "PASS"
+                        }
+                      }
+                    },
+                    "gameplayReadability": {
+                      "properties": {
+                        "status": {
+                          "const": "PASS"
+                        }
+                      }
+                    },
+                    "viewingComfort": {
+                      "properties": {
+                        "status": {
+                          "const": "PASS"
+                        }
+                      }
+                    },
+                    "artCompletion": {
+                      "properties": {
+                        "status": {
+                          "const": "PASS"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       }
     }
-  ],
+  }
+],
   "$defs": {
     "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
     "directionEvidence": {
       "allOf": [
-        {"$ref": "common.schema.json#/$defs/evidence"},
-        {"required": ["subjectId", "subjectVersion", "sourceRevision"]}
-      ]
+  {
+    "$ref": "common.schema.json#/$defs/evidence"
+  },
+  {
+    "required": [
+      "subjectId",
+      "subjectVersion",
+      "sourceRevision"
+    ]
+  },
+  {
+    "properties": {
+      "qualityResults": {
+        "$ref": "common.schema.json#/$defs/artQualityResults"
+      }
+    },
+    "required": [
+      "qualityResults"
+    ]
+  }
+]
     }
   }
 }

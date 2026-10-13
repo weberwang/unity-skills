@@ -51,6 +51,7 @@
       "required": ["textureType", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
       "properties": {
         "textureType": {"enum": ["Default", "NormalMap", "EditorGUI", "Cursor", "Cookie", "Lightmap", "SingleChannel"]},
+        "border": {"allOf": [{"$ref": "#/$defs/borderTuple"}, {"items": {"const": 0}}]},
         "filterMode": {"enum": ["Point", "Bilinear", "Trilinear"]},
         "wrapMode": {"enum": ["Repeat", "Clamp", "Mirror", "MirrorOnce"]},
         "maxSize": {"type": "integer", "minimum": 32, "maximum": 16384},
@@ -65,10 +66,11 @@
     "spriteImporter": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["textureType", "spriteMode", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
+      "required": ["textureType", "spriteMode", "border", "pixelsPerUnit", "filterMode", "wrapMode", "maxSize", "compression", "sRgb", "alphaIsTransparency", "mipmaps", "readWriteEnabled"],
       "properties": {
         "textureType": {"const": "Sprite"},
         "spriteMode": {"enum": ["Single", "Multiple", "Polygon"]},
+        "border": {"$ref": "#/$defs/borderTuple"},
         "pixelsPerUnit": {"type": "number", "exclusiveMinimum": 0},
         "filterMode": {"enum": ["Point", "Bilinear", "Trilinear"]},
         "wrapMode": {"enum": ["Repeat", "Clamp", "Mirror", "MirrorOnce"]},
@@ -79,6 +81,12 @@
         "mipmaps": {"type": "boolean"},
         "readWriteEnabled": {"type": "boolean"}
       }
+    },
+    "borderTuple": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"type": "integer", "minimum": 0}
     },
     "modelImporter": {
       "type": "object",

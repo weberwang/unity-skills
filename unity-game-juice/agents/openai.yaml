@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 游戏动态反馈"
+  short_description: "为 Unity 玩法事件设计动画、镜头、音频、时间和交互反馈"
+  default_prompt: "使用 $unity-game-juice 为这个 Unity 场景梳理关键事件反馈并接入已确认的实现。"

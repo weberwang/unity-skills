@@ -22,6 +22,7 @@ namespace Project.UnityWorkflow.Core.Models
         [SerializeField] private ImageOutputDto output = new ImageOutputDto();
         [SerializeField] private SelectedImageCandidateDto selectedCandidate;
         [SerializeField] private EvidenceDto finalVisualReview;
+        [SerializeField] private NineSliceDto nineSlice;
         [SerializeField] private ImageUnityImportDto unityImport = new ImageUnityImportDto();
         [SerializeField] private List<AcceptanceCriterionDto> acceptance = new List<AcceptanceCriterionDto>();
         [SerializeField] private string status;
@@ -66,6 +67,9 @@ namespace Project.UnityWorkflow.Core.Models
 
         /// <summary>获取或设置最终视觉审查证据；未批准时允许为空。</summary>
         public EvidenceDto FinalVisualReview { get => finalVisualReview; set => finalVisualReview = value; }
+
+        /// <summary>获取或设置显式九宫格决策；未切片任务可为空。</summary>
+        public NineSliceDto NineSlice { get => nineSlice; set => nineSlice = value; }
 
         /// <summary>获取或设置 Unity 导入参数。</summary>
         public ImageUnityImportDto UnityImport { get => unityImport; set => unityImport = value ?? new ImageUnityImportDto(); }
@@ -140,6 +144,7 @@ namespace Project.UnityWorkflow.Core.Models
     {
         [SerializeField] private string textureType;
         [SerializeField] private string spriteMode;
+        [SerializeField] private float[] border;
         [SerializeField] private float pixelsPerUnit;
         [SerializeField] private string filterMode;
         [SerializeField] private string wrapMode;
@@ -155,6 +160,9 @@ namespace Project.UnityWorkflow.Core.Models
 
         /// <summary>获取或设置 Single、Multiple 或 None Sprite 模式。</summary>
         public string SpriteMode { get => spriteMode; set => spriteMode = value; }
+
+        /// <summary>获取或设置 Sprite 边框，顺序为 [left, bottom, right, top]。</summary>
+        public float[] Border { get => border; set => border = value; }
 
         /// <summary>获取或设置每单位像素数。</summary>
         public float PixelsPerUnit { get => pixelsPerUnit; set => pixelsPerUnit = value; }

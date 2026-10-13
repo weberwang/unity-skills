@@ -16,7 +16,7 @@ using Unity.Pipeline.Commands;
 namespace Project.UnityWorkflow.Tests
 {
     /// <summary>
-    /// 验证 Unity Pipeline 命令的 API 形状、入口保护和四项业务服务转发。
+    /// 验证 Unity Pipeline 命令的 API 形状、入口保护和六项业务服务转发。
     /// </summary>
     public sealed class PipelineCommandTests
     {
@@ -25,11 +25,13 @@ namespace Project.UnityWorkflow.Tests
             typeof(ValidateProjectCommand),
             typeof(ImportImageCommand),
             typeof(CaptureVisualCommand),
-            typeof(DeliveryPreflightCommand)
+            typeof(DeliveryPreflightCommand),
+            typeof(MeasureLayoutCommand),
+            typeof(CaptureGameViewCommand)
         };
 
         /// <summary>
-        /// 确认四个命令使用稳定名称、主线程执行、字符串 Job 参数和统一结果类型。
+        /// 确认六个命令使用稳定名称、主线程执行、字符串 Job 参数和统一结果类型。
         /// </summary>
         [Test]
         public void CommandDefinitions_UseStableNamesAndExactHandlerSignature()
@@ -66,12 +68,14 @@ namespace Project.UnityWorkflow.Tests
                 "uwt_validate_project",
                 "uwt_import_image",
                 "uwt_capture_visual",
-                "uwt_delivery_preflight"
+                "uwt_delivery_preflight",
+                "uwt_measure_layout",
+                "uwt_capture_game_view"
             }));
             Assert.That(names.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(names.Length));
         }
 
-        /// <summary>确认四个命令在缺少 Job 路径时返回失败信封而不是抛出异常。</summary>
+        /// <summary>确认六个命令在缺少 Job 路径时返回失败信封而不是抛出异常。</summary>
         [Test]
         public void Execute_WithoutJobPath_ReturnsFailureResult()
         {
@@ -80,7 +84,9 @@ namespace Project.UnityWorkflow.Tests
                 ValidateProjectCommand.Execute(null),
                 ImportImageCommand.Execute(string.Empty),
                 CaptureVisualCommand.Execute("   "),
-                DeliveryPreflightCommand.Execute(null)
+                DeliveryPreflightCommand.Execute(null),
+                MeasureLayoutCommand.Execute(null),
+                CaptureGameViewCommand.Execute(null)
             };
 
             Assert.That(results.All(result => result != null && !result.Success), Is.True);
@@ -123,7 +129,9 @@ namespace Project.UnityWorkflow.Tests
                     ValidateProjectCommand.Execute(jobPath),
                     ImportImageCommand.Execute(jobPath),
                     CaptureVisualCommand.Execute(jobPath),
-                    DeliveryPreflightCommand.Execute(jobPath)
+                    DeliveryPreflightCommand.Execute(jobPath),
+                    MeasureLayoutCommand.Execute(jobPath),
+                    CaptureGameViewCommand.Execute(jobPath)
                 };
 
                 Assert.That(results.All(result => !result.Success), Is.True);

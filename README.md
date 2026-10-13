@@ -13,7 +13,7 @@
 5. 全局集成验证
 6. 发布
 
-场景与瞬态弹窗分别使用 `V0 分流 → V1 对象定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收`。新建且包含可见画面的场景或弹窗在 V1 生成至少一张完整效果图，供 V2 拆解；已有视觉规范时按规范生成，只有需要探索新方向时才生成多个候选。场景只负责自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只绑定运行上下文。内部状态、动作风险、质量门、实施包与证据均由控制面维护：
+场景与瞬态弹窗分别使用 `V0 分流 → V1 对象定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收`。新建且包含可见画面的场景或弹窗在 V1 生成至少一张完整效果图，供 V2 拆解；已有视觉规范时按规范生成，只有需要探索新方向时才生成多个候选。V1 同时明确美术 brief 与关键反馈意图，V2 冻结适用的九宫格参数和动作时间轴，V3 用 Unity 原生预览校准正式组合，V4 验收实际运行中的动态体验。场景只负责自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只绑定运行上下文。内部状态、动作风险、质量门、实施包与证据均由控制面维护：
 
 - A0-A3：调查、规格、隔离原型与生产实现；当前用户任务提供执行边界。
 - A4-A6：本地集成、外部状态/设备与发布。只有外部写入、付费、真机、破坏性删除、签名、上传和发布需要精确逐对象批准。
@@ -23,6 +23,8 @@
 Unity 写入遵循原生约束：唯一 Editor 实例、编译/导入/域重载稳定、单写者、AssetDatabase、资源与 `.meta` 配对、GUID/Importer/序列化回读，以及 EditMode/PlayMode/构建证据。未经用户明确要求，不启动 Standalone/Player 或真机，不签名、上传或发布。
 
 场景和独立显示层的 V0–V4 每个阶段都必须先展示交付并获得用户明确确认，才能进入下一阶段；V4 确认后才完成工作项。确认通过 `stageReviews` 绑定工作项、阶段和用户消息引用；测试通过不能代替人工确认。验收以用户要求和实际完成情况为准，中途实现调整无需回改合同，不要求或校验 SHA，具体见[阶段人工确认约束](unity-game-workflow-control/references/stage-confirmation.md)。
+
+图片与动画采用[图片优先的确认方式](unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)：内部维护分析、技术记录和提示词，直接展示真实图片或 Unity 预览；同目标返修展示前后对照。游戏画面按[游戏内文案](unity-development-workflow/references/game-copy.md)贯穿策划、效果图、资源拆解和实现，优先使用图标、数字与符号，只保留必要文字；内部规格不进入玩家画面。
 
 ## 安装
 
@@ -38,7 +40,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器把十五个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
+安装器把十六个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
 
 ```powershell
 node .\scripts\install-project-skills.mjs D:\Projects\my-game
@@ -82,7 +84,7 @@ unity pipeline install --project-path D:\Projects\my-game
 Copy-Item -Recurse .\.agents\skills\unity-development-workflow\assets\unity-workflow-toolkit\Packages\com.project.unity-workflow-toolkit .\Packages\com.project.unity-workflow-toolkit
 ```
 
-具体的 Editor、Scene、Prefab、资源、包、UI、测试和构建操作由匹配的 Unity 插件 Skill 负责，本仓库不复制插件命令教程。Toolkit 只补充项目验证、批准图片导入、固定机位取证和交付预检四项工作流命令；完整分工见 [Unity 插件能力路由](unity-development-workflow/references/unity-plugin-routing.md)。命令成功不能代替 AssetDatabase 回读、Console、EditMode/PlayMode、设备或发布证据；外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
+具体的 Editor、Scene、Prefab、资源、包、UI、测试和构建操作由匹配的 Unity 插件 Skill 负责，本仓库不复制插件命令教程。Toolkit 补充项目验证、批准图片导入、固定机位取证、布局实测、Editor Game View 采集和交付预检；完整分工见 [Unity 插件能力路由](unity-development-workflow/references/unity-plugin-routing.md)。命令成功不能代替 AssetDatabase 回读、Console、EditMode/PlayMode、设备或发布证据；外部模型生成、上传参考图、付费供应商和 DCC 任意代码执行仍需独立批准。
 
 生成式透明素材如果先产出不透明纯色背景 PNG，可在 Unity 导入前运行本地边缘连通去背景工具：
 
@@ -96,6 +98,7 @@ npm run remove:background -- --source .\art\hero.raw.png --output .\art\hero.png
 
 - `$unity-game-workflow-control`：全局状态、范围、风险门、实施包与证据。
 - `$unity-development-workflow`：六阶段和 V0-V4 Unity 领域编排。
+- [`$unity-game-juice`](unity-game-juice/SKILL.md)：将玩法事件映射为视觉、音频、镜头、时间和交互反馈，明确重复、叠加、中断、暂停与对象生命周期策略。
 - `$unity-game-production`、`$unity-game-architecture`、`$unity-gameplay-development`：制作、架构与玩法。
 - `$unity-game-visual-assets`、`$unity-game-3d-modeling`、`$unity-game-3d-texturing`、`$unity-game-spine-reskin`：视觉与资产生产。
 - [`$unity-game-2d-rigging`](unity-game-2d-rigging/SKILL.md)：Unity 原生 2D 骨骼与动画制作；按项目选择侧视、正面、四分之三、俯视、等距斜视或组合视角，交付 Sprite Skin 角色 Prefab 与动画接口。拆件方案及代表性动画分别确认，玩法代码由玩法角色负责。

@@ -7,9 +7,9 @@
 - ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
 - FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
-- VisualQA：从指定摄像机生成 1920×1080、版本化且不可覆盖的 Editor 参考 PNG；它不能替代任一目标平台 Player 实机视觉证据。
+- VisualQA：固定摄像机参考 PNG、实际 UI 布局测量与 Game View 帧末异步采集；仅记录工程事实，截图由用户人工验收。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
-- PipelineCommands：把四项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
+- PipelineCommands：把六项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
 - EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
 
 ## 安装
@@ -21,6 +21,8 @@
 - `uwt_validate_project`：消费 `project-profile` Job，返回项目质量报告。
 - `uwt_import_image`：消费已批准的 `image-task` Job，执行安全导入与 Importer 复核。
 - `uwt_capture_visual`：消费 `visual-capture` Job，生成固定机位证据。
+- `uwt_measure_layout`：消费 `layout-measurement` Job，读取同一场景、坐标空间的实际 uGUI/UIDocument 节点矩形、父框边距与目标差值。
+- `uwt_capture_game_view`：消费 `game-view-capture` Job，登记帧末请求并以同一 Job 回查终态；首次 `PENDING` 不表示采集完成。
 - `uwt_delivery_preflight`：消费 `delivery-preflight` Job，只执行技术构建预检。
 
 每个命令参数为项目内 `job_path`。命令返回包含 `Success`、`Message`、`Data` 的统一结果信封；业务失败会明确返回 `Success: false` 并携带结构化结果，不包含本机绝对路径。
@@ -38,6 +40,14 @@ unity command uwt_validate_project --project-path D:\Projects\my-game --job_path
 正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
 
 成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 设置。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、实际源路径、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；集成阶段审查并合并这些记录。
+
+Sprite 任务显式提供 `unityImport.border`，顺序为 `[left, bottom, right, top]`，普通 Sprite 为四零。非零边框同时声明 `nineSlice: { mode: "stretch", reason, sourceSize, border }`；边框一致性、正尺寸中心、实际源图大小及导入后真实 Sprite 均须核对。九宫格仅使用 Single Sprite，小图生产尺寸与目标显示框分别声明；被平台缩放、裁切或改写的结果不能登记通过。
+
+## 原生 UI 校准与取证
+
+布局测量的 uGUI 坐标是屏幕像素，UI Toolkit 坐标是同一 UIDocument 的逻辑点；均明确左上原点，不混用不同文档或测量空间。每项可声明 `targetRect` 与 `tolerance.maxAbsDelta`。已声明的容差超差为失败，没有容差的节点仅为 `MEASURED`；报告不修改布局或判断图像轮廓、字体墨迹及显示质量。编辑校准仍使用 Inspector、Rect 工具、UI Builder 与 Unity Undo。
+
+Game View 采集只消费已有的非 Batch Editor PlayMode，要求可用 Game View 与活动场景一致，不切换播放模式或分辨率。工具在帧末采集最终画面，覆盖实际进入该帧的 Overlay、摄像机 UI 和 runtime Panel；不能证明未激活或独立 RenderTexture UI 可见。PNG 与配套 JSON 都落盘后才返回采集 `PASS`，输出不可覆盖；退出、域重载或超时取消请求。原有 `uwt_capture_visual` 仅覆盖摄像机及摄像机空间，不能作为 Overlay UI 的完整证据。采集成功、几何通过与人工显示效果验收分别记录。
 
 ## 交付边界
 

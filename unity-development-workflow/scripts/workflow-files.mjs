@@ -14,6 +14,7 @@ import {
 import { createHash } from "node:crypto";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateNineSliceProduction } from "./nine-slice-contract.mjs";
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CORE_FILES = Object.freeze(["project-profile.yaml", "GDD.md", "TDD.md", "control-plane.md"]);
@@ -185,7 +186,15 @@ export function main(argumentsList = process.argv.slice(2)) {
       output: requireOption(options, "output"),
     });
   }
-  throw new Error("用法：workflow-files.mjs <init-docs|sha256|compile-json> [参数]");
+  if (command === "nine-slice-check") {
+    rejectUnknownOptions(options, ["project-root", "source"]);
+    const root = validateProjectRoot(requireOption(options, "project-root"));
+    const path = ensureInsideProject(resolve(root, requireOption(options, "source")), root, "九宫格验证材料");
+    const errors = validateNineSliceProduction(JSON.parse(readFileSync(path, "utf8")));
+    if (errors.length) throw new Error(errors.join("；"));
+    return "九宫格合同传递与参数回读通过；显示效果仍需用户确认。";
+  }
+  throw new Error("用法：workflow-files.mjs <init-docs|sha256|compile-json|nine-slice-check> [参数]");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

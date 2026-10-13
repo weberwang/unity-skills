@@ -66,14 +66,80 @@ directionCandidates:
     subjectId: global-direction.a
     subjectVersion: direction-a-v1
     sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
   - type: global-direction
     path: Artifacts/Visual/Global/direction-b.png
     subjectId: global-direction.b
     subjectVersion: direction-b-v1
     sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
   - type: global-direction
     path: Artifacts/Visual/Global/direction-c.png
     subjectId: global-direction.c
     subjectVersion: direction-c-v1
     sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
 reviews: []
+artBrief:
+  schemaVersion: "1.0"
+  projectId: starfall-arena
+  theme: 依据当前 GDD 定义主题
+  audience:
+    facts: []
+    assumptions:
+      - 目标玩家偏好待验证
+  coreLoop: 观察、选择、操作与结果确认
+  experienceGoals:
+    - 关键结果清晰
+  viewingContext: 目标设备与典型单局情境待项目明确
+  visualHierarchy:
+    - 玩法关键对象优先于背景装饰
+  intensityBudget:
+    normal: 常态保持稳定可读的层级
+    operation: 局部短促反馈，重复合并并及时收尾
+    peak: 按事件重要性限制占屏、时长及并发，结束回归常态

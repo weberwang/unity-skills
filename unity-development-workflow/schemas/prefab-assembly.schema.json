@@ -40,7 +40,10 @@
           "productionEvidence": {"$ref": "common.schema.json#/$defs/evidence"},
           "assetPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "assetGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
-          "consumerNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}}
+          "consumerNodeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/taskId"}},
+          "nineSlice": {
+            "$ref": "common.schema.json#/$defs/nineSlice"
+          }
         }
       }
     },

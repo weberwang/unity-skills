@@ -10,7 +10,7 @@ const PACKAGE_PATH = resolve(ROOT, "package.json");
 const INSTALLER_PATH = resolve(ROOT, "scripts/install-project-skills.mjs");
 // 打包白名单与实际安装产物同时校验，确保技能及其参考文件完整交付。
 const EXPECTED_SKILL_NAMES = [
-  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-gameplay-development",
+  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-gameplay-development", "unity-game-juice",
 ];
 
 /** 创建短生命周期的临时项目目录，并在回调结束后清理测试副本。 */

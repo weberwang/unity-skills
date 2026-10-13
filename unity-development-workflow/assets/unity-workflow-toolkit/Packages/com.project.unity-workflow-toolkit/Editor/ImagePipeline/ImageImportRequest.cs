@@ -21,6 +21,7 @@ namespace Project.UnityWorkflow.ImagePipeline
         [SerializeField] private string visualVersion;
         [SerializeField] private string status;
         [SerializeField] private EvidenceDto finalVisualReview;
+        [SerializeField] private NineSliceDto nineSlice;
         [SerializeField] private List<ApprovalDto> approvals = new List<ApprovalDto>();
         [SerializeField] private string targetDirectory;
         [SerializeField] private string fileName;
@@ -32,6 +33,7 @@ namespace Project.UnityWorkflow.ImagePipeline
         [SerializeField] private int maximumHeight = 16384;
         [SerializeField] private string textureType;
         [SerializeField] private string spriteMode;
+        [SerializeField] private float[] border;
         [SerializeField] private float pixelsPerUnit = 100f;
         [SerializeField] private string filterMode;
         [SerializeField] private string wrapMode;
@@ -73,6 +75,9 @@ namespace Project.UnityWorkflow.ImagePipeline
         /// <summary>获取或设置绑定选中候选的最终视觉审查证据。</summary>
         public EvidenceDto FinalVisualReview { get => finalVisualReview; set => finalVisualReview = value; }
 
+        /// <summary>获取或设置 image-task 中的九宫格声明。</summary>
+        public NineSliceDto NineSlice { get => nineSlice; set => nineSlice = value; }
+
         /// <summary>获取或设置用户批准记录。</summary>
         public List<ApprovalDto> Approvals
         {
@@ -109,6 +114,9 @@ namespace Project.UnityWorkflow.ImagePipeline
 
         /// <summary>获取或设置 Single、Multiple 或 None Sprite 模式。</summary>
         public string SpriteMode { get => spriteMode; set => spriteMode = value; }
+
+        /// <summary>获取或设置 Sprite 边框，顺序为 [left, bottom, right, top]。</summary>
+        public float[] Border { get => border; set => border = value; }
 
         /// <summary>获取或设置每单位像素数。</summary>
         public float PixelsPerUnit { get => pixelsPerUnit; set => pixelsPerUnit = value; }
@@ -167,6 +175,7 @@ namespace Project.UnityWorkflow.ImagePipeline
                 VisualVersion = candidate?.VisualVersion,
                 Status = task.Status,
                 FinalVisualReview = task.FinalVisualReview,
+                NineSlice = task.NineSlice,
                 Approvals = task.Approvals,
                 TargetDirectory = output.TargetPath,
                 FileName = output.Filename,
@@ -174,6 +183,7 @@ namespace Project.UnityWorkflow.ImagePipeline
                 AlphaRequired = output.AlphaRequired,
                 TextureType = settings.TextureType,
                 SpriteMode = settings.SpriteMode,
+                Border = settings.Border,
                 PixelsPerUnit = settings.PixelsPerUnit,
                 FilterMode = settings.FilterMode,
                 WrapMode = settings.WrapMode,

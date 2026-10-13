@@ -77,6 +77,7 @@ namespace Project.UnityWorkflow.ImagePipeline
                 return result;
             }
 
+            ValidateImporterSettings(request, result);
             ValidateSourceFile(request, stagedPath, result);
             result.IsValid = result.Issues.Count == 0;
             return result;
@@ -448,6 +449,7 @@ namespace Project.UnityWorkflow.ImagePipeline
                 result.Width = texture.width;
                 result.Height = texture.height;
                 result.HasAlpha = format == "PNG" && PngDeclaresAlpha(bytes);
+                ValidateBorderDimensions(request, result.Width, result.Height, result);
 
                 if ((request.MinimumWidth > 0 && result.Width < request.MinimumWidth) ||
                     (request.MinimumHeight > 0 && result.Height < request.MinimumHeight))
@@ -552,6 +554,193 @@ namespace Project.UnityWorkflow.ImagePipeline
             {
                 result.AddIssue("import.compression", "Compression 不是受支持值。");
             }
+
+            ValidateBorderSettings(request, result);
+        }
+
+        /// <summary>检查边框元组形状、Sprite 要求及非 Sprite 的零边框约束。</summary>
+        private static void ValidateBorderSettings(ImageImportRequest request, ImageValidationResult result)
+        {
+            float[] border = request.Border;
+            if (request.TextureType == "Sprite" && border == null)
+            {
+                result.AddIssue("import.border-required", "Sprite 导入必须显式声明四项边框；普通 Sprite 使用 [0, 0, 0, 0]。");
+            }
+
+            if (border == null)
+            {
+                ValidateNineSliceDeclaration(request, false, result);
+                return;
+            }
+
+            if (border.Length != 4)
+            {
+                result.AddIssue("import.border-shape", "边框必须按 [left, bottom, right, top] 声明四项整数。");
+                return;
+            }
+
+            bool hasNonZeroBorder = false;
+            for (int index = 0; index < border.Length; index++)
+            {
+                if (float.IsNaN(border[index]) || float.IsInfinity(border[index]) ||
+                    border[index] > int.MaxValue || Mathf.Floor(border[index]) != border[index])
+                {
+                    result.AddIssue("import.border-integer", "边框必须是有限的整数值。");
+                    return;
+                }
+
+                if (border[index] < 0)
+                {
+                    result.AddIssue("import.border-negative", "边框尺寸必须是非负整数。");
+                    return;
+                }
+
+                hasNonZeroBorder |= border[index] != 0;
+            }
+
+            if (request.TextureType != "Sprite" && hasNonZeroBorder)
+            {
+                result.AddIssue("import.border-non-sprite", "非 Sprite 纹理不能声明非零边框。");
+            }
+
+            ValidateNineSliceDeclaration(request, hasNonZeroBorder, result);
+        }
+
+        /// <summary>验证九宫格决策与实际导入边框一致，避免只记录上游声明。</summary>
+        private static void ValidateNineSliceDeclaration(
+            ImageImportRequest request,
+            bool hasNonZeroBorder,
+            ImageValidationResult result)
+        {
+            NineSliceDto nineSlice = request.NineSlice;
+            if (nineSlice == null)
+            {
+                if (hasNonZeroBorder)
+                {
+                    result.AddIssue("import.nine-slice-required", "非零 Sprite 边框必须绑定 stretch 九宫格声明。");
+                }
+
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(nineSlice.Reason))
+            {
+                result.AddIssue("import.nine-slice-reason", "九宫格决策必须说明适用或不适用原因。");
+            }
+
+            if (nineSlice.Mode == "not-applicable")
+            {
+                if (nineSlice.SourceSize != null || nineSlice.Border != null)
+                {
+                    result.AddIssue("import.nine-slice-not-applicable", "not-applicable 决策不能携带源尺寸或边框。");
+                }
+
+                if (hasNonZeroBorder)
+                {
+                    result.AddIssue("import.nine-slice-mode-mismatch", "非零 Sprite 边框必须使用 stretch 决策。");
+                }
+
+                return;
+            }
+
+            if (nineSlice.Mode != "stretch")
+            {
+                result.AddIssue("import.nine-slice-mode", "九宫格模式必须是 stretch 或 not-applicable。");
+                return;
+            }
+
+            if (request.TextureType != "Sprite")
+            {
+                result.AddIssue("import.nine-slice-non-sprite", "stretch 九宫格只能用于 Sprite 纹理。");
+            }
+
+            if (request.SpriteMode != "Single")
+            {
+                result.AddIssue("import.nine-slice-sprite-mode", "stretch 九宫格必须使用 Single Sprite 模式，避免多 Sprite 裁切定义改变边框语义。");
+            }
+
+            if (!hasNonZeroBorder)
+            {
+                result.AddIssue("import.nine-slice-zero-border", "零边框应省略九宫格声明或标记 not-applicable。");
+            }
+
+            if (nineSlice.SourceSize == null || nineSlice.SourceSize.Width <= 0 || nineSlice.SourceSize.Height <= 0)
+            {
+                result.AddIssue("import.nine-slice-source-size", "stretch 九宫格必须声明正整数源图宽高。");
+            }
+
+            float[] declaredBorder = nineSlice.Border;
+            if (declaredBorder == null || declaredBorder.Length != 4)
+            {
+                result.AddIssue("import.nine-slice-border-shape", "stretch 九宫格边框必须是 [left, bottom, right, top] 四项整数。");
+                return;
+            }
+
+            for (int index = 0; index < declaredBorder.Length; index++)
+            {
+                if (float.IsNaN(declaredBorder[index]) || float.IsInfinity(declaredBorder[index]) ||
+                    declaredBorder[index] > int.MaxValue || Mathf.Floor(declaredBorder[index]) != declaredBorder[index])
+                {
+                    result.AddIssue("import.nine-slice-border-integer", "九宫格边框必须是有限的整数值。");
+                    return;
+                }
+
+                if (declaredBorder[index] < 0)
+                {
+                    result.AddIssue("import.nine-slice-border-negative", "九宫格边框必须是非负整数。");
+                    return;
+                }
+            }
+
+            if (request.Border == null || request.Border.Length != 4 ||
+                declaredBorder[0] != request.Border[0] || declaredBorder[1] != request.Border[1] ||
+                declaredBorder[2] != request.Border[2] || declaredBorder[3] != request.Border[3])
+            {
+                result.AddIssue("import.nine-slice-border-mismatch", "九宫格边框必须与 Unity Importer 边框完全一致。");
+            }
+        }
+
+        /// <summary>按源图尺寸验证边框中心区，并阻止 maxSize 静默缩放九宫格边界。</summary>
+        private static void ValidateBorderDimensions(
+            ImageImportRequest request,
+            int sourceWidth,
+            int sourceHeight,
+            ImageValidationResult result)
+        {
+            float[] border = request.Border;
+            if (request.TextureType != "Sprite" || border == null || border.Length != 4 ||
+                !IsFiniteNonNegativeInteger(border[0]) || !IsFiniteNonNegativeInteger(border[1]) ||
+                !IsFiniteNonNegativeInteger(border[2]) || !IsFiniteNonNegativeInteger(border[3]))
+            {
+                return;
+            }
+
+            NineSliceSourceSizeDto sourceSize = request.NineSlice?.SourceSize;
+            if (request.NineSlice?.Mode == "stretch" && sourceSize != null &&
+                (sourceSize.Width != sourceWidth || sourceSize.Height != sourceHeight))
+            {
+                result.AddIssue("import.nine-slice-source-size-mismatch", "实际源图尺寸必须与九宫格任务声明的 sourceSize 完全一致。");
+            }
+
+            if ((long)border[0] + (long)border[2] >= sourceWidth ||
+                (long)border[1] + (long)border[3] >= sourceHeight)
+            {
+                result.AddIssue("import.border-center-empty", "左右或上下边框必须为中心内容保留至少一个源像素。");
+            }
+
+            bool hasNonZeroBorder = border[0] != 0 || border[1] != 0 || border[2] != 0 || border[3] != 0;
+            if (hasNonZeroBorder && (sourceWidth > request.MaxSize || sourceHeight > request.MaxSize))
+            {
+                // Unity 会在 maxSize 超限时缩放纹理；拒绝该路径可避免 Sprite 边框随源尺寸被隐式改义。
+                result.AddIssue("import.border-max-size", "非零 Sprite 边框不能与 maxSize 缩放同时使用；请提高 maxSize 或按目标尺寸重新生成源图。");
+            }
+        }
+
+        /// <summary>判断边框分量能否无损作为非负源像素整数使用。</summary>
+        private static bool IsFiniteNonNegativeInteger(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value) && value >= 0f &&
+                   value <= int.MaxValue && Mathf.Floor(value) == value;
         }
 
         /// <summary>依据文件签名识别 PNG 或 JPEG，拒绝仅伪装扩展名的文件。</summary>

@@ -22,6 +22,7 @@ const SKILL_NAMES = Object.freeze([
   "unity-game-spine-reskin",
   "unity-game-2d-rigging",
   "unity-gameplay-development",
+  "unity-game-juice",
 ]);
 
 /**

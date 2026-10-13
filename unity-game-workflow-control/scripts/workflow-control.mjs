@@ -438,7 +438,7 @@ function validateUnityOwnership(pkg, files, allowedPaths, forbiddenPaths) {
 
 /** 校验证据清单结构并绑定当前 Work Item 与实施包。 */
 export function validateEvidence(evidence, work, pkg = null, repo = process.cwd()) {
-  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'artifacts', 'approval', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata']);
   knownObject(evidence, allowed, 'Evidence Manifest');
   schemaVersion(evidence, 'Evidence Manifest');
   for (const field of ['evidenceId', 'workItemId', 'packageId', 'baselineHash', 'recordedAt']) if (typeof evidence[field] !== 'string' || !evidence[field].trim()) fail(`Evidence Manifest.${field} 必须为非空字符串`);
@@ -717,6 +717,7 @@ function assertTransitionPreconditions(inspection, target, args) {
   }
   if (target === 'PASSED' || target === 'COMPLETE' || target === 'INTEGRATING') {
     if (!evidence || evidence.verdict !== 'PASS') fail(`${target} 必须绑定 PASS Evidence Manifest`, 2, { errorCode: 'EVIDENCE_REQUIRED' });
+    validateEvidence(evidence, work, pkg, inspection.repo ?? process.cwd());
     if (!gateAvailable(inspection, 'F3')) fail(`${target} 必须通过 F3`, 2, { errorCode: 'F3_NOT_PASS' });
   }
   if (target === 'RELEASING' || (target === 'INTEGRATING' && requiresExactApproval(work)) || requiresExactApproval(work) && target === 'COMPLETE') {
@@ -917,7 +918,7 @@ function loadApproval(args, work) {
 /** Skill 自检：schema、入口文档、状态/风险标识和文件规模必须齐全。 */
 export function lint(args = {}) {
   const root = args.skill ? resolve(String(args.skill)) : resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'references/stage-confirmation.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs', 'scripts/runtime/stage-confirmation.mjs'];
+  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'references/stage-confirmation.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs', 'scripts/runtime/stage-confirmation.mjs', 'scripts/runtime/art-experience-contract.mjs', 'scripts/runtime/timestamp-contract.mjs'];
   const checked = [];
   for (const item of required) {
     const path = join(root, item);

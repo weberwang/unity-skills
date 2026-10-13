@@ -125,7 +125,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-          "required": ["id", "resourceId", "itemVersion", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "targetPath", "stateVariants", "bounds", "delivery", "action", "parentElementId", "semanticGrouping", "visualRouteAnalysis", "assemblyAnalysis", "layoutBinding"],
+        "required": ["id", "resourceId", "itemVersion", "elementIndex", "assetType", "purpose", "generationBrief", "splitRationale", "targetPrefabNodeIds", "targetPath", "stateVariants", "bounds", "delivery", "action", "parentElementId", "semanticGrouping", "visualRouteAnalysis", "assemblyAnalysis", "layoutBinding"],
         "properties": {
           "id": {"$ref": "common.schema.json#/$defs/taskId"},
           "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
@@ -166,36 +166,214 @@
           "semanticGrouping": {"$ref": "common.schema.json#/$defs/semanticGrouping"},
           "visualRouteAnalysis": {"$ref": "common.schema.json#/$defs/visualRouteAnalysis"},
           "assemblyAnalysis": {"$ref": "common.schema.json#/$defs/assemblyAnalysis"},
-          "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"}
+          "layoutBinding": {"$ref": "common.schema.json#/$defs/layoutBinding"},
+          "nineSlice": {
+            "$ref": "common.schema.json#/$defs/nineSlice"
+          }
         },
         "allOf": [
+  {
+    "if": {
+      "properties": {
+        "assemblyAnalysis": {
+          "properties": {
+            "layoutSystem": {
+              "enum": [
+                "RECT_TRANSFORM",
+                "UI_TOOLKIT",
+                "CANVAS"
+              ]
+            }
+          },
+          "required": [
+            "layoutSystem"
+          ]
+        }
+      },
+      "required": [
+        "assemblyAnalysis"
+      ]
+    },
+    "then": {
+      "properties": {
+        "layoutBinding": {
+          "required": [
+            "uiLayout"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "delivery": {
+          "const": "NOT_APPLICABLE"
+        }
+      },
+      "required": [
+        "delivery"
+      ]
+    },
+    "then": {
+      "not": {
+        "anyOf": [
           {
-            "if": {"properties": {"assemblyAnalysis": {"properties": {"layoutSystem": {"enum": ["RECT_TRANSFORM", "UI_TOOLKIT", "CANVAS"]}}, "required": ["layoutSystem"]}}, "required": ["assemblyAnalysis"]},
-            "then": {"properties": {"layoutBinding": {"required": ["uiLayout"]}}}
+            "required": [
+              "targetSize"
+            ]
           },
           {
-            "if": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}, "required": ["delivery"]},
-            "then": {"not": {"anyOf": [{"required": ["targetSize"]}, {"required": ["alphaRequired"]}, {"required": ["pivot"]}, {"required": ["pixelsPerUnit"]}, {"required": ["border"]}]}},
-            "else": {"required": ["targetSize", "alphaRequired", "pivot", "pixelsPerUnit"]}
+            "required": [
+              "alphaRequired"
+            ]
           },
           {
-            "if": {"properties": {"action": {"enum": ["MODEL_3D", "MATERIAL", "VFX", "CODE", "PROGRAMMATIC"]}}, "required": ["action"]},
-            "then": {"properties": {"delivery": {"const": "NOT_APPLICABLE"}}}
+            "required": [
+              "pivot"
+            ]
           },
           {
-            "if": {"properties": {"action": {"enum": ["GENERATE", "REDRAW"]}}, "required": ["action"]},
-            "then": {"properties": {"delivery": {"enum": ["SINGLE_SPRITE", "SPRITE_SHEET", "ATLAS", "UI_TEXTURE"]}}}
+            "required": [
+              "pixelsPerUnit"
+            ]
           },
           {
-            "if": {"properties": {"action": {"const": "REUSE"}}, "required": ["action"]},
-            "then": {"required": ["existingAssetId", "reuseReason", "reuseResourcePlan"]},
-            "else": {"not": {"required": ["reuseResourcePlan"]}}
-          },
-          {
-            "if": {"properties": {"action": {"const": "BLOCKED"}}, "required": ["action"]},
-            "then": {"properties": {"notes": {"type": "string", "minLength": 1}}, "required": ["notes"]}
+            "required": [
+              "border"
+            ]
           }
         ]
+      }
+    },
+    "else": {
+      "required": [
+        "targetSize",
+        "alphaRequired",
+        "pivot",
+        "pixelsPerUnit"
+      ]
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "enum": [
+            "MODEL_3D",
+            "MATERIAL",
+            "VFX",
+            "CODE",
+            "PROGRAMMATIC"
+          ]
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "properties": {
+        "delivery": {
+          "const": "NOT_APPLICABLE"
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "enum": [
+            "GENERATE",
+            "REDRAW"
+          ]
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "properties": {
+        "delivery": {
+          "enum": [
+            "SINGLE_SPRITE",
+            "SPRITE_SHEET",
+            "ATLAS",
+            "UI_TEXTURE"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "const": "REUSE"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "required": [
+        "existingAssetId",
+        "reuseReason",
+        "reuseResourcePlan"
+      ]
+    },
+    "else": {
+      "not": {
+        "required": [
+          "reuseResourcePlan"
+        ]
+      }
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "action": {
+          "const": "BLOCKED"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "then": {
+      "properties": {
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "notes"
+      ]
+    }
+  },
+  {
+    "if": {
+      "properties": {
+        "assetType": {
+          "const": "UI_SKIN"
+        }
+      },
+      "required": [
+        "assetType"
+      ]
+    },
+    "then": {
+      "required": [
+        "nineSlice"
+      ]
+    }
+  }
+]
       }
     },
     "reviews": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/approval"}},

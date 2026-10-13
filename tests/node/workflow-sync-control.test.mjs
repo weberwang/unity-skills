@@ -17,6 +17,7 @@ import {
 } from '../../unity-game-workflow-control/scripts/workflow-control.mjs';
 import { validateUnityResponsiveContract } from '../../unity-game-workflow-control/scripts/runtime/visible-contract.mjs';
 import { stageConfirmationBlockers } from '../../unity-game-workflow-control/scripts/runtime/stage-confirmation.mjs';
+import { makeArtFixture } from './helpers/art-experience-fixture.mjs';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
 const REQUIRED_EVIDENCE = [
@@ -124,6 +125,7 @@ function makeResponsiveEvidence(repo = null) {
 /** 创建完整 V4 Evidence Manifest。 */
 function makeVisibleEvidence(work, overrides = {}, repo = null) {
   return {
+    ...makeArtFixture(repo, work).evidenceFields,
     schemaVersion: '1.0',
     evidenceId: 'EV-V4',
     workItemId: work.workItemId,
@@ -532,4 +534,17 @@ test('V4 响应式证据按本次支持方向决定是否要求方向切换轨�
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
+});
+
+test('直接完成迁移也重读美术材料，不能用伪造 inspect 的 PASS 绕过', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-sync-art-transition-'));
+  try {
+    const work = makeSceneWork({ globalState: 'PASSED', actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'] });
+    work.stageReviews = makeStageReviews(work, ['V0', 'V1', 'V2', 'V3', 'V4']);
+    const evidence = makeVisibleEvidence(work, {}, repo);
+    const inspection = { repo, work, evidence, pkg: null, blockers: [] };
+    assert.equal(transitionWorkItem(inspection, 'COMPLETE').globalState, 'COMPLETE');
+    delete evidence.artExperienceAcceptanceRef;
+    assert.throws(() => transitionWorkItem(inspection, 'COMPLETE'), /artExperienceAcceptanceRef/);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
 });

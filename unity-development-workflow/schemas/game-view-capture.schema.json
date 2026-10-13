@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/game-view-capture.schema.json",
+  "title": "Unity Game View 帧末采集请求",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "candidateId", "scenePath", "outputPath"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "scenePath": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        {"pattern": "\\.[Uu][Nn][Ii][Tt][Yy]$"}
+      ]
+    },
+    "outputPath": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        {"pattern": "^Artifacts/Visual/.+\\.png$"}
+      ]
+    }
+  },
+  "$defs": {
+    "screenshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "width", "height", "sizeBytes", "capturedAtUtc", "frameCount"],
+      "properties": {
+        "path": {
+          "allOf": [
+            {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+            {"pattern": "^Artifacts/Visual/.+\\.png$"}
+          ]
+        },
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "sizeBytes": {"type": "integer", "minimum": 1},
+        "capturedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
+        "frameCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "uiCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "scope", "pixelAnalysis", "screenSpaceOverlayCanvasCount", "screenSpaceCameraCanvasCount", "worldSpaceCanvasCount", "unclassifiedCanvasCount", "includedRuntimePanelCount", "unclassifiedRuntimePanelCount", "note"],
+      "properties": {
+        "status": {"enum": ["CAPTURED_UNANALYZED", "PARTIAL_UNCLASSIFIED", "NO_RUNTIME_UI_FOUND"]},
+        "scope": {"const": "FINAL_GAME_VIEW_FRAME"},
+        "pixelAnalysis": {"const": "NOT_PERFORMED"},
+        "screenSpaceOverlayCanvasCount": {"type": "integer", "minimum": 0},
+        "screenSpaceCameraCanvasCount": {"type": "integer", "minimum": 0},
+        "worldSpaceCanvasCount": {"type": "integer", "minimum": 0},
+        "unclassifiedCanvasCount": {"type": "integer", "minimum": 0},
+        "includedRuntimePanelCount": {"type": "integer", "minimum": 0},
+        "unclassifiedRuntimePanelCount": {"type": "integer", "minimum": 0},
+        "note": {"type": "string", "minLength": 1}
+      },
+      "description": "只记录 Game View 最终帧范围及可识别的活动 UI 系统，不据此宣称像素级可见性验收通过。"
+    },
+    "captureReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "status", "errorCode", "message", "taskId", "candidateId", "scenePath", "requestedOutputPath", "generatedAtUtc"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"},
+        "status": {"enum": ["PENDING", "PASS", "FAIL", "BLOCKED"]},
+        "errorCode": {"type": "string"},
+        "message": {"type": "string", "minLength": 1},
+        "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "scenePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "requestedOutputPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "generatedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
+        "captureScope": {"anyOf": [{"const": "EDITOR_GAME_VIEW_END_OF_FRAME"}, {"type": "null"}]},
+        "screenshot": {"anyOf": [{"$ref": "#/$defs/screenshot"}, {"type": "null"}]},
+        "uiCoverage": {"anyOf": [{"$ref": "#/$defs/uiCoverage"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "PASS"}}, "required": ["status"]},
+          "then": {
+            "required": ["captureScope", "screenshot", "uiCoverage"],
+            "properties": {
+              "captureScope": {"const": "EDITOR_GAME_VIEW_END_OF_FRAME"},
+              "screenshot": {"$ref": "#/$defs/screenshot"},
+              "uiCoverage": {"$ref": "#/$defs/uiCoverage"}
+            }
+          },
+          "else": {
+            "properties": {
+              "captureScope": {"type": "null"},
+              "screenshot": {"type": "null"},
+              "uiCoverage": {"type": "null"}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "description": "一次调用只登记采集请求并返回 PENDING；只有真实帧末 PNG 和对应报告均已落盘后才返回 PASS。"
+}

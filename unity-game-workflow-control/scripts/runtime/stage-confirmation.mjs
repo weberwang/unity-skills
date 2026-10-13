@@ -1,6 +1,7 @@
 /** Unity 场景与显示层五阶段的人工作业确认合同。 */
 
 import { VISUAL_STAGES } from './visible-contract.mjs';
+import { isValidIsoTimestamp } from './timestamp-contract.mjs';
 
 export { VISUAL_STAGES };
 
@@ -18,28 +19,6 @@ function isRecord(value) {
 /** 判断字符串是否包含可审计内容。 */
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
-}
-
-/** 验证带时区且日历日期真实存在的 ISO 8601 时间。 */
-function isValidIsoTimestamp(value) {
-  if (typeof value !== 'string') return false;
-  const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})$/.exec(value);
-  if (!parts || !Number.isFinite(Date.parse(value))) return false;
-  const [, yearText, monthText, dayText, hourText, minuteText, secondText, zone] = parts;
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  const second = Number(secondText);
-  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  if (month < 1 || month > 12 || day < 1 || day > daysInMonth[month - 1] || hour > 23 || minute > 59 || second > 59) return false;
-  if (zone !== 'Z') {
-    const [offsetHour, offsetMinute] = zone.slice(1).split(':').map(Number);
-    if (offsetHour > 23 || offsetMinute > 59) return false;
-  }
-  return true;
 }
 
 /** 检查阶段确认字段的严格形状；确认只绑定工作项身份、阶段和用户确认记录。 */

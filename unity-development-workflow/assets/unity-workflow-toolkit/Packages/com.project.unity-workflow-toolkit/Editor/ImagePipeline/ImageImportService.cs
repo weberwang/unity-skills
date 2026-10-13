@@ -111,6 +111,8 @@ namespace Project.UnityWorkflow.ImagePipeline
                         "TextureImporter 实际设置与请求不一致。");
                 }
 
+                VerifyNineSliceAsset(assetPath, request);
+
                 var assetGuid = AssetDatabase.AssetPathToGUID(assetPath);
                 if (string.IsNullOrWhiteSpace(assetGuid))
                 {
@@ -233,6 +235,16 @@ namespace Project.UnityWorkflow.ImagePipeline
         {
             importer.textureType = ParseTextureType(request.TextureType);
             importer.spriteImportMode = ParseSpriteMode(request.SpriteMode);
+            importer.spriteBorder = ToVector4(request.Border);
+            if (request.NineSlice?.Mode == "stretch")
+            {
+                // 九宫格要求完整矩形网格，普通 Sprite 则保留 Unity 默认网格类型。
+                var textureSettings = new TextureImporterSettings();
+                importer.ReadTextureSettings(textureSettings);
+                textureSettings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(textureSettings);
+            }
+
             importer.spritePixelsPerUnit = request.PixelsPerUnit;
             importer.filterMode = ParseFilterMode(request.FilterMode);
             importer.wrapMode = ParseWrapMode(request.WrapMode);
@@ -250,8 +262,19 @@ namespace Project.UnityWorkflow.ImagePipeline
         /// <summary>重新读取并比较实际 Importer 设置，防止 Unity 静默修正未被发现。</summary>
         private static bool SettingsMatch(TextureImporter importer, ImageImportRequest request)
         {
+            if (request.NineSlice?.Mode == "stretch")
+            {
+                var textureSettings = new TextureImporterSettings();
+                importer.ReadTextureSettings(textureSettings);
+                if (textureSettings.spriteMeshType != SpriteMeshType.FullRect)
+                {
+                    return false;
+                }
+            }
+
             if (importer.textureType != ParseTextureType(request.TextureType) ||
                 importer.spriteImportMode != ParseSpriteMode(request.SpriteMode) ||
+                !BorderMatches(importer.spriteBorder, request.Border) ||
                 importer.filterMode != ParseFilterMode(request.FilterMode) ||
                 importer.wrapMode != ParseWrapMode(request.WrapMode) ||
                 importer.maxTextureSize != request.MaxSize ||
@@ -275,6 +298,13 @@ namespace Project.UnityWorkflow.ImagePipeline
             {
                 TextureType = importer.textureType.ToString(),
                 SpriteMode = importer.spriteImportMode.ToString(),
+                Border = new[]
+                {
+                    Mathf.RoundToInt(importer.spriteBorder.x),
+                    Mathf.RoundToInt(importer.spriteBorder.y),
+                    Mathf.RoundToInt(importer.spriteBorder.z),
+                    Mathf.RoundToInt(importer.spriteBorder.w)
+                },
                 PixelsPerUnit = importer.spritePixelsPerUnit,
                 FilterMode = importer.filterMode.ToString(),
                 WrapMode = importer.wrapMode.ToString(),
@@ -285,6 +315,95 @@ namespace Project.UnityWorkflow.ImagePipeline
                 Mipmaps = importer.mipmapEnabled,
                 ReadWriteEnabled = importer.isReadable
             };
+        }
+
+        /// <summary>将声明式边框转换为 Unity 的 [left, bottom, right, top] Vector4。</summary>
+        private static Vector4 ToVector4(float[] border)
+        {
+            return border == null || border.Length != 4
+                ? Vector4.zero
+                : new Vector4(border[0], border[1], border[2], border[3]);
+        }
+
+        /// <summary>精确复核 Unity 重新读取的边框，发现浮点改写时阻断登记。</summary>
+        private static bool BorderMatches(Vector4 actual, float[] expected)
+        {
+            Vector4 declared = ToVector4(expected);
+            return Mathf.Approximately(actual.x, declared.x) &&
+                   Mathf.Approximately(actual.y, declared.y) &&
+                   Mathf.Approximately(actual.z, declared.z) &&
+                   Mathf.Approximately(actual.w, declared.w);
+        }
+
+        /// <summary>复核已导入纹理和 Sprite 的实际尺寸、裁切区域、边框及唯一性。</summary>
+        private static void VerifyNineSliceAsset(string assetPath, ImageImportRequest request)
+        {
+            NineSliceDto nineSlice = request.NineSlice;
+            if (nineSlice?.Mode != "stretch")
+            {
+                return;
+            }
+
+            NineSliceSourceSizeDto expectedSize = nineSlice.SourceSize;
+            if (expectedSize == null)
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.source-size-missing",
+                    "stretch 九宫格未提供可复核的源尺寸。");
+            }
+
+            Texture2D importedTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+            if (importedTexture == null)
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.texture-missing",
+                    "Unity 未能重新读取九宫格纹理资源。");
+            }
+
+            // 平台压缩或后处理可能改变导入产物尺寸；登记前必须以 Unity 实际载入的纹理为准。
+            if (importedTexture.width != expectedSize.Width || importedTexture.height != expectedSize.Height)
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.texture-size-mismatch",
+                    "Unity 实际导入纹理尺寸与九宫格 sourceSize 不一致，已阻止登记。");
+            }
+
+            Sprite importedSprite = null;
+            int spriteCount = 0;
+            UnityEngine.Object[] importedAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            for (int index = 0; index < importedAssets.Length; index++)
+            {
+                if (importedAssets[index] is Sprite sprite)
+                {
+                    importedSprite = sprite;
+                    spriteCount++;
+                }
+            }
+
+            if (request.SpriteMode != "Single" || spriteCount != 1 || importedSprite == null)
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.sprite-count-mismatch",
+                    "stretch 九宫格必须实际导入为唯一的 Single Sprite。");
+            }
+
+            Rect rect = importedSprite.rect;
+            if (importedSprite.texture != importedTexture ||
+                !Mathf.Approximately(rect.x, 0f) || !Mathf.Approximately(rect.y, 0f) ||
+                !Mathf.Approximately(rect.width, expectedSize.Width) ||
+                !Mathf.Approximately(rect.height, expectedSize.Height))
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.sprite-rect-mismatch",
+                    "Unity 实际 Sprite 的纹理或 rect 已发生裁切、尺寸漂移，已阻止登记。");
+            }
+
+            if (!BorderMatches(importedSprite.border, request.Border))
+            {
+                throw new ImageImportOperationException(
+                    "nine-slice.sprite-border-mismatch",
+                    "Unity 实际 Sprite 边框与九宫格声明不一致，已阻止登记。");
+            }
         }
 
         /// <summary>创建包含来源、GUID、批准证据和实际 Importer 的不可变登记事实。</summary>

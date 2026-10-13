@@ -6,6 +6,8 @@
 
 ## 布局基准与分层
 
+HUD、按钮、弹窗和奖励反馈先按[游戏内文案](game-copy.md)确定最小必要可见表达，再安排节点与布局。图标、数值和符号已表达的信息不重复写成解释句；数值与对应图标及语境形成同一信息组，必要条件、引导、操作后果和无障碍名称仍保留。内部规格、拆解标注和编辑器说明不加入正式 UI。
+
 - 横屏设计基准 `1920×1080`，CanvasScaler/PanelSettings 使用随屏幕尺寸缩放、Match Width Or Height、`Match = 1`；竖屏 `1080×1920`，`Match = 0`。设计基准不是实际输出分辨率。
 - 全屏背景可延伸到安全区之外并裁切边缘；关键文字、按钮、玩法信息以实时 `Screen.safeArea` 为边界。弹窗遮罩可覆盖全屏，弹窗内容必须留在安全区内。
 - 基础模块的 `SafeAreaRectTransform` 只挂在全屏 Canvas 的直接子节点 `SafeAreaRoot`；UI Toolkit 使用 `SafeAreaVisualElement` 作用于全屏 `UIDocument` 根节点的同名直接子节点。两者共享实时安全区换算；不得给背景或遮罩挂安全区组件，也不得在已经收缩的父节点内重复应用。
@@ -79,6 +81,8 @@ HealthBar
 
 ## V2 布局合同
 
+父子关系、布局职责和对齐决策由代理内部推导后，直接展示当前编号拆解图及必要布局标注供 V2 确认，不先请求用户确认文字布局方案。确认后的调整仍在既定目标内直接修复、重验并展示对照；正式原生组合在 V3 提交，不另建布局审批。
+
 每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：`parentElementId` 指向实际直接父节点，`hierarchyRelation` 声明父子或同级，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`constraints` 必须说明上述布局参照及其依赖链，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
 
 | 字段 | 必须回答的问题 |
@@ -117,6 +121,12 @@ layoutBinding:
 ```
 
 格子内部节点的 `parentElementId` 指向树中实际的直接父节点：图标和选中框属于 `VisualRoot`，数量文字属于 `CountBadge`。这些视觉子节点的 `interactionPolicy` 为 `DELEGATE_TO_PARENT`，点击最终由祖先 `InventorySlot` 处理。需要滚动的背包内容把 `overflowPolicy` 声明在列表容器上，单个格子仍需保持完整可见。
+
+## 九宫格资源与 V3 校准
+
+需要保持面板边角的资源在 V2 先判断九宫格是否适用；适用时冻结源图像素尺寸、Unity `Sprite.border` 四边值（`left, bottom, right, top`）、目标最小尺寸与内容内边距。文字、图标、交互和装饰仍按实际布局职责作为独立节点，不合并进面板图。导入与呈现按[九宫格 UI 合同](nine-slice-ui.md)检查。
+
+V3 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。Toolkit 的 `uwt_measure_layout` 读取目标视口下的节点矩形、边距/间距及差值；`uwt_capture_game_view` 只采集 Unity Editor Game View。使用和差异归因规则见[布局校准合同](layout-calibration.md)。几何测量与图像采集不自动改布局、不分析截图，也不代替用户对显示效果的检查确认。
 
 ## 代表性检查
 

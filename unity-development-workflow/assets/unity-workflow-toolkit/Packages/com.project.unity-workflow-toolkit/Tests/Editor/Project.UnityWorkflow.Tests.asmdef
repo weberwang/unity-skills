@@ -10,7 +10,8 @@
     "Project.UnityWorkflow.ProjectValidation",
     "Project.UnityWorkflow.VisualQA",
     "Project.UnityWorkflow.BuildPipeline",
-    "Project.UnityWorkflow.PipelineCommands"
+    "Project.UnityWorkflow.PipelineCommands",
+    "Unity.ugui"
   ],
   "includePlatforms": [
     "Editor"

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
+import { validateArtExperienceAcceptance } from './art-experience-contract.mjs';
 
 /** Unity 可见工作项的机器枚举；SCENE 与 DISPLAY_LAYER 必须独立闭环。 */
 export const WORK_ITEM_TYPES = Object.freeze(['PROJECT', 'FOUNDATION', 'SCENE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE']);
@@ -391,6 +392,7 @@ export function validateVisibleEvidenceContract(evidence, work, repo) {
   const stage = work.workItemType === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
   if (visible && evidence.visualStage !== stage) errors.push('Evidence Manifest.visualStage 未绑定当前可见 Work Item 阶段');
   if (visible && evidence.visualStage === 'V4' && evidence.verdict === 'PASS') {
+    errors.push(...validateArtExperienceAcceptance(evidence, work, repo));
     errors.push(...validateUnityResponsiveEvidence(evidence.responsiveEvidence, work, { repo }));
     const audit = evidence.productionContractAudit;
     if (!isObject(audit) || audit.status !== 'PASS' || !nonEmptyString(audit.contractVersion) || audit.staticDeclarationOnly !== false || audit.buildOnly !== false || audit.singleScreenshotOnly !== false) errors.push('V4 PASS 必须有真实 productionContractAudit，静态声明/构建成功/单图不能替代运行证据');

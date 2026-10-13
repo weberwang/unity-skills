@@ -25,9 +25,15 @@ description: Unity 游戏的测试与性能角色。需要建立或执行 EditMo
 6. 对 `$unity-game-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、蒙皮/骨骼/BlendShape、Collider、挂点、Prefab 引用和架构预算；模型生产代理的自检不能替代 QA。
 7. 对 `$unity-game-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
 8. 研发期 3D 验收使用 Unity Editor 覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形与目标场景光照；批准平台实机转台、设备性能和稳定性只在 G2 `PASS` 后的 G3 执行。
-9. 程序化文本对 `en`、`zh-CN`、`ja`、`ru`、`es` 分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
+9. 程序化文本对 `en`、`zh-CN`、`ja`、`ru`、`es` 分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。按[游戏内文案指导](../unity-development-workflow/references/game-copy.md)使用实际必要翻译中占用空间最长的文本与合理边界输入检查换行、容器适配和截断；验证可见内容与真实数据/显示条件一致，并保留必要条件和后果。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
 10. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。
+
+## 美术质量与动态反馈验收
+
+按[美术质量合同](../unity-development-workflow/references/art-quality-contract.md)独立检查主题贴合、受众适配、玩法可读、观看舒适、美术完成度，五项必须逐项 `PASS`。V4 对 `normal-play`、`repeated-feedback`、`event-peak`、`overlap-peak` 逐项记录必需或不适用及理由；适用项缺少真实运行证据时为 `NOT_RUN`，不推定通过。
+
+验收材料绑定当前 Work Item、候选与场景/显示层，由控制面 `artExperienceAcceptanceRef` 引用。实际运行片段或截图交由用户人工检查显示效果并确认；QA 不自动分析截图或据此声称视觉通过。动态反馈的重复、叠加、中断、暂停和对象池生命周期按 [`unity-game-juice`](../unity-game-juice/SKILL.md) 的事件映射和当前 Unity 实测轨迹检查。
 
 对 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md) 的交付，读取其[制作与验收合同](../unity-game-2d-rigging/references/production-contract.md)，独立检查部件与骨骼映射、网格/权重和 Sprite Skin 状态、极端姿势、视角/方向/镜像、动画循环/过渡/中断/事件、挂点、Prefab 保存与重导入、多实例及实际对象池生命周期。确认记录、来源版本、资源引用和预算必须对应当前候选；未在目标 Editor 实测的 API 能力或设备性能保留 `NOT_RUN`，不由静态检查推断通过。

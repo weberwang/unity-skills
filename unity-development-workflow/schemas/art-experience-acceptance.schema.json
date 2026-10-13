@@ -1,0 +1,408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/art-experience-acceptance.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "workItemId",
+    "candidateId",
+    "candidateVersion",
+    "sceneId",
+    "artBriefRef",
+    "qualityResults",
+    "scenarios",
+    "confirmedBy",
+    "confirmedAt",
+    "userMessageRef",
+    "userText"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "workItemId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sceneId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayLayerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artBriefRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qualityResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "themeFit",
+        "audienceFit",
+        "gameplayReadability",
+        "viewingComfort",
+        "artCompletion"
+      ],
+      "properties": {
+        "themeFit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASS"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "audienceFit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASS"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "gameplayReadability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASS"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "viewingComfort": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASS"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "artCompletion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASS"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "required",
+          "reason",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "normal-play",
+              "repeated-feedback",
+              "event-peak",
+              "overlap-peak"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "NOT_RUN",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "recordingPath": {
+            "type": "string",
+            "pattern": "\\.(mp4|webm|mov|mkv)$"
+          },
+          "durationSeconds": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "startSeconds": {
+            "type": "number",
+            "minimum": 0
+          },
+          "endSeconds": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "eventCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "peakConcurrency": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "viewport": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "width",
+              "height"
+            ],
+            "properties": {
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "observations": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "id": {
+                  "const": "normal-play"
+                }
+              },
+              "required": [
+                "id"
+              ]
+            },
+            "then": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              },
+              "required": [
+                "required"
+              ]
+            },
+            "then": {
+              "required": [
+                "recordingPath",
+                "durationSeconds",
+                "startSeconds",
+                "endSeconds",
+                "eventCount",
+                "peakConcurrency",
+                "viewport",
+                "observations"
+              ],
+              "properties": {
+                "status": {
+                  "const": "PASS"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "status": {
+                  "const": "NOT_APPLICABLE"
+                }
+              },
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "recordingPath"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "durationSeconds"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "startSeconds"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "endSeconds"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "eventCount"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "peakConcurrency"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "viewport"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "observations"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "normal-play"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "repeated-feedback"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "event-peak"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "id": {
+                "const": "overlap-peak"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "confirmedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confirmedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "userMessageRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "userText": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

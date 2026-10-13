@@ -22,6 +22,12 @@ Manifest 同时记录 `workItemType`、`visualStage`、`contractVersions`、`res
 
 静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=1` 只表示生产基线，不是运行时 DPR。
 
+## 可见 V4 美术与动态体验
+
+V4 `PASS` 还必须提供 `candidateId`、`candidateVersion` 与项目内 JSON 路径 `artExperienceAcceptanceRef`。材料遵循[美术验收合同](../../unity-development-workflow/references/art-quality-contract.md)，绑定工作项、场景或独立显示层、项目美术 brief、五项人工质量结果及四个动态情境。五项均通过；适用情境必须有非空真实录屏、有效片段范围、实测次数/并发、视口与人工观察。不适用情境逐一说明理由，不伪造实测。
+
+机器检查文件边界、结构、身份和结果记录，不能证明用户已实际观看或评价画面；编排者须依据真实用户回复填写确认。既有 V4 确认可同时覆盖这些材料，不新增审批。截图采集 `PASS`、几何容差 `PASS` 和美术人工通过分别记录，缺失、失败或未验证时阻断当前完成结论。直接状态迁移也会重新读取证据，不能以静态门状态绕过。
+
 ## 设备与发布
 
 设备、商店、外部服务和发布属于 A5/A6。没有精确批准时，`device` 和 `release` 必须保持 `NOT_RUN`；不得将“未测试”写成 PASS。设备或发布证据若为 PASS，必须同时引用当前 F4 批准的 `approvalId`、目标和基线。

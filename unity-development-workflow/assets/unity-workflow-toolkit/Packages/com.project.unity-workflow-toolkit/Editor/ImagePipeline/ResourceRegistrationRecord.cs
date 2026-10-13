@@ -13,6 +13,7 @@ namespace Project.UnityWorkflow.ImagePipeline
     {
         [SerializeField] private string textureType;
         [SerializeField] private string spriteMode;
+        [SerializeField] private int[] border;
         [SerializeField] private float pixelsPerUnit;
         [SerializeField] private string filterMode;
         [SerializeField] private string wrapMode;
@@ -28,6 +29,9 @@ namespace Project.UnityWorkflow.ImagePipeline
 
         /// <summary>获取或设置实际 Sprite 模式。</summary>
         public string SpriteMode { get => spriteMode; set => spriteMode = value; }
+
+        /// <summary>获取或设置实际 Sprite 边框，顺序为 [left, bottom, right, top]。</summary>
+        public int[] Border { get => border; set => border = value; }
 
         /// <summary>获取或设置实际每单位像素数。</summary>
         public float PixelsPerUnit { get => pixelsPerUnit; set => pixelsPerUnit = value; }

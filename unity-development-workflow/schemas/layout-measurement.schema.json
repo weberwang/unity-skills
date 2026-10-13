@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/layout-measurement.schema.json",
+  "title": "Unity 实际 UI 布局测量请求",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "scenePath", "uiSystem", "coordinateSpace", "outputPath", "targets"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "candidateId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "scenePath": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        {"pattern": "\\.[Uu][Nn][Ii][Tt][Yy]$"}
+      ]
+    },
+    "uiSystem": {"enum": ["UGUI", "UI_TOOLKIT"]},
+    "coordinateSpace": {"enum": ["SCREEN_SPACE_PIXELS", "UI_TOOLKIT_LOGICAL_POINTS"]},
+    "outputPath": {
+      "allOf": [
+        {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        {"pattern": "^Artifacts/Visual/.+\\.json$"}
+      ]
+    },
+    "gapAxis": {"enum": ["horizontal", "vertical"]},
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/target"}
+    }
+  },
+  "$defs": {
+    "gapValue": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["value"],
+          "properties": {"value": {"type": "number"}}
+        },
+        {"type": "null"}
+      ]
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parentPath", "fromId", "toId", "actualGap", "targetGap", "deltaGap"],
+      "properties": {
+        "parentPath": {"type": "string", "minLength": 1},
+        "fromId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "toId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "actualGap": {"type": "number", "description": "负值表示所选相邻节点在该轴上重叠。"},
+        "targetGap": {"$ref": "#/$defs/gapValue"},
+        "deltaGap": {"$ref": "#/$defs/gapValue"}
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "width": {"type": "number", "exclusiveMinimum": 0},
+        "height": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "objectPath": {"type": "string", "minLength": 1},
+        "parentObjectPath": {"type": "string", "minLength": 1},
+        "documentPath": {"type": "string", "minLength": 1},
+        "elementName": {"type": "string", "minLength": 1},
+        "parentElementName": {"type": "string", "minLength": 1},
+        "targetRect": {"$ref": "#/$defs/rect"},
+        "tolerance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["maxAbsDelta"],
+          "properties": {"maxAbsDelta": {"type": "number", "minimum": 0}}
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"objectPath": {"minLength": 1}}, "required": ["objectPath"]},
+          "then": {
+            "required": ["parentObjectPath"],
+            "not": {"anyOf": [{"required": ["documentPath"]}, {"required": ["elementName"]}, {"required": ["parentElementName"]}]}
+          },
+          "else": {
+            "required": ["documentPath", "elementName", "parentElementName"],
+            "not": {"required": ["parentObjectPath"]}
+          }
+        },
+        {
+          "if": {"required": ["tolerance"]},
+          "then": {"required": ["targetRect"]}
+        }
+      ],
+      "description": "目标矩形和容差只能声明期望值；实际矩形必须由 Unity Editor 从场景对象读取。"
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "objectPath", "elementName", "parentPath", "actualRect", "parentRect", "margins", "targetRect", "delta", "tolerance", "status"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/taskId"},
+        "objectPath": {"type": "string"},
+        "elementName": {"type": "string"},
+        "parentPath": {"type": "string", "minLength": 1},
+        "actualRect": {"$ref": "#/$defs/rect"},
+        "parentRect": {"$ref": "#/$defs/rect"},
+        "margins": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["left", "top", "right", "bottom"],
+          "properties": {
+            "left": {"type": "number"},
+            "top": {"type": "number"},
+            "right": {"type": "number"},
+            "bottom": {"type": "number"}
+          }
+        },
+        "targetRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
+        "delta": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["x", "y", "width", "height"],
+              "properties": {
+                "x": {"type": "number"},
+                "y": {"type": "number"},
+                "width": {"type": "number"},
+                "height": {"type": "number"}
+              }
+            },
+            {"type": "null"}
+          ]
+        },
+        "tolerance": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["maxAbsDelta"],
+              "properties": {"maxAbsDelta": {"type": "number", "minimum": 0}}
+            },
+            {"type": "null"}
+          ]
+        },
+        "status": {"enum": ["MEASURED", "PASS", "FAIL"]}
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "status", "taskId", "scenePath", "uiSystem", "coordinateSpace", "unit", "origin", "generatedAtUtc", "outputPath", "measurements", "gapAxis", "gapNote", "gaps"],
+      "properties": {
+        "schemaVersion": {"const": "1.0"},
+        "status": {"enum": ["MEASURED", "PASS", "FAIL", "BLOCKED"]},
+        "errorCode": {"type": "string"},
+        "message": {"type": "string"},
+        "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "candidateId": {"anyOf": [{"$ref": "common.schema.json#/$defs/taskId"}, {"const": ""}]},
+        "scenePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "uiSystem": {"enum": ["UGUI", "UI_TOOLKIT"]},
+        "coordinateSpace": {"enum": ["SCREEN_SPACE_PIXELS", "UI_TOOLKIT_LOGICAL_POINTS"]},
+        "unit": {"enum": ["PIXEL", "POINT"]},
+        "origin": {"enum": ["SCREEN_TOP_LEFT", "UIDOCUMENT_ROOT_TOP_LEFT"]},
+        "generatedAtUtc": {"type": "string", "format": "date-time", "pattern": "(?:[Zz]|[+]00:00)$"},
+        "outputPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
+        "measurements": {"type": "array", "items": {"$ref": "#/$defs/measurement"}},
+        "gapAxis": {"enum": ["", "horizontal", "vertical"]},
+        "gapNote": {"type": "string"},
+        "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"gapAxis": {"const": ""}}, "required": ["gapAxis"]},
+          "then": {"properties": {"gaps": {"maxItems": 0}}}
+        },
+        {
+          "if": {"properties": {"uiSystem": {"const": "UGUI"}}, "required": ["uiSystem"]},
+          "then": {
+            "properties": {
+              "coordinateSpace": {"const": "SCREEN_SPACE_PIXELS"},
+              "origin": {"const": "SCREEN_TOP_LEFT"}
+            }
+          },
+          "else": {
+            "properties": {
+              "coordinateSpace": {"const": "UI_TOOLKIT_LOGICAL_POINTS"},
+              "origin": {"const": "UIDOCUMENT_ROOT_TOP_LEFT"}
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"uiSystem": {"const": "UGUI"}}, "required": ["uiSystem"]},
+      "then": {
+        "properties": {
+          "coordinateSpace": {"const": "SCREEN_SPACE_PIXELS"},
+          "targets": {
+            "items": {
+              "required": ["objectPath", "parentObjectPath"],
+              "not": {"anyOf": [{"required": ["documentPath"]}, {"required": ["elementName"]}, {"required": ["parentElementName"]}]}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "coordinateSpace": {"const": "UI_TOOLKIT_LOGICAL_POINTS"},
+          "targets": {
+            "items": {
+              "required": ["documentPath", "elementName", "parentElementName"],
+              "not": {"anyOf": [{"required": ["objectPath"]}, {"required": ["parentObjectPath"]}]}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "此契约不接受手填的实际 bounds；每个请求只允许一种 UI 系统和一种坐标空间。gapAxis 可选，间距仅描述请求选择的同一直接父级子项中按实测轴位置相邻的节点，不代表检查了父级所有子项。UI Toolkit 报告统一以同一 UIDocument 根节点的左上角为逻辑点原点。"
+}

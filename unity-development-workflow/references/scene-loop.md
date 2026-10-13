@@ -10,18 +10,22 @@
 
 冻结玩家行为、状态、失败/恢复、输入、相机、UI、数据所有权与 Scene/Prefab/UXML 结构，并生成响应式合同。按[布局参照规则](ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。新建且包含可见画面的场景或显示层先生成至少一张完整效果图作为 V2 目标图；草图和灰盒只承载布局与交互验证，不能替代效果图，也不注册为正式资源。
 
+视觉任务同时明确主题、受众、核心循环、体验目标与主要观看情境，并由玩法和 [`unity-game-juice`](../../unity-game-juice/SKILL.md) 确认关键事件的反馈意图，按[美术质量合同](art-quality-contract.md)记录目标。
+
 ## V2 拆解确认
 
 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单；在冻结的 V1 效果图上标出稳定编号、来源、关系、装配与生产边界。详细展示规则见[视觉工作流](visual-workflow.md#图片框选与标注交付)，以下结构化字段作为内部合同保存并与图中编号同步。
 
-冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。仅对真实取舍额外提问，不重复询问已确认事实；阶段交付人工确认始终执行。
+冻结组件×状态、`parentElementId`、`semanticGrouping`、`layoutBinding`、视觉来源分析、Scene/Prefab/UXML 装配分析、资源/Importer/GUID/Addressables 约定和验收条件。适用的九宫格资源冻结源图尺寸、border、目标最小尺寸和内容内边距；动作资产冻结意图时间轴、事件、消费接口、循环/中断和资产生产者。父子必须由定位、布局、交互、状态、裁切或复用的真实依赖显式决定；无这些依赖时保持同组同级。屏幕 UI 按[节点树规则](ui-layout-and-hierarchy.md)声明每个容器职责和空间不足时的处理。仅对真实取舍额外提问，不重复询问已确认事实；阶段交付人工确认始终执行。
 
 ## V3 资源与组合验收
 
-全部必需正式资源在 Unity 中导入并验证，宿主 Scene/Prefab/UI 组合没有缺失引用、孤儿资源、占位或 Console 错误。显示层可并行准备，但必须持有自己的 V2/V3 证据、响应式合同和互斥所有权，不并入场景的完成条件。
+全部必需正式资源在 Unity 中导入并验证，宿主 Scene/Prefab/UI 组合没有缺失引用、孤儿资源、占位或 Console 错误；九宫格需回读实际 Importer Border 并检查 UI Toolkit 或 uGUI `Sliced` 呈现。用现有 Inspector/UI Builder/Undo 校准实际布局，按[布局校准合同](layout-calibration.md)记录实测差值。显示层可并行准备，但必须持有自己的 V2/V3 证据、响应式合同和互斥所有权，不并入场景的完成条件。
 
 ## V4 正式实现与运行验收
 
 正式实现满足已确认要求，完成玩法、视觉、音频、输入、生命周期和清理；在 Editor/PlayMode 中按实际实现采集 Screen/GameView、backbuffer 或 RenderTexture、Camera、Canvas/PanelSettings、安全区、方向/resize、输入命中、截图和状态轨迹。中途调整无需回改 V2/V3 合同，不校验 SHA；实际完成情况记录在交付和验收报告。缺少真实 Unity 测量时 V4 只能为 `NOT_RUN` 或失败。场景 V4 不等待独立瞬态层。
+
+美术质量五项逐项通过，动态体验按适用性覆盖正常游玩、重复反馈、事件峰值和同屏叠加；不适用项记录理由，适用项必须有真实运行证据。独立验收材料由控制面 `artExperienceAcceptanceRef` 引用，并绑定当前 Work Item、候选及场景/显示层；用户人工检查实际片段/截图后确认，机器侧参数不代表视觉通过。具体检查见[美术质量合同](art-quality-contract.md)。
 
 不同场景可并行只读准备；正式 Unity Editor 写入受单写者约束。完成一个场景不是切换下一个场景的强制前提，只有共享资源、入口或状态所有权存在依赖时才串行。

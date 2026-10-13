@@ -10,6 +10,7 @@
 
 | 请求 | 使用的 Unity 插件 Skill |
 | --- | --- |
+| 玩法事件的视觉、音频、镜头、时间与交互反馈设计 | 本仓库 [`unity-game-juice`](../../unity-game-juice/SKILL.md)；确定玩法事件及参数后使用，不替代玩法规则所有权 |
 | Editor/项目发现、Scene/Prefab/GameObject/资源写入、测试、构建、日志 | `unity:unity-cli` |
 | 新建项目 | `unity:new-unity-project` |
 | UPM 包发现、安装、升级、移除 | `unity:unity-package-management` |
@@ -27,8 +28,9 @@
 ## 保留在本仓库的职责
 
 - `unity-game-workflow-control`：范围、状态、风险、实施包和证据权威。
-- `unity-development-workflow`：六阶段与 V0-V4 编排、单写者、交接和质量门。
+- `unity-development-workflow`：六阶段与 V0-V4 编排、单写者、交接和质量门；另维护美术质量、动画意图、九宫格和布局校准合同。
+- `unity-game-juice`：把已确认玩法事件映射到多通道动态反馈，明确重复、叠加、中断、时间来源与生命周期。
 - 各领域 Skill：产品与技术决策、跨领域合同、资源权属、预算、验收和发布边界。
-- `com.project.unity-workflow-toolkit`：项目专用的验证、批准资源导入、固定机位取证与交付预检命令。
+- `com.project.unity-workflow-toolkit`：项目专用的验证、批准资源导入、固定机位取证、布局实测（`uwt_measure_layout`）、Editor Game View 采集（`uwt_capture_game_view`）与交付预检命令。布局命令只读取 Unity 实际几何，采集命令只提供给用户检查的画面证据。
 
 插件命令成功只证明命令执行完成，不自动满足本仓库的 F2/F3、V4、设备或发布证据。插件没有覆盖的项目合同继续由本仓库维护；插件已经覆盖的操作步骤不得在本仓库再维护一份易漂移副本。

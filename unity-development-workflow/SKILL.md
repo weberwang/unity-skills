@@ -11,11 +11,13 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 ## 最短流程
 
-1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](references/unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[屏幕 UI 布局与节点树](references/ui-layout-and-hierarchy.md)、[TMP 多语言字体图集](references/tmp-font-atlas-workflow.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
+1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](references/unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](references/workflow-overview.md)、[@Unity 执行契约](references/unity-plugin-execution.md)、[项目发现](references/project-discovery.md)、[模块规划](references/module-planning.md)、[响应式 UI 合同](references/responsive-ui-contract.md)、[屏幕 UI 布局与节点树](references/ui-layout-and-hierarchy.md)、[TMP 多语言字体图集](references/tmp-font-atlas-workflow.md)、[视觉工作流](references/visual-workflow.md)、[美术质量合同](references/art-quality-contract.md)、[动画意图合同](references/animation-intent-contract.md)、[九宫格 UI 合同](references/nine-slice-ui.md)、[布局校准](references/layout-calibration.md)、[游戏实现](references/game-implementation.md)与[交付](references/delivery.md)。
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前明确 Implementation Package 的基线、文件所有权、Unity 对象所有权、执行单元、验证命令和停止条件。任务内方案或资源清单调整记录实际交付并重验受影响行为；路径或所有权越出授权边界时先更新执行范围。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。
 5. 阶段完成后回到控制面运行 `check`/`run`。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
+
+图片与动画采用[图片优先的确认方式](../unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)：阶段内技术分析、布局决策和制作参数内部维护，直接展示真实候选；已有阶段或专项交付确认后不再请求文字复述确认，同目标返修直接展示前后对照。玩家画面按[游戏内文案](references/game-copy.md)维护同一可见表达，内部规格、效果图与运行数据来源分清归属。
 
 ## Unity 原生执行约束
 
@@ -32,14 +34,14 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 
-- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹。按[布局参照规则](references/ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
-- V2 先冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
-- V3 验证正式资源、Prefab/Scene/UXML 组合、序列化引用与宿主同屏效果；不得以灰盒或整张效果图冒充正式资源。
-- V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。
+- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](references/ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
+- V2 先冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
+- V3 验证正式资源、实际 Importer 回读、Prefab/Scene/UXML 组合、序列化引用与宿主同屏效果；以现有 Inspector、UI Builder 和 Undo 校准真实布局，具体按[布局校准合同](references/layout-calibration.md)测量。不得以灰盒或整张效果图冒充正式资源。
+- V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据；美术质量五项逐项通过，并按适用性验收正常游玩、重复反馈、事件峰值和同屏叠加。动态证据与人工显示确认通过 `artExperienceAcceptanceRef` 绑定当前工作项/候选/场景；机器参数不能代替视觉确认。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。
 
 ## 领域协作
 
-制作、架构、玩法、视觉、3D、音频、数值、QA 和发布 Skill 只提交领域提议、实施结果或证据。现有 Spine 角色仅换皮时调用 `$unity-game-spine-reskin`。开发者不得审查自己的交付；F2 领域质量审查和 F3 工程验证分开记录。并行规则见[多代理执行](references/multi-agent-execution.md)。
+制作、架构、玩法、视觉、3D、音频、数值、QA 和发布 Skill 只提交领域提议、实施结果或证据。玩法事件对应的视觉、音频、镜头、时间与生命周期反馈由 [`$unity-game-juice`](../unity-game-juice/SKILL.md) 协调；规则和权威状态仍由玩法角色持有。现有 Spine 角色仅换皮时调用 `$unity-game-spine-reskin`；新 Spine/3D 动画必须在 Work Item 明确动画资产生产者，模型与贴图 Skill 不默认承担动画制作。开发者不得审查自己的交付；F2 领域质量审查和 F3 工程验证分开记录。并行规则见[多代理执行](references/multi-agent-execution.md)。
 
 Unity 原生 2D 骨骼、蒙皮和角色动画交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)：拆件前确定项目视角和方向合同，由视觉资产角色生产部件，骨骼角色交付 Prefab、动画与 Animator 接口，玩法角色消费，QA 独立验收。拆件和代表性动画分别取得当前版本确认；沿用现有工作项及实施单元，不新增角色资产状态机或非法工作项类型。
 

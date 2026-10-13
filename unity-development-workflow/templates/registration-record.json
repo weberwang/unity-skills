@@ -23,7 +23,13 @@
     "sRgb": true,
     "alphaIsTransparency": true,
     "mipmaps": false,
-    "readWriteEnabled": false
+    "readWriteEnabled": false,
+    "border": [
+      0,
+      0,
+      0,
+      0
+    ]
   },
   "approvalEvidencePaths": [
     "Artifacts/Approvals/image.arena-background.json"

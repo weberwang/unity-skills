@@ -20,7 +20,13 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
 8. `SCENE` 与 `DISPLAY_LAYER` 每个 V0–V4 阶段结束时按[阶段人工确认](references/stage-confirmation.md)展示可查看交付并等待用户确认；通过 `stageReviews` 保存工作项、阶段、确认人、时间与用户消息引用。未确认不推进下一阶段，V4 未确认不完成工作项。
 
+V4 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](references/unity-evidence.md#可见-v4-美术与动态体验)：Manifest 明确 `candidateId`、`candidateVersion`、`artExperienceAcceptanceRef`，机器只核对材料与文件，不代替用户观看判断。该材料复用现有 V4 阶段确认；纯工程工作项不适用。
+
 用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V0-V4，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。
+
+## 视觉任务交付
+
+遵守[图片优先的确认方式](references/simplified-workflow.md#图片优先的确认方式)：代理内部维护分析、技术记录与提示词，在已满足阶段前置和操作授权的范围内直接展示真实图片或预览供人工确认，不设常规文字提案、布局决策或动画时间轴的制作前确认门。同目标返修直接给前后对照；真实需求歧义才暂停受影响部分。V0–V4、真实素材和已有专项确认继续执行，内部记录不能替代实际候选。游戏画面表达遵守[游戏内文案](../unity-development-workflow/references/game-copy.md)，不新增审批或机器词库门禁。
 
 ## 稳定 CLI
 
