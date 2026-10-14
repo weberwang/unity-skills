@@ -39,7 +39,7 @@ unity command uwt_validate_project --project-path D:\Projects\my-game --job_path
 
 正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
 
-成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 设置。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、实际源路径、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；集成阶段审查并合并这些记录。
+成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 设置。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、实际源路径、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；当前 V3 资源交接由实施包指定的资源登记单写者审查并合并，不必等到项目最终全局集成。Toolkit 不自动合并总表或汇总消费者，消费关系由各场景/显示层拆解与装配合同维护；导入 `PASS` 不代表许可或人工视觉确认已完成。
 
 Sprite 任务显式提供 `unityImport.border`，顺序为 `[left, bottom, right, top]`，普通 Sprite 为四零。非零边框同时声明 `nineSlice: { mode: "stretch", reason, sourceSize, border }`；边框一致性、正尺寸中心、实际源图大小及导入后真实 Sprite 均须核对。九宫格仅使用 Single Sprite，小图生产尺寸与目标显示框分别声明；被平台缩放、裁切或改写的结果不能登记通过。
 

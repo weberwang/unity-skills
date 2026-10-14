@@ -22,7 +22,13 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 如果场景基于参考图还原，明确 `usability` 或 `exact`。默认 `usability` 关注边界、裁切、遮挡、可读性、状态和交互；仅用户明确要求精确还原时使用像素容差和完整矩阵。
 
+回对功能/场景阶段的[共享资源规划](shared-asset-usage.md)：核实共同消费位置、状态、尺寸、视觉要求和差异；未定项保持候选，明确同一部件才交给 V2 统一生产规划，不因共享功能强行统一不同场景美术。
+
 ## V2 拆解确认
+
+先按[文本与色彩拆分路线](visual-decomposition-routes.md)完整识别冻结位图中的文字、图标、底板、填充、边框与装饰，系统文本和原生绘制也进入编号清单及标注。低显著性文字优先系统文本，简单填充优先原生绘制；明显字形、材质、纹理和光影保留独立资产。逐项记录视觉来源与实际实现资格，拆开来源仍保持原功能组件的交互、状态、本地化和布局联动。
+
+再按[公共资源登记与使用](shared-asset-usage.md#v2-查库与绑定)查询已登记字体、贴图、材质、图标和组件。合格复用保留本场景拆解编号并绑定公共资源身份及消费节点；无合格资源才安排独立生产，多个确定消费者共用同一来源和唯一所有者。
 
 ### 图片框选与标注交付
 
@@ -41,7 +47,7 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；
 - 资源来源、许可、Unity GUID、复用理由和替换策略；
-- 静态特色外观的独立生产结论；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持；`REUSE` 的精确 GUID、源路径、实际 Importer 设置和消费节点；
+- 静态特色外观的独立生产结论，以及[文字路线](visual-decomposition-routes.md#文字路线判定)和[填充路线](visual-decomposition-routes.md#色彩填充路线判定)的显著性、变化/复用需求与替代依据；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持，并完整实现方案要求保留的外观与状态；`REUSE` 的精确 GUID、源路径、实际 Importer 设置和消费节点；
 - Scene/Prefab/UXML/UIDocument/Canvas/Transform 的结构化装配；单区域不得使用 `COMPOSITE` 或整屏截图，`fullScreenCapture` 必须为 `false`；
 - 图片框选与图内中文标注的 annotated preview、内部完整覆盖记录和生产/验证责任。
 
@@ -52,6 +58,10 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 ## V3 正式资源与组合验收
 
 按拆解计划逐项独立生产或复用。位图、模型、材质、字体、音频和 VFX 使用其真实 Importer 与平台设置；Unity 管理资源与 `.meta` 同步进入所有权和证据。UI/2D 位图生产默认 `sourceScale=1`，平台预算或像素美术合同另有明确批准值时才改变；运行时不使用固定 Web DPR，而读取 Unity 平台、Canvas/PanelSettings、Camera 和动态分辨率事实。SpriteAtlas、压缩、MipMap 和 Addressables 由 Unity 预算决定。
+
+原生文本与填充同样按 V2 编号实现、绑定消费节点并参与组合验收；核对字体/字形覆盖、所需材质效果、表面复用、共同裁切边界及状态同步。不能把原生项从生产覆盖记录中遗漏，也不能在接入时静默用默认字体、纯色矩形或固定进度替代已确认外观与可变行为。
+
+公共资源在本阶段交接时按[登记同步](shared-asset-usage.md#v3-登记同步)由指定单写者合并独立事实到 `docs/asset-register.yaml`，核对许可、实际 GUID/Importer 与场景装配绑定后交给后续消费者；生产者不能并发覆盖总表，也不能把导入技术通过当作可复用或人工视觉通过。
 
 生成式透明位图可采用“生成不透明单一纯色背景 PNG → `unity-game-visual-assets/scripts/remove-background-local.mjs` → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。工具自行生成的 SHA 不参与验收。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
 

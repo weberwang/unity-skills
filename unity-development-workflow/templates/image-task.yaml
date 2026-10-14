@@ -172,21 +172,22 @@ splitPlanApproval:
           - id: default
             description: 默认角色选择框状态
         targetPrefabNodeIds: [node.player-select-frame]
-        targetPath: Assets/Art/Runtime/UI/PlayerSelect/frame.png
+        # 复用绑定公共源，不为场景复制资源或建立第二个资源身份。
+        targetPath: Assets/Art/Library/PlayerSelect/Frame.png
         delivery: SINGLE_SPRITE
         action: REUSE
-        existingAssetId: ui.player-select.frame-registered
+        existingAssetId: ui.player-select.frame
         reuseReason: 已登记选择框与当前 Visual Bible 风格兼容且已有 Unity 验证
         reuseResourcePlan:
-          existingAssetId: ui.player-select.frame-registered
+          existingAssetId: ui.player-select.frame
           reuseReason: 已登记选择框与当前 Visual Bible 风格兼容且已有 Unity 验证
           reuseMode: REGISTERED_ASSET
           effectImagePixelReuse: FORBIDDEN
           sourcePath: Assets/Art/Library/PlayerSelect/Frame.png
           unityGuid: fedcba9876543210fedcba9876543210
           assetRegisterEvidence:
-            recordId: asset-register.player-select-frame-v1
-            path: Artifacts/AssetRegister/player-select-frame-v1.yaml
+            recordId: ui.player-select.frame
+            path: docs/asset-register.yaml
           licenseEvidence:
             rightsStatus: APPROVED
             path: Artifacts/Licenses/player-select-frame-v1.yaml

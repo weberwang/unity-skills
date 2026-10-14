@@ -34,8 +34,10 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 场景按 `V0 分流 → V1 场景定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](references/visual-workflow.md)和[场景闭环](references/scene-loop.md)。
 
+公共资源按[登记与使用规则](references/shared-asset-usage.md)从功能/场景规划贯穿 V1-V4：早期识别共享候选，V2 先查项目资源总表再选择复用或统一生产，V3 用真实产物复核；资源交接时由指定单写者同步登记，场景/显示层记录实际消费关系，替换后只重验受影响消费者。
+
 - V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](references/ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
-- V2 先冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
+- V2 按[文本与色彩拆分路线](references/visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
 - V3 验证正式资源、实际 Importer 回读、Prefab/Scene/UXML 组合、序列化引用与宿主同屏效果；以现有 Inspector、UI Builder 和 Undo 校准真实布局，具体按[布局校准合同](references/layout-calibration.md)测量。不得以灰盒或整张效果图冒充正式资源。
 - V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据；美术质量五项逐项通过，并按适用性验收正常游玩、重复反馈、事件峰值和同屏叠加。动态证据与人工显示确认通过 `artExperienceAcceptanceRef` 绑定当前工作项/候选/场景；机器参数不能代替视觉确认。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。
 

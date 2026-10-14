@@ -236,21 +236,22 @@ splitPlanApproval:
           - id: default
             description: 默认竞技场徽标状态
         targetPrefabNodeIds: [node.arena-logo]
-        targetPath: Assets/Art/Runtime/Scenes/ArenaIntro/arena-logo.png
+        # 复用绑定公共源，不为场景复制资源或建立第二个资源身份。
+        targetPath: Assets/Art/Library/Arena/ArenaLogo.png
         delivery: SINGLE_SPRITE
         action: REUSE
-        existingAssetId: asset.arena-logo-registered
+        existingAssetId: asset.arena-logo
         reuseReason: 已登记资源与当前 Visual Bible 风格兼容且已有 Unity 验证
         reuseResourcePlan:
-          existingAssetId: asset.arena-logo-registered
+          existingAssetId: asset.arena-logo
           reuseReason: 已登记资源与当前 Visual Bible 风格兼容且已有 Unity 验证
           reuseMode: REGISTERED_ASSET
           effectImagePixelReuse: FORBIDDEN
           sourcePath: Assets/Art/Library/Arena/ArenaLogo.png
           unityGuid: 0123456789abcdef0123456789abcdef
           assetRegisterEvidence:
-            recordId: asset-register.arena-logo-v1
-            path: Artifacts/AssetRegister/arena-logo-v1.yaml
+            recordId: asset.arena-logo
+            path: docs/asset-register.yaml
           licenseEvidence:
             rightsStatus: APPROVED
             path: Artifacts/Licenses/arena-logo-v1.yaml

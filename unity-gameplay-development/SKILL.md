@@ -13,6 +13,8 @@ description: Unity 游戏的玩法开发角色。需要依据 GDD、TDD、场景
 
 Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先用 `unity:ui`；NavMesh、3D 碰撞、多人和 LiveOps 分别路由到 `unity:initialize-ai-navigation`、`unity:physics-3d-collision`、`unity:setup-multiplayer-services`、`unity:build-live-game`。本角色保留玩法规则、状态所有权、接口和场景增量，不复制插件专项实现指南。
 
+按[公共资源登记与使用](../unity-development-workflow/references/shared-asset-usage.md)从总表解析资源身份与实际引用，在当前场景/显示层合同维护消费节点和变更影响；只控制本地实例、文案和动态状态，不修改共享源或为每个消费者复制公共资产。
+
 1. 先冻结玩家行为、边界情况和测试点；A3 前冻结实施包，再按总控的阶段任务闭环编码。
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$unity-game-3d-modeling` 与 `$unity-game-3d-texturing`；原生 2D 骨骼与动画交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)。消费已独立验收的角色 Prefab、视角/方向规则、Animator 参数、动作事件和挂点合同，负责触发与战斗逻辑；不在场景中私改骨架、网格、权重或共享 Clip，接口不足时退回资产角色修复。玩法拥有权威状态、命中/伤害判定、事件语义、数值和动作触发；把已确定的事件及参数交给 [`$unity-game-juice`](../unity-game-juice/SKILL.md) 设计反馈映射。表现层消费事件，不能成为玩法判定来源；顿帧、击退等改变规则或玩家控制的行为由玩法/数值角色确定。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。

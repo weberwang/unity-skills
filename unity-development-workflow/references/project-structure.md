@@ -72,6 +72,7 @@ Assets/
 - `Plugins/` 按原生插件导入规则使用；`Gizmos/`、`Editor Default Resources/` 仅在有对应编辑器用途时创建，并遵守 Unity 的根路径要求。
 - 资源与 `.meta` 为一个所有权单元，移动、重命名通过 AssetDatabase 执行并复读 GUID 与引用；禁止复制 `.meta` 制造 GUID 冲突。
 - 复用对象使用 Prefab、Variant 或配置资产，场景只持有实例和本场景组合；禁止复制后私改共享 Mesh、Material、Texture。
+- 公共资源沿用 TDD 的目录映射和唯一所有者，按[登记与使用规则](shared-asset-usage.md)统一资源身份并记录实际消费者；不因新增拆解项就为各场景复制字体、填充贴图或共享材质，也不为尚无共同消费需求的资源预建公共库。
 
 ## 场景与运行时结构
 
