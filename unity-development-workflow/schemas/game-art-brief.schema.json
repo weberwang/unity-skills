@@ -80,20 +80,83 @@
       "required": [
         "normal",
         "operation",
-        "peak"
+        "peak",
+        "measurementMethod"
       ],
       "properties": {
         "normal": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/intensityLevel"
         },
         "operation": {
-          "type": "string",
-          "minLength": 1
+          "$ref": "#/$defs/intensityLevel"
         },
         "peak": {
+          "$ref": "#/$defs/intensityLevel"
+        },
+        "measurementMethod": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明各层级预算采用的测量方法、观察条件和记录方式。"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "intensityLevel": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "normal、operation、peak 各自使用的严格刺激预算结构。",
+      "required": [
+        "brightnessContrast",
+        "screenCoverage",
+        "duration",
+        "triggerFrequency",
+        "maxConcurrent",
+        "recovery",
+        "blendPolicy"
+      ],
+      "properties": {
+        "brightnessContrast": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明该层级的亮度变化与对比度边界。"
+        },
+        "screenCoverage": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明刺激占用的屏幕区域及覆盖限制。"
+        },
+        "duration": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明单次刺激的持续时长或结束条件。"
+        },
+        "triggerFrequency": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明触发频率、去重或重复策略。"
+        },
+        "maxConcurrent": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "该层级允许同时活动的刺激数量上限。"
+        },
+        "recovery": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明刺激结束、打断或暂停后的恢复方式。"
+        },
+        "blendPolicy": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "说明并发刺激的混合、合并、抑制或优先级策略。"
         }
       }
     }

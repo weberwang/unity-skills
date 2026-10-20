@@ -16,13 +16,14 @@ using Unity.Pipeline.Commands;
 namespace Project.UnityWorkflow.Tests
 {
     /// <summary>
-    /// 验证 Unity Pipeline 命令的 API 形状、入口保护和六项业务服务转发。
+    /// 验证 Unity Pipeline 命令的 API 形状、入口保护和业务服务转发。
     /// </summary>
     public sealed class PipelineCommandTests
     {
         private static readonly Type[] CommandTypes =
         {
             typeof(ValidateProjectCommand),
+            typeof(Validate2DRiggingCommand),
             typeof(ImportImageCommand),
             typeof(CaptureVisualCommand),
             typeof(DeliveryPreflightCommand),
@@ -31,7 +32,7 @@ namespace Project.UnityWorkflow.Tests
         };
 
         /// <summary>
-        /// 确认六个命令使用稳定名称、主线程执行、字符串 Job 参数和统一结果类型。
+        /// 确认所有命令使用稳定名称、主线程执行、字符串 Job 参数和统一结果类型。
         /// </summary>
         [Test]
         public void CommandDefinitions_UseStableNamesAndExactHandlerSignature()
@@ -66,6 +67,7 @@ namespace Project.UnityWorkflow.Tests
             Assert.That(names, Is.EquivalentTo(new[]
             {
                 "uwt_validate_project",
+                "uwt_validate_2d_rigging",
                 "uwt_import_image",
                 "uwt_capture_visual",
                 "uwt_delivery_preflight",
@@ -75,13 +77,14 @@ namespace Project.UnityWorkflow.Tests
             Assert.That(names.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(names.Length));
         }
 
-        /// <summary>确认六个命令在缺少 Job 路径时返回失败信封而不是抛出异常。</summary>
+        /// <summary>确认所有命令在缺少 Job 路径时返回失败信封而不是抛出异常。</summary>
         [Test]
         public void Execute_WithoutJobPath_ReturnsFailureResult()
         {
             PipelineCommandResult[] results =
             {
                 ValidateProjectCommand.Execute(null),
+                Validate2DRiggingCommand.Execute(null),
                 ImportImageCommand.Execute(string.Empty),
                 CaptureVisualCommand.Execute("   "),
                 DeliveryPreflightCommand.Execute(null),
@@ -127,6 +130,7 @@ namespace Project.UnityWorkflow.Tests
                 PipelineCommandResult[] results =
                 {
                     ValidateProjectCommand.Execute(jobPath),
+                    Validate2DRiggingCommand.Execute(jobPath),
                     ImportImageCommand.Execute(jobPath),
                     CaptureVisualCommand.Execute(jobPath),
                     DeliveryPreflightCommand.Execute(jobPath),

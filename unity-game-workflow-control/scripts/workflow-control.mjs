@@ -5,204 +5,21 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { canonicalizePosixPath as canonicalizePosixPathRuntime, commitWithLock } from './runtime/io.mjs';
+import { commitWithLock } from './runtime/io.mjs';
 import { assertStageConfirmationGate, stageConfirmationBlockers, validateStageReviewsShape } from './runtime/stage-confirmation.mjs';
 import { assertVisibleContract, validateUnitDependencies, validateUnityOwnershipShape, validateVisibleEvidenceContract, validateVisibleImplementationPackage, validateVisibleWorkItemContract } from './runtime/visible-contract.mjs';
-/** 唯一接受的数据合同版本；旧字段不会被迁移或解释。 */
-export const SCHEMA_VERSION = '1.0';
-/** 用户可见的六个项目阶段。 */
-export const STAGES = Object.freeze(['requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'global-integration-validation', 'release']);
-/** 单场景证据阶段。 */
-export const SCENE_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
-/** 工作项全局状态。 */
-export const STATES = Object.freeze(['INTAKE', 'BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'COMPLETE', 'RETURN', 'BLOCKED']);
-/** 控制门集合。 */
-export const GATES = Object.freeze(['F0', 'F1', 'F2', 'F3', 'F4']);
-/** 实施包单元类型。 */
-export const UNIT_TYPES = Object.freeze(['SHARED', 'MODULE', 'SCENE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE']);
-
-/** 合法前向迁移图；RETURN/BLOCKED 的恢复路径只能由显式 transition 使用。 */
-export const TRANSITIONS = Object.freeze({
-  INTAKE: ['BASELINE', 'BLOCKED'],
-  BASELINE: ['PROPOSAL', 'BLOCKED'],
-  PROPOSAL: ['REVIEW', 'BLOCKED', 'RETURN'],
-  REVIEW: ['IMPLEMENTING', 'VALIDATING', 'BLOCKED', 'RETURN'],
-  IMPLEMENTING: ['VALIDATING', 'BLOCKED', 'RETURN'],
-  VALIDATING: ['PASSED', 'BLOCKED', 'RETURN'],
-  PASSED: ['INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'COMPLETE', 'BLOCKED', 'RETURN'],
-  INTEGRATING: ['COMPLETE', 'RELEASE_APPROVAL_REQUIRED', 'BLOCKED', 'RETURN'],
-  RELEASE_APPROVAL_REQUIRED: ['RELEASING', 'BLOCKED', 'RETURN'],
-  RELEASING: ['COMPLETE', 'BLOCKED'],
-  RETURN: ['BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'BLOCKED'],
-  BLOCKED: ['BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING'],
-  COMPLETE: [],
-});
-
-/** Unity 动作白名单及唯一风险等级。未知 unity-* 动作也不能旁路控制面。 */
-export const ACTION_LEVEL = Object.freeze({
-  'unity-inspect': 'A0',
-  'unity-spec-candidate': 'A1',
-  'unity-prototype': 'A2',
-  'unity-code-change': 'A3',
-  'unity-asset-change': 'A3',
-  'unity-scene-change': 'A3',
-  'unity-display-layer-change': 'A3',
-  'unity-qa-build': 'A3',
-  'unity-integration': 'A4',
-  'unity-migration': 'A4',
-  'unity-project-settings': 'A4',
-  'unity-external-config': 'A5',
-  'unity-device-test': 'A5',
-  'unity-build-upload': 'A5',
-  'unity-release': 'A6',
-  'unity-store-submit': 'A6',
-  'unity-rollback': 'A6',
-});
-
-/** 阶段中文标签仅用于稳定展示，不参与门禁判断。 */
-export const STAGE_LABELS = Object.freeze({
-  'requirements-scope': '需求与范围', 'global-baseline': '全局基线', 'foundation-engineering': '基础工程',
-  'scene-production': '场景与弹窗生产', 'global-integration-validation': '全局集成验证',
-  release: '发布',
-});
-/** 场景阶段中文标签仅用于稳定展示。 */
-export const SCENE_LABELS = Object.freeze({ V0: '分流', V1: '场景定义', V2: '拆解确认', V3: '正式资源与组合验收', V4: '正式实现与运行验收' });
-/** 控制面异常；CLI 入口会把它转换为稳定 JSON 错误。 */
-export class WorkflowControlError extends Error {
-  /** 创建带机器可读错误码的控制面异常。 */
-  constructor(message, code = 2, details = {}) {
-    super(String(message));
-    this.name = 'WorkflowControlError';
-    this.code = code;
-    this.details = details;
-  }
-}
-
-/** 抛出统一控制面异常。 */
-export function fail(message, code = 2, details = {}) {
-  throw new WorkflowControlError(message, code, details);
-}
-/** 解析 CLI 参数；重复选项保留为数组，便于绑定多个输入文件。 */
-export function parseArgs(argv = []) {
-  const args = { _: [] };
-  for (let index = 0; index < argv.length; index += 1) {
-    const token = String(argv[index]);
-    if (!token.startsWith('--')) {
-      args._.push(token);
-      continue;
-    }
-    const equal = token.indexOf('=');
-    const rawKey = equal >= 0 ? token.slice(2, equal) : token.slice(2);
-    const key = rawKey.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-    let value = equal >= 0 ? token.slice(equal + 1) : undefined;
-    if (value === undefined && index + 1 < argv.length && !String(argv[index + 1]).startsWith('--')) value = String(argv[++index]);
-    if (value === undefined) value = true;
-    if (args[key] === undefined) args[key] = value;
-    else args[key] = Array.isArray(args[key]) ? [...args[key], value] : [args[key], value];
-  }
-  return args;
-}
-/** 将单值或重复 CLI 值统一成数组。 */
-function values(value) {
-  if (value === undefined || value === null || value === true) return [];
-  return (Array.isArray(value) ? value : [value]).map((item) => String(item));
-}
-/** 读取 JSON 控制工件并给出包含文件名的错误。 */
-export function readJson(file, label = 'JSON') {
-  if (!file) fail(`${label} 路径不能为空`);
-  const path = resolve(String(file));
-  if (!existsSync(path) || !statSync(path).isFile()) fail(`${label} 不存在：${path}`);
-  try {
-    return JSON.parse(readFileSync(path, 'utf8'));
-  } catch (error) {
-    fail(`${label} 不是有效 JSON：${path}（${error.message}）`);
-  }
-}
-/** 把路径统一为仓库相对 POSIX 表示，并拒绝越出仓库。 */
-export function normalizeRepoPath(repo, input) {
-  const base = resolve(repo);
-  const absolute = resolve(base, String(input));
-  const rel = relative(base, absolute);
-  if (!rel || rel === '.') return '.';
-  if (rel === '..' || rel.startsWith('..\\') || rel.startsWith('../') || isAbsolute(rel)) fail(`路径越出 Unity 仓库：${input}`);
-  return rel.replaceAll('\\', '/');
-}
-/** 将 Unity 文件或 glob 模式规范化为严格 POSIX 相对路径。 */
-export function canonicalizePosixPath(input, label = '路径') {
-  return canonicalizePosixPathRuntime(input, label, fail);
-}
-/** 规范化路径模式，不把通配符当作真实文件解析。 */
-function normalizePattern(pattern) {
-  return canonicalizePosixPath(pattern);
-}
-
-/** 以最小 glob 语义匹配路径，支持 *、? 和 **。 */
-export function pathMatches(path, pattern) {
-  const value = normalizePattern(path);
-  const source = normalizePattern(pattern);
-  let expression = '^';
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (char === '*' && source[index + 1] === '*') {
-      expression += '.*';
-      index += 1;
-    } else if (char === '*') expression += '[^/]*';
-    else if (char === '?') expression += '[^/]';
-    else expression += char.replace(/[\\^$+?.()|[\]{}]/g, '\\$&');
-  }
-  return new RegExp(`${expression}$`).test(value);
-}
-/** 确认数组内容均为非空字符串。 */
-function stringArray(value, label, required = false) {
-  if (value === undefined && !required) return [];
-  if (!Array.isArray(value) || (required && value.length === 0) || value.some((item) => typeof item !== 'string' || !item.trim())) fail(`${label} 必须为${required ? '非空' : ''}字符串数组`);
-  return [...value];
-}
-
-/** 确认对象只包含 schema 已声明的字段，拒绝旧版或拼写错误字段。 */
-function knownObject(value, allowed, label) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(`${label} 必须为对象`);
-  for (const key of Object.keys(value)) if (!allowed.has(key)) fail(`${label} 含未声明字段：${key}`, 2, { errorCode: 'UNKNOWN_FIELD', field: key });
-}
-
-/** 校验 schemaVersion，避免控制面静默接受旧数据。 */
-function schemaVersion(value, label) {
-  if (value?.schemaVersion !== SCHEMA_VERSION) fail(`${label}.schemaVersion 必须为 ${SCHEMA_VERSION}`);
-}
-
-/** 校验枚举值。 */
-function enumValue(value, allowed, label) {
-  if (!allowed.includes(value)) fail(`${label} 无效：${value}`);
-}
-
-/** 返回有效的 gate 状态对象。 */
-function gateStatuses(value, label) {
-  if (value === undefined) return {};
-  knownObject(value, new Set(GATES), label);
-  for (const [gate, status] of Object.entries(value)) enumValue(status, ['PASS', 'FAIL', 'NOT_RUN'], `${label}.${gate}`);
-  return { ...value };
-}
-
-/** 从嵌套 pendingApproval 或扁平动作字段生成统一的待处理动作快照。 */
-function approvalSnapshot(work) {
-  const pending = work.pendingApproval && typeof work.pendingApproval === 'object' ? { ...work.pendingApproval } : {};
-  const actionType = pending.actionType ?? work.actionType ?? 'unity-inspect';
-  const actionLevel = pending.actionLevel ?? work.actionLevel ?? ACTION_LEVEL[actionType];
-  return {
-    ...pending,
-    approvalId: pending.approvalId ?? null,
-    actionType,
-    actionLevel,
-    gate: pending.gate ?? 'F0',
-    object: pending.object ?? work.objective,
-    impact: Array.isArray(pending.impact) ? [...pending.impact] : [],
-    target: Array.isArray(pending.target) ? [...pending.target] : [],
-  };
-}
+import { assertRiggingDeliveryHandoff, inspectRiggingDelivery, summarizeRiggingDelivery, validateRiggingDeliveryEvidenceShape, validateRiggingDeliveryWorkItem } from './runtime/rigging-delivery-contract.mjs';
+import { createExecutionState, loadExecutionState, assertExecutionComplete } from './runtime/execution-state.mjs';
+import { prepareExecutionMutation } from './runtime/execution-transaction.mjs';
+import { assertActiveReferences, createReturnRecord, deriveReturnVisualStage, validateReturnRecord, invalidateStageReviews } from './runtime/return-disposition.mjs';
+import { validateVisualBaseline } from './runtime/visual-baseline-contract.mjs';
+import { nextSceneStage } from './runtime/stage-transition.mjs';
+import { SCHEMA_VERSION, STAGES, SCENE_STAGES, STATES, GATES, UNIT_TYPES, TRANSITIONS, ACTION_LEVEL, STAGE_LABELS, SCENE_LABELS, WorkflowControlError, fail, parseArgs, readJson, normalizeRepoPath, canonicalizePosixPath, pathMatches, values, normalizePattern, stringArray, knownObject, schemaVersion, enumValue, gateStatuses, approvalSnapshot } from './runtime/control-primitives.mjs';
+export { SCHEMA_VERSION, STAGES, SCENE_STAGES, STATES, GATES, UNIT_TYPES, TRANSITIONS, ACTION_LEVEL, STAGE_LABELS, SCENE_LABELS, WorkflowControlError, fail, parseArgs, readJson, normalizeRepoPath, canonicalizePosixPath, pathMatches } from './runtime/control-primitives.mjs';
 
 /** 校验并返回 Work Item 的只读规范化视图。 */
 export function validateWorkItem(work) {
-  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'workItemType', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'displayLayer', 'responsiveContract', 'stageReviews', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'workItemId', 'projectId', 'workItemType', 'moduleIds', 'domain', 'stageId', 'globalState', 'scene', 'displayLayer', 'responsiveContract', 'stageReviews', 'globalVisualBaselineSelectionRef', 'baselineId', 'baselineVersion', 'baselineHash', 'revision', 'objective', 'userOriginalText', 'inScope', 'outOfScope', 'approvedRequirements', 'allowedActions', 'allowedActionLevels', 'explicitApprovalActionLevels', 'prohibitedActions', 'allowedPaths', 'forbiddenPaths', 'allowedExternalTargets', 'protectedExternalTargets', 'requiredGates', 'gateStatus', 'assignedAgent', 'delegatedAgents', 'expectedOutputs', 'validationPlan', 'exitCriteria', 'nextGate', 'evidenceRoot', 'implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'actionLevel', 'actionType', 'sideEffects', 'userDecisionRequired', 'decisionId', 'editorWriter', 'pendingApproval', 'approval', 'returnRecord', 'metadata', 'riggingDelivery']);
   knownObject(work, allowed, 'Work Item');
   schemaVersion(work, 'Work Item');
   for (const field of ['workItemId', 'projectId', 'baselineHash', 'objective']) if (typeof work[field] !== 'string' || !work[field].trim()) fail(`Work Item.${field} 必须为非空字符串`);
@@ -224,6 +41,12 @@ export function validateWorkItem(work) {
   for (const level of explicitLevels) enumValue(level, ['A4', 'A5', 'A6'], 'Work Item.explicitApprovalActionLevels');
   const gates = gateStatuses(work.gateStatus, 'Work Item.gateStatus');
   const snapshot = approvalSnapshot(work);
+  if (work.globalVisualBaselineSelectionRef !== undefined) {
+    knownObject(work.globalVisualBaselineSelectionRef, new Set(['path']), 'globalVisualBaselineSelectionRef');
+    canonicalizePosixPath(work.globalVisualBaselineSelectionRef.path, 'globalVisualBaselineSelectionRef.path');
+  }
+  const riggingErrors = validateRiggingDeliveryWorkItem(work, snapshot.actionType);
+  if (riggingErrors.length) fail(riggingErrors[0], 2, { errorCode: 'RIGGING_DELIVERY_INVALID' });
   enumValue(snapshot.actionLevel, ['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6'], 'Work Item.actionLevel');
   if (ACTION_LEVEL[snapshot.actionType] && ACTION_LEVEL[snapshot.actionType] !== snapshot.actionLevel) fail(`动作等级与动作类型不一致：${snapshot.actionType} 只能使用 ${ACTION_LEVEL[snapshot.actionType]}`);
   if (work.allowedActions?.length && !work.allowedActions.includes(snapshot.actionType)) fail('当前 pending actionType 不在 Work Item.allowedActions 内');
@@ -240,8 +63,10 @@ export function validateWorkItem(work) {
   if (work.pendingApproval !== undefined) validateApprovalShape(work.pendingApproval, 'Work Item.pendingApproval', approvalContext, { pending: true });
   if (work.approval !== undefined) validateApprovalShape(work.approval, 'Work Item.approval', approvalContext);
   if (work.globalState === 'RETURN') validateReturnRecord(work.returnRecord, 'Work Item.returnRecord');
+  if (work.returnRecord?.resolvedAt === null && work.globalState !== 'RETURN') fail('未解决的 RETURN 记录不能经其他状态绕过恢复入口');
   return {
     ...work,
+    evidenceRoot: canonicalizePosixPath(work.evidenceRoot ?? `.workflow-control/evidence/${work.workItemId}`, 'Work Item.evidenceRoot'),
     moduleIds,
     allowedPaths,
     forbiddenPaths,
@@ -270,18 +95,6 @@ function validateApprovalShape(approval, label, context = null, options = {}) {
     for (const field of ['workItemId', 'baselineHash', 'stageId']) if (approval[field] !== context[field]) fail(`${label}.${field} 未绑定当前 Work Item`);
     if (approval.actionType !== context.actionType || approval.actionLevel !== context.actionLevel) fail(`${label} 动作未绑定当前 pending action`);
   }
-}
-
-/** 校验 RETURN 记录，保证回退范围和理由可审计。 */
-function validateReturnRecord(record, label = 'returnRecord') {
-  if (!record || typeof record !== 'object' || Array.isArray(record)) fail(`${label} 是 RETURN 必需的对象`);
-  knownObject(record, new Set(['classification', 'reason', 'affectedScope', 'fromState', 'toState', 'recordedAt', 'resolvedAt']), label);
-  enumValue(record.classification, ['upstream-fact-invalidated', 'scope-changed', 'hard-gate-would-be-bypassed'], `${label}.classification`);
-  if (typeof record.reason !== 'string' || !record.reason.trim()) fail(`${label}.reason 不能为空`);
-  if (record.toState !== 'RETURN') fail(`${label}.toState 必须为 RETURN`);
-  stringArray(record.affectedScope, `${label}.affectedScope`, true);
-  if (typeof record.fromState !== 'string' || !STATES.includes(record.fromState)) fail(`${label}.fromState 无效`);
-  return record;
 }
 
 /** 判断路径是否在允许模式内且没有命中禁止模式。 */
@@ -322,12 +135,14 @@ function isSharedUnityPath(file) {
 
 /** 校验 Unity 实施包、路径所有权、.meta/GUID/Importer 和单写者约束。 */
 export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
-  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'workItemType', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'responsiveContractRef', 'expectedFiles', 'executionUnits', 'packageStatus', 'metadata']);
+  assertActiveReferences(work, { pkg });
+  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'workItemType', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'responsiveContractRef', 'expectedFiles', 'executionUnits', 'packageStatus', 'visualBaselineRequired', 'metadata']);
   knownObject(pkg, allowed, 'Implementation Package');
   schemaVersion(pkg, 'Implementation Package');
   for (const field of ['packageId', 'workItemId', 'baselineHash']) if (typeof pkg[field] !== 'string' || !pkg[field].trim()) fail(`Implementation Package.${field} 必须为非空字符串`);
   if (pkg.editorWriter !== undefined && (typeof pkg.editorWriter !== 'string' || !pkg.editorWriter.trim())) fail('Implementation Package.editorWriter 必须为非空字符串');
   enumValue(pkg.packageStatus, ['FROZEN', 'IN_PROGRESS', 'COMPLETE', 'BLOCKED'], 'Implementation Package.packageStatus');
+  if (pkg.visualBaselineRequired !== undefined && typeof pkg.visualBaselineRequired !== 'boolean') fail('visualBaselineRequired 必须为布尔值');
   if (pkg.workItemId !== work.workItemId || pkg.baselineHash !== work.baselineHash) fail('Implementation Package 未绑定当前 Work Item 或基线');
   if (pkg.stageId !== undefined && pkg.stageId !== work.stageId) fail('Implementation Package.stageId 与 Work Item 不一致');
   if (!Array.isArray(pkg.executionUnits) || pkg.executionUnits.length === 0) fail('Implementation Package.executionUnits 不能为空');
@@ -346,7 +161,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
   const editorOwners = new Set();
   const specialParallel = new Set();
   for (const unit of pkg.executionUnits) {
-    const unitAllowed = new Set(['unitId', 'unitType', 'scopeId', 'moduleId', 'sceneId', 'displayLayerId', 'hostSceneId', 'owner', 'files', 'status', 'parallelGroup', 'editorWrite', 'serial', 'dependsOn']);
+    const unitAllowed = new Set(['unitId', 'unitType', 'scopeId', 'moduleId', 'sceneId', 'displayLayerId', 'hostSceneId', 'owner', 'files', 'status', 'parallelGroup', 'editorWrite', 'serial', 'dependsOn', 'acceptanceCommands']);
     knownObject(unit, unitAllowed, 'Implementation Package.executionUnit');
     for (const field of ['unitId', 'moduleId', 'owner']) if (typeof unit[field] !== 'string' || !unit[field].trim()) fail(`实施单元.${field} 必须为非空字符串`);
     if (unitIds.has(unit.unitId)) fail(`实施单元 ID 重复：${unit.unitId}`);
@@ -355,6 +170,8 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
     enumValue(unit.status, ['PLANNED', 'READY', 'IMPLEMENTING', 'COMPLETE', 'BLOCKED', 'NOT_RUN'], `实施单元 ${unit.unitId}.status`);
     if (work.moduleIds.length && !work.moduleIds.includes(unit.moduleId)) fail(`实施单元 ${unit.unitId} 的 moduleId 不属于 Work Item`);
     const files = stringArray(unit.files, `实施单元 ${unit.unitId}.files`, true);
+    const acceptanceCommands = stringArray(unit.acceptanceCommands, `实施单元 ${unit.unitId}.acceptanceCommands`, true);
+    if (new Set(acceptanceCommands).size !== acceptanceCommands.length) fail('acceptanceCommands 不得重复');
     const sharedFiles = files.filter(isSharedUnityPath);
     if (sharedFiles.length && !['SHARED', 'INTEGRATION'].includes(unit.unitType)) fail(`工程级 Unity 文件必须归 SHARED/INTEGRATION 单元：${unit.unitId}`, 2, { errorCode: 'UNITY_SHARED_UNIT_REQUIRED' });
     if (sharedFiles.length && unit.editorWrite === false) fail(`工程级 Unity 文件必须声明正式 Editor 写入：${unit.unitId}`);
@@ -378,7 +195,7 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
       if (fileOwners.has(normalized) && fileOwners.get(normalized) !== unit.owner) fail(`文件被多个所有者声明：${normalized}`);
       fileOwners.set(normalized, unit.owner);
     }
-    units.push({ ...unit, files: files.map(normalizePattern), formalEditorWrite, dependsOn: stringArray(unit.dependsOn, `实施单元 ${unit.unitId}.dependsOn`) });
+    units.push({ ...unit, acceptanceCommands, files: files.map(normalizePattern), formalEditorWrite, dependsOn: stringArray(unit.dependsOn, `实施单元 ${unit.unitId}.dependsOn`) });
   }
   validateUnitDependencies(units, { stringArray, fail });
   if (pkg.packageStatus === 'COMPLETE' && units.some((unit) => unit.status !== 'COMPLETE')) fail('packageStatus=COMPLETE 时所有实施单元必须为 COMPLETE', 2, { errorCode: 'PACKAGE_STATUS_INCONSISTENT' });
@@ -438,13 +255,21 @@ function validateUnityOwnership(pkg, files, allowedPaths, forbiddenPaths) {
 
 /** 校验证据清单结构并绑定当前 Work Item 与实施包。 */
 export function validateEvidence(evidence, work, pkg = null, repo = process.cwd()) {
-  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata']);
+  assertActiveReferences(work, { evidence });
+  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata', 'riggingDelivery']);
   knownObject(evidence, allowed, 'Evidence Manifest');
   schemaVersion(evidence, 'Evidence Manifest');
   for (const field of ['evidenceId', 'workItemId', 'packageId', 'baselineHash', 'recordedAt']) if (typeof evidence[field] !== 'string' || !evidence[field].trim()) fail(`Evidence Manifest.${field} 必须为非空字符串`);
   if (evidence.workItemId !== work.workItemId || evidence.baselineHash !== work.baselineHash) fail('Evidence Manifest 未绑定当前 Work Item 或基线');
+  if (evidence.riggingDelivery !== undefined) {
+    if (!work.riggingDelivery) fail('Evidence Manifest 含骨骼交付信息，但 Work Item 未声明 riggingDelivery', 2, { errorCode: 'RIGGING_DELIVERY_INVALID' });
+    const riggingErrors = validateRiggingDeliveryEvidenceShape(evidence.riggingDelivery);
+    if (riggingErrors.length) fail(riggingErrors[0], 2, { errorCode: 'RIGGING_DELIVERY_INVALID' });
+  }
   if (pkg && evidence.packageId !== pkg.packageId) fail('Evidence Manifest 未绑定当前 Implementation Package');
   enumValue(evidence.verdict, ['PASS', 'FAIL', 'NOT_RUN'], 'Evidence Manifest.verdict');
+  // 骨骼门禁不依赖 validationPlan 文本，仍要求现有 F3 的 PlayMode 证据实际通过。
+  if (work.riggingDelivery && evidence.verdict === 'PASS' && statusOf(evidence.unityEvidence?.playMode) !== 'PASS') fail('骨骼资产 PASS 证据要求 unityEvidence.playMode 为 PASS', 2, { errorCode: 'RIGGING_UNITY_PLAYMODE_REQUIRED' });
   const gates = evidence.gateResults;
   knownObject(gates, new Set(GATES), 'Evidence Manifest.gateResults');
   for (const gate of GATES) {
@@ -524,8 +349,9 @@ export function approvalMatches(work, approval) {
 }
 
 /** 判断实施包是否所有单元都已完成。 */
-export function packageComplete(pkg) {
-  return Boolean(pkg && pkg.executionUnits?.length && pkg.executionUnits.every((unit) => unit.status === 'COMPLETE') && pkg.packageStatus !== 'BLOCKED');
+export function packageComplete(pkg, executionState = null) {
+  const units = executionState?.units ?? pkg?.executionUnits;
+  return Boolean(pkg && units?.length && units.every((unit) => unit.status === 'COMPLETE') && pkg.packageStatus !== 'BLOCKED');
 }
 
 /** 判断实施包是否包含 A4 集成所需的串行 INTEGRATION 单元。 */
@@ -541,31 +367,48 @@ export function inspect(args = {}, command = 'status') {
   const blockers = [];
   let pkg = null;
   let evidence = null;
+  let rawEvidence = null;
   const packagePath = args['implementation-package'] ?? args.package ?? work.implementationPackagePath ?? work.implementationPackage ?? findInput(args.input, repo, (value) => value && value.executionUnits && value.packageId);
   const evidencePath = args.evidence ?? args['evidence-manifest'] ?? work.evidenceManifestPath ?? work.evidenceManifest ?? findInput(args.input, repo, (value) => value && value.gateResults && value.evidenceId);
   if (work.globalState === 'RETURN') blockers.push(blocker('RETURN_STATE', 'Work Item 处于 RETURN 恢复状态，不能自动继续', '显式记录恢复目标后使用 transition'));
   if (work.globalState === 'BLOCKED') blockers.push(blocker('BLOCKED_STATE', 'Work Item 处于 BLOCKED 状态，需显式恢复', '检查失败门并使用 transition'));
   if (packagePath) {
-    try { pkg = validateImplementationPackage(readJson(resolve(repo, String(packagePath)), 'Implementation Package'), work, repo); } catch (error) { blockers.push(errorBlock(error, 'Implementation Package 校验失败')); }
+    try {
+      assertActiveReferences(work, { repo, packagePath: String(packagePath) });
+      pkg = validateImplementationPackage(readJson(resolve(repo, String(packagePath)), 'Implementation Package'), work, repo);
+    } catch (error) { blockers.push(errorBlock(error, 'Implementation Package 校验失败')); }
   }
-  const packageRequired = ['A2', 'A3'].includes(work.actionLevel) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState);
+  const packageRequired = ['A2', 'A3', 'A4'].includes(work.actionLevel) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState);
   if (packageRequired && !packagePath) blockers.push(blocker('IMPLEMENTATION_PACKAGE_MISSING', '当前状态缺少 Implementation Package，不能跳过实施包', '冻结并绑定当前阶段 Implementation Package'));
   if (packageRequired && packagePath && !pkg) blockers.push(blocker('IMPLEMENTATION_PACKAGE_INVALID', '当前 Implementation Package 无法通过 Unity 所有权校验', '修复实施包后重新运行 check'));
   // IMPLEMENTING 本身就是 run 的安全停点；只有离开实施阶段时才把未完成单元视为硬阻断。
-  if (pkg && ['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState) && !packageComplete(pkg)) blockers.push(blocker('IMPLEMENTATION_INCOMPLETE', '实施包仍有未完成单元', '完成当前实施单元并重新验证'));
+  let executionState = null;
+  if (pkg && ['A2', 'A3', 'A4'].includes(work.actionLevel) && ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState)) {
+    try {
+      executionState = work.globalState === 'IMPLEMENTING' ? loadExecutionState(repo, work, pkg) : assertExecutionComplete(repo, work, pkg);
+    } catch (error) { blockers.push(blocker('EXECUTION_STATE_INVALID', error.message, '使用当前实施包初始化执行状态并通过 unit-check 补齐真实结果')); }
+  }
+  if (!['RETURN', 'BLOCKED'].includes(work.globalState)) for (const message of validateVisualBaseline(work, pkg, repo)) blockers.push(blocker('VISUAL_BASELINE_INVALID', message, '补齐或复用有效的三候选人工选图证据'));
   if (work.actionLevel === 'A4' && ['PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState) && (!pkg || !hasIntegrationUnit(pkg))) blockers.push(blocker('INTEGRATION_PACKAGE_MISSING', 'A4 集成或完成必须绑定含 INTEGRATION 单元的实施包', '冻结并绑定当前集成实施包'));
   if (evidencePath) {
-    try { evidence = validateEvidence(readJson(resolve(repo, String(evidencePath)), 'Evidence Manifest'), work, pkg, repo); } catch (error) { blockers.push(errorBlock(error, 'Evidence Manifest 校验失败')); }
+    try {
+      assertActiveReferences(work, { repo, evidencePath: String(evidencePath) });
+      rawEvidence = readJson(resolve(repo, String(evidencePath)), 'Evidence Manifest');
+      evidence = validateEvidence(rawEvidence, work, pkg, repo);
+    } catch (error) { blockers.push(errorBlock(error, 'Evidence Manifest 校验失败')); }
   }
+  const riggingDelivery = inspectRiggingDelivery({ work, evidence: rawEvidence ?? evidence, repo });
+  // 先展示骨骼交付岗位派发，避免通用 F3 阻断遮住具体返修责任。
+  if (riggingDelivery) blockers.unshift(...riggingDelivery.blockers.map((item) => blocker(item.code, item.message, item.next)));
   if (['VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING', 'COMPLETE'].includes(work.globalState) && !evidencePath) blockers.push(blocker('EVIDENCE_MISSING', '当前状态缺少 Evidence Manifest', '记录并绑定当前候选验证证据'));
   if (evidence && evidence.verdict !== 'PASS') blockers.push(blocker('EVIDENCE_NOT_PASS', 'Evidence Manifest verdict 不是 PASS', '按证据选择 repair 或 revalidate'));
   if (evidence && work.globalState !== 'RETURN' && !gatePassed(evidence, 'F3') && ['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState)) blockers.push(blocker('F3_NOT_PASS', 'F3 工程验证证据未通过', '补齐编译、域重载、Console、测试、资源和构建证据'));
-  blockers.push(...stageConfirmationBlockers(work, evidence));
+  if (!['RETURN', 'BLOCKED'].includes(work.globalState)) blockers.push(...stageConfirmationBlockers(work, evidence));
   if (work.userDecisionRequired) blockers.push(blocker('USER_DECISION_REQUIRED', '存在未决用户选择，控制面不会替用户决定', '澄清选择并更新 Work Item'));
   const releaseApprovalPending = ['PASSED', 'INTEGRATING'].includes(work.globalState) && ['A5', 'A6'].includes(work.actionLevel);
   if (requiresExactApproval(work) && !releaseApprovalPending && !approvalMatches(work, evidence?.approval)) blockers.push(blocker('EXACT_APPROVAL_REQUIRED', '当前 A4-A6 副作用缺少与对象、影响、目标和基线精确匹配的 F4 批准', '展示当前精确审批点并等待用户批准'));
   const planFingerprint = stableFingerprint(work, pkg, evidence);
-  const inspection = { repo, workPath, work, pkg, evidence, packagePath: packagePath ? resolve(repo, String(packagePath)) : null, evidencePath: evidencePath ? resolve(repo, String(evidencePath)) : null, blockers, planFingerprint, command };
+  const inspection = { repo, workPath, work, pkg, evidence, executionState, riggingDelivery, packagePath: packagePath ? resolve(repo, String(packagePath)) : null, evidencePath: evidencePath ? resolve(repo, String(evidencePath)) : null, blockers, planFingerprint, command };
   return { ...inspection, next: nextAction(inspection) };
 }
 
@@ -620,7 +463,7 @@ function nextAction(inspection) {
   if (work.globalState === 'BASELINE') return '完成规格候选并通过 F1';
   if (work.globalState === 'PROPOSAL') return '完成审查并通过 F1/F2';
   if (work.globalState === 'REVIEW') return ['A2', 'A3'].includes(work.actionLevel) && !pkg ? '冻结当前阶段 Implementation Package' : '运行 run 推进到实施或验证';
-  if (work.globalState === 'IMPLEMENTING') return packageComplete(pkg) ? '显式迁移到 VALIDATING' : '完成当前实施单元';
+  if (work.globalState === 'IMPLEMENTING') return packageComplete(pkg, inspection.executionState) ? '显式迁移到 VALIDATING' : '完成当前实施单元';
   if (work.globalState === 'VALIDATING') return evidence ? '通过 F3 后进入 PASSED' : '提交当前候选验证证据';
   if (work.globalState === 'PASSED') return requiresExactApproval(work) ? '展示当前精确 F4 审批点' : work.actionLevel === 'A4' ? '进入本地集成验证' : '闭合当前 Work Item';
   if (work.globalState === 'INTEGRATING') return '完成集成证据并进入 COMPLETE';
@@ -642,6 +485,7 @@ export function resultRecord(inspection, status, changed = [], extra = {}) {
     actionLevel: inspection.work.actionLevel,
     planFingerprint: inspection.planFingerprint,
     workflowView: workflowView(inspection.work),
+    ...(inspection.riggingDelivery ? { riggingDelivery: summarizeRiggingDelivery(inspection.riggingDelivery) } : {}),
     ...(first ? { errorCode: first.code } : {}),
     ...extra,
   };
@@ -698,6 +542,7 @@ function gateAvailable(inspection, gate) {
 function assertTransitionPreconditions(inspection, target, args) {
   const { work, pkg, evidence } = inspection;
   const from = work.globalState;
+  assertRiggingDeliveryHandoff(inspection, target, fail);
   for (const gate of transitionGates(from, target)) if (!gateAvailable(inspection, gate)) fail(`${from} → ${target} 缺少 ${gate} PASS`, 2, { errorCode: `${gate}_NOT_PASS` });
   if (['A5', 'A6'].includes(work.actionLevel)) {
     if (from === 'PASSED' && target !== 'RELEASE_APPROVAL_REQUIRED') fail('A5/A6 必须先进入 RELEASE_APPROVAL_REQUIRED，不能绕过发布审批状态', 2, { errorCode: 'RELEASE_APPROVAL_STATE_REQUIRED' });
@@ -706,13 +551,20 @@ function assertTransitionPreconditions(inspection, target, args) {
   }
   if (target === 'IMPLEMENTING') {
     if (!pkg) fail('进入 IMPLEMENTING 必须绑定 Implementation Package', 2, { errorCode: 'IMPLEMENTATION_PACKAGE_REQUIRED' });
-    if (!['A2', 'A3'].includes(work.actionLevel)) fail('当前动作等级不能进入生产 IMPLEMENTING');
+    if (!['A2', 'A3', 'A4'].includes(work.actionLevel)) fail('当前动作等级不能进入生产 IMPLEMENTING');
+    const stage = work.scene?.stage ?? work.displayLayer?.stage;
+    if (['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType) && !['V3', 'V4'].includes(stage)) fail('可见工作项只有 V3 资源生产或 V4 正式实现才能进入生产实施');
+    if (stage === 'V3' && work.actionType !== 'unity-asset-change') fail('V3 只允许资源生产与导入；正式场景/UI 实现在 V4 执行');
+    createExecutionState(work, pkg);
   }
+  if (!['RETURN', 'BLOCKED'].includes(target)) {
+    const visualErrors = validateVisualBaseline(work, pkg, inspection.repo);
+    if (visualErrors.length) fail(visualErrors[0], 2, { errorCode: 'VISUAL_BASELINE_INVALID' });
+  }
+  if (pkg && ['A2', 'A3', 'A4'].includes(work.actionLevel) && ['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(target)) assertExecutionComplete(inspection.repo, work, pkg);
   if (['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(target) && ['A2', 'A3'].includes(work.actionLevel) && !pkg) fail(`${target} 不能绕过 Implementation Package`, 2, { errorCode: 'IMPLEMENTATION_PACKAGE_REQUIRED' });
-  if (['VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(target) && ['A2', 'A3'].includes(work.actionLevel) && !packageComplete(pkg)) fail(`${target} 前必须完成实施包所有单元`, 2, { errorCode: 'IMPLEMENTATION_INCOMPLETE' });
   if (work.actionLevel === 'A4' && ['INTEGRATING', 'COMPLETE'].includes(target)) {
     if (!pkg || !hasIntegrationUnit(pkg)) fail('A4 进入 INTEGRATING/COMPLETE 必须绑定含 INTEGRATION 单元的实施包', 2, { errorCode: 'INTEGRATION_PACKAGE_MISSING' });
-    if (target === 'COMPLETE' && !packageComplete(pkg)) fail('A4 完成前必须完成 INTEGRATION 单元', 2, { errorCode: 'INTEGRATION_INCOMPLETE' });
     if (from === 'PASSED' && target === 'COMPLETE') fail('A4 必须先经过 INTEGRATING', 2, { errorCode: 'INTEGRATING_REQUIRED' });
   }
   if (target === 'PASSED' || target === 'COMPLETE' || target === 'INTEGRATING') {
@@ -728,8 +580,9 @@ function assertTransitionPreconditions(inspection, target, args) {
 
 /** 恢复时失效下游包、证据、批准和门状态，防止旧候选跨 RETURN 复用。 */
 function invalidateDownstreamReferences(next, args, fromState, inspection) {
-  const oldPackageRef = inspection.work.implementationPackagePath ?? inspection.work.implementationPackage;
-  const oldEvidenceRef = inspection.work.evidenceManifestPath ?? inspection.work.evidenceManifest;
+  const invalidated = fromState === 'RETURN' ? inspection.work.returnRecord?.invalidatedReferences : null;
+  const oldPackageRef = invalidated?.implementationPackagePath ?? inspection.work.implementationPackagePath ?? inspection.work.implementationPackage;
+  const oldEvidenceRef = invalidated?.evidenceManifestPath ?? inspection.work.evidenceManifestPath ?? inspection.work.evidenceManifest;
   const rejectReuse = (candidate, previous, label) => {
     if (candidate === undefined || previous === undefined || typeof previous !== 'string') return;
     if (resolve(inspection.repo, String(candidate)) === resolve(inspection.repo, String(previous))) fail(`恢复不能复用旧 ${label} 引用`, 2, { errorCode: 'STALE_RECOVERY_REFERENCE' });
@@ -738,20 +591,13 @@ function invalidateDownstreamReferences(next, args, fromState, inspection) {
   const evidenceInput = args.evidence ?? args['evidence-manifest'];
   rejectReuse(packageInput, oldPackageRef, 'Implementation Package');
   rejectReuse(evidenceInput, oldEvidenceRef, 'Evidence Manifest');
+  if (fromState === 'RETURN' && invalidated?.packageId && inspection.pkg?.packageId === invalidated.packageId) fail('恢复不能复用失效 Implementation Package 身份');
+  if (fromState === 'RETURN' && invalidated?.evidenceId && inspection.evidence?.evidenceId === invalidated.evidenceId) fail('恢复不能复用失效 Evidence Manifest 身份');
   for (const field of ['implementationPackage', 'implementationPackagePath', 'evidenceManifest', 'evidenceManifestPath', 'approval', 'pendingApproval']) delete next[field];
   next.gateStatus = Object.fromEntries(GATES.map((gate) => [gate, 'NOT_RUN']));
   next.metadata = { ...(next.metadata ?? {}), invalidatedFrom: fromState, invalidatedAtState: next.globalState };
   if (packageInput !== undefined) next.implementationPackagePath = String(packageInput);
   if (evidenceInput !== undefined) next.evidenceManifestPath = String(evidenceInput);
-}
-
-/** 构造显式 RETURN 记录。 */
-function returnRecord(fromState, args) {
-  const classification = String(args['return-category'] ?? args.classification ?? '');
-  const reason = String(args['return-reason'] ?? args.reason ?? '');
-  const affectedScope = values(args['affected-scope'] ?? args.scope);
-  if (!['upstream-fact-invalidated', 'scope-changed', 'hard-gate-would-be-bypassed'].includes(classification) || !reason.trim() || !affectedScope.length) fail('RETURN 必须提供有效分类、理由和 affected-scope', 2, { errorCode: 'RETURN_RECORD_REQUIRED' });
-  return { classification, reason, affectedScope, fromState, toState: 'RETURN', recordedAt: new Date().toISOString(), resolvedAt: null };
 }
 
 /** 为一次内存迁移分配下一个版本；真正写盘时仍由 CAS 再次核对。 */
@@ -772,6 +618,7 @@ function assertRecoveryBlockers(inspection, from, args = {}) {
 /** 在内存中执行一次严格迁移；CLI 负责成功后写回。 */
 export function transitionWorkItem(inspection, target, args = {}) {
   const { work } = inspection;
+  if (!['RETURN', 'BLOCKED'].includes(target)) assertActiveReferences(work, { repo: inspection.repo, pkg: inspection.pkg, evidence: inspection.evidence, packagePath: inspection.packagePath, evidencePath: inspection.evidencePath });
   enumValue(target, STATES, 'transition target');
   const from = work.globalState;
   if (target === from) fail('transition 不接受同状态迁移');
@@ -779,22 +626,29 @@ export function transitionWorkItem(inspection, target, args = {}) {
   if (!['RETURN', 'BLOCKED'].includes(target)) assertStageConfirmationGate(work, inspection.evidence ?? null, target, fail);
   if (target === 'RETURN') {
     if (!TRANSITIONS[from]?.includes('RETURN')) fail(`非法 RETURN 迁移：${from} → RETURN`, 2, { errorCode: 'RETURN_NOT_ALLOWED' });
-    const next = nextRevision(work, { ...work, globalState: 'RETURN', returnRecord: returnRecord(from, args) });
+    const record = createReturnRecord(work, args);
+    record.invalidatedReferences = {
+      implementationPackagePath: inspection.packagePath ? normalizeRepoPath(inspection.repo, inspection.packagePath) : record.invalidatedReferences.implementationPackagePath,
+      evidenceManifestPath: inspection.evidencePath ? normalizeRepoPath(inspection.repo, inspection.evidencePath) : record.invalidatedReferences.evidenceManifestPath,
+      packageId: inspection.pkg?.packageId ?? null, evidenceId: inspection.evidence?.evidenceId ?? null, planVersion: inspection.executionState?.planVersion ?? null,
+    };
+    const next = nextRevision(work, { ...work, globalState: 'RETURN', returnRecord: record });
+    invalidateDownstreamReferences(next, {}, from, inspection);
+    if (work.stageReviews) next.stageReviews = invalidateStageReviews(work, record);
+    // 将可见阶段一并退到真实受影响的入口，避免要求先确认已经失效的旧阶段。
+    const key = work.workItemType === 'SCENE' ? 'scene' : work.workItemType === 'DISPLAY_LAYER' ? 'displayLayer' : null;
+    if (key) next[key] = { ...work[key], stage: deriveReturnVisualStage(work, record), status: 'IN_PROGRESS' };
     validateWorkItem(next);
     return next;
   }
   if (!TRANSITIONS[from]?.includes(target)) fail(`非法状态迁移：${from} → ${target}`, 2, { errorCode: 'ILLEGAL_TRANSITION' });
   if (target === 'BLOCKED') {
     if (!String(args.reason ?? '').trim()) fail('进入 BLOCKED 必须显式提供 reason', 2, { errorCode: 'BLOCK_REASON_REQUIRED' });
-    if (from === 'RETURN') assertRecoveryBlockers(inspection, from, args);
     const next = nextRevision(work, { ...work, globalState: 'BLOCKED', metadata: { ...(work.metadata ?? {}), blockingReason: String(args.reason) } });
-    if (from === 'RETURN') {
-      next.returnRecord = { ...work.returnRecord, resolvedAt: new Date().toISOString() };
-      invalidateDownstreamReferences(next, args, from, inspection);
-    }
     return validateWorkItem(next);
   }
   if (from === 'RETURN' && !args['return-resolution'] && !args.reason) fail('从 RETURN 恢复必须显式提供 return-resolution');
+  if (from === 'RETURN' && target !== work.returnRecord.returnState) fail(`RETURN 只能恢复到影响范围确定的 ${work.returnRecord.returnState}`, 2, { errorCode: 'RETURN_TARGET_INVALID' });
   if (['RETURN', 'BLOCKED'].includes(from) && target === 'IMPLEMENTING' && !args['implementation-package'] && !args.package) fail('恢复到 IMPLEMENTING 必须显式绑定新的 Implementation Package', 2, { errorCode: 'IMPLEMENTATION_PACKAGE_REQUIRED' });
   if (['RETURN', 'BLOCKED'].includes(from)) assertRecoveryBlockers(inspection, from, args);
   // CLI 的 inspect 尚未看到本次 approval；只预验证当前精确审批对应的 EXACT blocker，其他阻断不豁免。
@@ -816,7 +670,7 @@ export function transitionWorkItem(inspection, target, args = {}) {
 }
 
 /** 通过运行时 IO 模块提交一次 Work Item mutation，并注入当前合同校验器。 */
-export function commitWorkMutation(inspection, next) {
+export function commitWorkMutation(inspection, next, options = {}) {
   return commitWithLock({
     workPath: inspection.workPath,
     expected: inspection.work,
@@ -824,6 +678,7 @@ export function commitWorkMutation(inspection, next) {
     readCurrent: (path) => readJson(path, 'Work Item'),
     validate: validateWorkItem,
     fail,
+    beforeWrite: () => prepareExecutionMutation(inspection, next, options),
   });
 }
 
@@ -864,7 +719,7 @@ function safeTarget(inspection) {
   if (work.globalState === 'BASELINE' && gateAvailable(inspection, 'F1')) return 'PROPOSAL';
   if (work.globalState === 'PROPOSAL' && gateAvailable(inspection, 'F1') && gateAvailable(inspection, 'F2')) return 'REVIEW';
   if (work.globalState === 'REVIEW') {
-    if (['A2', 'A3'].includes(work.actionLevel) && pkg) return 'IMPLEMENTING';
+    if (['A2', 'A3', 'A4'].includes(work.actionLevel) && pkg) return 'IMPLEMENTING';
     if (['A0', 'A1'].includes(work.actionLevel) && gateAvailable(inspection, 'F3')) return 'VALIDATING';
     return null;
   }
@@ -894,6 +749,26 @@ export function transition(args = {}) {
   return output;
 }
 
+/** 校验当前 Result 并闭合一个 READY 单元；命令本身不执行验收或业务代码。 */
+export function unitCheck(args = {}) {
+  const inspection = inspect(args, 'unit-check');
+  if (inspection.work.globalState !== 'IMPLEMENTING' || !inspection.pkg) fail('unit-check 必须处于绑定当前实施包的 IMPLEMENTING');
+  if (inspection.blockers.length) fail(inspection.blockers[0].message);
+  if (typeof args.result !== 'string') fail('unit-check 必须提供 --result <json>');
+  commitWorkMutation(inspection, { ...inspection.work, revision: inspection.work.revision + 1 }, { resultPath: args.result });
+  return resultRecord(inspect(args, 'unit-check'), 'READY', ['当前单元 Result 已验收']);
+}
+
+/** 在确认与当前证据闭合后，显式推进同一工作项的下一个视觉阶段。 */
+export function sceneStage(args = {}) {
+  const inspection = inspect(args, 'scene-stage');
+  const next = nextSceneStage(inspection, String(args.to ?? ''));
+  commitWorkMutation(inspection, next, { sceneStage: true });
+  // 不继续消费命令行传入的旧阶段实施包与证据，新阶段应显式绑定自己的交付。
+  const post = inspect({ repo: inspection.repo, 'work-item': inspection.workPath }, 'scene-stage');
+  return resultRecord(post, post.blockers.length ? 'BLOCKED' : 'READY', [`${inspection.work.scene?.stage ?? inspection.work.displayLayer?.stage} → ${args.to}`]);
+}
+
 /** 从文件或精确 CLI 字段读取批准对象；没有完整对象就保持未批准。 */
 function loadApproval(args, work) {
   if (args.approval && args.approval !== true) return readJson(args.approval, 'Approval');
@@ -918,7 +793,7 @@ function loadApproval(args, work) {
 /** Skill 自检：schema、入口文档、状态/风险标识和文件规模必须齐全。 */
 export function lint(args = {}) {
   const root = args.skill ? resolve(String(args.skill)) : resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'references/stage-confirmation.md', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs', 'scripts/runtime/stage-confirmation.mjs', 'scripts/runtime/art-experience-contract.mjs', 'scripts/runtime/timestamp-contract.mjs'];
+  const required = ['SKILL.md', 'agents/openai.yaml', 'references/simplified-workflow.md', 'references/control-model.md', 'references/state-gates.md', 'references/unity-evidence.md', 'references/stage-confirmation.md', 'references/rigging-delivery-gate.md', 'references/minimal-git.md', 'assets/minimal-project.gitignore', 'schemas/work-item.schema.json', 'schemas/implementation-package.schema.json', 'schemas/evidence-manifest.schema.json', 'schemas/execution-state.schema.json', 'schemas/execution-unit-result.schema.json', 'schemas/global-visual-baseline.schema.json', 'scripts/workflow-control.mjs', 'scripts/runtime/io.mjs', 'scripts/runtime/visible-contract.mjs', 'scripts/runtime/stage-confirmation.mjs', 'scripts/runtime/art-experience-contract.mjs', 'scripts/runtime/timestamp-contract.mjs', 'scripts/runtime/rigging-delivery-contract.mjs', 'scripts/runtime/control-primitives.mjs', 'scripts/runtime/execution-state.mjs', 'scripts/runtime/execution-transaction.mjs', 'scripts/runtime/return-disposition.mjs', 'scripts/runtime/visual-baseline-contract.mjs', 'scripts/runtime/stage-transition.mjs'];
   const checked = [];
   for (const item of required) {
     const path = join(root, item);
@@ -926,7 +801,7 @@ export function lint(args = {}) {
     checked.push(item);
     if (statSync(path).isFile() && !item.endsWith('.json') && readFileSync(path, 'utf8').split(/\r?\n/).length > 1000) fail(`文件超过 1000 行：${item}`);
   }
-  for (const schemaName of ['work-item.schema.json', 'implementation-package.schema.json', 'evidence-manifest.schema.json']) {
+  for (const schemaName of ['work-item.schema.json', 'implementation-package.schema.json', 'evidence-manifest.schema.json', 'execution-state.schema.json', 'execution-unit-result.schema.json', 'global-visual-baseline.schema.json']) {
     const schema = JSON.parse(readFileSync(join(root, 'schemas', schemaName), 'utf8'));
     if (schema.type !== 'object' || schema.additionalProperties !== false || schema.properties?.schemaVersion?.const !== SCHEMA_VERSION || !schema.required?.includes('schemaVersion')) fail(`schema 不符合统一严格合同：${schemaName}`, 2, { errorCode: 'SCHEMA_CONTRACT_INVALID' });
   }
@@ -948,6 +823,8 @@ export function main(argv = process.argv.slice(2)) {
     else if (command === 'check') output = check(args);
     else if (command === 'run') output = run(args);
     else if (command === 'transition') output = transition(args);
+    else if (command === 'unit-check') output = unitCheck(args);
+    else if (command === 'scene-stage') output = sceneStage(args);
     else if (command === 'lint') output = lint(args);
     else fail(`未知命令：${command ?? '(空)'}`);
     process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);

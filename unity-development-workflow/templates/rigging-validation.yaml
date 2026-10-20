@@ -1,0 +1,26 @@
+schemaVersion: "1.0"
+# 正式交付时，taskId 使用当前资产交付 Work Item ID；修订与 riggingDelivery 当前候选一致。
+taskId: character-hero-assets
+projectId: current-project
+sourceRevision: current-candidate
+prefabPath: Assets/Characters/Hero/Hero.prefab
+outputPath: Artifacts/RiggingValidation/hero-assets.json
+clips:
+  - id: idle
+    clipPath: Assets/Characters/Hero/Animations/Idle.anim
+    loop: true
+    requiredEvents: []
+  - id: attack
+    clipPath: Assets/Characters/Hero/Animations/Attack.anim
+    loop: false
+    requiredEvents:
+      - OnAttackContact
+variants:
+  - id: hand-open
+    rendererPath: Visual/Hand
+    spritePath: Assets/Characters/Hero/Art/HandOpen.png
+    spriteName: HandOpen
+  - id: hand-closed
+    rendererPath: Visual/Hand
+    spritePath: Assets/Characters/Hero/Art/HandClosed.png
+    spriteName: HandClosed

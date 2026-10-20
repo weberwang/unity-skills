@@ -5,20 +5,22 @@
 - Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
 - ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
+- RiggingValidation：只读核对角色 Prefab、SpriteSkin 骨骼映射、导入网格／权重、Clip／事件及部件变体，输出资产工程报告。
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
 - FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
 - VisualQA：固定摄像机参考 PNG、实际 UI 布局测量与 Game View 帧末异步采集；仅记录工程事实，截图由用户人工验收。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
-- PipelineCommands：把六项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
+- PipelineCommands：把七项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
 - EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
 
 ## 安装
 
-在目标项目的 `Packages/manifest.json` 中加入本包的本地地址，并固定官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0`、`com.unity.nuget.newtonsoft-json` `3.0.2`、`com.unity.ugui` `2.0.0` 与 `com.unity.localization` `1.5.9`。也可在 Work Item 已授权修改 `Packages/manifest.json` 时运行 `unity pipeline install --project-path <项目路径>`。Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
+按 `unity:unity-package-management` 通过 UPM Client API 安装本包的本地地址。本包声明官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0`、`com.unity.nuget.newtonsoft-json` `3.0.2`、`com.unity.ugui` `2.0.0`、`com.unity.localization` `1.5.9` 与 `com.unity.2d.animation` `10.2.2` 依赖；Editor 可能解析至其内置的更高版本，验证报告须记录实际 Editor 与包版本。也可在工作项已授权时运行 `unity pipeline install --project-path <项目路径>` 安装 Pipeline。Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
 
 ## 自定义 Pipeline 命令
 
 - `uwt_validate_project`：消费 `project-profile` Job，返回项目质量报告。
+- `uwt_validate_2d_rigging`：消费 `rigging-validation` Job，只读检查角色骨骼资产，并将工程报告写入指定的 `Artifacts/` JSON。
 - `uwt_import_image`：消费已批准的 `image-task` Job，执行安全导入与 Importer 复核。
 - `uwt_capture_visual`：消费 `visual-capture` Job，生成固定机位证据。
 - `uwt_measure_layout`：消费 `layout-measurement` Job，读取同一场景、坐标空间的实际 uGUI/UIDocument 节点矩形、父框边距与目标差值。
@@ -32,6 +34,25 @@
 ```powershell
 unity command uwt_validate_project --project-path D:\Projects\my-game --job_path Artifacts/Jobs/project-profile.json
 ```
+
+## 2D 骨骼资产工程检查
+
+参考工作流 `templates/rigging-validation.yaml` 填写当前 Prefab、动作、事件和变体真实身份，再按 `schemas/rigging-validation.schema.json` 保存为 JSON 输入；`compile-json` 只读取 JSON，不直接解析 YAML。`variants[].spriteName` 用于精确定位图片中的 Sprite 子资源，`rendererPath` 相对于角色根节点，空字符串表示根；不以文件名猜测映射。
+
+```powershell
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs compile-json --project-root D:\Projects\my-game --kind rigging-validation --source docs\hero-rigging.json --output Artifacts\Jobs\hero-rigging.json
+unity command uwt_validate_2d_rigging --project-path D:\Projects\my-game --caller plugin --skill unity-game-2d-animation-ta --job_path Artifacts/Jobs/hero-rigging.json --format json
+```
+
+先按 Unity 插件发现实际命令与参数。检查器只读取 `Assets/` 中的角色资产，不修复 Prefab、Importer 或 Clip；报告仅允许进入 `Artifacts/`，并拒绝覆盖输入 Job 或源契约。必需数据缺失、非法权重／引用、要求的 Clip／事件或变体不符都会阻止工程通过；无法取得必需工程数据时如实记录未验证或阻断，不伪造通过。
+
+这份报告只覆盖资产工程事实；动作运行行为由独立角色回归验证，像素接缝、表演质量与显示效果由用户人工验收。合法工程报告的 `PASS` 不代表完整角色验收通过。用技术测试纹理构造的角色夹具也不替代游戏正式角色的场景测试。
+
+正式交付按工作流的[骨骼交付门禁](../../../../../unity-game-workflow-control/references/rigging-delivery-gate.md)绑定当前候选。报告通过现有 `evidence` 记录实际 Prefab/GUID 和 Assets 依赖；Job 的 `taskId` 对应 Work Item ID，`sourceRevision` 对应当前角色候选。独立 QA 还须提交目标项目正式角色的 Editor PlayMode 结果；报告失败、缺失、陈旧或身份不符会阻断交接并按岗位退修，公共夹具通过不能放行正式角色。
+
+当前检查协议要求角色层级中只有一个 Animator。变体按同一 SpriteSkin 直接替换检查；未声明补偿协议的 Pivot 局部位置差异会记录为 `BLOCKED`，需要技术美术核对局部坐标与补偿方案后再交接，不能据此认定不同视角必须使用相同画布。
+
+独立 QA 可复用已打开的隔离宿主，通过发现到的 `run_tests` 命令运行 `Project.UnityWorkflow.Tests.Rigging` 测试并查询 `test_status`；没有可复用宿主时使用下方 `unity test`。测试会创建独占的临时角色资产、保存重导入、执行 Animator 与骨骼变形，并通过 Editor 内的 PlayMode 验证适用的循环、事件、打断／恢复、部件切换、暂停、对象池复用和多实例隔离；不启动 Standalone 或真机，不自动分析截图。命令行／API 的参数以目标版本实际目录为准。
 
 ## 图片导入边界
 

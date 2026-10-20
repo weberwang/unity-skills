@@ -1,12 +1,14 @@
 # 美术质量与动态体验验收合同
 
-本合同用于 V1 确定美术目标，贯穿 V2 拆解、V3 生产与组合审查，并在 V4 对实际场景或显示层体验逐项验收。它补充 Visual Bible，不创建独立阶段、状态机或确认机制。
+本合同用于 V1 确定美术目标，贯穿 V2 拆解、V3 资源生产、导入与素材验收，并在 V4 对实际 Scene/Prefab/UI 组合及场景或显示层体验逐项验收。V3 可交付组合预览；正式组合实现和校准属于 V4。它补充 Visual Bible，不创建独立阶段、状态机或确认机制。
 
 ## V1 brief
 
 按 Work Item 写明主题、目标玩家/受众、核心循环、体验目标和主要观看情境，并说明视觉层级、关键玩法信息、刺激预算与已有规范。Visual Bible 的 `artBrief` 遵守 [`game-art-brief.schema.json`](../schemas/game-art-brief.schema.json)；美术 brief 字段由 `unity-game-production` 维护。将事件的反馈意图交给 [`unity-game-juice`](../../unity-game-juice/SKILL.md)，不以“更炫”替代玩家需要理解的信息。内部 brief 只供理解；按[游戏内文案](game-copy.md)交接玩家可见表达，不把 brief 原句绘入效果图或运行界面。
 
-是否生成方向候选遵循[视觉工作流](visual-workflow.md)：仅在需要探索新视觉方向时生成候选，数量由 Work Item 决定；已有有效规范时按规范推进单一目标方案。不得为满足固定候选数量而重复生成近似方案。
+`intensityBudget` 必须为 `normal`、`operation`、`peak` 三个层级分别填写 `brightnessContrast`（亮度与对比边界）、`screenCoverage`（占屏范围）、`duration`（持续时长或结束条件）、`triggerFrequency`（触发频率与去重策略）、`maxConcurrent`（允许并发的非负整数上限）、`recovery`（结束、打断或暂停后的恢复方式）和 `blendPolicy`（并发混合、合并、抑制或优先级）。同一预算对象的 `measurementMethod` 说明测量方法、观察条件和记录方式。各值由项目和实际情境确定，不预设通用医学或刺激阈值。
+
+全局视觉基线首次建立时，按[视觉工作流](visual-workflow.md)生成恰好三张同条件候选，每张保留五项人工质量结果；唯一选中的候选五项全部通过后冻结。已有有效三候选选择证据可跨工作项复用，不重复选图；逐场景目标图不能替代全局选择证据。
 
 ## 五项逐项通过
 

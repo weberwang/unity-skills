@@ -10,7 +10,7 @@ const PACKAGE_PATH = resolve(ROOT, "package.json");
 const INSTALLER_PATH = resolve(ROOT, "scripts/install-project-skills.mjs");
 // 打包白名单与实际安装产物同时校验，确保技能及其参考文件完整交付。
 const EXPECTED_SKILL_NAMES = [
-  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-gameplay-development", "unity-game-juice",
+  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-game-2d-animation-ta", "unity-gameplay-development", "unity-game-juice",
 ];
 
 /** 创建短生命周期的临时项目目录，并在回调结束后清理测试副本。 */
@@ -88,12 +88,14 @@ test("npx 安装器复制当前包并要求 force", () => withTempDirectory((roo
   assert.deepEqual(readFileSync(modified), readFileSync(resolve(ROOT, "unity-game-audio/SKILL.md")));
 }));
 
-test("安装后的 2D 骨骼技能与领域入口引用可达", () => withTempDirectory((root) => {
+test("安装后的 2D 骨骼与技术美术技能及协作引用可达", () => withTempDirectory((root) => {
   const result = runInstaller([root]);
   assert.equal(result.status, 0, result.stderr);
   const targetRoot = resolve(root, ".agents/skills");
   const documents = [
     ...listFiles(resolve(targetRoot, "unity-game-2d-rigging")).filter((path) => path.endsWith(".md")),
+    ...listFiles(resolve(targetRoot, "unity-game-2d-animation-ta")).filter((path) => path.endsWith(".md")),
+    resolve(targetRoot, "unity-development-workflow/references/2d-animation-collaboration.md"),
     ...["unity-development-workflow", "unity-game-visual-assets", "unity-gameplay-development", "unity-game-qa-performance"]
       .map((name) => resolve(targetRoot, name, "SKILL.md")),
   ];

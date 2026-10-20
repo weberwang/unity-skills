@@ -13,14 +13,14 @@ description: Unity 6 URP 游戏的技术架构角色。需要建立或评审模�
 
 ## 执行与交接
 
-首次建立工程、规划目录或评审模块边界时，读取[项目结构约束](../unity-development-workflow/references/project-structure.md)，在 TDD 固定目录映射、程序集依赖、场景生命周期与资源所有权；后续新增实现必须沿用该合同。
+首次建立工程、规划目录或评审模块边界时，读取[项目结构约束](../unity-development-workflow/references/project-structure.md)与[产物存放规则](../unity-development-workflow/references/artifact-storage.md)，在 TDD 固定代码、文档、资源、源文件和证据目录映射、程序集依赖、场景生命周期与资源所有权；后续新增实现必须沿用该合同。
 
 项目创建与 Editor/构建操作交给 `unity:new-unity-project`、`unity:unity-cli`；UPM 交给 `unity:unity-package-management`；BiRP→URP 和 Render Graph 专项分别交给 `unity:migrate-birp-to-urp`、`unity:validate-urp-render-graph-renderer-feature`。本角色只决定架构、预算、依赖和验收边界，不重复维护插件操作步骤。
 
-1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建。
+1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建；采用 SDK 时按[统一初始化合同](../unity-development-workflow/references/sdk-initialization.md)登记唯一入口、真实前置、完成信号、失败隔离和重试所有者。
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。
 3. 只将至少两个场景共同需要的能力上移 Foundation/Shared；为公共接口建立消费者和变更影响清单。
-4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建；平台服务通过接口隔离，不为未选择平台增加实现。
+4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建；平台服务通过接口隔离，不为未选择平台增加实现。已采用 SDK 的统一初始化只投递各自独立任务，不作为首帧或场景启动屏障。
 5. 为所有可见 Scene、常驻 HUD 和独立 DISPLAY_LAYER 定义唯一 Unity 原生响应式合同，冻结 Camera、Screen/Game View、CanvasScaler 或 PanelSettings、安全区、输入坐标、resize/orientation、文本、资源分辨率、性能预算和代表性视口。UI/2D 位图默认 `sourceScale=1` 只表示生产像素密度，不是固定运行时 DPR；运行时以平台、Canvas/Panel、Camera、Render Scale、动态分辨率和 Importer 实测为准。
 6. 场景 Implementation Package 只包含 `SCENE`，弹窗包只包含 `DISPLAY_LAYER`；`hostSceneId` 只绑定公开接口和运行上下文，不表示所有权或完成依赖。Scene/Prefab/UXML/UIDocument 装配与视觉资源来源分别建模，禁止用整屏复合图代替结构。
 7. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$unity-game-3d-modeling`、`$unity-game-3d-texturing` 和独立 QA，不代替它们制作或批准资产。

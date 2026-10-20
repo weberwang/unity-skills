@@ -4,231 +4,2024 @@
   "title": "Unity Work Item",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "workItemId", "projectId", "workItemType", "stageId", "globalState", "baselineHash", "objective", "allowedPaths", "revision"],
+  "required": [
+    "schemaVersion",
+    "workItemId",
+    "projectId",
+    "workItemType",
+    "stageId",
+    "globalState",
+    "baselineHash",
+    "objective",
+    "allowedPaths",
+    "revision"
+  ],
   "properties": {
-    "schemaVersion": {"const": "1.0"},
-    "workItemId": {"type": "string", "minLength": 1},
-    "projectId": {"type": "string", "minLength": 1},
-    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
-    "moduleIds": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-    "domain": {"type": "string", "minLength": 1},
-    "stageId": {"enum": ["requirements-scope", "global-baseline", "foundation-engineering", "scene-production", "global-integration-validation", "release"]},
-    "globalState": {"enum": ["INTAKE", "BASELINE", "PROPOSAL", "REVIEW", "IMPLEMENTING", "VALIDATING", "PASSED", "INTEGRATING", "RELEASE_APPROVAL_REQUIRED", "RELEASING", "COMPLETE", "BLOCKED", "RETURN"]},
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "workItemId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workItemType": {
+      "enum": [
+        "PROJECT",
+        "FOUNDATION",
+        "SCENE",
+        "DISPLAY_LAYER",
+        "INTEGRATION",
+        "RELEASE"
+      ]
+    },
+    "moduleIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stageId": {
+      "enum": [
+        "requirements-scope",
+        "global-baseline",
+        "foundation-engineering",
+        "scene-production",
+        "global-integration-validation",
+        "release"
+      ]
+    },
+    "globalState": {
+      "enum": [
+        "INTAKE",
+        "BASELINE",
+        "PROPOSAL",
+        "REVIEW",
+        "IMPLEMENTING",
+        "VALIDATING",
+        "PASSED",
+        "INTEGRATING",
+        "RELEASE_APPROVAL_REQUIRED",
+        "RELEASING",
+        "COMPLETE",
+        "BLOCKED",
+        "RETURN"
+      ]
+    },
     "scene": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sceneId", "stage", "status"],
+      "required": [
+        "sceneId",
+        "stage",
+        "status"
+      ],
       "properties": {
-        "sceneId": {"type": "string", "minLength": 1},
-        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "PASS", "FAIL", "NOT_RUN"]}
+        "sceneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "enum": [
+            "V0",
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ]
+        },
+        "status": {
+          "enum": [
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        }
       }
     },
-    "displayLayer": {"$ref": "#/$defs/displayLayer"},
-    "responsiveContract": {"$ref": "#/$defs/responsiveContract"},
+    "displayLayer": {
+      "$ref": "#/$defs/displayLayer"
+    },
+    "responsiveContract": {
+      "$ref": "#/$defs/responsiveContract"
+    },
     "stageReviews": {
       "type": "array",
-      "items": {"$ref": "#/$defs/stageReview"},
+      "items": {
+        "$ref": "#/$defs/stageReview"
+      },
       "allOf": [
-        {"not": {"contains": {"properties": {"stage": {"const": "V0"}}, "required": ["stage"]}, "minContains": 2}},
-        {"not": {"contains": {"properties": {"stage": {"const": "V1"}}, "required": ["stage"]}, "minContains": 2}},
-        {"not": {"contains": {"properties": {"stage": {"const": "V2"}}, "required": ["stage"]}, "minContains": 2}},
-        {"not": {"contains": {"properties": {"stage": {"const": "V3"}}, "required": ["stage"]}, "minContains": 2}},
-        {"not": {"contains": {"properties": {"stage": {"const": "V4"}}, "required": ["stage"]}, "minContains": 2}}
+        {
+          "not": {
+            "contains": {
+              "properties": {
+                "stage": {
+                  "const": "V1"
+                }
+              },
+              "required": [
+                "stage"
+              ]
+            },
+            "minContains": 2
+          }
+        },
+        {
+          "not": {
+            "contains": {
+              "properties": {
+                "stage": {
+                  "const": "V2"
+                }
+              },
+              "required": [
+                "stage"
+              ]
+            },
+            "minContains": 2
+          }
+        },
+        {
+          "not": {
+            "contains": {
+              "properties": {
+                "stage": {
+                  "const": "V3"
+                }
+              },
+              "required": [
+                "stage"
+              ]
+            },
+            "minContains": 2
+          }
+        },
+        {
+          "not": {
+            "contains": {
+              "properties": {
+                "stage": {
+                  "const": "V4"
+                }
+              },
+              "required": [
+                "stage"
+              ]
+            },
+            "minContains": 2
+          }
+        }
       ]
     },
-    "baselineId": {"type": "string", "minLength": 1},
-    "baselineVersion": {"type": "string", "minLength": 1},
-    "baselineHash": {"type": "string", "minLength": 1},
-    "revision": {"type": "integer", "minimum": 0},
-    "objective": {"type": "string", "minLength": 1},
-    "userOriginalText": {"type": "string", "minLength": 1},
-    "inScope": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "outOfScope": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "approvedRequirements": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "allowedActions": {"type": "array", "items": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"}},
-    "allowedActionLevels": {"type": "array", "items": {"enum": ["A0", "A1", "A2", "A3"]}, "uniqueItems": true},
-    "explicitApprovalActionLevels": {"type": "array", "items": {"enum": ["A4", "A5", "A6"]}, "uniqueItems": true},
-    "prohibitedActions": {"type": "array", "items": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"}},
-    "allowedPaths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-    "forbiddenPaths": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "allowedExternalTargets": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "protectedExternalTargets": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "requiredGates": {"type": "array", "items": {"enum": ["F0", "F1", "F2", "F3", "F4"]}, "uniqueItems": true},
+    "baselineId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baselineVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baselineHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "userOriginalText": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inScope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "outOfScope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "approvedRequirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "allowedActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^unity-[a-z0-9-]+$"
+      }
+    },
+    "allowedActionLevels": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "A0",
+          "A1",
+          "A2",
+          "A3"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "explicitApprovalActionLevels": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "A4",
+          "A5",
+          "A6"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "prohibitedActions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^unity-[a-z0-9-]+$"
+      }
+    },
+    "allowedPaths": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forbiddenPaths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "allowedExternalTargets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "protectedExternalTargets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiredGates": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "F0",
+          "F1",
+          "F2",
+          "F3",
+          "F4"
+        ]
+      },
+      "uniqueItems": true
+    },
     "gateStatus": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "F0": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "F1": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "F2": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "F3": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-        "F4": {"enum": ["PASS", "FAIL", "NOT_RUN"]}
+        "F0": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "F1": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "F2": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "F3": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "F4": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        }
       }
     },
-    "assignedAgent": {"type": "string", "minLength": 1},
-    "delegatedAgents": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "expectedOutputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "validationPlan": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "exitCriteria": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "nextGate": {"enum": ["F0", "F1", "F2", "F3", "F4"]},
-    "evidenceRoot": {"type": "string", "minLength": 1},
-    "implementationPackage": {"type": "string", "minLength": 1},
-    "implementationPackagePath": {"type": "string", "minLength": 1},
-    "evidenceManifest": {"type": "string", "minLength": 1},
-    "evidenceManifestPath": {"type": "string", "minLength": 1},
-    "actionLevel": {"enum": ["A0", "A1", "A2", "A3", "A4", "A5", "A6"]},
-    "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
-    "sideEffects": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "userDecisionRequired": {"type": "boolean"},
-    "decisionId": {"type": "string", "minLength": 1},
-    "editorWriter": {"type": "string", "minLength": 1},
-    "pendingApproval": {"$ref": "#/$defs/pendingApproval"},
-    "approval": {"$ref": "#/$defs/approval"},
-    "returnRecord": {"$ref": "#/$defs/returnRecord"},
-    "metadata": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}}
+    "assignedAgent": {
+      "type": "string",
+      "minLength": 1
+    },
+    "delegatedAgents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "expectedOutputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validationPlan": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "exitCriteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "nextGate": {
+      "enum": [
+        "F0",
+        "F1",
+        "F2",
+        "F3",
+        "F4"
+      ]
+    },
+    "evidenceRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implementationPackage": {
+      "type": "string",
+      "minLength": 1
+    },
+    "implementationPackagePath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidenceManifest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidenceManifestPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "actionLevel": {
+      "enum": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6"
+      ]
+    },
+    "actionType": {
+      "type": "string",
+      "pattern": "^unity-[a-z0-9-]+$"
+    },
+    "sideEffects": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "userDecisionRequired": {
+      "type": "boolean"
+    },
+    "decisionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "editorWriter": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pendingApproval": {
+      "$ref": "#/$defs/pendingApproval"
+    },
+    "approval": {
+      "$ref": "#/$defs/approval"
+    },
+    "returnRecord": {
+      "$ref": "#/$defs/returnRecord"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "riggingDelivery": {
+      "$ref": "#/$defs/riggingDelivery"
+    },
+    "globalVisualBaselineSelectionRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
   },
   "allOf": [
-    {"if": {"properties": {"workItemType": {"const": "SCENE"}}, "required": ["workItemType"]}, "then": {"required": ["scene", "responsiveContract"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["displayLayer"]}}},
-    {"if": {"properties": {"workItemType": {"const": "DISPLAY_LAYER"}}, "required": ["workItemType"]}, "then": {"required": ["displayLayer", "responsiveContract"], "properties": {"stageId": {"const": "scene-production"}}, "not": {"required": ["scene"]}}},
-    {"if": {"properties": {"workItemType": {"enum": ["PROJECT", "FOUNDATION", "INTEGRATION", "RELEASE"]}}, "required": ["workItemType"]}, "then": {"not": {"anyOf": [{"required": ["scene"]}, {"required": ["displayLayer"]}, {"required": ["responsiveContract"]}, {"required": ["stageReviews"]}]}}}
+    {
+      "if": {
+        "properties": {
+          "domain": {
+            "const": "2d-rigging"
+          },
+          "actionType": {
+            "const": "unity-asset-change"
+          }
+        },
+        "required": [
+          "domain",
+          "actionType"
+        ],
+        "not": {
+          "properties": {
+            "pendingApproval": {
+              "required": [
+                "actionType"
+              ]
+            }
+          },
+          "required": [
+            "pendingApproval"
+          ]
+        }
+      },
+      "then": {
+        "required": [
+          "riggingDelivery"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "domain": {
+            "const": "2d-rigging"
+          },
+          "pendingApproval": {
+            "properties": {
+              "actionType": {
+                "const": "unity-asset-change"
+              }
+            },
+            "required": [
+              "actionType"
+            ]
+          }
+        },
+        "required": [
+          "domain",
+          "pendingApproval"
+        ]
+      },
+      "then": {
+        "required": [
+          "riggingDelivery"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "SCENE"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "required": [
+          "scene",
+          "responsiveContract"
+        ],
+        "properties": {
+          "stageId": {
+            "const": "scene-production"
+          }
+        },
+        "not": {
+          "required": [
+            "displayLayer"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "DISPLAY_LAYER"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "required": [
+          "displayLayer",
+          "responsiveContract"
+        ],
+        "properties": {
+          "stageId": {
+            "const": "scene-production"
+          }
+        },
+        "not": {
+          "required": [
+            "scene"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "workItemType": {
+            "enum": [
+              "PROJECT",
+              "FOUNDATION",
+              "INTEGRATION",
+              "RELEASE"
+            ]
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "scene"
+              ]
+            },
+            {
+              "required": [
+                "displayLayer"
+              ]
+            },
+            {
+              "required": [
+                "responsiveContract"
+              ]
+            },
+            {
+              "required": [
+                "stageReviews"
+              ]
+            }
+          ]
+        }
+      }
+    }
   ],
   "$defs": {
+    "riggingDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owners",
+        "characters"
+      ],
+      "properties": {
+        "owners": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "technicalArt",
+            "rigging",
+            "visualAssets",
+            "gameplay",
+            "qa"
+          ],
+          "properties": {
+            "technicalArt": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rigging": {
+              "type": "string",
+              "minLength": 1
+            },
+            "visualAssets": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gameplay": {
+              "type": "string",
+              "minLength": 1
+            },
+            "qa": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "characters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/riggingDeliveryCharacter"
+          }
+        }
+      }
+    },
+    "riggingDeliveryCharacter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "characterId",
+        "prefabPath",
+        "prefabGuid",
+        "sourceRevision",
+        "updatedAt",
+        "requiredRuntimeCases"
+      ],
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prefabPath": {
+          "type": "string",
+          "pattern": "^Assets/(?!__UwtRiggingTests_)(?!.*\\/__UwtRiggingTests_)(?!/)(?!\\.\\.?(?:/|$))(?!.*(?:\\\\|//|(?:^|/)\\.\\.?(?:/|$))).+\\.prefab$"
+        },
+        "prefabGuid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "sourceRevision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+        },
+        "requiredRuntimeCases": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allOf": [
+            {
+              "contains": {
+                "const": "runtime-instantiation"
+              }
+            },
+            {
+              "contains": {
+                "const": "animation-playback"
+              }
+            }
+          ]
+        }
+      }
+    },
     "stageReview": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["stage"],
+      "required": [
+        "stage"
+      ],
       "properties": {
-        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "confirmation": {"$ref": "#/$defs/stageConfirmation"}
-      }
+        "stage": {
+          "enum": [
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ]
+        },
+        "confirmation": {
+          "$ref": "#/$defs/stageConfirmation"
+        },
+        "decompositionConfirmation": {
+          "$ref": "#/$defs/stageConfirmation"
+        },
+        "layoutConfirmation": {
+          "$ref": "#/$defs/stageConfirmation"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "V2"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "confirmation"
+              ]
+            },
+            "properties": {
+              "decompositionConfirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V2"
+                  }
+                }
+              },
+              "layoutConfirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V2"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "decompositionConfirmation"
+                  ]
+                },
+                {
+                  "required": [
+                    "layoutConfirmation"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "V1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "confirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "V3"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "confirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V3"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "V4"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "confirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V4"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "stageConfirmation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["workItemId", "stage", "confirmedBy", "confirmedAt", "userMessageRef"],
+      "required": [
+        "workItemId",
+        "stage",
+        "confirmedBy",
+        "confirmedAt",
+        "userMessageRef"
+      ],
       "properties": {
-        "workItemId": {"type": "string", "minLength": 1},
-        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "confirmedBy": {"type": "string", "minLength": 1},
-        "confirmedAt": {"type": "string", "format": "date-time"},
-        "userMessageRef": {"type": "string", "minLength": 1}
+        "workItemId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "enum": [
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ]
+        },
+        "confirmedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userMessageRef": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "displayLayer": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["displayLayerId", "hostSceneId", "type", "stage", "status"],
+      "required": [
+        "displayLayerId",
+        "hostSceneId",
+        "type",
+        "stage",
+        "status"
+      ],
       "properties": {
-        "displayLayerId": {"type": "string", "minLength": 1},
-        "hostSceneId": {"type": "string", "minLength": 1},
-        "type": {"enum": ["modal", "popup", "drawer", "toast"]},
-        "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
-        "status": {"enum": ["NOT_STARTED", "IN_PROGRESS", "PASS", "FAIL", "NOT_RUN"]}
+        "displayLayerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hostSceneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "modal",
+            "popup",
+            "drawer",
+            "toast"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "V0",
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ]
+        },
+        "status": {
+          "enum": [
+            "NOT_STARTED",
+            "IN_PROGRESS",
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        }
       }
     },
     "positiveSize": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["width", "height"],
+      "required": [
+        "width",
+        "height"
+      ],
       "properties": {
-        "width": {"type": "integer", "minimum": 1},
-        "height": {"type": "integer", "minimum": 1}
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "responsiveContract": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "uiSystem", "logicalSpace", "backbuffer", "panel", "renderTexture", "canvasScaler", "panelSettings", "camera", "safeArea", "inputCoordinates", "resize", "orientation", "textLocalization", "resourceResolution", "performanceBudget", "representativeViewports", "requiredRuntimeEvidence"],
+      "required": [
+        "version",
+        "uiSystem",
+        "logicalSpace",
+        "backbuffer",
+        "panel",
+        "renderTexture",
+        "canvasScaler",
+        "panelSettings",
+        "camera",
+        "safeArea",
+        "inputCoordinates",
+        "resize",
+        "orientation",
+        "textLocalization",
+        "resourceResolution",
+        "performanceBudget",
+        "representativeViewports",
+        "requiredRuntimeEvidence"
+      ],
       "properties": {
-        "version": {"const": "unity-responsive/1.0"},
-        "uiSystem": {"enum": ["UGUI", "UI Toolkit", "World Space Canvas"]},
-        "logicalSpace": {"$ref": "#/$defs/logicalSpace"},
-        "backbuffer": {"$ref": "#/$defs/backbuffer"},
-        "panel": {"$ref": "#/$defs/panel"},
-        "renderTexture": {"$ref": "#/$defs/renderTexture"},
-        "canvasScaler": {"$ref": "#/$defs/canvasScaler"},
-        "panelSettings": {"$ref": "#/$defs/panelSettings"},
-        "camera": {"$ref": "#/$defs/camera"},
-        "safeArea": {"$ref": "#/$defs/safeArea"},
-        "inputCoordinates": {"$ref": "#/$defs/inputCoordinates"},
-        "resize": {"$ref": "#/$defs/resize"},
-        "orientation": {"$ref": "#/$defs/orientation"},
-        "textLocalization": {"$ref": "#/$defs/textLocalization"},
-        "resourceResolution": {"$ref": "#/$defs/resourceResolution"},
-        "performanceBudget": {"$ref": "#/$defs/performanceBudget"},
-        "representativeViewports": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/representativeViewport"}},
-        "requiredRuntimeEvidence": {"type": "array", "minItems": 10, "uniqueItems": true, "items": {"enum": ["gameView", "screen", "backbuffer", "canvasScalerOrPanelSettings", "camera", "screenSafeArea", "inputHit", "resizeOrientationTrajectory", "screenshot", "supportedOrientations"]}}
+        "version": {
+          "const": "unity-responsive/1.0"
+        },
+        "uiSystem": {
+          "enum": [
+            "UGUI",
+            "UI Toolkit",
+            "World Space Canvas"
+          ]
+        },
+        "logicalSpace": {
+          "$ref": "#/$defs/logicalSpace"
+        },
+        "backbuffer": {
+          "$ref": "#/$defs/backbuffer"
+        },
+        "panel": {
+          "$ref": "#/$defs/panel"
+        },
+        "renderTexture": {
+          "$ref": "#/$defs/renderTexture"
+        },
+        "canvasScaler": {
+          "$ref": "#/$defs/canvasScaler"
+        },
+        "panelSettings": {
+          "$ref": "#/$defs/panelSettings"
+        },
+        "camera": {
+          "$ref": "#/$defs/camera"
+        },
+        "safeArea": {
+          "$ref": "#/$defs/safeArea"
+        },
+        "inputCoordinates": {
+          "$ref": "#/$defs/inputCoordinates"
+        },
+        "resize": {
+          "$ref": "#/$defs/resize"
+        },
+        "orientation": {
+          "$ref": "#/$defs/orientation"
+        },
+        "textLocalization": {
+          "$ref": "#/$defs/textLocalization"
+        },
+        "resourceResolution": {
+          "$ref": "#/$defs/resourceResolution"
+        },
+        "performanceBudget": {
+          "$ref": "#/$defs/performanceBudget"
+        },
+        "representativeViewports": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/representativeViewport"
+          }
+        },
+        "requiredRuntimeEvidence": {
+          "type": "array",
+          "minItems": 10,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "gameView",
+              "screen",
+              "backbuffer",
+              "canvasScalerOrPanelSettings",
+              "camera",
+              "screenSafeArea",
+              "inputHit",
+              "resizeOrientationTrajectory",
+              "screenshot",
+              "supportedOrientations"
+            ]
+          }
+        }
       },
       "allOf": [
-        {"if": {"properties": {"uiSystem": {"enum": ["UGUI", "World Space Canvas"]}}}, "then": {"properties": {"canvasScaler": {"properties": {"status": {"const": "configured"}}}, "panelSettings": {"properties": {"status": {"const": "not-applicable"}}}}}},
-        {"if": {"properties": {"uiSystem": {"const": "UI Toolkit"}}}, "then": {"properties": {"canvasScaler": {"properties": {"status": {"const": "not-applicable"}}}, "panelSettings": {"properties": {"status": {"const": "configured"}}}}}}
+        {
+          "if": {
+            "properties": {
+              "uiSystem": {
+                "enum": [
+                  "UGUI",
+                  "World Space Canvas"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "canvasScaler": {
+                "properties": {
+                  "status": {
+                    "const": "configured"
+                  }
+                }
+              },
+              "panelSettings": {
+                "properties": {
+                  "status": {
+                    "const": "not-applicable"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uiSystem": {
+                "const": "UI Toolkit"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "canvasScaler": {
+                "properties": {
+                  "status": {
+                    "const": "not-applicable"
+                  }
+                }
+              },
+              "panelSettings": {
+                "properties": {
+                  "status": {
+                    "const": "configured"
+                  }
+                }
+              }
+            }
+          }
+        }
       ]
     },
-    "logicalSpace": {"type": "object", "additionalProperties": false, "required": ["mode", "referenceResolution", "unit"], "properties": {"mode": {"enum": ["Canvas", "Panel", "RenderTexture", "World"]}, "referenceResolution": {"$ref": "#/$defs/positiveSize"}, "unit": {"const": "Unity logical units"}}},
-    "backbuffer": {"type": "object", "additionalProperties": false, "required": ["source", "policy", "measuredAtRuntime"], "properties": {"source": {"enum": ["Display", "Screen", "CameraTarget"]}, "policy": {"type": "string", "minLength": 1}, "measuredAtRuntime": {"const": true}}},
-    "panel": {"type": "object", "additionalProperties": false, "required": ["mode", "panelId", "runtimePanel"], "properties": {"mode": {"enum": ["Overlay", "Camera", "World"]}, "panelId": {"type": "string", "minLength": 1}, "runtimePanel": {"type": "boolean"}}},
-    "renderTexture": {"type": "object", "additionalProperties": false, "required": ["enabled", "format", "resolutionPolicy"], "properties": {"enabled": {"type": "boolean"}, "format": {"type": "string", "minLength": 1}, "resolutionPolicy": {"type": "string", "minLength": 1}}},
-    "canvasScaler": {"type": "object", "additionalProperties": false, "required": ["status"], "properties": {"status": {"enum": ["configured", "not-applicable"]}, "reason": {"type": "string", "minLength": 1}, "enabled": {"type": "boolean"}, "mode": {"type": "string", "minLength": 1}, "screenMatchMode": {"type": "string", "minLength": 1}, "referenceResolution": {"$ref": "#/$defs/positiveSize"}, "matchWidthOrHeight": {"type": "number", "minimum": 0, "maximum": 1}}, "allOf": [{"if": {"properties": {"status": {"const": "configured"}}}, "then": {"required": ["enabled", "mode", "referenceResolution", "matchWidthOrHeight"]}}, {"if": {"properties": {"status": {"const": "not-applicable"}}}, "then": {"required": ["reason"]}}]},
-    "panelSettings": {"type": "object", "additionalProperties": false, "required": ["status"], "properties": {"status": {"enum": ["configured", "not-applicable"]}, "reason": {"type": "string", "minLength": 1}, "enabled": {"type": "boolean"}, "scaleMode": {"type": "string", "minLength": 1}, "screenMatchMode": {"type": "string", "minLength": 1}, "match": {"type": "number", "minimum": 0, "maximum": 1}, "referenceResolution": {"$ref": "#/$defs/positiveSize"}, "referenceDpi": {"type": "number", "exclusiveMinimum": 0}}, "allOf": [{"if": {"properties": {"status": {"const": "configured"}}}, "then": {"required": ["enabled", "scaleMode", "referenceResolution", "referenceDpi"]}}, {"if": {"properties": {"status": {"const": "not-applicable"}}}, "then": {"required": ["reason"]}}]},
-    "camera": {"type": "object", "additionalProperties": false, "required": ["id", "renderMode", "viewport", "projection", "measuredAtRuntime"], "properties": {"id": {"type": "string", "minLength": 1}, "renderMode": {"type": "string", "minLength": 1}, "viewport": {"$ref": "#/$defs/positiveSize"}, "projection": {"type": "string", "minLength": 1}, "measuredAtRuntime": {"const": true}}},
-    "safeArea": {"type": "object", "additionalProperties": false, "required": ["source", "policy", "measuredAtRuntime"], "properties": {"source": {"const": "Screen.safeArea"}, "policy": {"type": "string", "minLength": 1}, "measuredAtRuntime": {"const": true}}},
-    "inputCoordinates": {"type": "object", "additionalProperties": false, "required": ["inputSystem", "eventSystem", "screenToLocal", "cameraRaycast"], "properties": {"inputSystem": {"const": "InputSystem"}, "eventSystem": {"const": "EventSystem"}, "screenToLocal": {"type": "string", "minLength": 1}, "cameraRaycast": {"type": "string", "minLength": 1}}},
-    "resize": {"type": "object", "additionalProperties": false, "required": ["mode", "events", "sameProcess"], "properties": {"mode": {"type": "string", "minLength": 1}, "events": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "sameProcess": {"const": true}}},
-    "orientation": {"type": "object", "additionalProperties": false, "required": ["supported", "runtimeReflow"], "properties": {"supported": {"type": "array", "minItems": 1, "items": {"enum": ["portrait", "landscape", "auto"]}}, "runtimeReflow": {"const": true}}},
-    "localePolicy": {"type": "object", "additionalProperties": false, "required": ["singleLine", "wrap", "truncation"], "properties": {"singleLine": {"type": "boolean"}, "wrap": {"type": "boolean"}, "truncation": {"const": "forbidden"}}},
-    "textLocalization": {"type": "object", "additionalProperties": false, "required": ["programmatic"], "properties": {"programmatic": {"type": "boolean"}, "locales": {"type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true, "prefixItems": [{"const": "en"}, {"const": "zh-CN"}, {"const": "ja"}, {"const": "ru"}, {"const": "es"}], "items": false}, "localePolicies": {"type": "object", "additionalProperties": false, "required": ["en", "zh-CN", "ja", "ru", "es"], "properties": {"en": {"$ref": "#/$defs/localePolicy"}, "zh-CN": {"$ref": "#/$defs/localePolicy"}, "ja": {"$ref": "#/$defs/localePolicy"}, "ru": {"$ref": "#/$defs/localePolicy"}, "es": {"$ref": "#/$defs/localePolicy"}}}}, "allOf": [{"if": {"properties": {"programmatic": {"const": true}}}, "then": {"required": ["locales", "localePolicies"]}}, {"if": {"properties": {"programmatic": {"const": false}}}, "then": {"not": {"anyOf": [{"required": ["locales"]}, {"required": ["localePolicies"]}]}}}]},
-    "resourceResolution": {"type": "object", "additionalProperties": false, "required": ["sourceScale", "runtimeScalePolicy", "platformMeasured"], "properties": {"sourceScale": {"type": "number", "exclusiveMinimum": 0}, "runtimeScalePolicy": {"type": "string", "minLength": 1}, "platformMeasured": {"const": true}, "override": {"type": "object", "additionalProperties": false, "required": ["reason"], "properties": {"reason": {"type": "string", "minLength": 1}, "approvalRef": {"type": "string", "minLength": 1}, "evidenceRef": {"type": "string", "minLength": 1}}, "anyOf": [{"required": ["approvalRef"]}, {"required": ["evidenceRef"]}]}}, "allOf": [{"if": {"properties": {"sourceScale": {"not": {"const": 1}}}}, "then": {"required": ["override"]}}]},
-    "performanceBudget": {"type": "object", "additionalProperties": false, "required": ["frameTimeMs", "uiDrawCalls", "renderTexturePixels", "memoryMb", "degradationPolicy"], "properties": {"frameTimeMs": {"type": "number", "minimum": 0}, "uiDrawCalls": {"type": "number", "minimum": 0}, "renderTexturePixels": {"type": "number", "minimum": 0}, "memoryMb": {"type": "number", "minimum": 0}, "degradationPolicy": {"type": "string", "minLength": 1}}},
-    "representativeViewport": {"type": "object", "additionalProperties": false, "required": ["id", "width", "height", "orientation"], "properties": {"id": {"type": "string", "minLength": 1}, "width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}, "orientation": {"enum": ["portrait", "landscape", "square"]}}},
+    "logicalSpace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "referenceResolution",
+        "unit"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "Canvas",
+            "Panel",
+            "RenderTexture",
+            "World"
+          ]
+        },
+        "referenceResolution": {
+          "$ref": "#/$defs/positiveSize"
+        },
+        "unit": {
+          "const": "Unity logical units"
+        }
+      }
+    },
+    "backbuffer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "policy",
+        "measuredAtRuntime"
+      ],
+      "properties": {
+        "source": {
+          "enum": [
+            "Display",
+            "Screen",
+            "CameraTarget"
+          ]
+        },
+        "policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "measuredAtRuntime": {
+          "const": true
+        }
+      }
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "panelId",
+        "runtimePanel"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "Overlay",
+            "Camera",
+            "World"
+          ]
+        },
+        "panelId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimePanel": {
+          "type": "boolean"
+        }
+      }
+    },
+    "renderTexture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "format",
+        "resolutionPolicy"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "format": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolutionPolicy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "canvasScaler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "configured",
+            "not-applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screenMatchMode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "referenceResolution": {
+          "$ref": "#/$defs/positiveSize"
+        },
+        "matchWidthOrHeight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "configured"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "enabled",
+              "mode",
+              "referenceResolution",
+              "matchWidthOrHeight"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not-applicable"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "panelSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "configured",
+            "not-applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "scaleMode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screenMatchMode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "match": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "referenceResolution": {
+          "$ref": "#/$defs/positiveSize"
+        },
+        "referenceDpi": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "configured"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "enabled",
+              "scaleMode",
+              "referenceResolution",
+              "referenceDpi"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "not-applicable"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "camera": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "renderMode",
+        "viewport",
+        "projection",
+        "measuredAtRuntime"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "renderMode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "viewport": {
+          "$ref": "#/$defs/positiveSize"
+        },
+        "projection": {
+          "type": "string",
+          "minLength": 1
+        },
+        "measuredAtRuntime": {
+          "const": true
+        }
+      }
+    },
+    "safeArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "policy",
+        "measuredAtRuntime"
+      ],
+      "properties": {
+        "source": {
+          "const": "Screen.safeArea"
+        },
+        "policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "measuredAtRuntime": {
+          "const": true
+        }
+      }
+    },
+    "inputCoordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputSystem",
+        "eventSystem",
+        "screenToLocal",
+        "cameraRaycast"
+      ],
+      "properties": {
+        "inputSystem": {
+          "const": "InputSystem"
+        },
+        "eventSystem": {
+          "const": "EventSystem"
+        },
+        "screenToLocal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cameraRaycast": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "resize": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "events",
+        "sameProcess"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sameProcess": {
+          "const": true
+        }
+      }
+    },
+    "orientation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported",
+        "runtimeReflow"
+      ],
+      "properties": {
+        "supported": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "portrait",
+              "landscape",
+              "auto"
+            ]
+          }
+        },
+        "runtimeReflow": {
+          "const": true
+        }
+      }
+    },
+    "localePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "singleLine",
+        "wrap",
+        "truncation"
+      ],
+      "properties": {
+        "singleLine": {
+          "type": "boolean"
+        },
+        "wrap": {
+          "type": "boolean"
+        },
+        "truncation": {
+          "const": "forbidden"
+        }
+      }
+    },
+    "textLocalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "programmatic"
+      ],
+      "properties": {
+        "programmatic": {
+          "type": "boolean"
+        },
+        "locales": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "prefixItems": [
+            {
+              "const": "en"
+            },
+            {
+              "const": "zh-CN"
+            },
+            {
+              "const": "ja"
+            },
+            {
+              "const": "ru"
+            },
+            {
+              "const": "es"
+            }
+          ],
+          "items": false
+        },
+        "localePolicies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "en",
+            "zh-CN",
+            "ja",
+            "ru",
+            "es"
+          ],
+          "properties": {
+            "en": {
+              "$ref": "#/$defs/localePolicy"
+            },
+            "zh-CN": {
+              "$ref": "#/$defs/localePolicy"
+            },
+            "ja": {
+              "$ref": "#/$defs/localePolicy"
+            },
+            "ru": {
+              "$ref": "#/$defs/localePolicy"
+            },
+            "es": {
+              "$ref": "#/$defs/localePolicy"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "programmatic": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "locales",
+              "localePolicies"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "programmatic": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "locales"
+                  ]
+                },
+                {
+                  "required": [
+                    "localePolicies"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "resourceResolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceScale",
+        "runtimeScalePolicy",
+        "platformMeasured"
+      ],
+      "properties": {
+        "sourceScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "runtimeScalePolicy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "platformMeasured": {
+          "const": true
+        },
+        "override": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reason"
+          ],
+          "properties": {
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "approvalRef": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidenceRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "approvalRef"
+              ]
+            },
+            {
+              "required": [
+                "evidenceRef"
+              ]
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "sourceScale": {
+                "not": {
+                  "const": 1
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "override"
+            ]
+          }
+        }
+      ]
+    },
+    "performanceBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frameTimeMs",
+        "uiDrawCalls",
+        "renderTexturePixels",
+        "memoryMb",
+        "degradationPolicy"
+      ],
+      "properties": {
+        "frameTimeMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "uiDrawCalls": {
+          "type": "number",
+          "minimum": 0
+        },
+        "renderTexturePixels": {
+          "type": "number",
+          "minimum": 0
+        },
+        "memoryMb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "degradationPolicy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "representativeViewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "width",
+        "height",
+        "orientation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "orientation": {
+          "enum": [
+            "portrait",
+            "landscape",
+            "square"
+          ]
+        }
+      }
+    },
     "approval": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["approvalId", "workItemId", "baselineHash", "stageId", "actionType", "actionLevel", "gate", "object", "impact", "target", "approvedAt", "approvedBy"],
+      "required": [
+        "approvalId",
+        "workItemId",
+        "baselineHash",
+        "stageId",
+        "actionType",
+        "actionLevel",
+        "gate",
+        "object",
+        "impact",
+        "target",
+        "approvedAt",
+        "approvedBy"
+      ],
       "properties": {
-        "approvalId": {"type": "string", "minLength": 1},
-        "workItemId": {"type": "string", "minLength": 1},
-        "baselineHash": {"type": "string", "minLength": 1},
-        "stageId": {"type": "string", "minLength": 1},
-        "actionLevel": {"enum": ["A4", "A5", "A6"]},
-        "gate": {"const": "F4"},
-        "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
-        "object": {"type": "string", "minLength": 1},
-        "impact": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "target": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "approvedAt": {"type": "string", "minLength": 1},
-        "approvedBy": {"type": "string", "minLength": 1}
+        "approvalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workItemId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baselineHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actionLevel": {
+          "enum": [
+            "A4",
+            "A5",
+            "A6"
+          ]
+        },
+        "gate": {
+          "const": "F4"
+        },
+        "actionType": {
+          "type": "string",
+          "pattern": "^unity-[a-z0-9-]+$"
+        },
+        "object": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "target": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approvedAt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approvedBy": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "pendingApproval": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["approvalId", "workItemId", "baselineHash", "stageId", "actionType", "actionLevel", "gate", "object", "impact", "target"],
+      "required": [
+        "approvalId",
+        "workItemId",
+        "baselineHash",
+        "stageId",
+        "actionType",
+        "actionLevel",
+        "gate",
+        "object",
+        "impact",
+        "target"
+      ],
       "properties": {
-        "approvalId": {"type": "string", "minLength": 1},
-        "workItemId": {"type": "string", "minLength": 1},
-        "baselineHash": {"type": "string", "minLength": 1},
-        "stageId": {"type": "string", "minLength": 1},
-        "actionLevel": {"enum": ["A4", "A5", "A6"]},
-        "gate": {"const": "F4"},
-        "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
-        "object": {"type": "string", "minLength": 1},
-        "impact": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "target": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        "approvalId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workItemId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baselineHash": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actionLevel": {
+          "enum": [
+            "A4",
+            "A5",
+            "A6"
+          ]
+        },
+        "gate": {
+          "const": "F4"
+        },
+        "actionType": {
+          "type": "string",
+          "pattern": "^unity-[a-z0-9-]+$"
+        },
+        "object": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "target": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "returnRecord": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["classification", "reason", "affectedScope", "fromState", "toState", "recordedAt"],
+      "required": [
+        "classification",
+        "reason",
+        "affectedScope",
+        "fromState",
+        "toState",
+        "recordedAt",
+        "returnState",
+        "invalidatedArtifacts",
+        "invalidatedReferences"
+      ],
       "properties": {
-        "classification": {"enum": ["upstream-fact-invalidated", "scope-changed", "hard-gate-would-be-bypassed"]},
-        "reason": {"type": "string", "minLength": 1},
-        "affectedScope": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "fromState": {"type": "string", "minLength": 1},
-        "toState": {"const": "RETURN"},
-        "recordedAt": {"type": "string", "minLength": 1},
-        "resolvedAt": {"type": ["string", "null"]}
+        "classification": {
+          "enum": [
+            "upstream-fact-invalidated",
+            "scope-changed",
+            "hard-gate-would-be-bypassed"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "affectedScope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(stage|scene|artifact):[^\\s*?]+$"
+          },
+          "uniqueItems": true
+        },
+        "fromState": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toState": {
+          "const": "RETURN"
+        },
+        "recordedAt": {
+          "type": "string",
+          "minLength": 1,
+          "format": "date-time"
+        },
+        "resolvedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "returnState": {
+          "enum": [
+            "BASELINE",
+            "PROPOSAL",
+            "REVIEW",
+            "IMPLEMENTING"
+          ]
+        },
+        "priorInvalidatedReferences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/returnRecord/properties/invalidatedReferences" }
+        },
+        "invalidatedReferences": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["implementationPackagePath", "evidenceManifestPath", "packageId", "evidenceId", "planVersion"],
+          "properties": {
+            "implementationPackagePath": { "type": ["string", "null"], "minLength": 1 },
+            "evidenceManifestPath": { "type": ["string", "null"], "minLength": 1 },
+            "packageId": { "type": ["string", "null"], "minLength": 1 },
+            "evidenceId": { "type": ["string", "null"], "minLength": 1 },
+            "planVersion": { "type": ["string", "null"], "minLength": 1 }
+          }
+        },
+        "invalidatedArtifacts": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "implementationPackage",
+              "executionState",
+              "evidenceManifest",
+              "approval"
+            ]
+          }
+        }
       }
     }
   }

@@ -16,9 +16,17 @@ Manifest 同时记录 `workItemType`、`visualStage`、`contractVersions`、`res
 
 `unityEvidence` 中的每一项使用 `PASS`、`FAIL` 或 `NOT_RUN`（也可用布尔值表示 PASS/FAIL），并通过 `gateResults` 绑定 F0-F4。
 
+## 执行单元结果
+
+进入 `IMPLEMENTING` 时，控制面在本次 `evidenceRoot` 创建 `execution-state.json`。Implementation Package 每个单元必须声明非空 `acceptanceCommands`；单元结果须绑定当前 Work Item、实施包、单元业务身份、计划顺序和验收命令；业务身份包括 `moduleId`、`scopeId`、`sceneId`、`layer` 和 `host`。真实证据 `files` 与每项命令的 `outputFile` 都必须落在 `evidenceRoot` 内。
+
+`unit-check --result <json>` 只校验当前 `IMPLEMENTING` 单元的结果、绑定、`PASS`、证据路径和顺序，不执行其中的命令。所有单元结束后进入 `VALIDATING` 时，重新检查当前 `execution-state.units` 中全部单元的有效完成结果；Implementation Package 的 `unit.status` 是冻结计划快照，不改写，也不能替代执行结果。场景资源、布局合同及其他业务引用继续按自身 schema 校验，不要求迁入执行证据目录。
+
+V1–V4 阶段切换或 `RETURN` 时，旧执行状态须归档；下一阶段实施重新创建执行状态。全局视觉基线选择通过 `Work.globalVisualBaselineSelectionRef.path` 单独引用[视觉基线合同](../../unity-development-workflow/references/visual-workflow.md#全局视觉基线)，不要把业务引用误当作单元结果文件。
+
 ## 可见 V4 响应式证据
 
-可见 Work Item 只有在 `visualStage=V4` 且所有响应式运行事实真实测量后才能提交 PASS。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，双方向或自动方向必须另含 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
+可见 Work Item 的 V3 PASS 证明当前资源生产与导入验收；V4 PASS 还须满足 `visualStage=V4` 和全部响应式运行事实的真实测量，才能证明正式组合与运行交付。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，双方向或自动方向必须另含 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
 
 静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=1` 只表示生产基线，不是运行时 DPR。
 

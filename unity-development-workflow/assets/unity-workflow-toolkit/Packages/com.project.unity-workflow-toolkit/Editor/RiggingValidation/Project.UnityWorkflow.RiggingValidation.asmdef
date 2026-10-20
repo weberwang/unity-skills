@@ -1,0 +1,19 @@
+{
+  "name": "Project.UnityWorkflow.RiggingValidation",
+  "rootNamespace": "Project.UnityWorkflow.RiggingValidation",
+  "references": [
+    "Project.UnityWorkflow.Core",
+    "Unity.2D.Animation.Runtime",
+    "Unity.2D.Sprite.Editor",
+    "Unity.Collections"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

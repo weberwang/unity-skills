@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Unity 全局视觉基线三候选选择",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "baselineId",
+    "producerWorkItemId",
+    "briefPath",
+    "conditions",
+    "candidates",
+    "selection",
+    "frozenBaselinePath"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "baselineId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producerWorkItemId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "briefPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "conditions": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateId",
+          "source",
+          "imagePath",
+          "generationRecordPath",
+          "qualityResults"
+        ],
+        "properties": {
+          "candidateId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "const": "generated"
+          },
+          "imagePath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "generationRecordPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "qualityResults": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "themeFit",
+              "audienceFit",
+              "gameplayReadability",
+              "viewingComfort",
+              "artCompletion"
+            ],
+            "properties": {
+              "themeFit": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL",
+                      "NOT_RUN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "audienceFit": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL",
+                      "NOT_RUN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "gameplayReadability": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL",
+                      "NOT_RUN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "viewingComfort": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL",
+                      "NOT_RUN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "artCompletion": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "PASS",
+                      "FAIL",
+                      "NOT_RUN"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateId",
+        "confirmedBy",
+        "confirmedAt",
+        "userMessageRef"
+      ],
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userMessageRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "frozenBaselinePath": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

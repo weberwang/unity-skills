@@ -15,6 +15,12 @@ Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先�
 
 按[公共资源登记与使用](../unity-development-workflow/references/shared-asset-usage.md)从总表解析资源身份与实际引用，在当前场景/显示层合同维护消费节点和变更影响；只控制本地实例、文案和动态状态，不修改共享源或为每个消费者复制公共资产。
 
+原生 2D 骨骼角色在拆件和骨架制作前提供实际使用场景、相机与显示尺度、速度、操作频率、动作窗口、事件和中断需求，与骨骼角色评审根节点、朝向、挂点及位移归属。按[动画意图合同](../unity-development-workflow/references/animation-intent-contract.md)协同确定贴合场景的节奏；不能在接入时任意加速、减速或拉伸动作掩盖设计不匹配。玩法拥有权威玩法状态并通过合同参数/事件接口驱动，角色 Animator Controller 的内部参数、状态、过渡和中断由骨骼角色维护；不足时退回该负责人修改，禁止双方同时写入。接入后的触发、事件消费和状态规则缺陷由本角色修复，资产缺陷退回对应生产者。
+
+按[2D 动画岗位协作](../unity-development-workflow/references/2d-animation-collaboration.md)向质量负责人和 TA 提供真实玩法窗口、触发／中断／恢复轨迹与测量入口。质量意见涉及规则变更时交总控协调，TA 工具只诊断和测量、不接管权威状态；玩法接入后向独立 QA 提交运行证据，资产轮通过不能代替实际场景运行轮。
+
+正式消费骨骼资产前，核对[交付门禁](../unity-game-workflow-control/references/rigging-delivery-gate.md)与现有工作流检查均已通过，且当前角色、Prefab/GUID 和候选修订一致。失败、缺失或陈旧报告不作为已交付资产接入；按门禁诊断退相应岗位，玩法只修自己的触发、规则和生命周期问题，不临时改共享资产绕过失败。
+
 1. 先冻结玩家行为、边界情况和测试点；A3 前冻结实施包，再按总控的阶段任务闭环编码。
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$unity-game-3d-modeling` 与 `$unity-game-3d-texturing`；原生 2D 骨骼与动画交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)。消费已独立验收的角色 Prefab、视角/方向规则、Animator 参数、动作事件和挂点合同，负责触发与战斗逻辑；不在场景中私改骨架、网格、权重或共享 Clip，接口不足时退回资产角色修复。玩法拥有权威状态、命中/伤害判定、事件语义、数值和动作触发；把已确定的事件及参数交给 [`$unity-game-juice`](../unity-game-juice/SKILL.md) 设计反馈映射。表现层消费事件，不能成为玩法判定来源；顿帧、击退等改变规则或玩家控制的行为由玩法/数值角色确定。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。

@@ -29,6 +29,7 @@ function hasNearbySummary(lines, index) {
 
 test("Toolkit 包含 Pipeline 命令层和全部规划模块", () => {
   const requiredFiles = [
+    "Editor/RiggingValidation/Project.UnityWorkflow.RiggingValidation.asmdef", "Editor/RiggingValidation/RiggingValidationService.cs", "Editor/PipelineCommands/Validate2DRiggingCommand.cs",
     "package.json", "Runtime/Project.UnityWorkflow.Runtime.asmdef", "Runtime/Scene2DAdaptation.cs", "Editor/Core/WorkflowPaths.cs", "Editor/Core/EditorStabilityGuard.cs", "Editor/Core/ManifestLoader.cs", "Editor/Core/ReportWriter.cs", "Editor/ImagePipeline/ImageValidationService.cs", "Editor/ImagePipeline/ImageImportService.cs", "Editor/ImagePipeline/AssetTargetLock.cs", "Editor/ImagePipeline/ResourceRegistrationRecord.cs", "Editor/ProjectValidation/ProjectValidationService.cs", "Editor/ProjectValidation/Scene2DAdaptationValidationService.cs", "Editor/VisualQA/VisualCaptureService.cs", "Editor/BuildPipeline/DeliveryPreflightService.cs", "Editor/PipelineCommands/PipelineCommandSupport.cs", "Editor/PipelineCommands/ValidateProjectCommand.cs", "Editor/PipelineCommands/ImportImageCommand.cs", "Editor/PipelineCommands/CaptureVisualCommand.cs", "Editor/PipelineCommands/DeliveryPreflightCommand.cs", "Editor/PipelineCommands/Project.UnityWorkflow.PipelineCommands.asmdef", "Tests/Editor/CoreTests.cs", "Tests/Editor/ImagePipelineTests.cs", "Tests/Editor/ProjectValidationTests.cs", "Tests/Editor/Scene2DAdaptationTests.cs", "Tests/Editor/VisualCaptureTests.cs", "Tests/Editor/DeliveryPreflightTests.cs", "Tests/Editor/PipelineCommandTests.cs",
   ];
   for (const relative of requiredFiles) assert.equal(statSync(resolve(PACKAGE_ROOT, relative)).isFile(), true, relative);
@@ -47,6 +48,7 @@ test("asmdef 使用官方 Pipeline 程序集且程序集名称唯一", () => {
   assert.ok(names.includes("Project.UnityWorkflow.PipelineCommands"));
   assert.ok(names.includes("Project.UnityWorkflow.Runtime"));
   assert.ok(names.includes("Project.UnityWorkflow.Tests"));
+  assert.ok(names.includes("Project.UnityWorkflow.RiggingValidation"));
 
   const commandAsmdef = JSON.parse(readText(resolve(PACKAGE_ROOT, "Editor/PipelineCommands/Project.UnityWorkflow.PipelineCommands.asmdef")));
   assert.ok(commandAsmdef.references.includes("Unity.Pipeline"));
@@ -125,6 +127,7 @@ test("Toolkit 包声明官方 Pipeline 依赖且不含旧集成关键词", () =>
   const manifest = JSON.parse(readText(resolve(PACKAGE_ROOT, "package.json")));
   assert.equal(manifest.dependencies["com.unity.pipeline"], PIPELINE_VERSION);
   assert.equal(manifest.dependencies["com.unity.inputsystem"], INPUT_SYSTEM_VERSION);
+  assert.equal(manifest.dependencies["com.unity.2d.animation"], "10.2.2");
   assert.equal(manifest.keywords.some((keyword) => /mcp/i.test(keyword)), false);
 
   const corpus = listFiles(PACKAGE_ROOT)
@@ -161,8 +164,8 @@ test("C# 文件规模受控、具备注释且无占位符", () => {
 test("Pipeline 命令名称、参数和主线程标记精确且唯一", () => {
   const corpus = listFiles(resolve(PACKAGE_ROOT, "Editor/PipelineCommands")).filter((item) => item.endsWith(".cs")).map(readText).join("\n");
   const names = [...corpus.matchAll(/\[CliCommand\(\s*"([^"]+)"/g)].map((match) => match[1]).sort();
-  assert.deepEqual(names, ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_measure_layout", "uwt_validate_project"]);
-  assert.equal((corpus.match(/MainThreadRequired\s*=\s*true/g) ?? []).length, 6);
-  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, 6);
-  assert.equal((corpus.match(/public static PipelineCommandResult Execute\(/g) ?? []).length, 6);
+  assert.deepEqual(names, ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_measure_layout", "uwt_validate_2d_rigging", "uwt_validate_project"]);
+  assert.equal((corpus.match(/MainThreadRequired\s*=\s*true/g) ?? []).length, 7);
+  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, 7);
+  assert.equal((corpus.match(/public static PipelineCommandResult Execute\(/g) ?? []).length, 7);
 });

@@ -6,7 +6,7 @@
 
 ## 规划字段
 
-每个模块记录职责、非目标、公开入口、输入/输出、状态与数据所有权、生命周期、失败与降级、资源/平台依赖、允许/禁止依赖、测试边界和消费者。每个阶段任务记录依赖、输入、输出、路径、Unity 对象、执行角色、验收命令与停止条件。
+每个模块记录职责、非目标、公开入口、输入/输出、状态与数据所有权、生命周期、失败与降级、资源/平台依赖、允许/禁止依赖、测试边界和消费者。每个阶段任务记录依赖、输入、输出、路径、Unity 对象、执行角色、非空 `acceptanceCommands` 与停止条件；完成事实写入绑定当前计划顺序的执行单元结果。
 
 ## 单元边界
 
@@ -18,6 +18,8 @@
 - `RELEASE`：独立 Work Item，处理候选包和获批外部动作。
 
 `ProjectSettings/`、`Packages/`、共享 asmdef、场景列表、输入资产和全局 Addressables 不能分配给并行单元。`Assets` 资源与 `.meta` 必须同属一个单元；Prefab Variant 与基础 Prefab、Scene 与其共享 SubScene/资源的并行修改要显式证明互斥。
+
+`unit.status` 只是冻结实施包中的计划快照，不作为实际完成状态，也不会被 `unit-check` 改写。`execution-state.units` 记录实际激活顺序和完成结果；每个结果绑定 Work Item、实施包、单元业务身份（`moduleId`、`scopeId`、`sceneId`、`layer`、`host`）及验收命令。所有单元完成后由 `VALIDATING` 重新校验执行状态，不得以修改计划状态代替结果证据。
 
 视觉拆解 item 和 Prefab/Scene 节点必须绑定 `parentElementId`、`semanticGrouping` 与 `layoutBinding`。父子由定位、布局、交互、状态、裁切或复用依赖建立；共同信息没有这些依赖时声明同组同级，禁止按距离、bounds 或组件类型推断父级。屏幕 UI 额外遵守[节点树和 V2 布局字段](ui-layout-and-hierarchy.md)。父级、分组或布局绑定改变时，V2 和所有下游结构/运行证据标记为 `stale`。
 

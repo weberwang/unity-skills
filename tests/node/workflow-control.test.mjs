@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import test from 'node:test';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import { seedExecutionFixture } from './helpers/workflow-evidence-fixture.mjs';
 
 import {
   packageComplete,
@@ -53,6 +54,7 @@ function makePackage(workItemId, complete = false, owner = 'worker') {
       moduleId: 'core',
       owner,
       files: ['Assets/Scripts/Player.cs', 'Assets/Scripts/Player.cs.meta'],
+      acceptanceCommands: ['fixture-only-check'],
       status: complete ? 'COMPLETE' : 'READY',
     }],
   };
@@ -111,10 +113,34 @@ function fixture(state = 'REVIEW', overrides = {}, complete = false) {
   const packagePath = join(repo, 'package.json');
   const evidencePath = join(repo, 'evidence.json');
   const work = makeWork(state, overrides);
+  const pkg = makePackage(work.workItemId, complete);
+  seedExecutionFixture(repo, work, pkg, complete);
   writeJson(workPath, work);
-  writeJson(packagePath, makePackage(work.workItemId, complete));
+  writeJson(packagePath, pkg);
   writeJson(evidencePath, makeEvidence(work.workItemId));
   return { repo, workPath, packagePath, evidencePath };
+}
+
+/** 当前基础工程范围的 RETURN 总是恢复到 IMPLEMENTING，并声明全部下游失效。 */
+function returnRecord() {
+  return {
+    classification: 'scope-changed',
+    reason: '范围变化',
+    affectedScope: ['stage:foundation-engineering'],
+    fromState: 'REVIEW',
+    toState: 'RETURN',
+    returnState: 'IMPLEMENTING',
+    invalidatedArtifacts: ['implementationPackage', 'executionState', 'evidenceManifest', 'approval'],
+    invalidatedReferences: {
+      implementationPackagePath: null,
+      evidenceManifestPath: null,
+      packageId: null,
+      evidenceId: null,
+      planVersion: null,
+    },
+    recordedAt: '2026-09-10T00:00:00Z',
+    resolvedAt: null,
+  };
 }
 
 test('run 只推进安全前置状态并在 IMPLEMENTING 停止', () => {
@@ -148,23 +174,82 @@ test('完整实施包和 F3 证据允许 run 闭合到 COMPLETE', () => {
   assert.deepEqual(output.changed, ['VALIDATING → PASSED', 'PASSED → COMPLETE']);
 });
 
+test('A3 手写 COMPLETE 不能替代执行状态与逐单元 Result 闭环', () => {
+  const item = fixture('VALIDATING', {}, true);
+  const work = JSON.parse(readFileSync(item.workPath, 'utf8'));
+  rmSync(join(item.repo, work.evidenceRoot, 'execution-state.json'), { force: true });
+
+  const output = status({ repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath, evidence: item.evidencePath });
+  assert.equal(output.status, 'BLOCKED');
+  assert.match(output.blocking.join('\n'), /Execution State/);
+});
+
 test('RETURN 只能显式恢复，run 不会自动 RETURN 或回退', () => {
   const item = fixture('RETURN', {
-    returnRecord: {
-      classification: 'scope-changed',
-      reason: '需求变化',
-      affectedScope: ['stage:foundation-engineering'],
-      fromState: 'REVIEW',
-      toState: 'RETURN',
-      recordedAt: '2026-09-10T00:00:00Z',
-      resolvedAt: null,
-    },
+    returnRecord: { ...returnRecord(), reason: '需求变化' },
   });
   const before = readFileSync(item.workPath, 'utf8');
   const output = run({ repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath });
   assert.equal(output.status, 'BLOCKED');
   assert.deepEqual(output.changed, []);
   assert.equal(readFileSync(item.workPath, 'utf8'), before);
+});
+
+test('RETURN 无包恢复到 BASELINE/PROPOSAL 后仍拒绝重新绑定旧包路径或身份', () => {
+  // 恢复点不要求立即绑定包，但后续普通状态也不能重新引入已撤销的旧包。
+  for (const scenario of [
+    { scope: 'stage:global-baseline', target: 'BASELINE', gate: 'F0' },
+    { scope: 'stage:V1', target: 'PROPOSAL', gate: 'F1' },
+  ]) {
+    const item = fixture('IMPLEMENTING', {
+      implementationPackagePath: 'package.json', evidenceManifestPath: 'evidence.json',
+    });
+    try {
+      const returned = transitionWorkItem(inspect({
+        repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath, evidence: item.evidencePath,
+      }, 'transition'), 'RETURN', {
+        'return-category': 'scope-changed', 'return-reason': '重新确认上游事实', 'affected-scope': scenario.scope,
+      });
+      assert.equal(returned.returnRecord.returnState, scenario.target);
+      assert.deepEqual(returned.returnRecord.priorInvalidatedReferences, []);
+      returned.gateStatus[scenario.gate] = 'PASS';
+      writeJson(item.workPath, returned);
+
+      const recovered = transitionWorkItem(inspect({ repo: item.repo, 'work-item': item.workPath }, 'transition'), scenario.target, {
+        'return-resolution': '已重新确认影响范围',
+      });
+      assert.equal(recovered.globalState, scenario.target);
+      assert.equal(recovered.implementationPackagePath, undefined);
+      assert.equal(recovered.returnRecord.resolvedAt, new Date(recovered.returnRecord.resolvedAt).toISOString());
+      writeJson(item.workPath, recovered);
+
+      const stalePath = inspect({
+        repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath,
+      });
+      assert.ok(stalePath.blockers.some((entry) => /RETURN.*失效.*Implementation Package/.test(entry.message)));
+
+      const oldIdentityPath = join(item.repo, 'new-path-old-package-id.json');
+      writeJson(oldIdentityPath, makePackage('WI-1'));
+      const staleIdentity = inspect({
+        repo: item.repo, 'work-item': item.workPath, 'implementation-package': oldIdentityPath,
+      });
+      assert.ok(staleIdentity.blockers.some((entry) => /RETURN.*失效.*Implementation Package/.test(entry.message)));
+
+      if (scenario.target === 'PROPOSAL') {
+        const nextReturn = transitionWorkItem(inspect({ repo: item.repo, 'work-item': item.workPath }, 'transition'), 'RETURN', {
+          'return-category': 'scope-changed', 'return-reason': '再次确认上游事实', 'affected-scope': 'stage:V1',
+        });
+        assert.deepEqual(nextReturn.returnRecord.priorInvalidatedReferences, [returned.returnRecord.invalidatedReferences]);
+        writeJson(item.workPath, nextReturn);
+        const historicalReference = inspect({
+          repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath,
+        });
+        assert.ok(historicalReference.blockers.some((entry) => /RETURN.*失效.*Implementation Package/.test(entry.message)));
+      }
+    } finally {
+      rmSync(item.repo, { recursive: true, force: true });
+    }
+  }
 });
 
 test('A4 带副作用必须等待精确 F4 批准', () => {
@@ -191,7 +276,7 @@ test('Unity 路径所有权和单写者约束会拒绝不安全实施包', () =>
   invalid.executionUnits[0].files.push('ProjectSettings/ProjectSettings.asset');
   assert.throws(() => validateImplementationPackage(invalid, makeWork(), item.repo), /工程级|缺少工程设置|所有者|ProjectSettings/);
   const twoWriters = makePackage('WI-1', false, 'worker');
-  twoWriters.executionUnits.push({ unitId: 'SHARED-1', unitType: 'SHARED', moduleId: 'core', owner: 'other', files: ['Assets/Scripts/Shared.cs', 'Assets/Scripts/Shared.cs.meta'], status: 'READY' });
+  twoWriters.executionUnits.push({ unitId: 'SHARED-1', unitType: 'SHARED', moduleId: 'core', owner: 'other', files: ['Assets/Scripts/Shared.cs', 'Assets/Scripts/Shared.cs.meta'], acceptanceCommands: ['fixture-only-check'], status: 'READY' });
   Object.assign(twoWriters.fileOwnership, { 'Assets/Scripts/Shared.cs': 'other', 'Assets/Scripts/Shared.cs.meta': 'other' });
   twoWriters.unityOwnership.metaPairs.push({ asset: 'Assets/Scripts/Shared.cs', meta: 'Assets/Scripts/Shared.cs.meta' });
   twoWriters.unityOwnership.guidImporter.push('Assets/Scripts/Shared.cs');
@@ -206,7 +291,7 @@ test('Implementation Package allowedPaths 只能收窄 Work Item，依赖必须�
   const ordered = makePackage('WI-1');
   ordered.executionUnits[0].unitId = 'BASE';
   ordered.executionUnits[0].status = 'COMPLETE';
-  ordered.executionUnits.push({ unitId: 'SCENE', unitType: 'MODULE', moduleId: 'core', owner: 'worker', files: ['Assets/Scripts/Scene.cs', 'Assets/Scripts/Scene.cs.meta'], status: 'COMPLETE', dependsOn: ['BASE'] });
+  ordered.executionUnits.push({ unitId: 'SCENE', unitType: 'MODULE', moduleId: 'core', owner: 'worker', files: ['Assets/Scripts/Scene.cs', 'Assets/Scripts/Scene.cs.meta'], acceptanceCommands: ['fixture-only-check'], status: 'COMPLETE', dependsOn: ['BASE'] });
   Object.assign(ordered.fileOwnership, { 'Assets/Scripts/Scene.cs': 'worker', 'Assets/Scripts/Scene.cs.meta': 'worker' });
   ordered.unityOwnership.metaPairs.push({ asset: 'Assets/Scripts/Scene.cs', meta: 'Assets/Scripts/Scene.cs.meta' });
   ordered.unityOwnership.guidImporter.push('Assets/Scripts/Scene.cs');
@@ -333,22 +418,77 @@ test('A4 进入集成或完成必须绑定 INTEGRATION 单元', () => {
 test('COMPLETE 不能进入 RETURN，RETURN 恢复清除旧包和证据引用', () => {
   const item = fixture('COMPLETE', { implementationPackagePath: 'package.json', evidenceManifestPath: 'evidence.json' }, true);
   assert.throws(() => transitionWorkItem(importInspection({ repo: item.repo, 'work-item': item.workPath, 'implementation-package': item.packagePath, evidence: item.evidencePath }), 'RETURN', { 'return-category': 'scope-changed', 'return-reason': '范围变化', 'affected-scope': 'stage:foundation-engineering' }), /RETURN/);
-  const recover = fixture('RETURN', {
-    returnRecord: { classification: 'scope-changed', reason: '范围变化', affectedScope: ['stage:foundation-engineering'], fromState: 'REVIEW', toState: 'RETURN', recordedAt: '2026-09-10T00:00:00Z', resolvedAt: null },
+  const recover = fixture('IMPLEMENTING', {
     implementationPackagePath: 'package.json', evidenceManifestPath: 'evidence.json',
   });
-  const next = transitionWorkItem(importInspection({ repo: recover.repo, 'work-item': recover.workPath, 'implementation-package': recover.packagePath, evidence: recover.evidencePath }), 'REVIEW', { 'return-resolution': '重新审查' });
-  assert.equal(next.globalState, 'REVIEW');
-  assert.equal(next.implementationPackagePath, undefined);
+  const oldState = JSON.parse(readFileSync(join(recover.repo, '.workflow-control/evidence/WI-1/execution-state.json'), 'utf8'));
+  const returned = transitionWorkItem(importInspection({
+    repo: recover.repo, 'work-item': recover.workPath, 'implementation-package': recover.packagePath, evidence: recover.evidencePath,
+  }), 'RETURN', {
+    'return-category': 'scope-changed', 'return-reason': '范围变化', 'affected-scope': 'stage:foundation-engineering',
+  });
+  assert.deepEqual(returned.returnRecord.invalidatedReferences, {
+    implementationPackagePath: 'package.json', evidenceManifestPath: 'evidence.json',
+    packageId: 'PKG-1', evidenceId: 'EV-1', planVersion: oldState.planVersion,
+  });
+  assert.equal(returned.implementationPackagePath, undefined);
+  assert.equal(returned.evidenceManifestPath, undefined);
+  writeJson(recover.workPath, returned);
+
+  const replacementPackagePath = join(recover.repo, 'replacement-package.json');
+  const replacementPackage = makePackage('WI-1');
+  replacementPackage.packageId = 'PKG-2';
+  const replacementWork = { ...returned, evidenceRoot: '.workflow-control/evidence/WI-1-replacement' };
+  // RETURN 后重新通过 F2，满足恢复到 IMPLEMENTING 的真实前置门。
+  replacementWork.gateStatus.F2 = 'PASS';
+  seedExecutionFixture(recover.repo, replacementWork, replacementPackage, false);
+  writeJson(recover.workPath, replacementWork);
+  writeJson(replacementPackagePath, replacementPackage);
+  const recoveryArgs = {
+    repo: recover.repo,
+    'work-item': recover.workPath,
+    'implementation-package': replacementPackagePath,
+  };
+  const next = transitionWorkItem(importInspection(recoveryArgs), 'IMPLEMENTING', {
+    'return-resolution': '重新实施',
+    'implementation-package': replacementPackagePath,
+  });
+  assert.equal(next.globalState, 'IMPLEMENTING');
+  assert.equal(next.implementationPackagePath, replacementPackagePath);
   assert.equal(next.evidenceManifestPath, undefined);
+  assert.equal(next.returnRecord.resolvedAt, new Date(next.returnRecord.resolvedAt).toISOString());
   assert.deepEqual(next.gateStatus, { F0: 'NOT_RUN', F1: 'NOT_RUN', F2: 'NOT_RUN', F3: 'NOT_RUN', F4: 'NOT_RUN' });
 
   const hardBlocked = fixture('RETURN', {
     userDecisionRequired: true,
-    returnRecord: { classification: 'scope-changed', reason: '范围变化', affectedScope: ['stage:foundation-engineering'], fromState: 'REVIEW', toState: 'RETURN', recordedAt: '2026-09-10T00:00:00Z', resolvedAt: null },
+    returnRecord: returnRecord(),
   });
-  assert.throws(() => transitionWorkItem(importInspection({ repo: hardBlocked.repo, 'work-item': hardBlocked.workPath }), 'REVIEW', { 'return-resolution': '重新审查' }), /硬阻断|USER_DECISION/);
-  assert.throws(() => transitionWorkItem(importInspection({ repo: recover.repo, 'work-item': recover.workPath, 'implementation-package': recover.packagePath, evidence: recover.evidencePath }), 'REVIEW', { 'return-resolution': '重新审查', 'implementation-package': recover.packagePath, evidence: recover.evidencePath }), /不能复用旧/);
+  const hardBlockedPackagePath = join(hardBlocked.repo, 'replacement-package.json');
+  writeJson(hardBlockedPackagePath, makePackage('WI-1'));
+  assert.throws(() => transitionWorkItem(importInspection({ repo: hardBlocked.repo, 'work-item': hardBlocked.workPath, 'implementation-package': hardBlockedPackagePath }), 'IMPLEMENTING', {
+    'return-resolution': '重新实施',
+    'implementation-package': hardBlockedPackagePath,
+  }), /硬阻断|USER_DECISION/);
+  assert.throws(() => transitionWorkItem(importInspection({ repo: recover.repo, 'work-item': recover.workPath, 'implementation-package': recover.packagePath, evidence: recover.evidencePath }), 'IMPLEMENTING', {
+    'return-resolution': '重新实施',
+    'implementation-package': recover.packagePath,
+    evidence: recover.evidencePath,
+  }), /RETURN.*失效.*Implementation Package/);
+
+  const oldIdentityPath = join(recover.repo, 'replacement-old-identity.json');
+  const oldIdentityPackage = { ...replacementPackage, packageId: 'PKG-1' };
+  writeJson(oldIdentityPath, oldIdentityPackage);
+  assert.throws(() => transitionWorkItem(importInspection({ ...recoveryArgs, 'implementation-package': oldIdentityPath }), 'IMPLEMENTING', {
+    'return-resolution': '重新实施', 'implementation-package': oldIdentityPath,
+  }), /RETURN.*失效.*Implementation Package/);
+
+  const oldEvidencePath = join(recover.repo, 'replacement-old-evidence.json');
+  const oldIdentityEvidence = makeEvidence('WI-1');
+  oldIdentityEvidence.packageId = 'PKG-2';
+  writeJson(oldEvidencePath, oldIdentityEvidence);
+  assert.throws(() => transitionWorkItem(importInspection({ ...recoveryArgs, evidence: oldEvidencePath }), 'IMPLEMENTING', {
+    'return-resolution': '重新实施', 'implementation-package': replacementPackagePath, evidence: oldEvidencePath,
+  }), /RETURN.*失效.*Evidence Manifest/);
 });
 
 test('Work Item 拒绝旧版未声明字段', () => {
@@ -372,6 +512,35 @@ test('schema 与 runtime 对 unityOwnership、packageStatus、dependsOn 保持�
   validateImplementationPackage(pkg, work);
   validateEvidence(evidence, work, pkg);
 
+  const returnedWork = makeWork('RETURN', { returnRecord: returnRecord() });
+  assert.equal(workValid(returnedWork), true);
+  validateWorkItem(returnedWork);
+  const returnedWithReferences = structuredClone(returnedWork);
+  for (const field of ['implementationPackagePath', 'evidenceManifestPath', 'packageId', 'evidenceId', 'planVersion']) {
+    returnedWithReferences.returnRecord.invalidatedReferences[field] = `fixture-${field}`;
+  }
+  assert.equal(workValid(returnedWithReferences), true);
+  validateWorkItem(returnedWithReferences);
+  const historyWork = structuredClone(returnedWork);
+  historyWork.returnRecord.priorInvalidatedReferences = [structuredClone(returnRecord().invalidatedReferences)];
+  assert.equal(workValid(historyWork), true);
+  validateWorkItem(historyWork);
+  const malformedHistory = structuredClone(historyWork);
+  delete malformedHistory.returnRecord.priorInvalidatedReferences[0].evidenceId;
+  assert.equal(workValid(malformedHistory), false);
+  assert.throws(() => validateWorkItem(malformedHistory), /priorInvalidatedReferences/);
+  for (const field of ['implementationPackagePath', 'evidenceManifestPath', 'packageId', 'evidenceId', 'planVersion']) {
+    const invalidReference = structuredClone(returnedWork);
+    invalidReference.returnRecord.invalidatedReferences[field] = 1;
+    assert.equal(workValid(invalidReference), false, `schema 接受了非字符串 ${field}`);
+    assert.throws(() => validateWorkItem(invalidReference), /必须记录失效引用身份/);
+  }
+  const missingReferences = structuredClone(returnedWork);
+  delete missingReferences.returnRecord.invalidatedReferences;
+  assert.equal(workValid(missingReferences), false);
+  assert.throws(() => validateWorkItem(missingReferences), /invalidatedReferences/);
+  assert.throws(() => validateWorkItem({ ...returnedWork, globalState: 'BLOCKED' }), /未解决的 RETURN 记录/);
+
   const pendingApproval = { approvalId: 'AP-PENDING', workItemId: 'WI-1', baselineHash: HASH, stageId: 'foundation-engineering', actionType: 'unity-integration', actionLevel: 'A4', gate: 'F4', object: '入口', impact: ['修改入口'], target: ['unity-test'] };
   const pendingWork = makeWork('REVIEW', { allowedActions: ['unity-integration'], actionLevel: 'A4', actionType: 'unity-integration', sideEffects: ['修改入口'], pendingApproval });
   assert.equal(workValid(pendingWork), true);
@@ -388,6 +557,11 @@ test('schema 与 runtime 对 unityOwnership、packageStatus、dependsOn 保持�
   delete missingStatus.packageStatus;
   assert.equal(packageValid(missingStatus), false);
   assert.throws(() => validateImplementationPackage(missingStatus, work), /packageStatus/);
+
+  const missingAcceptanceCommands = structuredClone(pkg);
+  delete missingAcceptanceCommands.executionUnits[0].acceptanceCommands;
+  assert.equal(packageValid(missingAcceptanceCommands), false);
+  assert.throws(() => validateImplementationPackage(missingAcceptanceCommands, work), /acceptanceCommands/);
 
   const inconsistentStatus = structuredClone(pkg);
   inconsistentStatus.packageStatus = 'COMPLETE';

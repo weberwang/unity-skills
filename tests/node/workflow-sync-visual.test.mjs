@@ -399,4 +399,5 @@ test("参考文档同步 Unity 响应式合同与独立显示层语义", () => {
   for (const token of ["responsiveContractRef", "contractVersions", "sourceScale=1", "Screen.safeArea", "EventSystem/InputSystem", "DISPLAY_LAYER", "hostSceneId"]) assert.match(text, new RegExp(token.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(text, /未就绪层登记为 deferred.*阻止宿主.*V4/);
   assert.doesNotMatch(text, /显示层子任务.*阻断.*场景 V4/);
+  // 全局选择的数量与人工结果使用实际 JSON 文件门验证，避免把固定文案当成行为测试。
 });

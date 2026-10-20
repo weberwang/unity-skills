@@ -5,6 +5,8 @@ import { isValidIsoTimestamp } from './timestamp-contract.mjs';
 /** 人工质量项与动态情境的固定身份，机器仅检查记录而不解释画面。 */
 export const ART_QUALITY_ITEMS = Object.freeze(['themeFit', 'audienceFit', 'gameplayReadability', 'viewingComfort', 'artCompletion']);
 export const ART_SCENARIOS = Object.freeze(['normal-play', 'repeated-feedback', 'event-peak', 'overlap-peak']);
+/** 动态刺激预算各层级共用的严格字段；只有并发数采用可机器比较的整数。 */
+const INTENSITY_LEVEL_FIELDS = Object.freeze(['brightnessContrast', 'screenCoverage', 'duration', 'triggerFrequency', 'maxConcurrent', 'recovery', 'blendPolicy']);
 
 /** 判断结构化记录是否具有可审计内容。 */
 function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
@@ -47,7 +49,7 @@ export function validateArtQualityResults(results, requirePass = false) {
   return errors;
 }
 
-/** 验证美术 brief 的必要事实，不指定通用刺激或医学阈值。 */
+/** 验证美术 brief 的必要事实和三层结构化刺激预算，不指定通用刺激或医学阈值。 */
 export function validateArtBrief(brief) {
   const errors = [];
   if (!shape(brief, ['schemaVersion', 'projectId', 'theme', 'audience', 'coreLoop', 'experienceGoals', 'viewingContext', 'visualHierarchy', 'intensityBudget'], 'artBrief', errors)) return errors;
@@ -56,8 +58,17 @@ export function validateArtBrief(brief) {
   if (!shape(brief.audience, ['facts', 'assumptions'], 'artBrief.audience', errors)) return errors;
   for (const key of ['facts', 'assumptions']) if (!Array.isArray(brief.audience[key]) || brief.audience[key].some((item) => !text(item))) errors.push(`audience.${key} 必须明确事实与假设`);
   for (const key of ['experienceGoals', 'visualHierarchy']) if (!Array.isArray(brief[key]) || brief[key].length === 0 || brief[key].some((item) => !text(item))) errors.push(`artBrief.${key} 必须是非空事实数组`);
-  if (shape(brief.intensityBudget, ['normal', 'operation', 'peak'], 'artBrief.intensityBudget', errors)) {
-    for (const key of ['normal', 'operation', 'peak']) if (!text(brief.intensityBudget[key])) errors.push(`intensityBudget.${key} 缺少强度、频率、叠加与收尾约束`);
+  if (shape(brief.intensityBudget, ['normal', 'operation', 'peak', 'measurementMethod'], 'artBrief.intensityBudget', errors)) {
+    if (!text(brief.intensityBudget.measurementMethod)) errors.push('intensityBudget.measurementMethod 必须说明预算测量方法');
+    for (const key of ['normal', 'operation', 'peak']) {
+      const scope = `intensityBudget.${key}`;
+      const level = brief.intensityBudget[key];
+      if (!shape(level, INTENSITY_LEVEL_FIELDS, scope, errors)) continue;
+      for (const field of INTENSITY_LEVEL_FIELDS.filter((field) => field !== 'maxConcurrent')) {
+        if (!text(level[field])) errors.push(`${scope}.${field} 必须说明对应预算约束`);
+      }
+      if (!Number.isInteger(level.maxConcurrent) || level.maxConcurrent < 0) errors.push(`${scope}.maxConcurrent 必须为非负整数`);
+    }
   }
   return errors;
 }

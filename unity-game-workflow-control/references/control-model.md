@@ -49,6 +49,9 @@ Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内�
 - `ProjectSettings/`、`Packages/` 和 Build Settings 路径必须声明工程设置所有权。
 - `SHARED`、`INTEGRATION`、`RELEASE` 单元始终串行；同一个 Unity 项目的正式 Editor 写入只允许一个 `editorWriter`。
 - 文件必须同时落在 Work Item 的 `allowedPaths` 内且不命中 `forbiddenPaths`；不接受隐式扩大范围。
+- 每个单元必须声明非空 `acceptanceCommands`。进入 `IMPLEMENTING` 时，在本次 `evidenceRoot` 创建 `execution-state.json`，由此记录单元的激活和顺序。
+- 单元完成结果必须绑定 Work Item、Implementation Package、单元业务身份、计划顺序与验收命令；身份包括 `moduleId`、`scopeId`、`sceneId`、`displayLayerId` 和 `hostSceneId`。实际 `files` 和每项命令的 `outputFile` 都必须位于 `evidenceRoot`。业务资源、布局合同等引用按各自 schema 处理，不属于此受限证据路径。
+- `unit-check --result <json>` 只校验当前 `IMPLEMENTING` 单元已有的结果、绑定、`PASS`、证据路径和顺序，不执行验收命令。进入 `VALIDATING` 时再次校验 `execution-state.units` 中全部单元的有效结果与顺序。Implementation Package 的 `unit.status` 是冻结计划快照，不改写，也不能代替执行结果。
 
 ## 明确停止
 

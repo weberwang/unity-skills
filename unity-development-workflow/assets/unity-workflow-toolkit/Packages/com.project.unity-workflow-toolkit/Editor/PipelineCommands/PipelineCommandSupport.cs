@@ -33,7 +33,7 @@ namespace Project.UnityWorkflow.PipelineCommands
     }
 
     /// <summary>
-    /// 为四个 Pipeline 命令复用 Job 结构、项目边界和错误脱敏逻辑。
+    /// 为 Pipeline 命令复用 Job 结构、项目边界和错误脱敏逻辑。
     /// </summary>
     internal static class PipelineCommandSupport
     {
@@ -45,6 +45,17 @@ namespace Project.UnityWorkflow.PipelineCommands
         /// <param name="expectedKind">命令允许处理的契约类型。</param>
         /// <returns>通过结构和类型检查的 Job 负载。</returns>
         public static TPayload LoadPayload<TPayload>(string jobPath, string expectedKind)
+            where TPayload : class
+        {
+            return LoadJob<TPayload>(jobPath, expectedKind).Payload;
+        }
+
+        /// <summary>读取同一 Job 快照及其来源身份，供报告写入时保护输入文件。</summary>
+        /// <typeparam name="TPayload">Job 负载 DTO 类型。</typeparam>
+        /// <param name="jobPath">项目相对 Job 路径。</param>
+        /// <param name="expectedKind">允许处理的契约类型。</param>
+        /// <returns>已通过结构与类型检查的 Job。</returns>
+        public static WorkflowJobDto<TPayload> LoadJob<TPayload>(string jobPath, string expectedKind)
             where TPayload : class
         {
             string normalizedJobPath = RequireJobPath(jobPath);
@@ -59,7 +70,7 @@ namespace Project.UnityWorkflow.PipelineCommands
                 throw new InvalidDataException("Job 缺少 payload。");
             }
 
-            return job.Payload;
+            return job;
         }
 
         /// <summary>创建业务成功结果。</summary>

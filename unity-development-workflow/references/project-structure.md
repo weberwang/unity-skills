@@ -9,16 +9,18 @@
 ├── Assets/                   Unity 管理的代码与资源
 ├── Packages/                 包清单、锁文件和嵌入式包
 ├── ProjectSettings/          项目设置
-├── Docs/                     GDD、TDD 与项目说明
+├── docs/                     GDD、TDD 与项目说明（唯一大小写）
 ├── ArtSource/                不直接导入 Unity 的制作源文件与生成源图
 ├── .workflow-control/        工作项、实施包与证据索引
 └── Artifacts/                可再生成的构建、测试与取证产物
 ```
 
 - 版本控制必须包含 `Assets/` 及其 `.meta`、`ProjectSettings/`、`Packages/manifest.json`、`Packages/packages-lock.json` 和自有嵌入式包源码；工程文档与控制记录一并维护。
-- 忽略 `Library/`、`Temp/`、`Obj/`、`Logs/`、`UserSettings/`、IDE 缓存和可再生成的 `Artifacts/`。证据索引保留产物位置与摘要，需要长期保留的产物进入约定的归档位置。
+- `docs/` 是项目文档的唯一根目录；目录大小写固定为小写，禁止同时新建 `Docs/`。GDD、TDD、清单、已确认的非运行成果及机器控制记录分别按[产物存放规则](artifact-storage.md)归档。
+- 忽略 `Library/`、`Temp/`、`Obj/`、`Logs/`、`UserSettings/`、IDE 缓存和可再生成的 `Artifacts/` 文件。仍被当前工作项或有效记录引用的媒体、审阅与验证文件可按[最小 Git 提交集](../../unity-game-workflow-control/references/minimal-git.md)逐文件放行；忽略不代表可删除。
 - `ArtSource/` 存放 PSD、Blend 等不需要 Unity 直接导入的制作源文件，`ArtSource/Generated/` 存放生成源图；需要直接导入的文件按资产合同进入 `Assets/`。大型二进制源文件和正式资源按团队仓库策略使用 Git LFS。
 - 不提前创建未使用的目录；不得将生成报告、构建包或工作流 JSON 放入 `Assets/` 触发无关导入。
+- 默认路径与已建立项目不同时，只在 TDD 固定唯一实际映射；不得搬迁已冻结文件或同时保留大小写、职责相同的第二个入口。
 
 ## Assets 默认布局
 

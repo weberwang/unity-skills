@@ -12,15 +12,17 @@
 
 ## 执行步骤
 
-1. 深度校验拆分决策文件、用户确认、哈希、模块/场景边界和恢复出口，并确认其 ID、版本、`sourceRevision` 与 `projectStateVersion` 和活动拆分指针一致；未批准、被拒绝、等待确认或版本失配时停止，不得创建 S00 任务。
+1. 深度校验当前拆分决策的对象 ID、用户确认、模块/场景边界、恢复出口和活动指针；确认仍处于批准状态且用户确认覆盖当前实际范围。版本号、`sourceRevision`、`projectStateVersion` 用于识别来源与记录变更，不单独构成失效或验收阻断条件；只有批准范围实质变化、确认已撤回/被拒绝或对象身份不明时才停止 S00。
 2. 创建 S00 任务并冻结共享骨架范围。
-3. 建立最小目录、程序集、Composition Root、启动入口、场景加载、输入、时间/随机抽象、配置、存档版本边界、UI Toolkit 基础、公共安全区适配、日志与测试骨架。屏幕 UI 统一复用 Toolkit 的 `SafeAreaRectTransform` 或 `SafeAreaVisualElement`；全屏背景和遮罩留在安全区节点之外。
+3. 建立最小目录、程序集、Composition Root、启动入口、场景加载、输入、时间/随机抽象、配置、存档版本边界、UI Toolkit 基础、公共安全区适配、日志与测试骨架。屏幕 UI 统一复用 Toolkit 的 `SafeAreaRectTransform` 或 `SafeAreaVisualElement`；全屏背景和遮罩留在安全区节点之外。游戏显示默认全屏；尺寸、方向或安全区变化后重算显示与输入映射。目标包含 Android 时，纳入冷启动无系统标题栏、沉浸式全屏，以及应用恢复前台/窗口焦点后重新建立沉浸显示的要求。
 4. 仅将已在拆分决策中由至少两个场景共同需要的能力放入共享骨架。
-5. 可并行准备不写 Unity 的契约、测试清单和资源说明。
-6. 串行执行 asmdef、场景、资源和共享状态的 Unity 正式写入。
-7. 运行 Schema、静态、编译、Console、EditMode 与 PlayMode 基线。
-8. 通过 `unity:unity-cli` 为 `primaryDevelopmentPlatform` 生成可启动空壳构建，记录平台、Build Profile、场景列表、脚本后端、选项和任务结果；该构建只证明主开发平台基线，不代表其他目标平台已适配。
-9. 独立审查 S00 证据，通过后选择代表性场景进入 G1 垂直切片；不得把空壳骨架本身视为垂直切片完成。
+5. 项目采用的 SDK 必须通过[TDD 中唯一映射的统一初始化入口](sdk-initialization.md)独立投递初始化任务；不等待 SDK 批次完成再显示首帧或启动首个场景，也不绕过 SDK 自身真实官方前置。
+6. 按[产物存放规则](artifact-storage.md)固定源文件、正式资源、临时/候选文件、人工审阅/验证、确认成果和机器 `evidenceRoot` 的路径；冻结引用不得为目录整理批量迁移。
+7. 可并行准备不写 Unity 的契约、测试清单和资源说明。
+8. 串行执行 asmdef、场景、资源和共享状态的 Unity 正式写入。
+9. 运行 Schema、静态、编译、Console、EditMode 与 PlayMode 基线。
+10. 通过 `unity:unity-cli` 为 `primaryDevelopmentPlatform` 生成可启动空壳构建，记录平台、Build Profile、场景列表、脚本后端、选项和任务结果；该构建只证明主开发平台基线，不代表其他目标平台已适配。
+11. 独立审查 S00 证据，通过后选择代表性场景进入 G1 垂直切片；不得把空壳骨架本身视为垂直切片完成。
 
 ## 子代理角色与并行边界
 
@@ -36,12 +38,14 @@
 
 ## 机器可读输出
 
-以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、主开发平台空壳构建、独立审查和状态。S00 进入 `PASS` 前由 Codex 核对契约引用与哈希，并通过 [@Unity](plugin://unity@openai-curated-remote) 的 Pipeline 命令与 C# Toolkit 回读所有 Unity 事实。
+以 `schemas/s00-report.schema.json` 和 `templates/s00-report.yaml` 输出 `s00-report.yaml`，包含拆分决策、模块清单、范围、至少被两个场景使用的共享能力、变更路径、质量报告、Console、主开发平台空壳构建、独立审查和状态。S00 进入 `PASS` 前由 Codex 核对当前对象身份、批准范围、实际变更内容及证据引用，并通过 [@Unity](plugin://unity@openai-curated-remote) 的 Pipeline 命令与 C# Toolkit 回读所有 Unity 事实；SHA/hash 不作为验收硬门。
 
 ## 通过条件
 
 - 最小骨架可编译、可运行且 Console 无新增错误。
-- 目标平台需要屏幕 UI 时，公共安全区节点在窗口尺寸、方向及 `Screen.safeArea` 改变后更新；HUD、页面与弹窗内容均复用该边界，装饰背景仍可覆盖全屏。
+- 游戏显示为全屏，且尺寸、方向及 `Screen.safeArea` 改变后显示与输入映射正确更新；需要屏幕 UI 时，HUD、页面与弹窗内容均复用公共安全区边界，装饰背景仍可覆盖全屏。
+- 目标包含 Android 时，冷启动没有系统标题栏并启用沉浸式全屏；从后台、失焦或系统窗口变化恢复后重新应用显示状态。未获明确设备验收请求时保留设备运行状态为 `NOT_RUN`，不自动启动真机。
+- 音频生命周期通过暂停原因集合实现幂等暂停与原位置续播；全部阻断原因解除前不恢复，已停止/销毁播放不复活，后台新播放请求不补播。目标平台的真实系统回调证据按用户授权的验证方式记录。
 - EditMode、PlayMode 基线和主开发平台空壳构建实际通过。
 - 拆分决策仍为当前批准版本，模块清单与场景草案未越过用户确认边界。
 - 共享能力均有至少两个场景的需求证据，独立审查已批准。

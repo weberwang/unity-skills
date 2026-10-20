@@ -18,6 +18,7 @@
 | 未指定 UI 技术的菜单、HUD、弹窗、布局 | `unity:ui`，再路由到 `unity:ui-uitk`、`unity:ui-ugui` 或 `unity:ui-imgui` |
 | 2D 像素渲染、Sprite、Atlas、Tilemap | `unity:2d-pixel-perfect`、`unity:sprite-editor`、`unity:manage-sprite-atlas` 与适用的 `unity:tilemap-*` |
 | Unity 原生 2D 骨骼、蒙皮与角色动画 | 本仓库 [`unity-game-2d-rigging`](../../unity-game-2d-rigging/SKILL.md) 编排；Editor、包、Sprite 元数据及图集复用对应 `unity:*` 技能，骨骼与动画 API 缺口按项目版本验证 |
+| 2D 动画公共工具、资产校验、批量对账与回归 | 本仓库 [`unity-game-2d-animation-ta`](../../unity-game-2d-animation-ta/SKILL.md) 负责技术管线；实际 Unity 操作复用插件与 Toolkit，角色资产仍归骨骼／视觉，质量负责人与独立 QA 按[岗位协作](2d-animation-collaboration.md)交接 |
 | 本地化、TMP 字体与 CJK 回退 | `unity:localization`、`unity:optimize-text-mesh-pro` |
 | AudioMixer 路由与音频性能 | `unity:audio-setup-mixers`、`unity:optimize-audio` |
 | URP 迁移、后处理、Shader Graph、Render Graph 审查 | `unity:migrate-birp-to-urp`、`unity:urp-postprocessing`、`unity:shader-graph-create-custom-node`、`unity:validate-urp-render-graph-renderer-feature` |

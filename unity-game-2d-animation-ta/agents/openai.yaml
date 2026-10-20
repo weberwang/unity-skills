@@ -1,0 +1,7 @@
+interface:
+  display_name: "2D 动画技术美术"
+  short_description: "负责骨骼动画工具管线、资产校验、批量对账与回归方案"
+  default_prompt: "使用 $unity-game-2d-animation-ta 为当前骨骼动画工作项建立可复验的工具与资产校验方案，并按授权范围实施。"
+
+policy:
+  allow_implicit_invocation: true

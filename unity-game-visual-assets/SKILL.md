@@ -17,6 +17,12 @@ description: 在 Unity 场景 V0-V4 中建立视觉基线、结构草图、资�
 
 Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)；本角色消费其已确认的视角与拆件合同，独立生产部件、遮挡补全和连接区，不直接裁切完整效果图充当 Sprite。交付稳定部件 ID、视角/方向、画布与 Pivot、角色局部位置、层叠、源图位置、导入规格和资源身份；骨架、网格、权重与动画由骨骼角色负责，图片生成或编辑委派给图片子代理。
 
+骨骼部件按[制作与交接合同](../unity-game-2d-rigging/references/production-contract.md)保证运动范围内的无缝组合：依据实际动作幅度留足关节覆盖与遮挡补全，统一连接区的轮廓、线条、颜色和纹理衔接，核对 Pivot、PPU、局部空间和透明边缘。图片任务包须包含相邻部件的连接关系、覆盖范围与检查姿势，不能仅要求每张部件图单独好看。缺图、边缘或连接区缺陷由本角色返修；权重、排序或动作造成的问题交骨骼角色，总控裁决跨界问题。独立源素材检查与实际 Unity 组合的人工视觉验收分别记录，不以导入成功证明无缝。
+
+动作设计或制作中需要新角度、手势、表情、特殊变形或必要过渡图时，消费骨骼角色的补图需求，按同一制作合同生产部件变体。任务包须携带已确认的角色基线、基础部件与变体身份、目标角度/姿态、相邻连接区、消费动作及切换要求；生成编辑仍交 `image_generator`，维持角色造型、比例、配色与材质一致。交付独立图片与资源映射供骨骼角色接入，不以整段生成式动画替代骨骼驱动。已确认边界内的补图返修直接制作并展示；新增视角、方向或越过已确认拆件边界时，由总控先更新并取得受影响拆件内容的确认。
+
+按[2D 动画岗位协作](../unity-development-workflow/references/2d-animation-collaboration.md)消费动画质量负责人的风格与动作标杆，以及 TA 的数据／导入约束；向骨骼角色交付部件与变体映射，向 TA 提供对账和诊断所需的来源与导入事实。图像缺陷由本角色返修，公共导入工具缺陷交 TA；双方不直接修改骨架或动画资产。
+
 具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；本地化/TMP、URP 后处理和 Shader Graph 分别使用对应 `unity:*` Skill。本角色只维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
 
 ## V0-V4
@@ -24,12 +30,12 @@ Unity 原生 2D 骨骼角色交给 [`$unity-game-2d-rigging`](../unity-game-2d-r
 1. **V0 分流**：识别全局基线、场景、显示层、参考图使用边界和实际交付类型。场景只包含自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item。新建且包含可见画面的场景或显示层必须安排效果图任务；已有有效视觉规范时用它指导效果图，需要方向探索时生成由任务决定数量的实质不同候选，并让用户选择。
 2. **V1 对象定义**：为新建且包含可见画面的 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，确认后作为 V2–V4 的持续视觉目标；独立生产不等于重新设计，后续生成图不得静默替代 V1，具体见[持续目标规则](../unity-development-workflow/references/visual-workflow.md#v1-场景定义)。同时冻结主题、受众、核心循环、体验目标和观看情境，并与 `$unity-game-juice` 定义关键反馈意图。提交草图/灰盒和 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图不注册为正式资源。
 3. **V2 拆解确认**：先按[文本与色彩拆分路线](../unity-development-workflow/references/visual-decomposition-routes.md)覆盖 V1 的实际可见特征及空间结构，逐项绑定稳定编号、生产归属、消费节点和组件×状态，不能仅列功能名称；系统文本、原生绘制及原子资源内含特征同样登记。按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。适用的九宫格资源冻结源图尺寸、Unity border 与内容内边距；动作资产冻结独立时间轴、关键事件、资源生产者与消费接口。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。
-4. **V3 资源与组合验收**：按编号独立生产、创作或复用，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID、Addressables 和宿主同屏组合。九宫格导入后回读实际 Border 并检查目标组件呈现；使用[布局校准合同](../unity-development-workflow/references/layout-calibration.md)在现有 Inspector/UI Builder 与 Undo 中校准正式组合。资源与 `.meta` 同属一个所有权单元。
-5. **V4 正式接入**：由单写者按冻结结构拼装 Scene、Prefab 或 UXML/USS，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
+4. **V3 资源生产与验收**：按编号独立生产、创作或复用正式资源，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID 和 Addressables，并检查资源在宿主场景中的组合预览。九宫格导入后回读实际 Border 并检查组件呈现；V3 不负责正式 Scene/Prefab/UI 实现或布局校准。资源与 `.meta` 同属一个所有权单元。
+5. **V4 正式接入与校准**：由单写者按冻结结构实现并拼装 Scene、Prefab 或 UXML/USS，校准正式组合，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
 
 ## 生产规则
 
-- 当前阶段内先内部完成分析、技术记录、布局决策和提示词，直接交付真实候选供用户检查，不等待常规文字方案确认；同目标返修直接展示前后对照。V2、V3 等实际阶段确认与父图/视频专项确认仍保留，详见[图片优先的确认方式](../unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)。
+- 当前阶段内先内部完成分析、技术记录、布局决策和提示词，直接交付真实候选供用户检查，不等待常规文字方案确认；动画正式素材遵循[动画意图合同](../unity-development-workflow/references/animation-intent-contract.md)，先说明设计理念与动作方案并取得用户明确确认再制作。同目标返修直接展示前后对照。V2、V3 等实际阶段确认与父图/视频专项确认仍保留，详见[图片优先的确认方式](../unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)。
 - 生成全局方向图、场景效果图或宿主上下文图前，按[游戏内文案](../unity-development-workflow/references/game-copy.md)列明允许的可见文字、图标和示例数值，内部规格不得绘入画面；候选共用同一内容。冻结后按目标拆解，不从策划说明追加文字，也不擅自删改冻结文字；动态/本地化文本由真实数据与文本节点呈现。
 - 静态资源以画廊或可放大的 V1 相关区域/输出对照直接交付，透明资源并排给深浅底预览；V3/V4 按[组合对照交付](../unity-development-workflow/references/visual-workflow.md#v3-正式资源与组合验收)提供 V1 与当前实际 Unity 组合并列对照及已知未还原项。完整来源与工程结果内部保存，预览成功不代表用户已验收显示效果。
 - V2 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单。在冻结的 V1 效果图上逐项框选并绑定稳定编号，用引线说明用途、来源、关系、装配和生产边界；结构化合同内部保存。遵守[图片框选与标注交付](../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)。

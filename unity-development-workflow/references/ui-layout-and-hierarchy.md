@@ -2,7 +2,7 @@
 
 ## 适用范围
 
-在 V1 定义屏幕 UI 结构、V2 冻结拆解与装配合同、V3 组合预验收、V4 多视口验证时使用。适用于 uGUI 的 Canvas/RectTransform 和 UI Toolkit 的 UIDocument/UXML；World Space Canvas 按世界尺寸、相机距离和像素密度另行设计。
+在 V1 定义屏幕 UI 结构、V2 冻结拆解与布局合同、V3 验收正式资源、V4 实现并校准正式组合时使用。适用于 uGUI 的 Canvas/RectTransform 和 UI Toolkit 的 UIDocument/UXML；World Space Canvas 按世界尺寸、相机距离和像素密度另行设计。
 
 ## 布局基准与分层
 
@@ -16,7 +16,7 @@ HUD、按钮、弹窗和奖励反馈先按[游戏内文案](game-copy.md)确定�
 
 ## 布局参照选择
 
-在 V1 确定布局参照，V2 冻结到 `layoutBinding`，V3/V4 沿用同一参照：
+在 V1 确定布局参照，V2 冻结到 `layoutBinding`，V4 实现时沿用同一参照：
 
 | UI 所属范围 | 布局参照与行为 |
 | --- | --- |
@@ -83,7 +83,7 @@ HealthBar
 
 ## V2 布局合同
 
-父子关系、布局职责和对齐决策由代理内部推导后，直接展示当前编号拆解图及必要布局标注供 V2 确认，不先请求用户确认文字布局方案。确认后的调整仍在既定目标内直接修复、重验并展示对照；正式原生组合在 V3 提交，不另建布局审批。
+父子关系、布局职责和对齐决策由代理内部推导。V2 先单独展示编号拆解图并确认；确认后再展示布局图及参照、约束和适配行为，并单独确认。两项确认通过后才能生产正式资源。调整仍在既定目标内时直接修复、重验并展示对照；正式原生组合在 V4 实现，不增加其他审批。
 
 每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：`parentElementId` 指向实际直接父节点，`hierarchyRelation` 声明父子或同级，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`constraints` 必须说明上述布局参照及其依赖链，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
 
@@ -124,11 +124,11 @@ layoutBinding:
 
 格子内部节点的 `parentElementId` 指向树中实际的直接父节点：图标和选中框属于 `VisualRoot`，数量文字属于 `CountBadge`。这些视觉子节点的 `interactionPolicy` 为 `DELEGATE_TO_PARENT`，点击最终由祖先 `InventorySlot` 处理。需要滚动的背包内容把 `overflowPolicy` 声明在列表容器上，单个格子仍需保持完整可见。
 
-## 九宫格资源与 V3 校准
+## 九宫格资源与 V4 校准
 
 需要保持面板边角的资源在 V2 先判断九宫格是否适用；适用时冻结源图像素尺寸、Unity `Sprite.border` 四边值（`left, bottom, right, top`）、目标最小尺寸与内容内边距。文字、图标、交互和装饰仍按实际布局职责作为独立节点，不合并进面板图。导入与呈现按[九宫格 UI 合同](nine-slice-ui.md)检查。
 
-V3 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。Toolkit 的 `uwt_measure_layout` 读取目标视口下的节点矩形、边距/间距及差值；`uwt_capture_game_view` 只采集 Unity Editor Game View。使用和差异归因规则见[布局校准合同](layout-calibration.md)。几何测量与图像采集不自动改布局、不分析截图，也不代替用户对显示效果的检查确认。
+V3 只做资源导入与资源级验证，可提供临时组合预览。V4 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。Toolkit 的 `uwt_measure_layout` 读取目标视口下的节点矩形、边距/间距及差值；`uwt_capture_game_view` 只采集 Unity Editor Game View。使用和差异归因规则见[布局校准合同](layout-calibration.md)。几何测量与图像采集不自动改布局、不分析截图，也不代替用户对显示效果的检查确认。
 
 ## 代表性检查
 

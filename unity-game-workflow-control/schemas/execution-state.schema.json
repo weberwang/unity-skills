@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-game-workflow-control/schemas/execution-state.schema.json",
+  "title": "Unity Execution State",
+  "description": "绑定当前 Work Item、Implementation Package 和结构化实施计划的执行状态。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "workItemId",
+    "packageId",
+    "baselineHash",
+    "stageId",
+    "sceneStage",
+    "displayLayerStage",
+    "planVersion",
+    "units"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "revision": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "workItemId": {"type": "string", "minLength": 1},
+    "packageId": {"type": "string", "minLength": 1},
+    "baselineHash": {"type": "string", "minLength": 1, "description": "创建时的 Git 身份记录；不参与计划身份和证据验收。"},
+    "stageId": {"type": "string", "minLength": 1},
+    "sceneStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4"]},
+    "displayLayerStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4"]},
+    "planVersion": {"type": "string", "minLength": 1, "description": "固定键顺序的计划 JSON 身份串，不是文件摘要。"},
+    "units": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/executionUnit"}
+    }
+  },
+  "$defs": {
+    "projectPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*//)(?!.*[/]$)(?!.*(?:^|/)\\.\\.?(/|$)).+$"
+    },
+    "evidencePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*//)(?!.*[/]$)(?!.*[*?\\[\\]])(?!.*(?:^|/)\\.\\.?(/|$)).+$"
+    },
+    "executionUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unitId",
+        "unitType",
+        "moduleId",
+        "scopeId",
+        "sceneId",
+        "displayLayerId",
+        "hostSceneId",
+        "owner",
+        "editorWrite",
+        "serial",
+        "files",
+        "dependsOn",
+        "parallelGroup",
+        "acceptanceCommands",
+        "status"
+      ],
+      "properties": {
+        "unitId": {"type": "string", "minLength": 1},
+        "unitType": {"enum": ["SHARED", "MODULE", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
+        "moduleId": {"type": ["string", "null"], "minLength": 1},
+        "scopeId": {"type": ["string", "null"], "minLength": 1},
+        "sceneId": {"type": ["string", "null"], "minLength": 1},
+        "displayLayerId": {"type": ["string", "null"], "minLength": 1},
+        "hostSceneId": {"type": ["string", "null"], "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "editorWrite": {"type": "boolean"},
+        "serial": {"type": "boolean"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/projectPath"}
+        },
+        "dependsOn": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "parallelGroup": {"type": ["string", "null"], "minLength": 1},
+        "acceptanceCommands": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "status": {"enum": ["PENDING", "IN_PROGRESS", "COMPLETE"]},
+        "resultPath": {"$ref": "#/$defs/evidencePath"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "COMPLETE"}}, "required": ["status"]},
+          "then": {"required": ["resultPath"]},
+          "else": {"not": {"required": ["resultPath"]}}
+        }
+      ]
+    }
+  }
+}

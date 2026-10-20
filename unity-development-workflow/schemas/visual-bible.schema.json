@@ -89,7 +89,7 @@
         "layeredSourceStrategy": {"const": "SEPARATE_FILES_AND_MASKS"}
       }
     },
-    "directionCandidates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/directionEvidence"}},
+    "directionCandidates": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/directionEvidence"}},
     "selectedDirection": {"$ref": "#/$defs/directionEvidence"},
     "finalVisualReview": {
       "allOf": [
@@ -125,7 +125,8 @@
       ],
       "properties": {
         "directionCandidates": {
-          "minItems": 1
+          "minItems": 3,
+          "maxItems": 3
         },
         "approval": {
           "allOf": [

@@ -18,6 +18,7 @@ import {
 import { validateUnityResponsiveContract } from '../../unity-game-workflow-control/scripts/runtime/visible-contract.mjs';
 import { stageConfirmationBlockers } from '../../unity-game-workflow-control/scripts/runtime/stage-confirmation.mjs';
 import { makeArtFixture } from './helpers/art-experience-fixture.mjs';
+import { seedVisualBaseline } from './helpers/workflow-evidence-fixture.mjs';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
 const REQUIRED_EVIDENCE = [
@@ -73,6 +74,7 @@ function makeSceneWork(overrides = {}) {
     stageId: 'scene-production',
     globalState: 'VALIDATING',
     scene: { sceneId: 'MainScene', stage: 'V4', status: 'IN_PROGRESS' },
+    globalVisualBaselineSelectionRef: { path: 'baseline/selection.json' },
     responsiveContract: makeContract(),
     baselineHash: HASH,
     revision: 0,
@@ -160,7 +162,7 @@ function makeVisiblePackage(work, repo, overrides = {}) {
     unityOwnership: { metaPairs: [{ asset: 'Assets/UI/Main.cs', meta: 'Assets/UI/Main.cs.meta' }], guidImporter: ['Assets/UI/Main.cs'] },
     executionUnits: [{
       unitId: 'VISIBLE-1', unitType: work.workItemType, moduleId: 'ui', owner: 'ui-worker',
-      files: ['Assets/UI/Main.cs', 'Assets/UI/Main.cs.meta'], status: 'READY',
+      files: ['Assets/UI/Main.cs', 'Assets/UI/Main.cs.meta'], acceptanceCommands: ['fixture-only-check'], status: 'READY',
       ...(work.scene ? { sceneId: work.scene.sceneId } : {}),
       ...(work.displayLayer ? { displayLayerId: work.displayLayer.displayLayerId, hostSceneId: work.displayLayer.hostSceneId } : {}),
     }],
@@ -178,15 +180,23 @@ function schemaValidator(name) {
 /** 为某阶段构造绑定当前工作项和人工确认记录的测试数据。 */
 function makeStageReview(work, stage, options = {}) {
   const review = { stage };
-  if (options.confirmation !== null) {
-    review.confirmation = {
+  const confirmation = (confirmedAt, overrides = {}) => ({
       workItemId: work.workItemId,
       stage,
       confirmedBy: 'project-owner',
-      confirmedAt: '2026-09-30T10:00:00+08:00',
+      confirmedAt,
       userMessageRef: `user-message:${work.workItemId}:${stage}`,
-      ...options.confirmation,
-    };
+      ...overrides,
+    });
+  if (stage === 'V2') {
+    if (options.decompositionConfirmation !== null) {
+      review.decompositionConfirmation = confirmation('2026-09-30T10:00:00+08:00', options.decompositionConfirmation);
+    }
+    if (options.layoutConfirmation !== null) {
+      review.layoutConfirmation = confirmation('2026-09-30T10:01:00+08:00', options.layoutConfirmation);
+    }
+  } else if (options.confirmation !== null) {
+    review.confirmation = confirmation('2026-09-30T10:00:00+08:00', options.confirmation);
   }
   return review;
 }
@@ -208,7 +218,7 @@ test('合法 SCENE/DISPLAY_LAYER Work Item 必须具备独立身份和 Unity 响
 
 test('stageReviews 严格拒绝重复阶段、错误时间和非可见工作项', () => {
   const work = makeSceneWork();
-  const review = makeStageReview(work, 'V0');
+  const review = makeStageReview(work, 'V1');
   const valid = { ...work, stageReviews: [review] };
   assert.doesNotThrow(() => validateWorkItem(valid));
   assert.equal(schemaValidator('work-item.schema.json')(valid), true);
@@ -219,6 +229,20 @@ test('stageReviews 严格拒绝重复阶段、错误时间和非可见工作项'
   const invalidTime = { ...work, stageReviews: [{ ...review, confirmation: { ...review.confirmation, confirmedAt: '2026-02-30T25:00:00Z' } }] };
   assert.throws(() => validateWorkItem(invalidTime), /有效 ISO 8601/);
   assert.equal(schemaValidator('work-item.schema.json')(invalidTime), false);
+  const obsoleteV0 = { ...work, stageReviews: [makeStageReview(work, 'V0')] };
+  assert.throws(() => validateWorkItem(obsoleteV0), /只能是 V1、V2、V3 或 V4/);
+  assert.equal(schemaValidator('work-item.schema.json')(obsoleteV0), false);
+  const invalidV2Order = { ...work, stageReviews: [makeStageReview(work, 'V2', {
+    decompositionConfirmation: { confirmedAt: '2026-09-30T10:02:00+08:00' },
+    layoutConfirmation: { confirmedAt: '2026-09-30T10:01:00+08:00' },
+  })] };
+  assert.throws(() => validateWorkItem(invalidV2Order), /不能早于/);
+  // 两条时间戳的先后由运行时交叉校验，JSON Schema 只校验字段形状。
+  assert.equal(schemaValidator('work-item.schema.json')(invalidV2Order), true);
+  const legacyV2 = { ...work, stageReviews: [makeStageReview(work, 'V2')] };
+  legacyV2.stageReviews[0].confirmation = review.confirmation;
+  assert.throws(() => validateWorkItem(legacyV2), /V2 必须分别使用 decompositionConfirmation 和 layoutConfirmation/);
+  assert.equal(schemaValidator('work-item.schema.json')(legacyV2), false);
   const nonVisible = { ...work, workItemType: 'FOUNDATION', stageId: 'foundation-engineering' };
   delete nonVisible.scene;
   delete nonVisible.responsiveContract;
@@ -234,7 +258,8 @@ test('阶段门要求全部前序人工确认，并允许当前 V0 继续进行'
       scene: { sceneId: 'MainScene', stage: 'V2', status: 'IN_PROGRESS' },
       actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
     });
-    work.stageReviews = [makeStageReview(work, 'V0')];
+    work.stageReviews = [makeStageReview(work, 'V1', { confirmation: null })];
+    seedVisualBaseline(repo, work);
     const workPath = join(repo, 'work.json');
     writeJson(workPath, work);
     const inspection = inspect({ repo, 'work-item': workPath });
@@ -245,6 +270,43 @@ test('阶段门要求全部前序人工确认，并允许当前 V0 继续进行'
       actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
     });
     assert.deepEqual(stageConfirmationBlockers(initial), []);
+
+    const missingLayoutReview = makeSceneWork({
+      scene: { sceneId: 'MainScene', stage: 'V3', status: 'IN_PROGRESS' },
+      actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    });
+    missingLayoutReview.stageReviews = [
+      makeStageReview(missingLayoutReview, 'V1'),
+      makeStageReview(missingLayoutReview, 'V2', { layoutConfirmation: null }),
+    ];
+    assert.ok(stageConfirmationBlockers(missingLayoutReview).some((item) => item.message === '等待 V2 布局 人工确认'));
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('V1+ SCENE 必须引用真实的三候选全局视觉基线', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-visible-baseline-'));
+  try {
+    const work = makeSceneWork({
+      globalState: 'REVIEW',
+      scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' },
+      actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
+    });
+    const workPath = join(repo, 'work.json');
+    writeJson(workPath, work);
+    assert.ok(inspect({ repo, 'work-item': workPath }).blockers.some((item) => item.code === 'VISUAL_BASELINE_INVALID'));
+
+    seedVisualBaseline(repo, work);
+    writeJson(workPath, work);
+    const selectionPath = join(repo, work.globalVisualBaselineSelectionRef.path);
+    const selection = JSON.parse(readFileSync(selectionPath, 'utf8'));
+    assert.equal(selection.candidates.length, 3);
+    assert.equal(inspect({ repo, 'work-item': workPath }).blockers.some((item) => item.code === 'VISUAL_BASELINE_INVALID'), false);
+
+    selection.candidates.pop();
+    writeJson(selectionPath, selection);
+    assert.ok(inspect({ repo, 'work-item': workPath }).blockers.some((item) => item.code === 'VISUAL_BASELINE_INVALID'));
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -256,7 +318,8 @@ test('当前 PASS 证据不能替代人工确认，run/check 阻断后确认齐�
     const work = makeSceneWork({
       actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
     });
-    work.stageReviews = makeStageReviews(work, ['V0', 'V1', 'V2', 'V3']);
+    work.stageReviews = makeStageReviews(work, ['V1', 'V2', 'V3']);
+    seedVisualBaseline(repo, work);
     const workPath = join(repo, 'work.json');
     const evidencePath = join(repo, 'evidence.json');
     writeJson(workPath, work);
@@ -282,17 +345,24 @@ test('当前 PASS 证据不能替代人工确认，run/check 阻断后确认齐�
 
 test('直接迁移重算阶段门；F4 或 userDecisionRequired=false 不能绕过，RETURN/BLOCKED 可进入修复', () => {
   const work = makeSceneWork({
-    globalState: 'REVIEW', scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' },
+    globalState: 'REVIEW', scene: { sceneId: 'MainScene', stage: 'V1', status: 'PASS' },
     actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
     userDecisionRequired: false, gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' },
   });
   const forgedInspection = { work, blockers: [], evidence: null, pkg: null };
-  assert.throws(() => transitionWorkItem(forgedInspection, 'VALIDATING'), /等待 V0 人工确认/);
+  assert.throws(() => transitionWorkItem(forgedInspection, 'VALIDATING'), /等待 V1 人工确认/);
 
   const returned = transitionWorkItem(forgedInspection, 'RETURN', {
     'return-category': 'scope-changed', 'return-reason': '需重新确认', 'affected-scope': 'scene:MainScene',
   });
   assert.equal(returned.globalState, 'RETURN');
+  assert.equal(returned.returnRecord.returnState, 'PROPOSAL');
+  assert.deepEqual(returned.returnRecord.invalidatedArtifacts, ['implementationPackage', 'executionState', 'evidenceManifest', 'approval']);
+  assert.deepEqual(returned.returnRecord.invalidatedReferences, {
+    implementationPackagePath: null, evidenceManifestPath: null, packageId: null, evidenceId: null, planVersion: null,
+  });
+  assert.throws(() => transitionWorkItem({ ...forgedInspection, work: returned }, 'IMPLEMENTING', { 'return-resolution': '重新实施' }), /只能恢复到影响范围确定的 PROPOSAL/);
+  assert.throws(() => transitionWorkItem({ ...forgedInspection, work: returned }, 'BLOCKED', { reason: '绕过恢复点' }), /非法状态迁移/);
   assert.equal(transitionWorkItem(forgedInspection, 'BLOCKED', { reason: '待用户确认' }).globalState, 'BLOCKED');
 });
 
@@ -301,14 +371,14 @@ test('COMPLETE 必须处于 V4；实现调整不使既有阶段确认失效', ()
     globalState: 'INTEGRATING', scene: { sceneId: 'MainScene', stage: 'V3', status: 'PASS' },
     actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
   });
-  v3.stageReviews = makeStageReviews(v3, ['V0', 'V1', 'V2', 'V3']);
+  v3.stageReviews = makeStageReviews(v3, ['V1', 'V2', 'V3']);
   assert.throws(() => transitionWorkItem({ work: v3, blockers: [], evidence: null, pkg: null }, 'COMPLETE'), /必须到达 V4/);
 
   const changedCandidate = makeSceneWork({
     globalState: 'VALIDATING', scene: { sceneId: 'MainScene', stage: 'V0', status: 'PASS' },
     actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'],
   });
-  changedCandidate.stageReviews = [makeStageReview(changedCandidate, 'V0')];
+  changedCandidate.stageReviews = [];
   // 阶段完成后允许实现和预算细节继续微调，既有用户确认仍按工作项身份和阶段有效。
   changedCandidate.responsiveContract.performanceBudget.memoryMb += 128;
   assert.deepEqual(stageConfirmationBlockers(changedCandidate), []);
@@ -316,18 +386,19 @@ test('COMPLETE 必须处于 V4；实现调整不使既有阶段确认失效', ()
 
 test('确认绑定工作项和阶段身份；不绑定基线摘要，DISPLAY_LAYER 不继承宿主 SCENE 确认', () => {
   const scene = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
-  scene.stageReviews = [makeStageReview(scene, 'V0')];
+  scene.stageReviews = [makeStageReview(scene, 'V1')];
   const layer = makeDisplayLayerWork({
-    displayLayer: { displayLayerId: 'PauseModal', hostSceneId: 'MainScene', type: 'modal', stage: 'V1', status: 'IN_PROGRESS' },
+    displayLayer: { displayLayerId: 'PauseModal', hostSceneId: 'MainScene', type: 'modal', stage: 'V2', status: 'IN_PROGRESS' },
     stageReviews: scene.stageReviews,
   });
   const layerPath = join(mkdtempSync(join(tmpdir(), 'unity-layer-review-')), 'work.json');
+  seedVisualBaseline(resolve(layerPath, '..'), layer);
   writeJson(layerPath, layer);
   const inspection = inspect({ repo: resolve(layerPath, '..'), 'work-item': layerPath });
   assert.ok(inspection.blockers.some((item) => item.code === 'STAGE_CONFIRMATION_STALE'));
 
   const changedBaseline = makeSceneWork({ scene: { sceneId: 'MainScene', stage: 'V1', status: 'IN_PROGRESS' } });
-  changedBaseline.stageReviews = [makeStageReview(changedBaseline, 'V0')];
+  changedBaseline.stageReviews = [makeStageReview(changedBaseline, 'V1')];
   changedBaseline.baselineHash = `sha256:${'c'.repeat(64)}`;
   assert.deepEqual(stageConfirmationBlockers(changedBaseline), []);
   rmSync(resolve(layerPath, '..'), { recursive: true, force: true });
@@ -349,7 +420,7 @@ test('SCENE 与 DISPLAY_LAYER 不能混包，宿主依赖不能冒充 sceneId', 
     const scene = makeSceneWork();
     const pkg = makeVisiblePackage(scene, repo);
     const mixed = structuredClone(pkg);
-    mixed.executionUnits.push({ unitId: 'LAYER-1', unitType: 'DISPLAY_LAYER', moduleId: 'ui', displayLayerId: 'PauseModal', hostSceneId: 'MainScene', owner: 'ui-worker', files: ['Assets/UI/Main.cs'], status: 'READY' });
+    mixed.executionUnits.push({ unitId: 'LAYER-1', unitType: 'DISPLAY_LAYER', moduleId: 'ui', displayLayerId: 'PauseModal', hostSceneId: 'MainScene', owner: 'ui-worker', files: ['Assets/UI/Main.cs'], acceptanceCommands: ['fixture-only-check'], status: 'READY' });
     assert.throws(() => validateImplementationPackage(mixed, scene, repo), /混入 SCENE 与 DISPLAY_LAYER/);
     const misplaced = structuredClone(pkg);
     misplaced.executionUnits[0].hostSceneId = 'MainScene';
@@ -540,7 +611,8 @@ test('直接完成迁移也重读美术材料，不能用伪造 inspect 的 PASS
   const repo = mkdtempSync(join(tmpdir(), 'unity-sync-art-transition-'));
   try {
     const work = makeSceneWork({ globalState: 'PASSED', actionLevel: 'A1', actionType: 'unity-spec-candidate', allowedActions: ['unity-spec-candidate'] });
-    work.stageReviews = makeStageReviews(work, ['V0', 'V1', 'V2', 'V3', 'V4']);
+    work.stageReviews = makeStageReviews(work, ['V1', 'V2', 'V3', 'V4']);
+    seedVisualBaseline(repo, work);
     const evidence = makeVisibleEvidence(work, {}, repo);
     const inspection = { repo, work, evidence, pkg: null, blockers: [] };
     assert.equal(transitionWorkItem(inspection, 'COMPLETE').globalState, 'COMPLETE');

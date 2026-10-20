@@ -26,7 +26,7 @@ export function writeJsonAtomic(file, value) {
 }
 
 /** 在锁内执行 revision/CAS 检查并原子写回，拒绝陈旧快照覆盖当前状态。 */
-export function commitWithLock({ workPath, expected, next, readCurrent, validate, fail }) {
+export function commitWithLock({ workPath, expected, next, readCurrent, validate, fail, beforeWrite, writeNext = writeJsonAtomic }) {
   const lockPath = `${workPath}.lock`;
   let acquired = false;
   try {
@@ -40,7 +40,19 @@ export function commitWithLock({ workPath, expected, next, readCurrent, validate
     const current = validate(readCurrent(workPath));
     if (current.workItemId !== expected.workItemId || current.baselineHash !== expected.baselineHash || current.revision !== expected.revision) fail('Work Item 版本已变化，拒绝陈旧快照覆盖当前状态', 2, { errorCode: 'STALE_WORK_ITEM' });
     if (next.revision !== current.revision + 1) fail('Work Item mutation revision 必须严格递增 1', 2, { errorCode: 'INVALID_WORK_ITEM_REVISION' });
-    writeJsonAtomic(workPath, next);
+    validate(next);
+    // 衍生执行状态在同一工作项锁内写入；失败时不推进全局状态。
+    const rollback = beforeWrite?.();
+    try {
+      writeNext(workPath, next);
+    } catch (error) {
+      // 工作项提交失败时还原执行状态；调用方仍拿到原始写入失败，不能宣称迁移成功。
+      if (rollback) {
+        try { rollback(); }
+        catch (rollbackError) { throw new AggregateError([error, rollbackError], '工作项写入和衍生状态恢复均失败，保留现场并修复'); }
+      }
+      throw error;
+    }
     return next;
   } finally {
     if (acquired) rmSync(lockPath, { force: true });

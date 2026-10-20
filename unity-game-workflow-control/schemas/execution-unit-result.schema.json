@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-game-workflow-control/schemas/execution-unit-result.schema.json",
+  "title": "Unity Execution Unit Result",
+  "description": "单个实施单元的机器验收命令和 evidenceRoot 附件记录。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "resultId",
+    "workItemId",
+    "packageId",
+    "planVersion",
+    "unitId",
+    "verdict",
+    "commands",
+    "files",
+    "recordedAt"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "resultId": {"type": "string", "minLength": 1},
+    "workItemId": {"type": "string", "minLength": 1},
+    "packageId": {"type": "string", "minLength": 1},
+    "planVersion": {"type": "string", "minLength": 1},
+    "unitId": {"type": "string", "minLength": 1},
+    "verdict": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/commandResult"}
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/evidencePath"}
+    },
+    "recordedAt": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "evidencePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*//)(?!.*[/]$)(?!.*[*?\\[\\]])(?!.*(?:^|/)\\.\\.?(/|$)).+$"
+    },
+    "commandResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "exitCode", "outputFile"],
+      "properties": {
+        "command": {"type": "string", "minLength": 1},
+        "exitCode": {"type": "integer"},
+        "outputFile": {"$ref": "#/$defs/evidencePath"}
+      }
+    }
+  }
+}

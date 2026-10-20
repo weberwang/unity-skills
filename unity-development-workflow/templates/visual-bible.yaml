@@ -140,6 +140,28 @@ artBrief:
   visualHierarchy:
     - 玩法关键对象优先于背景装饰
   intensityBudget:
-    normal: 常态保持稳定可读的层级
-    operation: 局部短促反馈，重复合并并及时收尾
-    peak: 按事件重要性限制占屏、时长及并发，结束回归常态
+    normal:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    operation:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    peak:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    measurementMethod: 在目标视口和真实节奏下记录时长、次数、并发与占屏，观看效果由用户人工检查

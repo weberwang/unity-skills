@@ -1,0 +1,30 @@
+# Unity 生成缓存和本地用户状态。
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+/Build/
+/Builds/
+
+# 临时、构建、人工审阅和验证产物默认忽略文件，父目录保持可遍历。
+/Artifacts/**
+!/Artifacts/**/
+
+# 项目文档默认忽略文件，再按当前有效引用逐文件放行。
+/docs/**
+!/docs/**/
+
+# 制作源文件默认忽略文件，再按当前有效引用逐文件放行。
+/ArtSource/**
+!/ArtSource/**/
+
+# 控制面与机器记录默认忽略文件，再按当前有效引用逐文件放行。
+/.workflow-control/**
+!/.workflow-control/**/
+
+# 工作流必要文件开始
+# 只追加经过递归引用核对的精确文件例外；不放行整个目录。
+# 工作流必要文件结束

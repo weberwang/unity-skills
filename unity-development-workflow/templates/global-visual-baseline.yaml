@@ -1,0 +1,76 @@
+# 待确认模板；三张真实候选、人工选择与冻结正文就绪后，编译为 JSON 并绑定选择引用。
+schemaVersion: "1.0"
+baselineId: global-visual-v1
+producerWorkItemId: WI-GLOBAL-VISUAL
+briefPath: docs/game-art-brief.json
+conditions:
+  viewport: 1920x1080
+  state: 项目实际状态
+  content: 三候选共用的内容与示例值
+candidates:
+  - candidateId: direction-1
+    source: generated
+    imagePath: Artifacts/reviews/WI-GLOBAL-VISUAL/direction-1.png
+    generationRecordPath: Artifacts/reviews/WI-GLOBAL-VISUAL/generation-1.json
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+  - candidateId: direction-2
+    source: generated
+    imagePath: Artifacts/reviews/WI-GLOBAL-VISUAL/direction-2.png
+    generationRecordPath: Artifacts/reviews/WI-GLOBAL-VISUAL/generation-2.json
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+  - candidateId: direction-3
+    source: generated
+    imagePath: Artifacts/reviews/WI-GLOBAL-VISUAL/direction-3.png
+    generationRecordPath: Artifacts/reviews/WI-GLOBAL-VISUAL/generation-3.json
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户查看当前真实候选
+selection:
+  candidateId: ""
+  confirmedBy: ""
+  confirmedAt: ""
+  userMessageRef: ""
+frozenBaselinePath: docs/confirmed/global/visual-v1.json

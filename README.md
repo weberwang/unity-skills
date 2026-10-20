@@ -13,7 +13,7 @@
 5. 全局集成验证
 6. 发布
 
-场景与瞬态弹窗分别使用 `V0 分流 → V1 对象定义 → V2 拆解确认 → V3 正式资源与组合验收 → V4 正式实现与运行验收`。新建且包含可见画面的场景或弹窗在 V1 生成至少一张完整效果图，供 V2 拆解；已有视觉规范时按规范生成，只有需要探索新方向时才生成多个候选。V1 同时明确美术 brief 与关键反馈意图，V2 冻结适用的九宫格参数和动作时间轴，V3 用 Unity 原生预览校准正式组合，V4 验收实际运行中的动态体验。场景只负责自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只绑定运行上下文。内部状态、动作风险、质量门、实施包与证据均由控制面维护：
+场景与瞬态弹窗分别使用 `V0 内部分流 → V1 对象定义 → V2 拆解与布局确认 → V3 正式资源生产与导入验收 → V4 正式实现与运行验收`。V0 无常规人工确认；视觉工作项在 V1 生成并确认真实目标图；V2 拆解图与布局图分开确认；V3 验收正式资源和导入，可做临时组合预览；正式 Scene/Prefab/UI 接入和布局校准在 V4，实际运行交付经用户确认后完成。全局视觉基线首次建立时恰好生成三张同条件候选并记录每张五项美术质量结果；唯一人工选择的候选五项均须 `PASS`，有效选择证据可跨 Work 复用。纯工程基础任务无视觉依赖时不等待选图，除非实施包声明 `visualBaselineRequired=true`。普通图片直接制作真实候选；动画素材制作前先说明设计理念和动作方案、等待用户确认，完成后仍验收真实素材。场景只负责自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只绑定运行上下文。内部状态、动作风险、质量门、实施包与证据均由控制面维护：
 
 - A0-A3：调查、规格、隔离原型与生产实现；当前用户任务提供执行边界。
 - A4-A6：本地集成、外部状态/设备与发布。只有外部写入、付费、真机、破坏性删除、签名、上传和发布需要精确逐对象批准。
@@ -22,9 +22,9 @@
 
 Unity 写入遵循原生约束：唯一 Editor 实例、编译/导入/域重载稳定、单写者、AssetDatabase、资源与 `.meta` 配对、GUID/Importer/序列化回读，以及 EditMode/PlayMode/构建证据。未经用户明确要求，不启动 Standalone/Player 或真机，不签名、上传或发布。
 
-场景和独立显示层的 V0–V4 每个阶段都必须先展示交付并获得用户明确确认，才能进入下一阶段；V4 确认后才完成工作项。确认通过 `stageReviews` 绑定工作项、阶段和用户消息引用；测试通过不能代替人工确认。验收以用户要求和实际完成情况为准，中途实现调整无需回改合同，不要求或校验 SHA，具体见[阶段人工确认约束](unity-game-workflow-control/references/stage-confirmation.md)。
+场景和独立显示层的 V0 仅作内部识别与分流；V1–V4 按 `stageReviews` 保存实际用户确认，V2 独立记录拆解图和布局图确认。实施单元完成依赖 `evidenceRoot/execution-state.json` 中已验证的结果，不以 Implementation Package 的计划状态替代。验收以用户要求和实际完成情况为准，中途实现调整无需回改合同，不要求或校验 SHA，具体见[阶段人工确认约束](unity-game-workflow-control/references/stage-confirmation.md)。
 
-图片与动画采用[图片优先的确认方式](unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)：内部维护分析、技术记录和提示词，直接展示真实图片或 Unity 预览；同目标返修展示前后对照。游戏画面按[游戏内文案](unity-development-workflow/references/game-copy.md)贯穿策划、效果图、资源拆解和实现，优先使用图标、数字与符号，只保留必要文字；内部规格不进入玩家画面。
+图片与动画采用[图片优先的确认方式](unity-game-workflow-control/references/simplified-workflow.md#图片优先的确认方式)：普通图片直接制作真实候选；动画先确认设计理念和动作方案，再制作真实素材并验收；同目标返修展示前后对照。SDK 初始化规则见[SDK 统一初始化](unity-development-workflow/references/sdk-initialization.md)，项目文件和证据归属见[产物存放规则](unity-development-workflow/references/artifact-storage.md)。游戏画面按[游戏内文案](unity-development-workflow/references/game-copy.md)贯穿策划、效果图、资源拆解和实现，优先使用图标、数字与符号，只保留必要文字；内部规格不进入玩家画面。
 
 ## 安装
 
@@ -40,7 +40,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器把十六个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
+安装器把十七个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
 
 ```powershell
 node .\scripts\install-project-skills.mjs D:\Projects\my-game
@@ -55,6 +55,7 @@ node .\scripts\install-project-skills.mjs D:\Projects\my-game
   work-items/
   implementation-packages/
   evidence/
+    <work-item-id>/execution-state.json
   approvals/
   change-requests/
 ```
@@ -65,9 +66,11 @@ node .\scripts\install-project-skills.mjs D:\Projects\my-game
 node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs status --repo . --work-item .\.workflow-control\work-items\current.json
 node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs check --repo . --work-item .\.workflow-control\work-items\current.json
 node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs run --repo . --work-item .\.workflow-control\work-items\current.json
+node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs scene-stage --repo . --work-item .\.workflow-control\work-items\current.json --to V1
+node .\.agents\skills\unity-game-workflow-control\scripts\workflow-control.mjs unit-check --repo . --work-item .\.workflow-control\work-items\current.json --result <result-json>
 ```
 
-`status` 和 `check` 只读；`run` 只推进已满足的安全控制状态，不执行 Unity 写入、测试、设备或发布动作，也不自动选择 `RETURN`。
+`status` 和 `check` 只读；`scene-stage` 只相邻推进同一场景工作项，`unit-check` 的 `--result` 应指向当前 `evidenceRoot` 内的结果文件，只校验当前实施单元、不运行验收命令；`run` 只推进已满足的安全控制状态，不执行 Unity 写入、测试、设备或发布动作，也不自动选择 `RETURN`。
 
 项目文档仍由编排 Skill 的文件工具初始化：
 
@@ -101,7 +104,8 @@ npm run remove:background -- --source .\art\hero.raw.png --output .\art\hero.png
 - [`$unity-game-juice`](unity-game-juice/SKILL.md)：将玩法事件映射为视觉、音频、镜头、时间和交互反馈，明确重复、叠加、中断、暂停与对象生命周期策略。
 - `$unity-game-production`、`$unity-game-architecture`、`$unity-gameplay-development`：制作、架构与玩法。
 - `$unity-game-visual-assets`、`$unity-game-3d-modeling`、`$unity-game-3d-texturing`、`$unity-game-spine-reskin`：视觉与资产生产。
-- [`$unity-game-2d-rigging`](unity-game-2d-rigging/SKILL.md)：Unity 原生 2D 骨骼与动画制作；按项目选择侧视、正面、四分之三、俯视、等距斜视或组合视角，交付 Sprite Skin 角色 Prefab 与动画接口。拆件方案及代表性动画分别确认，玩法代码由玩法角色负责。
+- [`$unity-game-2d-rigging`](unity-game-2d-rigging/SKILL.md)：Unity 原生 2D 骨骼与动画制作；按项目选择侧视、正面、四分之三、俯视、等距斜视或组合视角，根据实际使用场景规划动作与节奏，保证部件在目标运动范围内无缝组合，交付 Sprite Skin 角色 Prefab 与动画接口。正式生产前验证最小资产链路，拆件方案及代表性动画分别确认；玩法代码由玩法角色负责，QA 分资产交付前和玩法接入后两轮，显示效果由用户人工验收。
+- [`$unity-game-2d-animation-ta`](unity-game-2d-animation-ta/SKILL.md)：2D 动画技术美术，负责公共工具、导入规范、资产校验、批量对账、回归夹具和性能测量支持；具体角色资产仍由骨骼角色制作。动画质量负责人作为现有工作流内的独立专业审查职责，由总控指定，按[岗位协作与交接](unity-development-workflow/references/2d-animation-collaboration.md)执行；实际显示效果由用户确认。
 - `$unity-game-audio`、`$unity-game-balance`：音频与数值。
 - `$unity-game-qa-performance`、`$unity-game-release`：质量、性能、候选与发布。
 - `$unity-game-grilling`：仅在事实无法消除且确需用户作实质取舍时提问和记录决定。

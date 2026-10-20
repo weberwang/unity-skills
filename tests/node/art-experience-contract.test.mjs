@@ -71,10 +71,30 @@ test('不适用情境有理由且不伪造实测；路径越界和空文件均�
   assert.match(validateArtExperienceAcceptance(evidence, work, repo).join(), /真实项目内录屏/);
 }));
 
-test('brief 区分受众事实和假设，并要求三层强度预算', () => fixture(({ brief }) => {
+test('brief 区分受众事实和假设，并要求三层结构化刺激预算', () => fixture(({ brief }) => {
   assert.deepEqual(validateArtBrief(brief), []);
   delete brief.intensityBudget.operation;
-  assert.match(validateArtBrief(brief).join(), /operation/);
+  assert.ok(validateArtBrief(brief).length > 0);
+}));
+
+test('刺激预算每层都要求亮度、占屏、时长、频率、并发、恢复与混合策略', () => fixture(({ brief }) => {
+  for (const levelName of ['normal', 'operation', 'peak']) {
+    const level = brief.intensityBudget[levelName];
+    for (const field of ['brightnessContrast', 'screenCoverage', 'duration', 'triggerFrequency', 'recovery', 'blendPolicy']) {
+      const original = level[field];
+      delete level[field];
+      assert.ok(validateArtBrief(brief).length > 0, `${levelName}.${field} 缺失应被拒绝`);
+      level[field] = original;
+    }
+    for (const maxConcurrent of [-1, 1.5, '2']) {
+      level.maxConcurrent = maxConcurrent;
+      assert.ok(validateArtBrief(brief).length > 0, `${levelName}.maxConcurrent=${maxConcurrent} 应被拒绝`);
+    }
+    level.maxConcurrent = 0;
+    assert.deepEqual(validateArtBrief(brief), []);
+  }
+  brief.intensityBudget.measurementMethod = '  ';
+  assert.ok(validateArtBrief(brief).length > 0);
 }));
 
 test('人工确认不能使用不存在的日历日期或无时区时间', () => fixture(({ repo, work, evidence, acceptance }) => {
@@ -84,19 +104,31 @@ test('人工确认不能使用不存在的日历日期或无时区时间', () =>
   }
 }));
 
-test('独立美术 schema 与单候选 Visual Bible 具有实际结构校验', () => fixture(({ brief, acceptance }) => {
+test('独立美术 schema 与三候选 Visual Bible 具有实际结构校验', () => fixture(({ brief, acceptance }) => {
   const ajv = new Ajv({ strict: false, allErrors: true }); addFormats(ajv);
   const dir = resolve('unity-development-workflow/schemas');
   for (const name of readdirSync(dir).filter((name) => name.endsWith('.schema.json'))) ajv.addSchema(JSON.parse(readFileSync(join(dir, name))));
-  assert.equal(ajv.getSchema('https://codex.local/unity-workflow/schemas/game-art-brief.schema.json')(brief), true);
+  const validateBrief = ajv.getSchema('https://codex.local/unity-workflow/schemas/game-art-brief.schema.json');
+  assert.equal(validateBrief(brief), true, JSON.stringify(validateBrief.errors));
+  brief.intensityBudget.peak.maxConcurrent = -1;
+  assert.equal(validateBrief(brief), false);
+  brief.intensityBudget.peak.maxConcurrent = 3;
+  brief.intensityBudget.measurementMethod = ' ';
+  assert.equal(validateBrief(brief), false);
+  brief.intensityBudget.measurementMethod = '在目标视口记录事件和并发数据';
+  brief.intensityBudget.peak.unexpected = 'extra';
+  assert.equal(validateBrief(brief), false);
+  delete brief.intensityBudget.peak.unexpected;
+  brief.intensityBudget.normal.maxConcurrent = 0;
+  assert.equal(validateBrief(brief), true);
   const validate = ajv.getSchema('https://codex.local/unity-workflow/schemas/art-experience-acceptance.schema.json');
   assert.equal(validate(acceptance), true, JSON.stringify(validate.errors));
   acceptance.scenarios[0].required = false;
   assert.equal(validate(acceptance), false);
   const bible = YAML.parse(readFileSync('unity-development-workflow/templates/visual-bible.yaml', 'utf8'));
-  bible.directionCandidates = bible.directionCandidates.slice(0, 1);
   const validateBible = ajv.getSchema('https://codex.local/unity-workflow/schemas/visual-bible.schema.json');
   assert.equal(validateBible(bible), true, JSON.stringify(validateBible.errors));
+  assert.equal(validateBible({ ...bible, directionCandidates: bible.directionCandidates.slice(0, 1) }), false);
   delete bible.directionCandidates[0].qualityResults.viewingComfort;
   assert.equal(validateBible(bible), false);
 }));
