@@ -9,7 +9,7 @@ const ROOT = resolve(import.meta.dirname, "../..");
 const INSTALLER_PATH = resolve(ROOT, "scripts/install-project-skills.mjs");
 // 逐项核对实际安装集合，防止新增技能仅能在仓库中发现而遗漏安装交付。
 const EXPECTED_SKILL_NAMES = [
-  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-game-2d-animation-ta", "unity-gameplay-development", "unity-game-juice",
+  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-3d-rigging", "unity-game-3d-animation", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-game-2d-animation-ta", "unity-gameplay-development", "unity-game-juice",
 ];
 
 /** 创建短生命周期的临时项目目录，并在测试回调结束后清理。 */
@@ -33,6 +33,10 @@ test("安装器复制全部已发现 Skill", () => withTempDirectory((root) => {
   assert.ok(existsSync(resolve(targetRoot, "unity-development-workflow/SKILL.md")));
   assert.ok(existsSync(resolve(targetRoot, "unity-game-3d-modeling/SKILL.md")));
   assert.ok(existsSync(resolve(targetRoot, "unity-game-3d-texturing/SKILL.md")));
+  assert.ok(existsSync(resolve(targetRoot, "unity-game-3d-rigging/SKILL.md")));
+  assert.ok(existsSync(resolve(targetRoot, "unity-game-3d-animation/SKILL.md")));
+  assert.ok(existsSync(resolve(targetRoot, "unity-development-workflow/references/3d-character-handoff.md")));
+  assert.ok(existsSync(resolve(targetRoot, "unity-development-workflow/references/3d-character-unity-import.md")));
 }));
 
 test("安装器默认拒绝覆盖、force 替换本地修改", () => withTempDirectory((root) => {

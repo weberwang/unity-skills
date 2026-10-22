@@ -19,14 +19,16 @@ Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先�
 
 按[2D 动画岗位协作](../unity-development-workflow/references/2d-animation-collaboration.md)向质量负责人和 TA 提供真实玩法窗口、触发／中断／恢复轨迹与测量入口。质量意见涉及规则变更时交总控协调，TA 工具只诊断和测量、不接管权威状态；玩法接入后向独立 QA 提交运行证据，资产轮通过不能代替实际场景运行轮。
 
-正式消费骨骼资产前，核对[交付门禁](../unity-game-workflow-control/references/rigging-delivery-gate.md)与现有工作流检查均已通过，且当前角色、Prefab/GUID 和候选修订一致。失败、缺失或陈旧报告不作为已交付资产接入；按门禁诊断退相应岗位，玩法只修自己的触发、规则和生命周期问题，不临时改共享资产绕过失败。
+正式消费 2D 骨骼资产前，核对[交付门禁](../unity-game-workflow-control/references/rigging-delivery-gate.md)与现有工作流检查均已通过，且当前角色、Prefab/GUID 和候选修订一致。失败、缺失或陈旧报告不作为已交付资产接入；按门禁诊断退相应岗位，玩法只修自己的触发、规则和生命周期问题，不临时改共享资产绕过失败。
+
+3D 角色按[角色共同交接](../unity-development-workflow/references/3d-character-handoff.md)和 [Unity 导入合同](../unity-development-workflow/references/3d-character-unity-import.md)消费已独立验证的蒙皮角色、材质/LOD、Avatar/Clips、挂点与 Animator 接口；绑定和动作需求分别交 [`$unity-game-3d-rigging`](../unity-game-3d-rigging/SKILL.md)、[`$unity-game-3d-animation`](../unity-game-3d-animation/SKILL.md)。角色内部 Animator 由实施包指定的动画/集成单写者维护；玩法负责触发、状态、事件消费和唯一位移权威，V4 实测循环/过渡/打断、根运动和生命周期。3D 不套用 2D 专用门禁，骨架/权重、动作或材质缺陷退原岗位，不从场景私改共享源绕过。
 
 1. 先冻结玩家行为、边界情况和测试点；A3 前冻结实施包，再按总控的阶段任务闭环编码。
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$unity-game-3d-modeling` 与 `$unity-game-3d-texturing`；原生 2D 骨骼与动画交给 [`$unity-game-2d-rigging`](../unity-game-2d-rigging/SKILL.md)。消费已独立验收的角色 Prefab、视角/方向规则、Animator 参数、动作事件和挂点合同，负责触发与战斗逻辑；不在场景中私改骨架、网格、权重或共享 Clip，接口不足时退回资产角色修复。玩法拥有权威状态、命中/伤害判定、事件语义、数值和动作触发；把已确定的事件及参数交给 [`$unity-game-juice`](../unity-game-juice/SKILL.md) 设计反馈映射。表现层消费事件，不能成为玩法判定来源；顿帧、击退等改变规则或玩家控制的行为由玩法/数值角色确定。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。
 4. 纯规则可与资源制作并行；正式场景只接入已登记、审查、授权和 Unity 验证通过的资源。场景只实现自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 DISPLAY_LAYER Work Item 和包，`hostSceneId` 仅用于公开接口与上下文接线，弹窗未完成不阻断宿主场景 V4。
 5. 2D/UI 场景必须消费响应式合同与平台目标：按现有项目选择 uGUI CanvasScaler、UI Toolkit PanelSettings 或 Camera 路线，并从唯一入口幂等重排；交互内容保持在安全区，左右或上下边带只接入已登记的纯视觉背景。移动端另处理刘海/挖孔、系统栏、旋转、软键盘和触控手势，Windows 另处理窗口缩放、焦点与键鼠/手柄切换。程序化文本同时实现 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言遵守单行/换行合同并禁止截断；玩家可见表达、真实数据绑定、代表值和本地化边界检查按[游戏内文案指导](../unity-development-workflow/references/game-copy.md)执行，不把内部 GDD 或设计描述绑定为界面文案。
-6. 3D 场景只消费两个 3D Skill 交付且通过独立 QA 的版本化 Prefab；按稳定资源 ID/GUID/地址接线，不在场景或运行时脚本中复制、覆盖或临时修改 Mesh、UV、Material、Texture、LOD、骨骼和材质槽。碰撞、交互挂点或 Animator 接口不满足玩法时，提交可复现需求并退回资产所有者修复。
+6. 3D 场景只消费按共同交接由建模、贴图、绑定、动画及指定集成单写者交付、通过独立 QA 的版本化资源级 Prefab；按稳定资源 ID/GUID/地址接线，不在场景或运行时脚本中复制、覆盖或临时修改 Mesh、UV、Material、Texture、LOD、骨骼和材质槽。碰撞、交互挂点或 Animator 接口不满足玩法时，提交可复现需求并退回资产所有者修复。
 7. 研发阶段仅在 Editor/EditMode/PlayMode 与 Game View 模拟中验证重开、暂停恢复、参考分辨率、输入映射、资源失败、离线和适用的存档异常；未经明确授权不安装或启动 Standalone/Player、真机或等价设备。
 8. 提交变更路径、测试、构建日志、Editor 固定机位截图、正式资源、限制和阻断项；开发者不能完成自己的独立 F2 审查。设备证据只在独立发布 Work Item 获明确授权后产生。
 

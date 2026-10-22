@@ -12,6 +12,8 @@ const SKILL_NAMES = Object.freeze([
   "unity-game-grilling",
   "unity-game-3d-modeling",
   "unity-game-3d-texturing",
+  "unity-game-3d-rigging",
+  "unity-game-3d-animation",
   "unity-game-architecture",
   "unity-game-audio",
   "unity-game-balance",

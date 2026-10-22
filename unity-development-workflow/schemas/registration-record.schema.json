@@ -89,6 +89,12 @@
       "items": {"type": "integer", "minimum": 0}
     },
     "modelImporter": {
+      "oneOf": [
+        {"$ref": "#/$defs/unityModelImporter"},
+        {"$ref": "#/$defs/externalModelImporter"}
+      ]
+    },
+    "unityModelImporter": {
       "type": "object",
       "additionalProperties": false,
       "required": ["globalScale", "meshCompression", "readWriteEnabled", "optimizeMeshPolygons", "optimizeMeshVertices", "importBlendShapes", "importCameras", "importLights", "generateColliders", "importMaterials", "importAnimation"],
@@ -106,6 +112,16 @@
         "importAnimation": {"type": "boolean"}
       }
     },
+    "externalModelImporter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["importerType", "sourceFormat", "settings"],
+      "properties": {
+        "importerType": {"type": "string", "minLength": 1, "not": {"const": "ModelImporter"}},
+        "sourceFormat": {"type": "string", "minLength": 1},
+        "settings": {"type": "object", "minProperties": 1}
+      }
+    },
     "prefabImporter": {
       "type": "object",
       "additionalProperties": false,
@@ -121,12 +137,12 @@
     "materialImporter": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["shader", "renderPipeline", "materialMode", "textureBindings", "enableInstancing", "doubleSidedGI", "renderQueue"],
+      "required": ["shader", "renderPipeline", "materialMode", "enableInstancing", "doubleSidedGI", "renderQueue"],
       "properties": {
         "shader": {"type": "string", "minLength": 1},
         "renderPipeline": {"const": "URP"},
-        "materialMode": {"enum": ["PBR_TEXTURED", "UNLIT", "PROCEDURAL"]},
-        "workflowMode": {"enum": ["Metallic", "Specular"]},
+        "materialMode": {"enum": ["PBR", "UNLIT", "PROCEDURAL"]},
+        "workflowMode": {"enum": ["Metallic", "Specular", "Custom"]},
         "textureBindings": {
           "type": "object",
           "additionalProperties": false,
@@ -134,9 +150,16 @@
             "baseColor": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "BASE_COLOR"}}}]},
             "normal": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "NORMAL"}}}]},
             "metallicSmoothness": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "METALLIC_SMOOTHNESS"}}}]},
+            "specularSmoothness": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "SPECULAR_SMOOTHNESS"}}}]},
             "ambientOcclusion": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "AMBIENT_OCCLUSION"}}}]},
             "emission": {"allOf": [{"$ref": "#/$defs/pbrTextureBinding"}, {"properties": {"semantic": {"const": "EMISSION"}}}]}
           }
+        },
+        "shaderProperties": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"minLength": 1},
+          "additionalProperties": {"$ref": "#/$defs/shaderPropertyValue"}
         },
         "enableInstancing": {"type": "boolean"},
         "doubleSidedGI": {"type": "boolean"},
@@ -144,27 +167,103 @@
       },
       "allOf": [
         {
-          "if": {"properties": {"materialMode": {"const": "PBR_TEXTURED"}}, "required": ["materialMode"]},
+          "if": {"properties": {"materialMode": {"const": "PBR"}}, "required": ["materialMode"]},
           "then": {
             "required": ["workflowMode"],
-            "properties": {"textureBindings": {"required": ["baseColor", "normal", "metallicSmoothness", "ambientOcclusion"]}}
+            "anyOf": [
+              {"required": ["textureBindings"], "properties": {"textureBindings": {"minProperties": 1}}},
+              {"required": ["shaderProperties"], "properties": {"shaderProperties": {"minProperties": 1}}}
+            ]
           }
+        },
+        {
+          "if": {"properties": {"materialMode": {"const": "PBR"}, "workflowMode": {"const": "Metallic"}}, "required": ["materialMode", "workflowMode"]},
+          "then": {"properties": {"textureBindings": {"not": {"required": ["specularSmoothness"]}}}}
+        },
+        {
+          "if": {"properties": {"materialMode": {"const": "PBR"}, "workflowMode": {"const": "Specular"}}, "required": ["materialMode", "workflowMode"]},
+          "then": {"properties": {"textureBindings": {"not": {"required": ["metallicSmoothness"]}}}}
+        },
+        {
+          "if": {"properties": {"materialMode": {"const": "PBR"}, "workflowMode": {"const": "Custom"}}, "required": ["materialMode", "workflowMode"]},
+          "then": {"required": ["shaderProperties"]}
         },
         {
           "if": {"properties": {"materialMode": {"const": "UNLIT"}}, "required": ["materialMode"]},
           "then": {
-            "not": {"required": ["workflowMode"]},
+            "not": {"anyOf": [{"required": ["workflowMode"]}, {"required": ["shaderProperties"]}]},
             "properties": {"textureBindings": {"propertyNames": {"enum": ["baseColor", "emission"]}}}
           }
         },
         {
           "if": {"properties": {"materialMode": {"const": "PROCEDURAL"}}, "required": ["materialMode"]},
           "then": {
-            "not": {"required": ["workflowMode"]},
+            "not": {"anyOf": [{"required": ["workflowMode"]}, {"required": ["shaderProperties"]}]},
             "properties": {"textureBindings": {"maxProperties": 0}}
           }
         }
       ]
+    },
+    "shaderPropertyValue": {
+      "oneOf": [
+        {"$ref": "#/$defs/shaderFloatProperty"},
+        {"$ref": "#/$defs/shaderIntProperty"},
+        {"$ref": "#/$defs/shaderRangeProperty"},
+        {"$ref": "#/$defs/shaderColorProperty"},
+        {"$ref": "#/$defs/shaderVectorProperty"},
+        {"$ref": "#/$defs/shaderTextureProperty"}
+      ]
+    },
+    "shaderFloatProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Float"}, "value": {"type": "number"}}
+    },
+    "shaderIntProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Int"}, "value": {"type": "integer"}}
+    },
+    "shaderRangeProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Range"}, "value": {"type": "number"}}
+    },
+    "shaderColorProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Color"}, "value": {"$ref": "#/$defs/shaderVector4"}}
+    },
+    "shaderVectorProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Vector"}, "value": {"$ref": "#/$defs/shaderVector4"}}
+    },
+    "shaderTextureProperty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {"type": {"const": "Texture"}, "value": {"$ref": "#/$defs/shaderTextureResource"}}
+    },
+    "shaderVector4": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"type": "number"}
+    },
+    "shaderTextureResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resourceId", "address"],
+      "properties": {
+        "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
+        "address": {"type": "string", "minLength": 1}
+      }
     },
     "pbrTextureBinding": {
       "type": "object",
@@ -173,7 +272,7 @@
       "properties": {
         "resourceId": {"$ref": "common.schema.json#/$defs/taskId"},
         "address": {"type": "string", "minLength": 1},
-        "semantic": {"enum": ["BASE_COLOR", "NORMAL", "METALLIC_SMOOTHNESS", "AMBIENT_OCCLUSION", "EMISSION"]}
+        "semantic": {"enum": ["BASE_COLOR", "NORMAL", "METALLIC_SMOOTHNESS", "SPECULAR_SMOOTHNESS", "AMBIENT_OCCLUSION", "EMISSION"]}
       }
     },
     "audioImporter": {

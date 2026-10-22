@@ -1,0 +1,7 @@
+interface:
+  display_name: "Unity 3D 角色绑定"
+  short_description: "通过 Blender MCP 制作生产级角色骨架、蒙皮与各 LOD 绑定"
+  default_prompt: "使用 $unity-game-3d-rigging 通过 Blender MCP 为已交接的 3D 角色模型制作生产级骨架、控制 Rig、蒙皮、接入已交付校正形态驱动（形态几何归建模）与各 LOD 的 skinned FBX。"
+
+policy:
+  allow_implicit_invocation: true

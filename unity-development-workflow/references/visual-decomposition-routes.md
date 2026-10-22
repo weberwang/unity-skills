@@ -51,6 +51,7 @@
 - 字体、字形/效果贴图、材质、填充表面与九宫格按[公共资源登记与使用](shared-asset-usage.md)先查库再选择复用或生产；复用资格须逐项核对 V1 所需的实际轮廓、比例、配色、材质及状态，主题或风格相似不足以证明合格。多个本地拆解编号可以绑定同一公共资源身份，资源交接同步总表与消费关系。纯原生样式参数引用已有规范和实现，不虚构资产文件或 GUID。
 - `visualRouteAnalysis.distinctiveVisual` 记录实际观察到的特征与显著性，`routeReason` 说明视觉作用、变化/复用需求及替代依据；明显美术特征遵守现有资产优先规则，不伪报 `isDistinctive=false` 获取原生资格。
 - `UNITY_NATIVE` 在 `nativeSuitability` 记录实际原语、理由与证据，使用既有 `TEXT`、`BASIC_GEOMETRY`、`PROGRESS` 或适用原语；具体字体/填充参数放入既有 brief、规格与验证材料，不向受 schema 约束的对象添加未定义字段。不能完整表达所需外观与状态时，采用独立资产或修订方案。
+- `BASIC_GEOMETRY` 的资格用于 UI/布局、技术占位/Blockout、碰撞代理及非模型资产的原生渲染载体；不能因为造型简单、风格化或低面数，就把新增正式可见 3D 模型改为 Unity 基础体或程序网格创建。此类模型选 `MODEL_3D` 并走[Blender MCP 生产流程](3d-asset-workflow.md)；合格既有模型可按 `REUSE` 记录真实来源和验证。粒子/Shader/VFX 仍按其真实职责路由，不能借它们的载体资格绕过模型生产。
 - `assemblyAnalysis`、`semanticGrouping` 与 `layoutBinding` 绑定每项消费节点、真实父级及功能组件；所含特征与状态覆盖写入既有分析、brief 和规格，不新增 schema 字段。V3 同屏组合核对文字/表面依赖、裁切、状态同步、命中和无遗漏，并按[美术质量合同](art-quality-contract.md#追溯与检查边界)从 V1 反查全链路；V4 验证真实数据、本地化、比例与输入，运行截图及显示效果由用户人工确认。
 
 上述检查沿用现有 V2/V3/V4 交付与确认。图片生成、字体授权、付费、外部写入及运行验证继续遵守各自既有边界；本文不授权自动分析 Unity 运行截图、启动 Player 或真机。

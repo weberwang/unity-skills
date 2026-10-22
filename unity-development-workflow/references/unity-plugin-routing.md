@@ -19,6 +19,8 @@
 | 2D 像素渲染、Sprite、Atlas、Tilemap | `unity:2d-pixel-perfect`、`unity:sprite-editor`、`unity:manage-sprite-atlas` 与适用的 `unity:tilemap-*` |
 | Unity 原生 2D 骨骼、蒙皮与角色动画 | 本仓库 [`unity-game-2d-rigging`](../../unity-game-2d-rigging/SKILL.md) 编排；Editor、包、Sprite 元数据及图集复用对应 `unity:*` 技能，骨骼与动画 API 缺口按项目版本验证 |
 | 2D 动画公共工具、资产校验、批量对账与回归 | 本仓库 [`unity-game-2d-animation-ta`](../../unity-game-2d-animation-ta/SKILL.md) 负责技术管线；实际 Unity 操作复用插件与 Toolkit，角色资产仍归骨骼／视觉，质量负责人与独立 QA 按[岗位协作](2d-animation-collaboration.md)交接 |
+| 3D 模型几何、拓扑、法线、UV、LOD、碰撞代理，以及 PBR 材质节点、绘制、烘焙、通道打包与贴图导出 | 按[3D 资源工作流](3d-asset-workflow.md)通过 Blender MCP 生产，并按[模型与贴图共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交接；`unity:unity-cli` 只负责模型/纹理导入器、Material/Renderer、资源级 Prefab 和运行验证 |
+| 3D 角色骨架、蒙皮、控制 Rig、动作与曲线烘焙 | [`unity-game-3d-rigging`](../../unity-game-3d-rigging/SKILL.md) 与 [`unity-game-3d-animation`](../../unity-game-3d-animation/SKILL.md) 使用 Blender MCP 生产；按[角色共同交接](3d-character-handoff.md)和[角色导入合同](3d-character-unity-import.md)，由 `unity:unity-cli` 接入 Avatar、Clips、Animator、蒙皮 Renderer 与 Prefab 并验证 |
 | 本地化、TMP 字体与 CJK 回退 | `unity:localization`、`unity:optimize-text-mesh-pro` |
 | AudioMixer 路由与音频性能 | `unity:audio-setup-mixers`、`unity:optimize-audio` |
 | URP 迁移、后处理、Shader Graph、Render Graph 审查 | `unity:migrate-birp-to-urp`、`unity:urp-postprocessing`、`unity:shader-graph-create-custom-node`、`unity:validate-urp-render-graph-renderer-feature` |
@@ -35,3 +37,5 @@
 - `com.project.unity-workflow-toolkit`：项目专用的验证、批准资源导入、固定机位取证、布局实测（`uwt_measure_layout`）、Editor Game View 采集（`uwt_capture_game_view`）与交付预检命令。布局命令只读取 Unity 实际几何，采集命令只提供给用户检查的画面证据。
 
 插件命令成功只证明命令执行完成，不自动满足本仓库的 F2/F3、V4、设备或发布证据。插件没有覆盖的项目合同继续由本仓库维护；插件已经覆盖的操作步骤不得在本仓库再维护一份易漂移副本。
+
+3D 模型几何与贴图生产均以 Blender MCP 为入口；Unity 插件执行模型/纹理导入、Material/Renderer 绑定、资源级 Prefab 组装及运行验证，不创建可见模型几何或贴图。生产阶段、工具发现、源文件、共同交接和质量边界按[3D 资源工作流](3d-asset-workflow.md)及其交接文档执行。

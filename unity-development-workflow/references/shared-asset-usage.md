@@ -15,6 +15,8 @@
 
 资源总表使用既有 `id`、`type`、`purpose`、`source`、`sourceVersion`、适用的 `visualVersion`、`path`、`address`、状态、许可、验证及证据字段；导入后登记实际 `guid`、Importer、导入报告和登记记录路径。资源身份在总表为 `id`，在生产和装配中为 `resourceId`，必须一致。同一项目同一有效资源只保留一个身份和一条当前总表记录，不为每个使用场景重新登记；不同来源或独立变体不能共用身份。
 
+3D 登记按[类型化记录](../schemas/registration-record.schema.json)选择 `model`、`texture`、`material`、`prefab` 或 `animation`，再合并[总表 Schema](../schemas/asset-register.schema.json)。实际使用 Unity ModelImporter 的模型填标准设置摘要；其他模型导入器填 `importerType`、`sourceFormat`、`settings` 的真实快照，不伪填不具备的设置。PBR 材质的 `materialMode` 为 `PBR`，按实际选择 `Metallic`、`Specular` 或 `Custom` 工作流，贴图按需登记，恒定值与实际 Shader 属性用类型化 `shaderProperties` 表达（Float/Range 数值、Int 整数、Color/Vector 四分量或 Texture 引用），不为了登记制造无用贴图或改标为程序材质。骨架/Avatar/Clip 子资源、格式专有验证和完整消费映射放入所引用的实际导入报告；Toolkit 的图片登记器不承担这些 3D 生产步骤。
+
 总表 schema 没有 `owner`、`consumers`、`shared` 字段，不临时添加字段；所有权与消费范围使用上表中的既有交付物。`address` 沿用项目实际资源定位约定，不为登记强制引入 Addressables，也不把未配置的定位名冒充已可运行的加载入口。
 
 `reuseResourcePlan.assetRegisterEvidence.path` 指向 `docs/asset-register.yaml`，`recordId` 指向其中 `assets[].id`，与 `existingAssetId` 一致；来源版本及生产、导入和许可事实通过该条目的版本与证据引用核对，不另建单资源登记副本。总表可更新，真实来源记录和已完成的验收证据仍保留，各消费合同引用适用的实际版本。

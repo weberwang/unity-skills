@@ -31,6 +31,8 @@
 
 视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 记录精确 GUID、源路径、实际 Importer 设置和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
 
+基础几何资格按[路线边界](visual-decomposition-routes.md)限制在 UI/布局、技术占位、碰撞及非模型资产的原生渲染用途；新增正式可见 3D 模型必须走 `MODEL_3D` 和 Blender MCP，不能用 `UNITY_NATIVE` 绕过。3D 贴图、绑定、动画同样走[3D 流程](3d-asset-workflow.md)，角色与 Unity 导入使用该流程引用的共同交接。
+
 ## 场景与显示层
 
 场景只包含玩法、画面和常驻 HUD。modal、popup、drawer、toast 等瞬态层是独立 `DISPLAY_LAYER` Work Item，`hostSceneId` 只表示运行上下文，不表示实现归属，也不阻断宿主场景 V4。显示层拥有自己的结构、响应式合同、打开/交互/关闭/恢复轨迹和运行证据。

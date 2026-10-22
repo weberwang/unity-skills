@@ -20,10 +20,12 @@ function parseFrontmatter(text) {
   return YAML.parse(match[1]);
 }
 
-test("两个 3D Skill 具备有效入口和代理界面", () => {
+test("四个 3D Skill 具备有效入口和代理界面", () => {
   const expectations = {
     "unity-game-3d-modeling": "references/mcp-modeling-workflow.md",
     "unity-game-3d-texturing": "references/pbr-texture-workflow.md",
+    "unity-game-3d-rigging": "references/rigging-workflow.md",
+    "unity-game-3d-animation": "references/animation-workflow.md",
   };
   for (const [skillName, reference] of Object.entries(expectations)) {
     const skillDir = resolve(ROOT, skillName);

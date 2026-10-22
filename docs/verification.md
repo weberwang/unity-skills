@@ -158,3 +158,39 @@ unity command test_status --project-path D:/Git/unity-skills/Artifacts/UnityVali
 原始 Node 输出保存在 `Artifacts/TestResults/workflow-alignment-node.log`。首次全量回归发现一条旧错误文案断言不适配持续失效检查，更新为语义断言后全量复跑通过；不以修改断言代替生产门禁修复。
 
 本轮没有启动 Unity、服务、Standalone/Player 或真机，没有构建、发布、截图分析或代替人工视觉确认。未新增进程异常终止与真实多进程压力验证。开始前已有的骨骼、TA 和 Unity C# 改动予以保留；因与既有未提交内容存在重叠，本轮未创建混合本地提交，也未创建分支或 worktree。
+
+## 2026 年 10 月 22 日 Blender MCP 3D 角色流程
+
+在已有建模与贴图流程改动之上，新增 `unity-game-3d-rigging` 与 `unity-game-3d-animation`，通过共同角色交接和 Unity 导入合同衔接网格/UV/贴图、骨架/蒙皮、Actions/曲线与 Avatar/Clips/Prefab。同步安装白名单、npm 文件清单、领域入口、项目发现和 QA；不新增角色状态机、Schema 字段或 2D 专用门禁。
+
+按 T2 模块验证执行：新技能和安装交付跨多文件，需要验证真实临时项目安装、引用与打包完整性。实际命令与结果：
+
+- `rtk node --test tests/node/3d-skills.test.mjs tests/node/npx-installer.test.mjs tests/node/skill-installer.test.mjs tests/node/workflow-policy.test.mjs`：26 项通过，0 失败、0 跳过；涵盖四个 3D 技能元数据、安装器安全行为、实际复制内容和安装后的本地链接。
+- `rtk node --check scripts/install-project-skills.mjs` 及三个修改测试文件的语法检查：通过。
+- 使用 `rtk python -X utf8 C:/Users/forjs/.codex/skills/.system/skill-creator/scripts/quick_validate.py <技能目录>` 校验建模、贴图、绑定、动画、领域编排和 QA 六个受影响技能：全部通过。
+- `rtk npm pack --dry-run --ignore-scripts --json`：通过；清单包含两个新技能的入口、代理元数据、生产参考，以及 `3d-character-handoff.md` 和 `3d-character-unity-import.md`。只做本地预检，没有发布或外部安装。
+- `rtk git diff --check`：通过；代码改动只扩展安装白名单与对应测试，未增加运行时依赖。
+
+独立只读审查未发现实质性问题，已核对四角色所有权、导出与导入边界、形态能力检查、局部返修依赖、安装交付和人工视觉验收规则。
+
+本轮未调用 Blender MCP 或 Unity，未制作/导出实际角色或动画、验证 Avatar/蒙皮/Clips，也未运行 Unity EditMode/PlayMode、构建、Standalone/Player、真机或视觉验收；这些均为 `NOT_RUN`，不能由文档、Node 测试或打包预检推断通过。此前未提交的建模和贴图改动保留，没有创建分支、worktree 或提交。
+
+## 2026 年 10 月 22 日 3D 全链路审查与修复
+
+对四个 3D 技能、模型/贴图与角色共同交接、Unity 导入、最高控制入口、策划/视觉/玩法/QA、实际登记 Schema、Toolkit 图片边界及安装交付做独立分工审查，并直接修复已确认问题：
+
+- 将 2D 专用骨骼门禁、TA/拆件/替换图条款明确限定为原生 2D，补齐 3D 角色在上游与玩法端的专用路线，清除旧的“两个 3D Skill”消费限制。
+- 在控制面及各场景/视觉入口统一 V3 资源级 Prefab 与 V4 宿主场景/场景装配 Prefab 的边界；基础几何资格不再能绕过正式可见 3D 模型的 Blender MCP 生产。
+- 允许网格/UV/槽位冻结后的绑定与贴图独立推进，正式贴图待交只阻塞相应材质连续性和最终外观验收；保留骨架、动画、贴图的单写者和实际依赖返修范围。
+- 材质登记采用 `PBR`，允许按需贴图和 Float/Range/Int/Color/Vector/Texture 类型的真实 Shader 属性，支持 Metallic/Specular/Custom，拒绝空摘要、工作流错槽与无效值类型；不再强制为恒定通道凑四张图。模型登记支持标准 ModelImporter 摘要和外部导入器的真实类型/格式/设置，不伪填不存在的配置。
+- 补充 FBX 子资源的实际 GUID/local file ID/类型/名称回读要求，移除“登记 Schema 只有纹理字段”的过期判断，明确 Toolkit 图片导入器不承担模型或材质登记。
+- 安装回归新增真实 Markdown 锚点检查。新回归先以 7 通过/1 失败复现视觉技能的旧 V3 锚点断链，修正链接后 8/8 通过；覆盖中文/重复标题、连续连字符/空格、组合字符、围栏排除、显式锚点和自文档 URL fragment。
+
+实际按 T2 模块验证执行：
+
+- `rtk npm test`：最终 **190/190** 通过，0 失败、0 跳过；包含新增完整登记记录与资产总表双入口的 5 组正反例、真实临时安装的文件内容/引用/锚点，以及既有控制与视觉回归。
+- `rtk node unity-game-workflow-control/scripts/workflow-control.mjs lint --repository .`：`READY`；该命令检查控制面文件，不把它当作全部 3D 技能的语义验证。
+- 使用 `quick_validate.py` 校验控制面、领域编排、四个 3D 技能、制作策划、玩法、视觉和 QA 共 10 个技能：全部通过。新增测试 Node 语法检查、必要中文注释检查与 `git diff --check` 通过。
+- `npm pack --dry-run --ignore-scripts --json`：367 个交付文件，确认四个 3D 入口、角色交接/导入参考与登记 Schema 在包内；安装后的本地链接与章节锚点均通过。没有发布、网络安装或引入运行时依赖。
+
+最终限定独立复核未发现遗留实质问题。Schema 与 Node 测试只证明记录结构和工作流交付，不证明 Shader 属性、外部导入器设置、蒙皮、Avatar 或 Clip 已在真实项目中运行。实际 Blender MCP/FBX/Unity、EditMode/PlayMode、构建和人工显示验收均未执行，继续保留 `NOT_RUN`；没有启动服务、Standalone/Player 或真机，也未创建分支、worktree 或提交。

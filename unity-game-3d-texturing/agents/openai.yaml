@@ -1,4 +1,4 @@
 interface:
   display_name: "Unity 3D 纹理贴图"
-  short_description: "通过 @Unity 制作 PBR 贴图并接入 URP 材质"
-  default_prompt: "使用 $unity-game-3d-texturing 与 @Unity 插件为已冻结模型制作并验证 URP PBR 纹理。"
+  short_description: "通过 Blender MCP 衔接模型交付、生产级 PBR 贴图与 Unity 材质验证"
+  default_prompt: "使用 $unity-game-3d-texturing 接收建模交付，通过 Blender MCP 完成生产级 PBR 制作、烘焙、通道打包与导出，再由 @Unity 导入验证。"

@@ -10,7 +10,7 @@ const PACKAGE_PATH = resolve(ROOT, "package.json");
 const INSTALLER_PATH = resolve(ROOT, "scripts/install-project-skills.mjs");
 // 打包白名单与实际安装产物同时校验，确保技能及其参考文件完整交付。
 const EXPECTED_SKILL_NAMES = [
-  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-game-2d-animation-ta", "unity-gameplay-development", "unity-game-juice",
+  "unity-game-workflow-control", "unity-development-workflow", "unity-game-grilling", "unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-3d-rigging", "unity-game-3d-animation", "unity-game-architecture", "unity-game-audio", "unity-game-balance", "unity-game-production", "unity-game-qa-performance", "unity-game-release", "unity-game-visual-assets", "unity-game-spine-reskin", "unity-game-2d-rigging", "unity-game-2d-animation-ta", "unity-gameplay-development", "unity-game-juice",
 ];
 
 /** 创建短生命周期的临时项目目录，并在回调结束后清理测试副本。 */
@@ -32,6 +32,125 @@ function listFiles(directory) {
     return entry.isDirectory() ? listFiles(path) : [path];
   });
 }
+
+/** 把 Markdown 标题转换为可供本地链接检查的锚点，并为同名标题追加序号。 */
+function addHeadingAnchor(anchors, duplicateCounts, heading) {
+  const slug = heading
+    .toLowerCase()
+    .replace(/<[^>]+>/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[^\p{L}\p{M}\p{N}_\s-]/gu, "")
+    .trim()
+    .replace(/\s/g, "-");
+  let duplicateIndex = duplicateCounts.get(slug) ?? 0;
+  let anchor = duplicateIndex === 0 ? slug : `${slug}-${duplicateIndex}`;
+  // 不同标题可能产生同一基础 slug 或与重复标题后缀碰撞，统一跳过已占用锚点。
+  while (anchors.has(anchor)) {
+    duplicateIndex += 1;
+    anchor = `${slug}-${duplicateIndex}`;
+  }
+  duplicateCounts.set(slug, duplicateIndex + 1);
+  anchors.add(anchor);
+}
+
+/** 读取 Markdown 标题和显式 HTML id/name；代码围栏内的示例不算真实锚点。 */
+function readMarkdownAnchors(path) {
+  const anchors = new Set();
+  const duplicateCounts = new Map();
+  const lines = readFileSync(path, "utf8").split(/\r?\n/);
+  let fenceMarker;
+  let fenceLength = 0;
+  let setextCandidate;
+
+  for (const line of lines) {
+    const fence = line.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (fence) {
+      const marker = fence[1][0];
+      if (!fenceMarker) {
+        fenceMarker = marker;
+        fenceLength = fence[1].length;
+      } else if (marker === fenceMarker && fence[1].length >= fenceLength && /^\s*$/.test(line.slice(fence[0].length))) {
+        fenceMarker = undefined;
+        fenceLength = 0;
+      }
+      setextCandidate = undefined;
+      continue;
+    }
+    if (fenceMarker) continue;
+
+    const heading = line.match(/^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$/);
+    if (heading) {
+      addHeadingAnchor(anchors, duplicateCounts, heading[1]);
+      setextCandidate = undefined;
+    } else if (/^ {0,3}(?:=+|-+)\s*$/.test(line) && setextCandidate) {
+      addHeadingAnchor(anchors, duplicateCounts, setextCandidate);
+      setextCandidate = undefined;
+    } else {
+      setextCandidate = line.trim() && !/^\s*</.test(line) ? line.trim() : undefined;
+    }
+
+    // 显式 id/name 可放在任意 HTML 元素上；先去掉行内代码和 HTML 注释，避免示例被当成真实目标。
+    const htmlLine = line.replace(/`+[^`]*`+/g, "").replace(/<!--.*?-->/g, "");
+    for (const match of htmlLine.matchAll(/<[^>]*\b(?:id|name)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))[^>]*>/gi)) {
+      anchors.add(match[1] ?? match[2] ?? match[3]);
+    }
+  }
+
+  return anchors;
+}
+
+/** 解析本地 Markdown 引用，并在锚点比对前解码 URL fragment。 */
+function resolveMarkdownReference(document, destination) {
+  const fragmentIndex = destination.indexOf("#");
+  const localPath = fragmentIndex < 0 ? destination : destination.slice(0, fragmentIndex);
+  let fragment = "";
+  if (fragmentIndex >= 0) {
+    try {
+      fragment = decodeURIComponent(destination.slice(fragmentIndex + 1));
+    } catch {
+      assert.fail(`引用片段不是有效 URL 编码：${document} -> ${destination}`);
+    }
+  }
+  return { target: localPath ? resolve(dirname(document), localPath) : document, fragment };
+}
+
+test("Markdown 锚点读取支持中文、重复标题与显式 HTML 锚点并忽略代码围栏", () => {
+  const path = resolve(tmpdir(), `unity-markdown-anchor-${process.pid}-${Date.now()}.md`);
+  writeFileSync(path, [
+    "## 角色交接",
+    "## 重复标题",
+    "## 重复标题",
+    "## 重复标题-1",
+    "## 间隔  标题",
+    "## 间隔--标题",
+    "## cafe\u0301",
+    "```md",
+    "## 代码中的假标题",
+    "<span id=\"代码中的假锚点\"></span>",
+    "```",
+    "<span id=\"显式锚点\"></span>",
+    "<a name='旧式锚点'></a>",
+  ].join("\n"), "utf8");
+  try {
+    const anchors = readMarkdownAnchors(path);
+    assert.ok(anchors.has("角色交接"));
+    assert.ok(anchors.has("重复标题"));
+    assert.ok(anchors.has("重复标题-1"));
+    assert.ok(anchors.has("重复标题-1-1"));
+    assert.ok(anchors.has("间隔--标题"));
+    assert.ok(anchors.has("间隔--标题-1"));
+    assert.ok(anchors.has("cafe\u0301"));
+    assert.ok(!anchors.has("代码中的假标题"));
+    assert.ok(!anchors.has("代码中的假锚点"));
+    assert.ok(anchors.has("显式锚点"));
+    assert.ok(anchors.has("旧式锚点"));
+    const selfLink = resolveMarkdownReference(path, "#%E8%A7%92%E8%89%B2%E4%BA%A4%E6%8E%A5");
+    assert.equal(selfLink.target, path);
+    assert.ok(readMarkdownAnchors(selfLink.target).has(selfLink.fragment));
+  } finally {
+    rmSync(path, { force: true });
+  }
+});
 
 test("根 npm 包暴露单一 npx 入口", () => {
   const packageJson = JSON.parse(readFileSync(PACKAGE_PATH, "utf8"));
@@ -88,26 +207,35 @@ test("npx 安装器复制当前包并要求 force", () => withTempDirectory((roo
   assert.deepEqual(readFileSync(modified), readFileSync(resolve(ROOT, "unity-game-audio/SKILL.md")));
 }));
 
-test("安装后的 2D 骨骼与技术美术技能及协作引用可达", () => withTempDirectory((root) => {
+test("安装后的 2D/3D 骨骼、动画技能及协作引用可达", () => withTempDirectory((root) => {
   const result = runInstaller([root]);
   assert.equal(result.status, 0, result.stderr);
   const targetRoot = resolve(root, ".agents/skills");
   const documents = [
+    ...listFiles(resolve(targetRoot, "unity-development-workflow/references")).filter((path) => path.endsWith(".md")),
+    ...["unity-game-3d-modeling", "unity-game-3d-texturing", "unity-game-3d-rigging", "unity-game-3d-animation"]
+      .flatMap((name) => listFiles(resolve(targetRoot, name)).filter((path) => path.endsWith(".md"))),
+    resolve(targetRoot, "unity-development-workflow/references/3d-character-handoff.md"),
+    resolve(targetRoot, "unity-development-workflow/references/3d-character-unity-import.md"),
+    resolve(targetRoot, "unity-development-workflow/references/animation-intent-contract.md"),
     ...listFiles(resolve(targetRoot, "unity-game-2d-rigging")).filter((path) => path.endsWith(".md")),
     ...listFiles(resolve(targetRoot, "unity-game-2d-animation-ta")).filter((path) => path.endsWith(".md")),
     resolve(targetRoot, "unity-development-workflow/references/2d-animation-collaboration.md"),
-    ...["unity-development-workflow", "unity-game-visual-assets", "unity-gameplay-development", "unity-game-qa-performance"]
+    ...["unity-development-workflow", "unity-game-production", "unity-game-visual-assets", "unity-gameplay-development", "unity-game-qa-performance"]
       .map((name) => resolve(targetRoot, name, "SKILL.md")),
   ];
   // 在真实安装副本中解析本地链接，发现遗漏参考文件或只能在仓库根目录工作的路径。
   for (const document of documents) {
     const text = readFileSync(document, "utf8");
     for (const [, destination] of text.matchAll(/\[[^\]]+\]\(([^)\s]+)\)/g)) {
-      if (/^[a-z][a-z0-9+.-]*:/i.test(destination) || destination.startsWith("#")) continue;
-      const target = resolve(dirname(document), destination.split("#", 1)[0]);
+      if (/^[a-z][a-z0-9+.-]*:/i.test(destination) || destination.startsWith("//")) continue;
+      const { target, fragment } = resolveMarkdownReference(document, destination);
       const targetRelative = relative(targetRoot, target);
       assert.ok(!targetRelative.startsWith(".."), `引用超出安装集合：${destination}`);
       assert.ok(existsSync(target), `安装产物缺少引用：${destination}`);
+      if (fragment) {
+        assert.ok(readMarkdownAnchors(target).has(fragment), `安装产物缺少 Markdown 锚点：${document} -> ${destination}（#${fragment}）`);
+      }
     }
   }
 }));

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Unity 3D 角色动画"
+  short_description: "通过 Blender MCP 制作表演动作并逐 Clip 烘焙导出"
+  default_prompt: "使用 $unity-game-3d-animation 先按动画意图合同说明并确认动作方案，再通过 Blender MCP 制作生产级角色动画、烘焙约束并逐 Clip 导出 FBX。"
+
+policy:
+  allow_implicit_invocation: true
