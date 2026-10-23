@@ -7,6 +7,7 @@
     "Project.UnityWorkflow.ImagePipeline",
     "Project.UnityWorkflow.ProjectValidation",
     "Project.UnityWorkflow.RiggingValidation",
+    "Project.UnityWorkflow.ResourceInspection",
     "Project.UnityWorkflow.VisualQA",
     "Project.UnityWorkflow.BuildPipeline"
   ],

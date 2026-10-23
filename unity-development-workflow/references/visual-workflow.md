@@ -50,7 +50,7 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 文本节点只登记冻结目标实际存在的玩家可见文字、数值及其来源，不从 GDD 追加说明。图内拆解标注属于审阅辅助层，不能成为正式界面的说明面板；原子资源继续忠实还原所属区域，不能借文案精简删改冻结文字，也不能把动态数值或本地化文本烘焙进固定图片。
 
-屏幕 UI 的 `layoutBinding.uiLayout` 必须说明父子分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点，并确定布局参照：场景 UI 相对场景内容区域大小停靠，弹窗内部有底板时相对底板布局，无底板时相对屏幕布局。将参照节点、边界来源与尺寸变化策略写入 `layoutBinding.constraints` 和 `resizePolicy`，再冻结拆解 item、Prefab/Scene 节点和装配实例；不得用效果图中的距离或元素类型代替依赖证据。
+屏幕 UI 的 `layoutBinding.uiLayout` 必须说明分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](ui-layout-and-hierarchy.md)判断组件根与子节点；底板可兼任根，功能父级与位置参照分别记录。场景 UI 相对场景内容区域大小停靠，弹窗内部默认有底板时相对底板、无底板时相对屏幕。机器引用使用 `positionReferenceId`，`constraints` 与 `resizePolicy` 补充边界理由和重算策略。拆解确认后按[机器布局包](ui-layout-plan.md)派生并检查严格/组合居中、参照依赖和显式越界，布局图消费同一派生结果；不得用效果图距离或元素类型代替依赖证据。
 
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；

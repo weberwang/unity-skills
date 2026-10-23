@@ -10,6 +10,7 @@ using Project.UnityWorkflow.Core;
 using Project.UnityWorkflow.Core.Models;
 using Project.UnityWorkflow.ImagePipeline;
 using Project.UnityWorkflow.PipelineCommands;
+using Project.UnityWorkflow.ResourceInspection;
 using Project.UnityWorkflow.VisualQA;
 using Unity.Pipeline.Commands;
 
@@ -28,7 +29,8 @@ namespace Project.UnityWorkflow.Tests
             typeof(CaptureVisualCommand),
             typeof(DeliveryPreflightCommand),
             typeof(MeasureLayoutCommand),
-            typeof(CaptureGameViewCommand)
+            typeof(CaptureGameViewCommand),
+            typeof(InspectResourceHandoffCommand)
         };
 
         /// <summary>
@@ -72,7 +74,8 @@ namespace Project.UnityWorkflow.Tests
                 "uwt_capture_visual",
                 "uwt_delivery_preflight",
                 "uwt_measure_layout",
-                "uwt_capture_game_view"
+                "uwt_capture_game_view",
+                "uwt_inspect_resource_handoff"
             }));
             Assert.That(names.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(names.Length));
         }
@@ -89,7 +92,8 @@ namespace Project.UnityWorkflow.Tests
                 CaptureVisualCommand.Execute("   "),
                 DeliveryPreflightCommand.Execute(null),
                 MeasureLayoutCommand.Execute(null),
-                CaptureGameViewCommand.Execute(null)
+                CaptureGameViewCommand.Execute(null),
+                InspectResourceHandoffCommand.Execute(null)
             };
 
             Assert.That(results.All(result => result != null && !result.Success), Is.True);

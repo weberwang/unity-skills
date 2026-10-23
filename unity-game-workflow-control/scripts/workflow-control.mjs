@@ -14,6 +14,8 @@ import { prepareExecutionMutation } from './runtime/execution-transaction.mjs';
 import { assertActiveReferences, createReturnRecord, deriveReturnVisualStage, validateReturnRecord, invalidateStageReviews } from './runtime/return-disposition.mjs';
 import { validateVisualBaseline } from './runtime/visual-baseline-contract.mjs';
 import { nextSceneStage } from './runtime/stage-transition.mjs';
+import { inspectUiLayoutEvidence, assertUiLayoutHandoff } from './runtime/ui-layout-evidence.mjs';
+import { validateResourceHandoffPackage, inspectResourceHandoffEvidence, assertResourceHandoff } from './runtime/resource-handoff-evidence.mjs';
 import { SCHEMA_VERSION, STAGES, SCENE_STAGES, STATES, GATES, UNIT_TYPES, TRANSITIONS, ACTION_LEVEL, STAGE_LABELS, SCENE_LABELS, WorkflowControlError, fail, parseArgs, readJson, normalizeRepoPath, canonicalizePosixPath, pathMatches, values, normalizePattern, stringArray, knownObject, schemaVersion, enumValue, gateStatuses, approvalSnapshot } from './runtime/control-primitives.mjs';
 export { SCHEMA_VERSION, STAGES, SCENE_STAGES, STATES, GATES, UNIT_TYPES, TRANSITIONS, ACTION_LEVEL, STAGE_LABELS, SCENE_LABELS, WorkflowControlError, fail, parseArgs, readJson, normalizeRepoPath, canonicalizePosixPath, pathMatches } from './runtime/control-primitives.mjs';
 
@@ -136,7 +138,7 @@ function isSharedUnityPath(file) {
 /** 校验 Unity 实施包、路径所有权、.meta/GUID/Importer 和单写者约束。 */
 export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
   assertActiveReferences(work, { pkg });
-  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'workItemType', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'responsiveContractRef', 'expectedFiles', 'executionUnits', 'packageStatus', 'visualBaselineRequired', 'metadata']);
+  const allowed = new Set(['schemaVersion', 'packageId', 'workItemId', 'workItemType', 'baselineHash', 'stageId', 'approvedRequirements', 'allowedPaths', 'forbiddenPaths', 'editorWriter', 'fileOwnership', 'unityOwnership', 'responsiveContractRef', 'uiLayoutPlanRef', 'resourceHandoff', 'expectedFiles', 'executionUnits', 'packageStatus', 'visualBaselineRequired', 'metadata']);
   knownObject(pkg, allowed, 'Implementation Package');
   schemaVersion(pkg, 'Implementation Package');
   for (const field of ['packageId', 'workItemId', 'baselineHash']) if (typeof pkg[field] !== 'string' || !pkg[field].trim()) fail(`Implementation Package.${field} 必须为非空字符串`);
@@ -216,6 +218,8 @@ export function validateImplementationPackage(pkg, work, repo = process.cwd()) {
     if (editorOwners.size !== 1 || !editorOwners.has(work.editorWriter)) fail('Work Item.editorWriter 未覆盖唯一正式 Editor 写入者');
   }
   assertVisibleContract(validateVisibleImplementationPackage(pkg, work, repo), fail);
+  const resourceErrors = validateResourceHandoffPackage(pkg, repo);
+  if (resourceErrors.length) fail(resourceErrors[0], 2, { errorCode: 'RESOURCE_HANDOFF_INVALID' });
   if (specialParallel.size) fail('共享设置、集成和发布单元不得使用并行组');
   validateUnityOwnership(pkg, files, packageAllowed.length ? allowedPaths : work.allowedPaths, packageForbidden);
   return { ...pkg, executionUnits: units, expectedFiles: files, allowedPaths, forbiddenPaths, fileOwners };
@@ -256,8 +260,17 @@ function validateUnityOwnership(pkg, files, allowedPaths, forbiddenPaths) {
 /** 校验证据清单结构并绑定当前 Work Item 与实施包。 */
 export function validateEvidence(evidence, work, pkg = null, repo = process.cwd()) {
   assertActiveReferences(work, { evidence });
-  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata', 'riggingDelivery']);
+  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'uiLayoutMeasurementRef', 'resourceHandoffInspectionRef', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata', 'riggingDelivery']);
   knownObject(evidence, allowed, 'Evidence Manifest');
+  if (evidence.resourceHandoffInspectionRef !== undefined) {
+    knownObject(evidence.resourceHandoffInspectionRef, new Set(['path']), 'Evidence Manifest.resourceHandoffInspectionRef');
+    canonicalizePosixPath(evidence.resourceHandoffInspectionRef.path, 'Evidence Manifest.resourceHandoffInspectionRef.path');
+  }
+  if (evidence.uiLayoutMeasurementRef !== undefined) {
+    knownObject(evidence.uiLayoutMeasurementRef, new Set(['path']), 'Evidence Manifest.uiLayoutMeasurementRef');
+    canonicalizePosixPath(evidence.uiLayoutMeasurementRef.path, 'Evidence Manifest.uiLayoutMeasurementRef.path');
+    if (!['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType)) fail('非可见工作项不得携带布局运行证据');
+  }
   schemaVersion(evidence, 'Evidence Manifest');
   for (const field of ['evidenceId', 'workItemId', 'packageId', 'baselineHash', 'recordedAt']) if (typeof evidence[field] !== 'string' || !evidence[field].trim()) fail(`Evidence Manifest.${field} 必须为非空字符串`);
   if (evidence.workItemId !== work.workItemId || evidence.baselineHash !== work.baselineHash) fail('Evidence Manifest 未绑定当前 Work Item 或基线');
@@ -398,6 +411,8 @@ export function inspect(args = {}, command = 'status') {
     } catch (error) { blockers.push(errorBlock(error, 'Evidence Manifest 校验失败')); }
   }
   const riggingDelivery = inspectRiggingDelivery({ work, evidence: rawEvidence ?? evidence, repo });
+  blockers.push(...inspectUiLayoutEvidence({ work, pkg, evidence: rawEvidence ?? evidence, repo }));
+  blockers.push(...inspectResourceHandoffEvidence({ work, pkg, evidence: rawEvidence ?? evidence, repo }));
   // 先展示骨骼交付岗位派发，避免通用 F3 阻断遮住具体返修责任。
   if (riggingDelivery) blockers.unshift(...riggingDelivery.blockers.map((item) => blocker(item.code, item.message, item.next)));
   if (['VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING', 'COMPLETE'].includes(work.globalState) && !evidencePath) blockers.push(blocker('EVIDENCE_MISSING', '当前状态缺少 Evidence Manifest', '记录并绑定当前候选验证证据'));
@@ -543,6 +558,8 @@ function assertTransitionPreconditions(inspection, target, args) {
   const { work, pkg, evidence } = inspection;
   const from = work.globalState;
   assertRiggingDeliveryHandoff(inspection, target, fail);
+  assertUiLayoutHandoff(inspection, target, fail);
+  assertResourceHandoff(inspection, target, fail);
   for (const gate of transitionGates(from, target)) if (!gateAvailable(inspection, gate)) fail(`${from} → ${target} 缺少 ${gate} PASS`, 2, { errorCode: `${gate}_NOT_PASS` });
   if (['A5', 'A6'].includes(work.actionLevel)) {
     if (from === 'PASSED' && target !== 'RELEASE_APPROVAL_REQUIRED') fail('A5/A6 必须先进入 RELEASE_APPROVAL_REQUIRED，不能绕过发布审批状态', 2, { errorCode: 'RELEASE_APPROVAL_STATE_REQUIRED' });

@@ -2,5 +2,7 @@ schemaVersion: "1.0"
 projectId: starfall-arena
 registerVersion: assets-v1
 sourceRevision: working-tree-snapshot-20260727
+# 正式导入条目声明 loading.mode；仅 RESOURCES / ADDRESSABLES 声明实际动态 key。
+# 示例：loading: { mode: SERIALIZED }；一般 address 字段不等于动态加载配置。
 assets: []
 placeholders: []

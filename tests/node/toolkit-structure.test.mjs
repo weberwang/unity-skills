@@ -164,8 +164,9 @@ test("C# 文件规模受控、具备注释且无占位符", () => {
 test("Pipeline 命令名称、参数和主线程标记精确且唯一", () => {
   const corpus = listFiles(resolve(PACKAGE_ROOT, "Editor/PipelineCommands")).filter((item) => item.endsWith(".cs")).map(readText).join("\n");
   const names = [...corpus.matchAll(/\[CliCommand\(\s*"([^"]+)"/g)].map((match) => match[1]).sort();
-  assert.deepEqual(names, ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_measure_layout", "uwt_validate_2d_rigging", "uwt_validate_project"]);
-  assert.equal((corpus.match(/MainThreadRequired\s*=\s*true/g) ?? []).length, 7);
-  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, 7);
-  assert.equal((corpus.match(/public static PipelineCommandResult Execute\(/g) ?? []).length, 7);
+  const expectedNames = ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_inspect_resource_handoff", "uwt_measure_layout", "uwt_validate_2d_rigging", "uwt_validate_project"];
+  assert.deepEqual(names, expectedNames);
+  assert.equal((corpus.match(/MainThreadRequired\s*=\s*true/g) ?? []).length, expectedNames.length);
+  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, expectedNames.length);
+  assert.equal((corpus.match(/public static PipelineCommandResult Execute\(/g) ?? []).length, expectedNames.length);
 });

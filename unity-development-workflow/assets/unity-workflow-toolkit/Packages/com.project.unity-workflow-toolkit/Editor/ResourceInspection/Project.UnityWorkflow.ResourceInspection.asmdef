@@ -1,0 +1,21 @@
+{
+  "name": "Project.UnityWorkflow.ResourceInspection",
+  "rootNamespace": "Project.UnityWorkflow.ResourceInspection",
+  "references": [
+    "Project.UnityWorkflow.Core",
+    "Unity.ugui"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -70,6 +70,7 @@ Assets/
 ## Unity 特殊目录与资源归属
 
 - `Resources/` 仅用于已记录的运行时加载需求，不作为通用资产库；优先序列化引用，需要动态寻址时按项目规模选择资源方案，不自动引入 Addressables。
+- 按[加载交接合同](resource-loading-and-frame-handoff.md)声明并读回实际加载方式、路径和动态 key；SERIALIZED 资源不进入 Resources，移动后同步总表及消费者，不只改文档。序列帧路径调整同时核对 Sprite 子资源身份、Clip 和消费入口。
 - `StreamingAssets/` 必须位于 `Assets/StreamingAssets/`，仅用于运行时需要原样提供的文件；记录平台读取方式与构建体积，不放制作源文件或秘密凭据。
 - `Plugins/` 按原生插件导入规则使用；`Gizmos/`、`Editor Default Resources/` 仅在有对应编辑器用途时创建，并遵守 Unity 的根路径要求。
 - 资源与 `.meta` 为一个所有权单元，移动、重命名通过 AssetDatabase 执行并复读 GUID 与引用；禁止复制 `.meta` 制造 GUID 冲突。

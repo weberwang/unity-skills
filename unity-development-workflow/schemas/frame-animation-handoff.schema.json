@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/frame-animation-handoff.schema.json",
+  "title": "序列帧Clip交接合同",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "animations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "animationId",
+          "clipPath",
+          "clipGuid",
+          "clipLocalId",
+          "frameRate",
+          "duration",
+          "loop",
+          "bindingPath",
+          "componentType",
+          "consumer",
+          "frames"
+        ],
+        "properties": {
+          "animationId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "clipPath": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/projectRelativePath"
+              },
+              {
+                "pattern": "^Assets/.+\\.[aA][nN][iI][mM]$"
+              }
+            ]
+          },
+          "clipGuid": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{32}$"
+          },
+          "clipLocalId": {
+            "type": "string",
+            "pattern": "^-?[0-9]+$"
+          },
+          "frameRate": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "loop": {
+            "type": "boolean"
+          },
+          "bindingPath": {
+            "type": "string"
+          },
+          "componentType": {
+            "enum": [
+              "SpriteRenderer",
+              "Image"
+            ]
+          },
+          "consumer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "prefabPath",
+              "prefabGuid",
+              "componentType"
+            ],
+            "properties": {
+              "prefabPath": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/projectRelativePath"
+                  },
+                  {
+                    "pattern": "^Assets/.+"
+                  }
+                ]
+              },
+              "prefabGuid": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{32}$"
+              },
+              "componentType": {
+                "enum": [
+                  "Animator",
+                  "Animation"
+                ]
+              }
+            }
+          },
+          "atlas": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assetPath",
+              "assetGuid"
+            ],
+            "properties": {
+              "assetPath": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/projectRelativePath"
+                  },
+                  {
+                    "pattern": "^Assets/.+"
+                  }
+                ]
+              },
+              "assetGuid": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{32}$"
+              }
+            }
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "time",
+                "assetPath",
+                "assetGuid",
+                "localId",
+                "pivot",
+                "pixelsPerUnit"
+              ],
+              "properties": {
+                "time": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "assetPath": {
+                  "allOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/projectRelativePath"
+                    },
+                    {
+                      "pattern": "^Assets/.+"
+                    }
+                  ]
+                },
+                "assetGuid": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{32}$"
+                },
+                "localId": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+$"
+                },
+                "pivot": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "pixelsPerUnit": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

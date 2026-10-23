@@ -10,6 +10,7 @@
     "Project.UnityWorkflow.ProjectValidation",
     "Project.UnityWorkflow.RiggingValidation",
     "Project.UnityWorkflow.RiggingTestSupport",
+    "Project.UnityWorkflow.ResourceInspection",
     "Unity.2D.Animation.Runtime",
     "Unity.2D.Sprite.Editor",
     "Unity.Collections",

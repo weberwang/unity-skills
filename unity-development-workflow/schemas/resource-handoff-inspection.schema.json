@@ -1,0 +1,530 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/resource-handoff-inspection.schema.json",
+  "title": "Unity资源与序列帧真实读回请求",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "outputPath",
+    "assets",
+    "animations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "taskId": {
+      "type": "string", "minLength": 1, "pattern": "\\S"
+    },
+    "outputPath": {
+      "allOf": [
+        {
+          "$ref": "common.schema.json#/$defs/projectRelativePath"
+        },
+        {
+          "pattern": "\\.json$"
+        }
+      ]
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resourceId",
+          "assetPath"
+        ],
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "assetPath": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/projectRelativePath"
+              },
+              {
+                "pattern": "^Assets/.+"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "animationId",
+          "clipPath",
+          "consumerPrefabPath",
+          "consumerComponent",
+          "bindingPath",
+          "componentType"
+        ],
+        "properties": {
+          "animationId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "clipPath": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/projectRelativePath"
+              },
+              {
+                "pattern": "^Assets/.+\\.[aA][nN][iI][mM]$"
+              }
+            ]
+          },
+          "consumerPrefabPath": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/projectRelativePath"
+              },
+              {
+                "pattern": "^Assets/.+"
+              }
+            ]
+          },
+          "consumerComponent": {
+            "enum": [
+              "Animator",
+              "Animation"
+            ]
+          },
+          "bindingPath": {
+            "type": "string"
+          },
+          "componentType": {
+            "enum": [
+              "SpriteRenderer",
+              "Image"
+            ]
+          },
+          "atlasPath": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/projectRelativePath"
+              },
+              {
+                "pattern": "^Assets/.+"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "properties": {
+        "assets": {
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "animations": {
+          "minItems": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resourceId",
+        "assetPath",
+        "assetGuid",
+        "resourcesKey",
+        "resourcesMatches",
+        "addressables"
+      ],
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "assetPath": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/projectRelativePath"
+            },
+            {
+              "pattern": "^Assets/.+"
+            }
+          ]
+        },
+        "assetGuid": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{32}$"
+        },
+        "resourcesKey": {
+          "type": "string"
+        },
+        "resourcesMatches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "assetPath",
+              "assetGuid"
+            ],
+            "properties": {
+              "assetPath": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/projectRelativePath"
+                  },
+                  {
+                    "pattern": "^Assets/.+"
+                  }
+                ]
+              },
+              "assetGuid": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{32}$"
+              }
+            }
+          }
+        },
+        "addressables": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "configured",
+            "address",
+            "group"
+          ],
+          "properties": {
+            "configured": {
+              "type": "boolean"
+            },
+            "address": {
+              "type": "string"
+            },
+            "group": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "time",
+        "assetGuid",
+        "localId",
+        "assetPath",
+        "spriteName",
+        "rect",
+        "pivot",
+        "pixelsPerUnit"
+      ],
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "assetGuid": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{32}$"
+        },
+        "localId": {
+          "type": "string",
+          "pattern": "^-?[0-9]+$"
+        },
+        "assetPath": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/projectRelativePath"
+            },
+            {
+              "pattern": "^Assets/.+"
+            }
+          ]
+        },
+        "spriteName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "rect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "pivot": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "x",
+            "y"
+          ],
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "pixelsPerUnit": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "animation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animationId",
+        "clipPath",
+        "clipGuid",
+        "clipLocalId",
+        "frameRate",
+        "duration",
+        "loop",
+        "bindingPath",
+        "componentType",
+        "propertyName",
+        "frames",
+        "consumer",
+        "atlas"
+      ],
+      "properties": {
+        "animationId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "clipPath": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/projectRelativePath"
+            },
+            {
+              "pattern": "^Assets/.+\\.[aA][nN][iI][mM]$"
+            }
+          ]
+        },
+        "clipGuid": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{32}$"
+        },
+        "clipLocalId": {
+          "type": "string",
+          "pattern": "^-?[0-9]+$"
+        },
+        "frameRate": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "duration": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "bindingPath": {
+          "type": "string"
+        },
+        "componentType": {
+          "enum": [
+            "SpriteRenderer",
+            "Image"
+          ]
+        },
+        "propertyName": {
+          "const": "m_Sprite"
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/frame"
+          },
+          "minItems": 1
+        },
+        "consumer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prefabPath",
+            "prefabGuid",
+            "componentType",
+            "referencesClip",
+            "bindingResolved"
+          ],
+          "properties": {
+            "prefabPath": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/projectRelativePath"
+                },
+                {
+                  "pattern": "^Assets/.+"
+                }
+              ]
+            },
+            "prefabGuid": {
+              "type": "string",
+              "pattern": "^[a-fA-F0-9]{32}$"
+            },
+            "componentType": {
+              "enum": [
+                "Animator",
+                "Animation"
+              ]
+            },
+            "referencesClip": {
+              "type": "boolean"
+            },
+            "bindingResolved": {
+              "type": "boolean"
+            }
+          }
+        },
+        "atlas": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "assetPath",
+                "assetGuid",
+                "allFramesBindable"
+              ],
+              "properties": {
+                "assetPath": {
+                  "allOf": [
+                    {
+                      "$ref": "common.schema.json#/$defs/projectRelativePath"
+                    },
+                    {
+                      "pattern": "^Assets/.+"
+                    }
+                  ]
+                },
+                "assetGuid": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{32}$"
+                },
+                "allFramesBindable": {
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "taskId",
+        "outputPath",
+        "measurementSource",
+        "runId",
+        "generatedAtUtc",
+        "status",
+        "message",
+        "assets",
+        "animations"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "taskId": {
+          "type": "string", "minLength": 1, "pattern": "\\S"
+        },
+        "outputPath": {
+          "allOf": [{"$ref": "common.schema.json#/$defs/projectRelativePath"}, {"pattern": "\\.json$"}]
+        },
+        "measurementSource": {
+          "const": "UNITY_EDITOR_ASSET_DATABASE"
+        },
+        "runId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "generatedAtUtc": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|[+]00:00)$"
+        },
+        "status": {
+          "enum": [
+            "MEASURED",
+            "FAIL"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "animations": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "MEASURED"}}, "required": ["status"]},
+        "then": {"properties": {
+          "assets": {"items": {"$ref": "#/$defs/asset"}},
+          "animations": {"items": {"$ref": "#/$defs/animation"}}
+        }}
+      }],
+      "description": "MEASURED要求完整实测字段；FAIL可保留已读取部分和空字段，不能作为通过证据。"
+    }
+  }
+}

@@ -15,6 +15,11 @@ import { createHash } from "node:crypto";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateNineSliceProduction } from "./nine-slice-contract.mjs";
+import { validateUiLayoutRuntime } from "./layout-runtime-contract.mjs";
+import { deriveUiLayoutPlan } from "./layout-plan-derive.mjs";
+import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
+import { validateResourceLoading } from "./resource-loading-contract.mjs";
+import { validateFrameAnimationHandoff } from "./frame-animation-contract.mjs";
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CORE_FILES = Object.freeze(["project-profile.yaml", "GDD.md", "TDD.md", "control-plane.md"]);
@@ -74,6 +79,7 @@ export function validateProjectRoot(input) {
 export function ensureInsideProject(path, projectRoot, label) {
   const absolute = resolve(path);
   const local = relative(projectRoot, absolute);
+  if (local.includes(":")) throw new Error(label + "路径不得包含替代数据流分隔符。");
   if (local === "" || local.startsWith(".." + sep) || isAbsolute(local)) {
     throw new Error(label + "必须位于项目根目录内：" + absolute);
   }
@@ -149,6 +155,10 @@ export function compileJsonJob({ projectRoot, kind, source, output }) {
     throw new Error("源文件不是有效 JSON：" + error.message);
   }
   if (payload === null || typeof payload !== "object" || Array.isArray(payload)) throw new Error("源 JSON 根必须是对象。");
+  if (kind === "ui-layout-plan") {
+    const errors = validateUiLayoutPlan(payload, { requireDerived: true });
+    if (errors.length) throw new Error(errors.join("；"));
+  }
   const job = {
     schemaVersion: "1.0",
     kind,
@@ -158,6 +168,58 @@ export function compileJsonJob({ projectRoot, kind, source, output }) {
   };
   writeAtomic(outputPath, JSON.stringify(job, null, 2) + "\n");
   return outputPath;
+}
+
+/** 读取并解析项目内布局计划，统一转换 JSON 解析错误为中文诊断。 */
+function readUiLayoutPlan(path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error("UI 布局计划不是有效 JSON：" + (error instanceof Error ? error.message : String(error)));
+  }
+}
+
+/** 从项目内原始计划生成派生副本，并拒绝覆盖输入计划。 */
+export function writeDerivedUiLayoutPlan({ projectRoot, source, output }) {
+  const root = validateProjectRoot(projectRoot);
+  const sourcePath = ensureInsideProject(source, root, "UI 布局计划源文件");
+  const outputPath = ensureInsideProject(output, root, "UI 布局计划输出文件");
+  const samePath = process.platform === "win32"
+    ? sourcePath.toLowerCase() === outputPath.toLowerCase()
+    : sourcePath === outputPath;
+  if (samePath) throw new Error("布局派生输出不能覆盖 source；请指定不同的 --output 路径。");
+  if (existsSync(outputPath)) throw new Error("拒绝覆盖已有 UI 布局派生文件；请指定新的 --output 路径。");
+  const plan = readUiLayoutPlan(sourcePath);
+  const derived = deriveUiLayoutPlan(plan);
+  writeAtomic(outputPath, JSON.stringify(derived, null, 2) + "\n");
+  return outputPath;
+}
+
+/** 对项目内 UI 布局计划运行 schema 和几何合同校验。 */
+export function checkUiLayoutPlan({ projectRoot, source }) {
+  const root = validateProjectRoot(projectRoot);
+  const sourcePath = ensureInsideProject(source, root, "UI 布局计划源文件");
+  const errors = validateUiLayoutPlan(readUiLayoutPlan(sourcePath), { requireDerived: true });
+  if (errors.length) throw new Error(errors.join("；"));
+  return "UI 布局计划合同校验通过。";
+}
+
+/** 校验项目内当前资源或序列帧交接材料与实际Unity读回，保持文件工具和控制面同源。 */
+export function checkResourceHandoffFiles({ projectRoot, source, register, plan }) {
+  if ((typeof register === "string") === (typeof plan === "string")) throw new Error("资源校验必须且只能指定 register 或 plan。");
+  const root = validateProjectRoot(projectRoot);
+  const reportPath = ensureInsideProject(resolve(root, source), root, "资源读回报告");
+  const report = JSON.parse(readFileSync(reportPath, "utf8"));
+  if (report.outputPath !== relative(root, reportPath).split(sep).join("/")) throw new Error("资源读回报告 outputPath 与实际输入位置不符。");
+  const materialPath = ensureInsideProject(resolve(root, register ?? plan), root, "资源交接材料");
+  const material = JSON.parse(readFileSync(materialPath, "utf8"));
+  const errors = register === undefined
+    ? validateFrameAnimationHandoff(material, report)
+    : validateResourceLoading(material, report);
+  if (errors.length) throw new Error(errors.join("；"));
+  return register === undefined
+    ? "序列帧Clip、帧身份与消费者读回一致；播放与显示效果仍按现有流程验收。"
+    : "资源加载声明、正式路径与实际动态键核验通过。";
 }
 
 /** 执行最小文件工具命令。 */
@@ -194,7 +256,43 @@ export function main(argumentsList = process.argv.slice(2)) {
     if (errors.length) throw new Error(errors.join("；"));
     return "九宫格合同传递与参数回读通过；显示效果仍需用户确认。";
   }
-  throw new Error("用法：workflow-files.mjs <init-docs|sha256|compile-json|nine-slice-check> [参数]");
+  if (command === "layout-plan") {
+    rejectUnknownOptions(options, ["project-root", "source", "output"]);
+    return writeDerivedUiLayoutPlan({
+      projectRoot: requireOption(options, "project-root"),
+      source: resolve(requireOption(options, "project-root"), requireOption(options, "source")),
+      output: resolve(requireOption(options, "project-root"), requireOption(options, "output")),
+    });
+  }
+  if (command === "layout-check") {
+    rejectUnknownOptions(options, ["project-root", "source"]);
+    return checkUiLayoutPlan({
+      projectRoot: requireOption(options, "project-root"),
+      source: resolve(requireOption(options, "project-root"), requireOption(options, "source")),
+    });
+  }
+  if (command === "layout-runtime-check") {
+    rejectUnknownOptions(options, ["project-root", "plan", "source"]);
+    const root = validateProjectRoot(requireOption(options, "project-root"));
+    const planPath = ensureInsideProject(resolve(root, requireOption(options, "plan")), root, "布局计划");
+    const reportPath = ensureInsideProject(resolve(root, requireOption(options, "source")), root, "布局运行报告");
+    const plan = readUiLayoutPlan(planPath);
+    const report = readUiLayoutPlan(reportPath);
+    if (report.outputPath !== relative(root, reportPath).split(sep).join("/")) throw new Error("布局运行报告 outputPath 与实际输入位置不符。");
+    const errors = validateUiLayoutRuntime(plan, report, { scenePath: plan.scenePath });
+    if (errors.length) throw new Error(errors.join("；"));
+    return "实际布局、参照和组件控制权校验通过；显示效果仍需用户确认。";
+  }
+  if (command === "resource-loading-check" || command === "frame-animation-check") {
+    const materialOption = command === "resource-loading-check" ? "register" : "plan";
+    rejectUnknownOptions(options, ["project-root", materialOption, "source"]);
+    return checkResourceHandoffFiles({
+      projectRoot: requireOption(options, "project-root"),
+      source: requireOption(options, "source"),
+      [materialOption]: requireOption(options, materialOption),
+    });
+  }
+  throw new Error("用法：workflow-files.mjs <init-docs|sha256|compile-json|nine-slice-check|layout-plan|layout-check|layout-runtime-check|resource-loading-check|frame-animation-check> [参数]");
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { validateArtExperienceAcceptance } from './art-experience-contract.mjs';
+import { validateUiLayoutPackage } from './ui-layout-evidence.mjs';
 
 /** Unity 可见工作项的机器枚举；SCENE 与 DISPLAY_LAYER 必须独立闭环。 */
 export const WORK_ITEM_TYPES = Object.freeze(['PROJECT', 'FOUNDATION', 'SCENE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE']);
@@ -311,6 +312,7 @@ export function validateVisibleImplementationPackage(pkg, work, repo) {
     if (!pkg.responsiveContractRef) errors.push('可见 Implementation Package 必须绑定 responsiveContractRef');
     else errors.push(...validateResponsiveContractReference(pkg.responsiveContractRef, work, repo));
   } else if (pkg.responsiveContractRef !== undefined) errors.push(`${type} Implementation Package 不得携带 responsiveContractRef`);
+  errors.push(...validateUiLayoutPackage(pkg, work, repo));
   return [...new Set(errors)];
 }
 

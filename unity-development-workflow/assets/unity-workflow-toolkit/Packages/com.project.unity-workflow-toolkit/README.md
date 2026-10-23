@@ -6,11 +6,12 @@
 - ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
 - ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
 - RiggingValidation：只读核对角色 Prefab、SpriteSkin 骨骼映射、导入网格／权重、Clip／事件及部件变体，输出资产工程报告。
+- ResourceInspection：只读核对实际资源身份、Resources key/现有 Addressables 配置、序列帧 Clip 曲线与 Prefab 消费者。
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
 - FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
 - VisualQA：固定摄像机参考 PNG、实际 UI 布局测量与 Game View 帧末异步采集；仅记录工程事实，截图由用户人工验收。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
-- PipelineCommands：把七项业务服务作为 Unity Pipeline CLI 自定义命令暴露。
+- PipelineCommands：将业务服务作为 Unity Pipeline CLI 自定义命令暴露。
 - EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
 
 ## 安装
@@ -23,7 +24,8 @@
 - `uwt_validate_2d_rigging`：消费 `rigging-validation` Job，只读检查角色骨骼资产，并将工程报告写入指定的 `Artifacts/` JSON。
 - `uwt_import_image`：消费已批准的 `image-task` Job，执行安全导入与 Importer 复核。
 - `uwt_capture_visual`：消费 `visual-capture` Job，生成固定机位证据。
-- `uwt_measure_layout`：消费 `layout-measurement` Job，读取同一场景、坐标空间的实际 uGUI/UIDocument 节点矩形、父框边距与目标差值。
+- `uwt_measure_layout`：消费 `layout-measurement` Job，读取同一场景、坐标空间的实际节点、父框与参照框；可同批采集组件配置、分轴写入者与 Image 原生尺寸。
+- `uwt_inspect_resource_handoff`：消费 `resource-handoff-inspection` Job，从 AssetDatabase、Clip 与 Prefab 读取正式资源和序列帧交接事实，不修改资源或加载配置。
 - `uwt_capture_game_view`：消费 `game-view-capture` Job，登记帧末请求并以同一 Job 回查终态；首次 `PENDING` 不表示采集完成。
 - `uwt_delivery_preflight`：消费 `delivery-preflight` Job，只执行技术构建预检。
 
@@ -56,6 +58,8 @@ unity command uwt_validate_2d_rigging --project-path D:\Projects\my-game --calle
 
 ## 图片导入边界
 
+资源导入交接时在唯一总表声明实际 `loading`，不要把一般 address 当作动态加载成功。按工作流[资源加载与序列帧交接](../../../../references/resource-loading-and-frame-handoff.md)调用 `uwt_inspect_resource_handoff`，再运行 `resource-loading-check` / `frame-animation-check`；没有 Addressables 配置时明确未配置，不安装包。序列帧按 Sprite GUID+localId 对齐实际曲线与消费入口，图集 CanBindTo 不代表平台打包或视觉通过。
+
 源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有该对象的用户批准记录。按实际图片质量、资源身份与授权验收，不校验 SHA，实现调整无需回改合同。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
 
 正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
@@ -67,6 +71,8 @@ Sprite 任务显式提供 `unityImport.border`，顺序为 `[left, bottom, right
 ## 原生 UI 校准与取证
 
 布局测量的 uGUI 坐标是屏幕像素，UI Toolkit 坐标是同一 UIDocument 的逻辑点；均明确左上原点，不混用不同文档或测量空间。每项可声明 `targetRect` 与 `tolerance.maxAbsDelta`。已声明的容差超差为失败，没有容差的节点仅为 `MEASURED`；报告不修改布局或判断图像轮廓、字体墨迹及显示质量。编辑校准仍使用 Inspector、Rect 工具、UI Builder 与 Unity Undo。
+
+V4 机器布局证据设置 `includeComponentSnapshots: true`、`stateId` 和项目内 `evidenceRoot`，每个目标绑定稳定 `referenceId` 与实际参照路径；输出严格位于该证据根内且禁止覆盖。几何单独测量继续使用 `Artifacts/Visual/`。非活动节点保留配置与空写入者，不伪造几何。外部脚本/动画通过 Runtime `LayoutWriterRegistration` 绑定真实 Behaviour 与控制属性；该登记不执行布局，也不能证明不存在未登记写入。完整字段、原尺寸与控制面交接见[布局运行合同](../../../../references/ui-layout-runtime.md)。
 
 Game View 采集只消费已有的非 Batch Editor PlayMode，要求可用 Game View 与活动场景一致，不切换播放模式或分辨率。工具在帧末采集最终画面，覆盖实际进入该帧的 Overlay、摄像机 UI 和 runtime Panel；不能证明未激活或独立 RenderTexture UI 可见。PNG 与配套 JSON 都落盘后才返回采集 `PASS`，输出不可覆盖；退出、域重载或超时取消请求。原有 `uwt_capture_visual` 仅覆盖摄像机及摄像机空间，不能作为 Overlay UI 的完整证据。采集成功、几何通过与人工显示效果验收分别记录。
 

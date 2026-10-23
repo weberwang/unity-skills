@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "taskId": "WI-ASSET",
+  "outputPath": ".workflow-control/evidence/WI-ASSET/resource-readback-1.json",
+  "assets": [{"resourceId": "coin-icon", "assetPath": "Assets/Art/Runtime/UI/Coin.png"}],
+  "animations": [{
+    "animationId": "coin-idle",
+    "clipPath": "Assets/Art/Runtime/Animations/CoinIdle.anim",
+    "consumerPrefabPath": "Assets/Art/Runtime/Prefabs/Coin.prefab",
+    "consumerComponent": "Animator",
+    "bindingPath": "Visual",
+    "componentType": "SpriteRenderer"
+  }]
+}

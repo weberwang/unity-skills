@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "animations": [{
+    "animationId": "coin-idle",
+    "clipPath": "Assets/Art/Runtime/Animations/CoinIdle.anim",
+    "clipGuid": "11111111111111111111111111111111",
+    "clipLocalId": "7400000",
+    "frameRate": 10,
+    "duration": 0.2,
+    "loop": true,
+    "bindingPath": "Visual",
+    "componentType": "SpriteRenderer",
+    "consumer": {
+      "prefabPath": "Assets/Art/Runtime/Prefabs/Coin.prefab",
+      "prefabGuid": "22222222222222222222222222222222",
+      "componentType": "Animator"
+    },
+    "frames": [
+      {"time": 0, "assetPath": "Assets/Art/Runtime/Animations/CoinFrames.png", "assetGuid": "33333333333333333333333333333333", "localId": "1001", "pivot": {"x": 0.5, "y": 0.5}, "pixelsPerUnit": 100},
+      {"time": 0.1, "assetPath": "Assets/Art/Runtime/Animations/CoinFrames.png", "assetGuid": "33333333333333333333333333333333", "localId": "1002", "pivot": {"x": 0.5, "y": 0.5}, "pixelsPerUnit": 100},
+      {"time": 0.2, "assetPath": "Assets/Art/Runtime/Animations/CoinFrames.png", "assetGuid": "33333333333333333333333333333333", "localId": "1003", "pivot": {"x": 0.5, "y": 0.5}, "pixelsPerUnit": 100}
+    ]
+  }]
+}

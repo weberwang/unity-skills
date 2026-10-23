@@ -18,6 +18,7 @@ import {
 import { validateUnityResponsiveContract } from '../../unity-game-workflow-control/scripts/runtime/visible-contract.mjs';
 import { stageConfirmationBlockers } from '../../unity-game-workflow-control/scripts/runtime/stage-confirmation.mjs';
 import { makeArtFixture } from './helpers/art-experience-fixture.mjs';
+import { seedUiLayoutFixture } from './helpers/ui-layout-fixture.mjs';
 import { seedVisualBaseline } from './helpers/workflow-evidence-fixture.mjs';
 
 const HASH = `sha256:${'a'.repeat(64)}`;
@@ -74,6 +75,7 @@ function makeSceneWork(overrides = {}) {
     stageId: 'scene-production',
     globalState: 'VALIDATING',
     scene: { sceneId: 'MainScene', stage: 'V4', status: 'IN_PROGRESS' },
+    evidenceRoot: '.workflow-control/evidence/WI-SCENE',
     globalVisualBaselineSelectionRef: { path: 'baseline/selection.json' },
     responsiveContract: makeContract(),
     baselineHash: HASH,
@@ -98,6 +100,7 @@ function makeDisplayLayerWork(overrides = {}) {
     workItemId: 'WI-LAYER',
     workItemType: 'DISPLAY_LAYER',
     displayLayer: { displayLayerId: 'PauseModal', hostSceneId: 'MainScene', type: 'modal', stage: 'V4', status: 'IN_PROGRESS' },
+    evidenceRoot: '.workflow-control/evidence/WI-LAYER',
     ...overrides,
   };
 }
@@ -126,6 +129,13 @@ function makeResponsiveEvidence(repo = null) {
 
 /** 创建完整 V4 Evidence Manifest。 */
 function makeVisibleEvidence(work, overrides = {}, repo = null) {
+  const layout = repo ? seedUiLayoutFixture(repo, {
+    sceneId: work.scene?.sceneId ?? work.displayLayer.hostSceneId,
+    ...(work.displayLayer ? { displayLayerId: work.displayLayer.displayLayerId } : {}),
+    uiSystem: work.responsiveContract.uiSystem === 'UI Toolkit' ? 'UI_TOOLKIT' : 'UGUI',
+    evidenceRoot: work.evidenceRoot,
+    candidateId: 'candidate-test',
+  }) : null;
   return {
     ...makeArtFixture(repo, work).evidenceFields,
     schemaVersion: '1.0',
@@ -141,6 +151,7 @@ function makeVisibleEvidence(work, overrides = {}, repo = null) {
     gateResults: { F0: { status: 'PASS' }, F1: { status: 'PASS' }, F2: { status: 'PASS' }, F3: { status: 'PASS' }, F4: { status: 'NOT_RUN' } },
     unityEvidence: { editorStable: 'PASS', compile: 'PASS', domainReload: 'PASS', console: 'PASS', editMode: 'PASS', playMode: 'PASS', scenePrefabImporterGuid: 'PASS', build: 'PASS', device: 'NOT_RUN', release: 'NOT_RUN' },
     responsiveEvidence: makeResponsiveEvidence(repo),
+    uiLayoutMeasurementRef: layout?.measurementRef ?? { path: `${work.evidenceRoot}/ui-layout-measurement.json` },
     productionContractAudit: { status: 'PASS', contractVersion: work.responsiveContract.version, staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false },
     ...overrides,
   };
@@ -150,6 +161,13 @@ function makeVisibleEvidence(work, overrides = {}, repo = null) {
 function makeVisiblePackage(work, repo, overrides = {}) {
   const contractPath = join(repo, 'responsive-contract.json');
   writeJson(contractPath, work.responsiveContract);
+  const layout = seedUiLayoutFixture(repo, {
+    sceneId: work.scene?.sceneId ?? work.displayLayer.hostSceneId,
+    ...(work.displayLayer ? { displayLayerId: work.displayLayer.displayLayerId } : {}),
+    uiSystem: work.responsiveContract.uiSystem === 'UI Toolkit' ? 'UI_TOOLKIT' : 'UGUI',
+    evidenceRoot: work.evidenceRoot,
+    candidateId: 'candidate-test',
+  });
   return {
     schemaVersion: '1.0',
     packageId: 'PKG-VISIBLE',
@@ -158,6 +176,7 @@ function makeVisiblePackage(work, repo, overrides = {}) {
     baselineHash: work.baselineHash,
     packageStatus: 'FROZEN',
     responsiveContractRef: { path: 'responsive-contract.json', version: work.responsiveContract.version },
+    uiLayoutPlanRef: layout.planRef,
     fileOwnership: { 'Assets/UI/Main.cs': 'ui-worker', 'Assets/UI/Main.cs.meta': 'ui-worker' },
     unityOwnership: { metaPairs: [{ asset: 'Assets/UI/Main.cs', meta: 'Assets/UI/Main.cs.meta' }], guidImporter: ['Assets/UI/Main.cs'] },
     executionUnits: [{

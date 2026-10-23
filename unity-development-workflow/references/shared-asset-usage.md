@@ -19,6 +19,8 @@
 
 总表 schema 没有 `owner`、`consumers`、`shared` 字段，不临时添加字段；所有权与消费范围使用上表中的既有交付物。`address` 沿用项目实际资源定位约定，不为登记强制引入 Addressables，也不把未配置的定位名冒充已可运行的加载入口。
 
+正式条目增加显式 `loading: {mode, key?}`，按[加载与序列帧交接](resource-loading-and-frame-handoff.md)区分 SERIALIZED、RESOURCES 和 ADDRESSABLES。V3/V4 对当前总表执行快照与 Unity 实际读回核对；动态键、实际配置及序列帧 GUID+localId 不能由一般 address 或文件名代替。加载检查不替代每个消费位置的引用与运行验收。
+
 `reuseResourcePlan.assetRegisterEvidence.path` 指向 `docs/asset-register.yaml`，`recordId` 指向其中 `assets[].id`，与 `existingAssetId` 一致；来源版本及生产、导入和许可事实通过该条目的版本与证据引用核对，不另建单资源登记副本。总表可更新，真实来源记录和已完成的验收证据仍保留，各消费合同引用适用的实际版本。
 
 ## V2 查库与绑定

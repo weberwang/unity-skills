@@ -28,6 +28,8 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内合同来源；控制器检查路径、文件存在及 JSON 格式，不比较合同内容、版本或 SHA。实际完成情况及调整记录在交付和验收证据中。
 
+屏幕 UI（UGUI/UI Toolkit）从 V2 起还绑定 `uiLayoutPlanRef.path`，读取[机器布局包](../../unity-development-workflow/references/ui-layout-plan.md)并重算目标几何。V4 的 `uiLayoutMeasurementRef.path` 只引用当前 evidenceRoot 内的正式[布局组件报告](../../unity-development-workflow/references/ui-layout-runtime.md)，与当前候选、场景、状态和计划节点对应。直接迁移也重新读取文件，不能靠缓存 blockers、静态 PASS 或人工确认替代实际组件证据。目标内的技术修复只重验受影响事实，不自动退阶段。
+
 程序化文本为 `programmatic=true` 时，`locales` 必须精确为 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`；非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=1`，非 1 的正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
 
 ## F0-F4 唯一语义
@@ -54,5 +56,7 @@ Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内�
 - `unit-check --result <json>` 只校验当前 `IMPLEMENTING` 单元已有的结果、绑定、`PASS`、证据路径和顺序，不执行验收命令。进入 `VALIDATING` 时再次校验 `execution-state.units` 中全部单元的有效结果与顺序。Implementation Package 的 `unit.status` 是冻结计划快照，不改写，也不能代替执行结果。
 
 ## 明确停止
+
+实施包可用 `resourceHandoff` 声明资源总表快照与序列帧合同。声明后进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 或提交 PASS 证据时，必须有当前 evidenceRoot 内的 `resourceHandoffInspectionRef`，且实际报告 taskId/outputPath 与工作项及引用相符。控制面与文件 CLI 复用相同资源/帧校验函数，直接交付重新读取磁盘材料；缺失或失败修复并重验，不新建资源状态机或自动回退 V2。
 
 控制面遇到未决用户选择、未冻结实施包、缺少验证证据、`RETURN`、不同所有者的正式 Editor 写入或带副作用 A4-A6 时停止。它不会通过猜测用户意图、把 NOT_RUN 改成 PASS、自动回退状态或调用 Unity/设备/服务来“完成”任务。

@@ -46,3 +46,5 @@ Unity 原生 2D 骨骼路线在拆件和骨架制作前，由玩法与骨骼角�
 | 3D 绑定与动画 | [`$unity-game-3d-rigging`](../../unity-game-3d-rigging/SKILL.md) 用 Blender MCP 负责骨架/蒙皮/控制 Rig 和角色模型导出；[`$unity-game-3d-animation`](../../unity-game-3d-animation/SKILL.md) 用 Blender MCP 负责动作、运行时骨架曲线烘焙与逐 Clip 导出。按[角色共同交接](3d-character-handoff.md)绑定模型/UV、贴图、骨架/权重、Root、Clip 和事件，按[导入合同](3d-character-unity-import.md)接入 Avatar、Animator 和角色 Prefab；Work Item 明确具体生产者与集成单写者，模型/贴图角色不接管绑定或动画。 |
 
 不同路线的资源生产方式可以不同，时间轴、事件含义、消费接口和 V4 动态检查点应保持一致。需要外部动画服务、付费或上传时遵循现有精确授权规则。
+
+序列帧的机器交接使用[资源加载与序列帧合同](resource-loading-and-frame-handoff.md)：生产者声明帧序、各动作 FPS/时长、归一化 Pivot/PPU、Sprite GUID+localId 与正式 Clip；Toolkit 只读实际曲线和 Prefab 的 Animator/Animation 引用与绑定。帧文件移动、重排、重新切片或图集调整后同步合同并重验；该工具不制作动画、不接管既有生产岗位，工程通过不替代播放与人工显示确认。

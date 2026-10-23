@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using Project.UnityWorkflow.Core;
+using Project.UnityWorkflow.Runtime;
 using Project.UnityWorkflow.VisualQA;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -51,6 +53,36 @@ namespace Project.UnityWorkflow.Tests.Editor
             GameObject documentObject = new GameObject("Menu", typeof(UIDocument));
             UIDocument document = documentObject.GetComponent<UIDocument>();
             document.panelSettings = panelSettings;
+            Animator registeredWriter = documentObject.AddComponent<Animator>();
+            LayoutWriterRegistration registration = documentObject.AddComponent<LayoutWriterRegistration>();
+            registration.entries.Add(new LayoutWriterRegistrationEntry
+            {
+                writer = registeredWriter,
+                elementName = "flow-probe",
+                driver = LayoutWriterDriver.Script,
+                width = true
+            });
+            registration.entries.Add(new LayoutWriterRegistrationEntry
+            {
+                writer = registeredWriter,
+                elementName = "static-probe",
+                driver = LayoutWriterDriver.Script,
+                width = true
+            });
+            registration.entries.Add(new LayoutWriterRegistrationEntry
+            {
+                writer = registeredWriter,
+                elementName = "hidden-probe",
+                driver = LayoutWriterDriver.Script,
+                width = true
+            });
+            registration.entries.Add(new LayoutWriterRegistrationEntry
+            {
+                writer = registeredWriter,
+                elementName = "fixed-cross-axis-probe",
+                driver = LayoutWriterDriver.Script,
+                width = true
+            });
             Assert.That(EditorSceneManager.SaveScene(scene, testScenePath), Is.True);
 
             // 禁用临时测试期间的域重载，避免编辑器测试夹具在 Play Mode 中重新运行同步场景 SetUp。
@@ -77,6 +109,8 @@ namespace Project.UnityWorkflow.Tests.Editor
                 parent.style.top = 30f;
                 parent.style.width = 300f;
                 parent.style.height = 200f;
+                parent.style.flexDirection = FlexDirection.Row;
+                parent.style.alignItems = Align.Stretch;
                 parent.style.marginLeft = 0f;
                 parent.style.marginTop = 0f;
                 parent.style.marginRight = 0f;
@@ -97,7 +131,63 @@ namespace Project.UnityWorkflow.Tests.Editor
                 target.style.marginRight = 0f;
                 target.style.marginBottom = 0f;
                 parent.Add(target);
+
+                var flowProbe = new VisualElement { name = "flow-probe" };
+                flowProbe.style.flexGrow = 1f;
+                flowProbe.style.flexShrink = 0f;
+                flowProbe.style.alignSelf = Align.Center;
+                flowProbe.style.paddingTop = 8f;
+                flowProbe.style.paddingBottom = 8f;
+                parent.Add(flowProbe);
+
+                var explicitHeightProbe = new VisualElement { name = "explicit-height-probe" };
+                explicitHeightProbe.style.flexGrow = 1f;
+                explicitHeightProbe.style.flexShrink = 0f;
+                explicitHeightProbe.style.height = 22f;
+                explicitHeightProbe.style.alignSelf = Align.Auto;
+                parent.Add(explicitHeightProbe);
+
+                var staticProbe = new VisualElement { name = "static-probe" };
+                staticProbe.style.width = 44f;
+                staticProbe.style.minHeight = 18f;
+                staticProbe.style.flexGrow = 0f;
+                staticProbe.style.flexShrink = 0f;
+                staticProbe.style.alignSelf = Align.Center;
+                parent.Add(staticProbe);
+
+                var hiddenProbe = new VisualElement { name = "hidden-probe" };
+                hiddenProbe.style.display = DisplayStyle.None;
+                parent.Add(hiddenProbe);
+
+                var columnParent = new VisualElement { name = "column-parent" };
+                columnParent.style.position = Position.Absolute;
+                columnParent.style.left = 0f;
+                columnParent.style.top = 250f;
+                columnParent.style.width = 180f;
+                columnParent.style.height = 120f;
+                columnParent.style.flexDirection = FlexDirection.Column;
+                columnParent.style.alignItems = Align.Stretch;
+                columnParent.style.marginLeft = 0f;
+                columnParent.style.marginTop = 0f;
+                columnParent.style.marginRight = 0f;
+                columnParent.style.marginBottom = 0f;
+                columnParent.style.paddingLeft = 0f;
+                columnParent.style.paddingTop = 0f;
+                columnParent.style.paddingRight = 0f;
+                columnParent.style.paddingBottom = 0f;
+
+                var fixedCrossAxisProbe = new VisualElement { name = "fixed-cross-axis-probe" };
+                fixedCrossAxisProbe.style.width = 100f;
+                fixedCrossAxisProbe.style.height = 32f;
+                fixedCrossAxisProbe.style.flexGrow = 0f;
+                fixedCrossAxisProbe.style.flexShrink = 0f;
+                fixedCrossAxisProbe.style.alignSelf = Align.Auto;
+                columnParent.Add(fixedCrossAxisProbe);
                 root.Add(parent);
+                root.Add(columnParent);
+
+                // 禁用状态不等同于隐藏；该元素仍参与 Panel 布局并保留真实矩形。
+                target.SetEnabled(false);
 
                 for (int frame = 0; frame < 120 &&
                      !(parent.worldBound.width > 0f && parent.worldBound.height > 0f &&
@@ -108,7 +198,12 @@ namespace Project.UnityWorkflow.Tests.Editor
 
                 layoutReady = parent.panel == root.panel && target.panel == root.panel &&
                               parent.worldBound.width > 0f && parent.worldBound.height > 0f &&
-                              target.worldBound.width > 0f && target.worldBound.height > 0f;
+                              target.worldBound.width > 0f && target.worldBound.height > 0f &&
+                              flowProbe.worldBound.width > 0f && flowProbe.worldBound.height > 0f &&
+                              explicitHeightProbe.worldBound.width > 0f && explicitHeightProbe.worldBound.height > 0f &&
+                              staticProbe.worldBound.width > 0f && staticProbe.worldBound.height > 0f &&
+                              columnParent.panel == root.panel &&
+                              fixedCrossAxisProbe.worldBound.width > 0f && fixedCrossAxisProbe.worldBound.height > 0f;
                 layoutDiagnostics = "parentPanelMatches=" + (parent.panel == root.panel) +
                                     ", targetPanelMatches=" + (target.panel == root.panel) +
                                     ", parent.worldBound=" + parent.worldBound +
@@ -116,9 +211,38 @@ namespace Project.UnityWorkflow.Tests.Editor
                                     ", parent.resolvedSize=" + parent.resolvedStyle.width + "x" + parent.resolvedStyle.height +
                                     ", target.worldBound=" + target.worldBound +
                                     ", target.layout=" + target.layout +
-                                    ", target.resolvedSize=" + target.resolvedStyle.width + "x" + target.resolvedStyle.height;
+                                    ", target.resolvedSize=" + target.resolvedStyle.width + "x" + target.resolvedStyle.height +
+                                    ", flowProbe.worldBound=" + flowProbe.worldBound +
+                                    ", explicitHeightProbe.worldBound=" + explicitHeightProbe.worldBound +
+                                     ", staticProbe.worldBound=" + staticProbe.worldBound +
+                                     ", fixedCrossAxisProbe.worldBound=" + fixedCrossAxisProbe.worldBound;
                 if (layoutReady)
                 {
+                    LayoutComponentSnapshot flowSnapshot = CaptureSnapshot(runtimeDocumentObject, flowProbe);
+                    LayoutComponentSnapshot explicitHeightSnapshot = CaptureSnapshot(runtimeDocumentObject, explicitHeightProbe);
+                    LayoutComponentSnapshot staticSnapshot = CaptureSnapshot(runtimeDocumentObject, staticProbe);
+                    LayoutComponentSnapshot hiddenSnapshot = CaptureSnapshot(runtimeDocumentObject, hiddenProbe);
+                    LayoutComponentSnapshot fixedCrossAxisSnapshot = CaptureSnapshot(
+                        runtimeDocumentObject, fixedCrossAxisProbe);
+                    Assert.That(target.enabledInHierarchy, Is.False);
+                    Assert.That(flowSnapshot.active, Is.True);
+                    Assert.That(flowSnapshot.widthWriters, Is.EqualTo(new[] { "UITOOLKIT_LAYOUT", "SCRIPT" }));
+                    Assert.That(flowSnapshot.heightWriters, Is.EqualTo(new[] { "UITOOLKIT_LAYOUT" }));
+                    Assert.That(flowSnapshot.externalWriters[0].active, Is.True);
+                    Assert.That(explicitHeightSnapshot.heightWriters, Is.EqualTo(new[] { "UITOOLKIT_LAYOUT" }),
+                        "显式高度样式由 Panel 布局引擎计算，不单独作为写入者。");
+                    Assert.That(staticSnapshot.widthWriters, Is.EqualTo(new[] { "SCRIPT" }),
+                        "没有额外 Flex 控制时，已登记脚本应替代静态尺寸输入的基础来源。");
+                    Assert.That(staticSnapshot.externalWriters[0].active, Is.True);
+                    Assert.That(fixedCrossAxisSnapshot.widthWriters, Is.EqualTo(new[] { "SCRIPT" }),
+                        "列布局中的显式 inline 宽度覆盖 Stretch，脚本登记替代尺寸输入来源。");
+                    Assert.That(hiddenSnapshot.active, Is.False);
+                    Assert.That(hiddenSnapshot.positionWriters, Is.Empty);
+                    Assert.That(hiddenSnapshot.widthWriters, Is.Empty);
+                    Assert.That(hiddenSnapshot.heightWriters, Is.Empty);
+                    Assert.That(hiddenSnapshot.externalWriters[0].active, Is.False,
+                        "目标退出布局时，关联 Behaviour 即使仍启用也不能标记为有效写入者。");
+
                     report = new LayoutMeasurementService().Measure(new LayoutMeasurementRequest
                     {
                         taskId = taskId,
@@ -127,11 +251,15 @@ namespace Project.UnityWorkflow.Tests.Editor
                         uiSystem = "UI_TOOLKIT",
                         coordinateSpace = "UI_TOOLKIT_LOGICAL_POINTS",
                         outputPath = outputPath,
+                        includeComponentSnapshots = true,
+                        stateId = "layout-state",
+                        evidenceRoot = "Artifacts/Visual/" + taskId,
                         targets = new System.Collections.Generic.List<LayoutMeasurementTarget>
                         {
                             new LayoutMeasurementTarget
                             {
                                 id = "card",
+                                referenceId = "layout-parent",
                                 documentPath = "Menu",
                                 elementName = "layout-target",
                                 parentElementName = "layout-parent",
@@ -152,6 +280,13 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(report.status, Is.EqualTo("PASS"), report.errorCode + " " + report.message);
             Assert.That(report.origin, Is.EqualTo("UIDOCUMENT_ROOT_TOP_LEFT"));
             Assert.That(report.unit, Is.EqualTo("POINT"));
+            Assert.That(report.measurementSource, Is.EqualTo("UNITY_EDITOR_LOADED_SCENE"));
+            Assert.That(report.runId, Is.Not.Empty);
+            Assert.That(report.frameCount, Is.GreaterThanOrEqualTo(0));
+            Assert.That(report.stateId, Is.EqualTo("layout-state"));
+            Assert.That(report.includesComponentSnapshots, Is.True);
+            Assert.That(report.viewportRect.width, Is.GreaterThan(0f));
+            Assert.That(report.safeAreaRect.width, Is.GreaterThan(0f));
             Assert.That(report.measurements, Has.Count.EqualTo(1));
 
             LayoutMeasurementItem measurement = report.measurements[0];
@@ -173,6 +308,16 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(measurement.delta.width, Is.EqualTo(0f).Within(0.1f));
             Assert.That(measurement.delta.height, Is.EqualTo(0f).Within(0.1f));
             Assert.That(measurement.tolerance.maxAbsDelta, Is.EqualTo(0.5f));
+            Assert.That(measurement.referenceId, Is.EqualTo("layout-parent"));
+            Assert.That(measurement.referencePath, Is.EqualTo("layout-parent"));
+            Assert.That(measurement.referenceRect.width, Is.EqualTo(300f).Within(0.1f));
+            Assert.That(measurement.componentSnapshot.active, Is.True);
+            Assert.That(measurement.componentSnapshot.uiToolkit.position, Is.EqualTo("Absolute"));
+            Assert.That(measurement.componentSnapshot.uiToolkit.width, Is.EqualTo(75f).Within(0.1f));
+            Assert.That(measurement.componentSnapshot.uiToolkit.height, Is.EqualTo(41f).Within(0.1f));
+            Assert.That(measurement.componentSnapshot.positionWriters, Is.EqualTo(new[] { "UITOOLKIT_STYLE" }));
+            Assert.That(measurement.componentSnapshot.widthWriters, Is.EqualTo(new[] { "UITOOLKIT_LAYOUT" }));
+            Assert.That(measurement.componentSnapshot.heightWriters, Is.EqualTo(new[] { "UITOOLKIT_LAYOUT" }));
             Assert.That(File.Exists(absoluteOutputPath), Is.True);
         }
 
@@ -248,6 +393,17 @@ namespace Project.UnityWorkflow.Tests.Editor
             {
                 Directory.Delete(taskDirectory);
             }
+        }
+
+        /// <summary>从真实 Panel 元素调用内部采集器，验证 Flex 轴向来源而不扩大公开 API。</summary>
+        private static LayoutComponentSnapshot CaptureSnapshot(GameObject documentObject, VisualElement element)
+        {
+            Type collectorType = typeof(LayoutMeasurementService).Assembly.GetType(
+                "Project.UnityWorkflow.VisualQA.LayoutComponentSnapshotCollector");
+            MethodInfo capture = collectorType.GetMethod("CaptureUiToolkit", BindingFlags.Public | BindingFlags.Static,
+                null, new[] { typeof(GameObject), typeof(VisualElement), typeof(string) }, null);
+            Assert.That(capture, Is.Not.Null);
+            return (LayoutComponentSnapshot)capture.Invoke(null, new object[] { documentObject, element, element.name });
         }
     }
 }

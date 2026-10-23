@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1.0",
+  "sceneId": "shop",
+  "stateId": "purchase-ready",
+  "scenePath": "Assets/Scenes/Shop.unity",
+  "uiSystem": "UGUI",
+  "coordinateSpace": "SCREEN_SPACE_PIXELS",
+  "roots": {
+    "viewport": {"x": 0, "y": 0, "width": 800, "height": 600},
+    "safe-area": {"x": 0, "y": 20, "width": 800, "height": 560}
+  },
+  "nodes": [
+    {
+      "id": "purchase-panel",
+      "parentElementId": "safe-area",
+      "semanticGrouping": {"kind": "component", "rationale": "底板同时管理购买按钮的布局、交互和状态。"},
+      "renderKind": "SPRITE",
+      "bounds": {"x": 300, "y": 200, "width": 160, "height": 64},
+      "layoutBinding": {
+        "parentElementId": "safe-area",
+        "hierarchyRelation": "PARENT_CHILD",
+        "coordinateSpace": "CANVAS_LOCAL",
+        "anchor": {"min": {"x": 0.5, "y": 0.5}, "max": {"x": 0.5, "y": 0.5}},
+        "pivot": {"x": 0.5, "y": 0.5},
+        "constraints": ["购买按钮相对实际安全区严格居中。"],
+        "resizePolicy": "LAYOUT_REBUILD",
+        "axisAlignment": {"horizontal": "center", "vertical": "center"},
+        "uiLayout": {
+          "groupingBasis": ["LAYOUT", "INTERACTION", "STATE"],
+          "positionDriver": "RECT_TRANSFORM",
+          "sizeDrivers": {"width": "RECT_TRANSFORM", "height": "RECT_TRANSFORM"},
+          "imageSizing": {"mode": "NATIVE"},
+          "layoutOwner": "SELF", "sizePolicy": "FIXED", "overflowPolicy": "KEEP_VISIBLE",
+          "safeAreaPolicy": "INSIDE_SAFE_AREA", "interactionPolicy": "HIT_TARGET"
+        }
+      }
+    },
+    {
+      "id": "purchase-icon",
+      "parentElementId": "purchase-panel",
+      "semanticGrouping": {"kind": "part", "rationale": "图标与价格组成同一购买信息。"},
+      "renderKind": "SPRITE",
+      "bounds": {"x": 320, "y": 220, "width": 24, "height": 24},
+      "layoutBinding": {
+        "parentElementId": "purchase-panel",
+        "hierarchyRelation": "PARENT_CHILD",
+        "coordinateSpace": "CANVAS_LOCAL",
+        "anchor": {"min": {"x": 0.5, "y": 0.5}, "max": {"x": 0.5, "y": 0.5}},
+        "pivot": {"x": 0.5, "y": 0.5},
+        "constraints": ["图标与价格整体居中，保留四个单位的间距。"],
+        "resizePolicy": "LAYOUT_REBUILD",
+        "axisAlignment": {"horizontal": "center", "vertical": "center"},
+        "centerAlignment": {
+          "horizontal": {"mode": "strict"}, "vertical": {"mode": "strict"},
+          "memberIds": ["purchase-icon", "purchase-label"]
+        },
+        "uiLayout": {
+          "groupingBasis": ["LAYOUT", "STATE"],
+          "positionDriver": "SCRIPT",
+          "sizeDrivers": {"width": "RECT_TRANSFORM", "height": "RECT_TRANSFORM"},
+          "imageSizing": {"mode": "NATIVE"},
+          "layoutOwner": "SELF", "sizePolicy": "FIXED", "overflowPolicy": "KEEP_VISIBLE",
+          "safeAreaPolicy": "INSIDE_SAFE_AREA", "interactionPolicy": "DELEGATE_TO_PARENT"
+        }
+      }
+    },
+    {
+      "id": "purchase-label",
+      "parentElementId": "purchase-panel",
+      "semanticGrouping": {"kind": "part", "rationale": "价格文字与图标同级，以图标为独立位置参照。"},
+      "renderKind": "TEXT",
+      "bounds": {"x": 348, "y": 222, "width": 48, "height": 20},
+      "layoutBinding": {
+        "parentElementId": "purchase-panel",
+        "positionReferenceId": "purchase-icon",
+        "hierarchyRelation": "PARENT_CHILD",
+        "coordinateSpace": "CANVAS_LOCAL",
+        "anchor": {"min": {"x": 0, "y": 1}, "max": {"x": 0, "y": 1}},
+        "pivot": {"x": 0.5, "y": 0.5},
+        "constraints": ["保持与图标的间距，不将文字改成图标的子节点。"],
+        "resizePolicy": "LAYOUT_REBUILD",
+        "axisAlignment": {"horizontal": "left", "vertical": "top"},
+        "uiLayout": {
+          "groupingBasis": ["POSITION", "STATE"],
+          "positionDriver": "SCRIPT",
+          "sizeDrivers": {"width": "CONTENT_SIZE_FITTER", "height": "CONTENT_SIZE_FITTER"},
+          "layoutOwner": "SELF", "sizePolicy": "CONTENT", "overflowPolicy": "KEEP_VISIBLE",
+          "safeAreaPolicy": "INSIDE_SAFE_AREA", "interactionPolicy": "DELEGATE_TO_PARENT"
+        }
+      }
+    }
+  ]
+}

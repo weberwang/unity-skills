@@ -37,6 +37,10 @@ description: Unity 6 游戏领域编排角色；在 unity-game-workflow-control 
 
 公共资源按[登记与使用规则](references/shared-asset-usage.md)从功能/场景规划贯穿 V1-V4：早期识别共享候选，V2 先查项目资源总表再选择复用或统一生产，V3 用真实产物复核；资源交接时由指定单写者同步登记，场景/显示层记录实际消费关系，替换后只重验受影响消费者。
 
+屏幕 UI 在 V2 拆解确认后读取[居中与机器布局包](references/ui-layout-plan.md)：功能父级与位置参照分开，底板可兼任组件根，严格居中与图文联合居中从确认事实派生；先通过 `layout-plan/layout-check` 检查，再生成供用户确认的布局图。机器结果不替代阶段确认，目标内技术修复继续使用 `repair + revalidate`。
+
+屏幕 UI 的 V2–V4 实施包绑定 `uiLayoutPlanRef`；V4 按[布局控制权与真实组件快照](references/ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，Evidence 以 `uiLayoutMeasurementRef` 绑定当前 evidenceRoot 内正式报告。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
+
 - V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](references/ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
 - V2 按[文本与色彩拆分路线](references/visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](references/ui-layout-and-hierarchy.md)。
 - V3 验证正式资源生产、实际 Importer 回读、资源级序列化引用和导入结果；可生产并验证资源级 Prefab、提供临时组合预览，不在本阶段实施正式宿主 Scene/场景装配 Prefab/UXML 或校准布局。不得以灰盒或整张效果图冒充正式资源。
@@ -57,6 +61,10 @@ Unity 原生 2D 骨骼、蒙皮和角色动画交给 [`$unity-game-2d-rigging`](
 2D 动画公共工具、导入规范、资产校验、批量对账及回归能力交给 [`$unity-game-2d-animation-ta`](../unity-game-2d-animation-ta/SKILL.md)，具体角色资产仍归骨骼制作。总控按[2D 动画岗位协作](references/2d-animation-collaboration.md)在既有实施包指定动画质量负责人，落实动作标杆与专业审查；其与被审资产制作者分离，可由现有 QA 中具备相应能力的独立审查者承担。TA 工程结果、专业审查意见与用户视觉确认分别记录，不增加用户审批阶段。
 
 ## 工具入口
+
+游戏运行时 UI 路线确定为 uGUI + TextMeshPro，使用 Canvas/RectTransform 与 Prefab，安全区复用 `SafeAreaRectTransform`；新增编辑器工具使用 UI Toolkit。按[插件能力路由](references/unity-plugin-routing.md)选择对应操作技能。
+
+V3/V4 涉及正式资源或序列帧交接时，按[加载与序列帧合同](references/resource-loading-and-frame-handoff.md)在唯一资源总表声明 `loading`，由 `uwt_inspect_resource_handoff` 读取实际路径、动态键、Clip/帧身份及消费者。实施包绑定 `resourceHandoff` 后，交付必须消费当前 `resourceHandoffInspectionRef`；不默认 Resources、不强制 Addressables，不把普通 address 当作加载证明。
 
 项目文档与 JSON Job 仍由最小文件工具处理；控制状态由 `unity-game-workflow-control` 处理，Unity 事实由 [@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与随附 Toolkit 处理：
 

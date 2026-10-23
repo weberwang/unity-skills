@@ -153,6 +153,19 @@
     "responsiveContractRef": {
       "$ref": "#/$defs/responsiveContractRef"
     },
+    "uiLayoutPlanRef": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string", "minLength": 1}},
+      "description": "屏幕UI从V2起必须绑定已派生机器布局包；沿用已有阶段确认。"
+    },
+    "resourceHandoff": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": {
+        "assetRegisterRef": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"type": "string", "minLength": 1}}},
+        "frameAnimationPlanRef": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"type": "string", "minLength": 1}}}
+      },
+      "description": "声明本工作项的当前资源或序列帧交接材料；交付时必须消费真实Unity读回。"
+    },
     "expectedFiles": {
       "type": "array",
       "items": {

@@ -8,6 +8,8 @@
 
 ## 核心路由
 
+游戏运行时 UI 采用 uGUI + TextMeshPro：Canvas/RectTransform 管理布局、Prefab 承载界面组件、`SafeAreaRectTransform` 管理安全区。未指定技术的运行时菜单、HUD、弹窗按此路线进入 `unity:ui-ugui`；新增编辑器窗口和工具进入 `unity:ui-uitk`。
+
 | 请求 | 使用的 Unity 插件 Skill |
 | --- | --- |
 | 玩法事件的视觉、音频、镜头、时间与交互反馈设计 | 本仓库 [`unity-game-juice`](../../unity-game-juice/SKILL.md)；确定玩法事件及参数后使用，不替代玩法规则所有权 |
@@ -15,7 +17,8 @@
 | 新建项目 | `unity:new-unity-project` |
 | UPM 包发现、安装、升级、移除 | `unity:unity-package-management` |
 | 查询具体资产或场景对象 | `unity:generate-editor-search-query` |
-| 未指定 UI 技术的菜单、HUD、弹窗、布局 | `unity:ui`，再路由到 `unity:ui-uitk`、`unity:ui-ugui` 或 `unity:ui-imgui` |
+| 运行时菜单、HUD、弹窗、布局 | `unity:ui` → `unity:ui-ugui`，文本使用 TextMeshPro |
+| 新增编辑器窗口和工具 UI | `unity:ui` → `unity:ui-uitk` |
 | 2D 像素渲染、Sprite、Atlas、Tilemap | `unity:2d-pixel-perfect`、`unity:sprite-editor`、`unity:manage-sprite-atlas` 与适用的 `unity:tilemap-*` |
 | Unity 原生 2D 骨骼、蒙皮与角色动画 | 本仓库 [`unity-game-2d-rigging`](../../unity-game-2d-rigging/SKILL.md) 编排；Editor、包、Sprite 元数据及图集复用对应 `unity:*` 技能，骨骼与动画 API 缺口按项目版本验证 |
 | 2D 动画公共工具、资产校验、批量对账与回归 | 本仓库 [`unity-game-2d-animation-ta`](../../unity-game-2d-animation-ta/SKILL.md) 负责技术管线；实际 Unity 操作复用插件与 Toolkit，角色资产仍归骨骼／视觉，质量负责人与独立 QA 按[岗位协作](2d-animation-collaboration.md)交接 |

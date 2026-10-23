@@ -30,6 +30,16 @@
     },
     "unityEvidence": {"$ref": "#/$defs/unityEvidence"},
     "responsiveEvidence": {"$ref": "#/$defs/responsiveEvidence"},
+    "uiLayoutMeasurementRef": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string", "minLength": 1}},
+      "description": "引用当前evidenceRoot内由Toolkit实际采集的布局与组件同批报告。"
+    },
+    "resourceHandoffInspectionRef": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string", "minLength": 1}},
+      "description": "引用当前evidenceRoot内由Toolkit实际读取资源加载、Clip与消费者的报告。"
+    },
     "productionContractAudit": {"$ref": "#/$defs/productionContractAudit"},
     "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
     "approval": {"$ref": "#/$defs/approval"},

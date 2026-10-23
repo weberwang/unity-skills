@@ -13,6 +13,8 @@
 
 `uwt_capture_game_view` 采用同一 Job 的请求与回查：首次返回 `PENDING` 只表示已登记请求，帧末真实图片与报告写入后才返回采集 `PASS`。仅在已有 Editor PlayMode、非 batch 且 Game View 可用时采集；不自动进入 PlayMode。退出 PlayMode、域重载或超时会取消当前请求。采集成功也不表示视觉验收通过。
 
+屏幕 UI 按[布局控制权与真实组件快照](ui-layout-runtime.md)启用 `uwt_measure_layout` 的组件采集：位置、宽度和高度分别核验写入者，同批读取真实父框、独立位置参照、安全区、图片与原生布局配置。V4 的 Evidence Manifest 通过 `uiLayoutMeasurementRef` 引用当前 evidenceRoot 内这份实际报告；不维护另一份手写组件快照。
+
 ## 差异归因
 
 先按[追溯与检查边界](art-quality-contract.md#追溯与检查边界)区分拆解漏项、规格与目标矛盾、生成结果偏离规格、Unity 装配或适配偏差。前三类交回拆解或资源生产修复，不能一概当作布局问题。属于装配或适配时，再区分场景内容区域、屏幕安全区和弹窗底板内容区域，并定位实际所有者：

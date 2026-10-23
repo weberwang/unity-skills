@@ -20,10 +20,13 @@
     "outputPath": {
       "allOf": [
         {"$ref": "common.schema.json#/$defs/projectRelativePath"},
-        {"pattern": "^Artifacts/Visual/.+\\.json$"}
+        {"pattern": "\\.json$"}
       ]
     },
     "gapAxis": {"enum": ["horizontal", "vertical"]},
+    "includeComponentSnapshots": {"type": "boolean"},
+    "stateId": {"type": "string", "minLength": 1},
+    "evidenceRoot": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
     "targets": {
       "type": "array",
       "minItems": 1,
@@ -78,6 +81,10 @@
         "documentPath": {"type": "string", "minLength": 1},
         "elementName": {"type": "string", "minLength": 1},
         "parentElementName": {"type": "string", "minLength": 1},
+        "referenceId": {"type": "string", "minLength": 1},
+        "referenceObjectPath": {"type": "string", "minLength": 1},
+        "referenceElementName": {"type": "string", "minLength": 1},
+        "referenceRoot": {"enum": ["viewport", "safe-area"]},
         "targetRect": {"$ref": "#/$defs/rect"},
         "tolerance": {
           "type": "object",
@@ -87,6 +94,11 @@
         }
       },
       "allOf": [
+        {"not": {"anyOf": [
+          {"required": ["referenceObjectPath", "referenceElementName"]},
+          {"required": ["referenceObjectPath", "referenceRoot"]},
+          {"required": ["referenceElementName", "referenceRoot"]}
+        ]}},
         {
           "if": {"properties": {"objectPath": {"minLength": 1}}, "required": ["objectPath"]},
           "then": {
@@ -114,9 +126,13 @@
         "objectPath": {"type": "string"},
         "elementName": {"type": "string"},
         "parentPath": {"type": "string", "minLength": 1},
-        "actualRect": {"$ref": "#/$defs/rect"},
-        "parentRect": {"$ref": "#/$defs/rect"},
-        "margins": {
+        "actualRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
+        "parentRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
+        "referenceId": {"type": "string"},
+        "referencePath": {"type": "string"},
+        "referenceRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
+        "componentSnapshot": {"anyOf": [{"$ref": "#/$defs/componentSnapshot"}, {"type": "null"}]},
+        "margins": {"anyOf": [{"type": "null"}, {
           "type": "object",
           "additionalProperties": false,
           "required": ["left", "top", "right", "bottom"],
@@ -126,7 +142,7 @@
             "right": {"type": "number"},
             "bottom": {"type": "number"}
           }
-        },
+        }]},
         "targetRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
         "delta": {
           "anyOf": [
@@ -155,8 +171,93 @@
             {"type": "null"}
           ]
         },
-        "status": {"enum": ["MEASURED", "PASS", "FAIL"]}
+        "status": {"enum": ["MEASURED", "PASS", "FAIL", "INACTIVE"]}
+      },
+      "allOf": [{
+        "if": {"properties": {"status": {"const": "INACTIVE"}}, "required": ["status"]},
+        "then": {"required": ["componentSnapshot"], "properties": {"margins": {"type": "null"}, "componentSnapshot": {"type": "object", "properties": {"active": {"const": false}}}}},
+        "else": {"properties": {"actualRect": {"$ref": "#/$defs/rect"}, "parentRect": {"$ref": "#/$defs/rect"}, "margins": {"type": "object"}}}
+      }]
+    },
+    "snapshotSize": {
+      "type": "object", "additionalProperties": false, "required": ["width", "height"],
+      "properties": {"width": {"type": "number", "minimum": 0}, "height": {"type": "number", "minimum": 0}}
+    },
+    "rectTransformSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["anchorMin", "anchorMax", "pivot", "sizeDelta", "anchoredPosition", "localSize", "drivenBy"],
+      "properties": {
+        "anchorMin": {"$ref": "common.schema.json#/$defs/vector2"}, "anchorMax": {"$ref": "common.schema.json#/$defs/vector2"},
+        "pivot": {"$ref": "common.schema.json#/$defs/vector2"}, "sizeDelta": {"$ref": "common.schema.json#/$defs/vector2"},
+        "anchoredPosition": {"$ref": "common.schema.json#/$defs/vector2"}, "localSize": {"$ref": "#/$defs/snapshotSize"}, "drivenBy": {"type": "string"}
       }
+    },
+    "layoutGroupSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "enabled", "childControlWidth", "childControlHeight", "childForceExpandWidth", "childForceExpandHeight", "cellSize"],
+      "properties": {
+        "type": {"type": "string"}, "enabled": {"type": "boolean"},
+        "childControlWidth": {"type": "boolean"}, "childControlHeight": {"type": "boolean"},
+        "childForceExpandWidth": {"type": "boolean"}, "childForceExpandHeight": {"type": "boolean"},
+        "cellSize": {"anyOf": [{"$ref": "#/$defs/snapshotSize"}, {"type": "null"}]}
+      }
+    },
+    "contentSizeFitterSnapshot": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "horizontalFit", "verticalFit"],
+      "properties": {"enabled": {"type": "boolean"}, "horizontalFit": {"enum": ["Unconstrained", "MinSize", "PreferredSize"]}, "verticalFit": {"enum": ["Unconstrained", "MinSize", "PreferredSize"]}}
+    },
+    "aspectRatioFitterSnapshot": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "aspectMode", "aspectRatio"],
+      "properties": {"enabled": {"type": "boolean"}, "aspectMode": {"enum": ["None", "WidthControlsHeight", "HeightControlsWidth", "FitInParent", "EnvelopeParent"]}, "aspectRatio": {"type": "number"}}
+    },
+    "imageSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["assetGuid", "localId", "assetPath", "sourceSize", "pixelsPerUnit", "imagePixelsPerUnit", "referencePixelsPerUnit", "pixelsPerUnitMultiplier", "type", "localSize", "nativeSize", "hasBorder", "preserveAspect", "border"],
+      "properties": {
+        "assetGuid": {"type": "string"}, "localId": {"type": "string"}, "assetPath": {"type": "string"},
+        "sourceSize": {"$ref": "#/$defs/snapshotSize"}, "localSize": {"$ref": "#/$defs/snapshotSize"}, "nativeSize": {"$ref": "#/$defs/snapshotSize"},
+        "pixelsPerUnit": {"type": "number"}, "imagePixelsPerUnit": {"type": "number"},
+        "referencePixelsPerUnit": {"type": "number"}, "pixelsPerUnitMultiplier": {"type": "number"},
+        "type": {"enum": ["Simple", "Sliced", "Tiled", "Filled"]}, "hasBorder": {"type": "boolean"}, "preserveAspect": {"type": "boolean"},
+        "border": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0}}
+      }
+    },
+    "uiToolkitSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["position", "display", "width", "height", "flexGrow", "flexShrink", "flexDirection", "alignItems", "justifyContent", "backgroundAssetGuid", "sliceLeft", "sliceRight", "sliceTop", "sliceBottom", "sliceScale"],
+      "properties": {
+        "position": {"enum": ["Relative", "Absolute"]}, "display": {"enum": ["Flex", "None"]}, "width": {"type": "number"}, "height": {"type": "number"},
+        "flexGrow": {"type": "number"}, "flexShrink": {"type": "number"}, "flexDirection": {"type": "string"},
+        "alignItems": {"type": "string"}, "justifyContent": {"type": "string"}, "backgroundAssetGuid": {"type": "string"},
+        "sliceLeft": {"type": "number"}, "sliceRight": {"type": "number"}, "sliceTop": {"type": "number"}, "sliceBottom": {"type": "number"}, "sliceScale": {"type": "number"}
+      }
+    },
+    "externalWriterSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["driver", "ownerType", "ownerPath", "active", "elementName", "position", "width", "height"],
+      "properties": {
+        "driver": {"enum": ["SCRIPT", "ANIMATION"]}, "ownerType": {"type": "string"}, "ownerPath": {"type": "string"},
+        "active": {"type": "boolean"}, "elementName": {"type": "string"}, "position": {"type": "boolean"}, "width": {"type": "boolean"}, "height": {"type": "boolean"}
+      }
+    },
+    "componentSnapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active", "positionWriters", "widthWriters", "heightWriters", "observationScope", "rectTransform", "layoutGroup", "parentLayoutGroup", "contentSizeFitter", "aspectRatioFitter", "image", "uiToolkit", "externalWriters"],
+      "properties": {
+        "active": {"type": "boolean"}, "observationScope": {"const": "ENGINE_COMPONENTS_AND_REGISTERED_WRITERS"},
+        "positionWriters": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/layoutDriver"}},
+        "widthWriters": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/layoutDriver"}},
+        "heightWriters": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/layoutDriver"}},
+        "rectTransform": {"anyOf": [{"$ref": "#/$defs/rectTransformSnapshot"}, {"type": "null"}]},
+        "layoutGroup": {"anyOf": [{"$ref": "#/$defs/layoutGroupSnapshot"}, {"type": "null"}]},
+        "parentLayoutGroup": {"anyOf": [{"$ref": "#/$defs/layoutGroupSnapshot"}, {"type": "null"}]},
+        "contentSizeFitter": {"anyOf": [{"$ref": "#/$defs/contentSizeFitterSnapshot"}, {"type": "null"}]},
+        "aspectRatioFitter": {"anyOf": [{"$ref": "#/$defs/aspectRatioFitterSnapshot"}, {"type": "null"}]},
+        "image": {"anyOf": [{"$ref": "#/$defs/imageSnapshot"}, {"type": "null"}]},
+        "uiToolkit": {"anyOf": [{"$ref": "#/$defs/uiToolkitSnapshot"}, {"type": "null"}]},
+        "externalWriters": {"type": "array", "items": {"$ref": "#/$defs/externalWriterSnapshot"}}
+      },
+      "allOf": [{"if": {"properties": {"active": {"const": false}}, "required": ["active"]}, "then": {"properties": {"positionWriters": {"maxItems": 0}, "widthWriters": {"maxItems": 0}, "heightWriters": {"maxItems": 0}}}}]
     },
     "report": {
       "type": "object",
@@ -169,6 +270,13 @@
         "message": {"type": "string"},
         "taskId": {"$ref": "common.schema.json#/$defs/taskId"},
         "candidateId": {"anyOf": [{"$ref": "common.schema.json#/$defs/taskId"}, {"const": ""}]},
+        "measurementSource": {"type": "string"},
+        "runId": {"type": "string"},
+        "frameCount": {"type": "integer", "minimum": 0},
+        "stateId": {"type": "string"},
+        "includesComponentSnapshots": {"type": "boolean"},
+        "viewportRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
+        "safeAreaRect": {"anyOf": [{"$ref": "#/$defs/rect"}, {"type": "null"}]},
         "scenePath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
         "uiSystem": {"enum": ["UGUI", "UI_TOOLKIT"]},
         "coordinateSpace": {"enum": ["SCREEN_SPACE_PIXELS", "UI_TOOLKIT_LOGICAL_POINTS"]},
@@ -182,6 +290,17 @@
         "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}}
       },
       "allOf": [
+        {
+          "if": {"properties": {"includesComponentSnapshots": {"const": true}}, "required": ["includesComponentSnapshots"]},
+          "then": {
+            "required": ["measurementSource", "runId", "frameCount", "stateId", "viewportRect", "safeAreaRect"],
+            "properties": {
+              "measurementSource": {"const": "UNITY_EDITOR_LOADED_SCENE"}, "runId": {"minLength": 1}, "stateId": {"minLength": 1},
+              "viewportRect": {"$ref": "#/$defs/rect"}, "safeAreaRect": {"$ref": "#/$defs/rect"},
+              "measurements": {"items": {"required": ["referenceId", "referencePath", "referenceRect", "componentSnapshot"], "properties": {"componentSnapshot": {"$ref": "#/$defs/componentSnapshot"}}}}
+            }
+          }
+        },
         {
           "if": {"properties": {"gapAxis": {"const": ""}}, "required": ["gapAxis"]},
           "then": {"properties": {"gaps": {"maxItems": 0}}}
@@ -206,6 +325,14 @@
   },
   "allOf": [
     {
+      "if": {"properties": {"includeComponentSnapshots": {"const": true}}, "required": ["includeComponentSnapshots"]},
+      "then": {
+        "required": ["stateId", "evidenceRoot"],
+        "properties": {"targets": {"items": {"required": ["referenceId"]}}}
+      },
+      "else": {"properties": {"outputPath": {"pattern": "^Artifacts/Visual/.+\\.json$"}}}
+    },
+    {
       "if": {"properties": {"uiSystem": {"const": "UGUI"}}, "required": ["uiSystem"]},
       "then": {
         "properties": {
@@ -213,7 +340,7 @@
           "targets": {
             "items": {
               "required": ["objectPath", "parentObjectPath"],
-              "not": {"anyOf": [{"required": ["documentPath"]}, {"required": ["elementName"]}, {"required": ["parentElementName"]}]}
+              "not": {"anyOf": [{"required": ["documentPath"]}, {"required": ["elementName"]}, {"required": ["parentElementName"]}, {"required": ["referenceElementName"]}]}
             }
           }
         }
@@ -224,12 +351,12 @@
           "targets": {
             "items": {
               "required": ["documentPath", "elementName", "parentElementName"],
-              "not": {"anyOf": [{"required": ["objectPath"]}, {"required": ["parentObjectPath"]}]}
+              "not": {"anyOf": [{"required": ["objectPath"]}, {"required": ["parentObjectPath"]}, {"required": ["referenceObjectPath"]}]}
             }
           }
         }
       }
     }
   ],
-  "description": "此契约不接受手填的实际 bounds；每个请求只允许一种 UI 系统和一种坐标空间。gapAxis 可选，间距仅描述请求选择的同一直接父级子项中按实测轴位置相邻的节点，不代表检查了父级所有子项。UI Toolkit 报告统一以同一 UIDocument 根节点的左上角为逻辑点原点。"
+  "description": "此契约不接受手填的实际 bounds 或组件快照；每个请求只允许一种 UI 系统和一种坐标空间。组件采集要求显式状态、证据根和参照ID，输出必须由Unity限制在该证据根内。gapAxis只描述所选同级节点实测间距。UI Toolkit使用同一UIDocument根左上逻辑点坐标。"
 }

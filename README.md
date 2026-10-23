@@ -1,6 +1,6 @@
 # Unity 游戏协作 Skills
 
-面向 Unity 6、URP、UI Toolkit 与 [@Unity](plugin://unity@openai-curated-remote) 插件的阶段化开发工作流。`$unity-game-workflow-control` 是唯一全局控制面，`$unity-development-workflow` 负责 Unity 领域编排，其余 Skills 负责制作、架构、玩法、视觉、3D、音频、数值、QA 和发布。
+面向 Unity 6、URP、uGUI + TextMeshPro 与 [@Unity](plugin://unity@openai-curated-remote) 插件的阶段化开发工作流。游戏运行时 UI 采用 Canvas/RectTransform 与 Prefab，新增编辑器工具采用 UI Toolkit。`$unity-game-workflow-control` 是唯一全局控制面，`$unity-development-workflow` 负责 Unity 领域编排，其余 Skills 负责制作、架构、玩法、视觉、3D、音频、数值、QA 和发布。
 
 ## 流程模型
 
@@ -21,6 +21,10 @@
 - A3 前冻结 Implementation Package；失败优先 `repair`，候选未变时 `revalidate`，仅上游失效或范围真实变化时 `return`。
 
 Unity 写入遵循原生约束：唯一 Editor 实例、编译/导入/域重载稳定、单写者、AssetDatabase、资源与 `.meta` 配对、GUID/Importer/序列化回读，以及 EditMode/PlayMode/构建证据。未经用户明确要求，不启动 Standalone/Player 或真机，不签名、上传或发布。
+
+屏幕 UI 在 V2 使用[机器布局包](unity-development-workflow/references/ui-layout-plan.md)，分别记录功能父级与位置参照，允许底板兼任组件根，派生严格/组合居中并校验依赖。V2–V4 实施包绑定 `uiLayoutPlanRef`；V4 由 `uwt_measure_layout` 读取[真实组件与布局](unity-development-workflow/references/ui-layout-runtime.md)，以 `uiLayoutMeasurementRef` 核验位置、宽度、高度的控制权及 Unity 原生尺寸。机器通过不代替用户检查显示效果。
+
+V3/V4 的[资源与序列帧交接](unity-development-workflow/references/resource-loading-and-frame-handoff.md)沿用唯一资源总表，显式区分序列化、Resources 和 Addressables。`uwt_inspect_resource_handoff` 读取实际加载键、Clip/帧身份及 Prefab 消费者；实施包声明 `resourceHandoff` 后，以真实报告完成同源校验与交付门禁，不新增阶段或强制资源框架。
 
 场景和独立显示层的 V0 仅作内部识别与分流；V1–V4 按 `stageReviews` 保存实际用户确认，V2 独立记录拆解图和布局图确认。实施单元完成依赖 `evidenceRoot/execution-state.json` 中已验证的结果，不以 Implementation Package 的计划状态替代。验收以用户要求和实际完成情况为准，中途实现调整无需回改合同，不要求或校验 SHA，具体见[阶段人工确认约束](unity-game-workflow-control/references/stage-confirmation.md)。
 

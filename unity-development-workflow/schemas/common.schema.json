@@ -3,6 +3,18 @@
   "$id": "https://codex.local/unity-workflow/schemas/common.schema.json",
   "title": "Unity 工作流公共定义",
   "$defs": {
+    "resourceLoading": {
+      "type": "object", "additionalProperties": false, "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["SERIALIZED", "RESOURCES", "ADDRESSABLES"]},
+        "key": {"type": "string", "minLength": 1, "pattern": "\\S"}
+      },
+      "allOf": [{
+        "if": {"properties": {"mode": {"const": "SERIALIZED"}}, "required": ["mode"]},
+        "then": {"not": {"required": ["key"]}}, "else": {"required": ["key"]}
+      }],
+      "description": "显式声明实际加载方式；一般address字段不构成动态加载配置证据。"
+    },
     "taskId": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9.-]{0,95}$"
@@ -23,6 +35,79 @@
       "minLength": 1,
       "pattern": "^[^\\s@]+(?:@[A-Za-z0-9._-]+)?$"
     },
+    "visualOverflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {"reason": {"type": "string", "minLength": 1}},
+      "description": "仅当子节点越出非根父节点显示框时声明；不能豁免 viewport 或 safe-area 边界。"
+    },
+    "independentContainerReason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "说明独立容器承担的动画、裁切、交互尺寸或动态布局职责。"
+    },
+    "axisAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["horizontal", "vertical"],
+      "properties": {
+        "horizontal": {"enum": ["left", "center", "right"]},
+        "vertical": {"enum": ["top", "center", "bottom"]}
+      },
+      "description": "描述节点相对位置参照的水平与垂直锚点；派生时保留原始间距。"
+    },
+    "centerAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "horizontal": {"$ref": "#/$defs/centerAlignmentAxis"},
+        "vertical": {"$ref": "#/$defs/centerAlignmentAxis"},
+        "memberIds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1},
+          "description": "整体居中的成员集合必须包含当前节点作为 leader。"
+        }
+      },
+      "anyOf": [{"required": ["horizontal"]}, {"required": ["vertical"]}],
+      "description": "strict 表示零偏移中心对齐；reference 表示有理由的显式补偿。"
+    },
+    "centerAlignmentAxis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["strict", "reference"]},
+        "offset": {"type": "number"},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "reference"}}, "required": ["mode"]},
+          "then": {"required": ["offset", "reason"]}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "strict"}}, "required": ["mode"]},
+          "then": {"properties": {"offset": {"const": 0}}}
+        }
+      ]
+    },
+    "layoutDriver": {
+      "enum": ["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"],
+      "description": "记录具体属性的唯一写入机制；位置、宽度和高度分别核对。"
+    },
+    "layoutSizeDrivers": {
+      "type": "object", "additionalProperties": false, "required": ["width", "height"],
+      "properties": {"width": {"$ref": "#/$defs/layoutDriver"}, "height": {"$ref": "#/$defs/layoutDriver"}}
+    },
+    "layoutImageSizing": {
+      "type": "object", "additionalProperties": false, "required": ["mode"],
+      "properties": {"mode": {"enum": ["NATIVE", "EXPLICIT", "SLICED"]}, "reason": {"type": "string", "minLength": 1}},
+      "allOf": [{"if": {"properties": {"mode": {"const": "EXPLICIT"}}, "required": ["mode"]}, "then": {"required": ["reason"]}}],
+      "description": "源像素和Unity显示尺寸分开；显式缩放说明意图，切片沿用既有九宫格合同。"
+    },
     "semanticGrouping": {
       "type": "object",
       "additionalProperties": false,
@@ -39,6 +124,9 @@
       "required": ["parentElementId", "hierarchyRelation", "coordinateSpace", "anchor", "pivot", "constraints"],
       "properties": {
         "parentElementId": {"type": "string", "minLength": 1},
+        "positionReferenceId": {"type": "string", "minLength": 1},
+        "axisAlignment": {"$ref": "#/$defs/axisAlignment"},
+        "centerAlignment": {"$ref": "#/$defs/centerAlignment"},
         "hierarchyRelation": {"enum": ["PARENT_CHILD", "SAME_LEVEL"]},
         "coordinateSpace": {"enum": ["SCENE_LOCAL", "PREFAB_LOCAL", "CANVAS_LOCAL", "UI_TOOLKIT_PANEL", "SCREEN_SAFE_AREA"]},
         "uiLayout": {
@@ -53,10 +141,15 @@
               "items": {"enum": ["POSITION", "LAYOUT", "INTERACTION", "STATE", "CLIP", "REUSE"]}
             },
             "layoutOwner": {"enum": ["PARENT", "SELF", "NONE"]},
+            "positionDriver": {"$ref": "#/$defs/layoutDriver"},
+            "sizeDrivers": {"$ref": "#/$defs/layoutSizeDrivers"},
+            "imageSizing": {"$ref": "#/$defs/layoutImageSizing"},
             "sizePolicy": {"enum": ["FIXED", "STRETCH", "CONTENT", "FLEX"]},
             "overflowPolicy": {"enum": ["KEEP_VISIBLE", "DECORATIVE_CROP", "REFLOW", "SCROLL"]},
             "safeAreaPolicy": {"enum": ["FULL_BLEED", "INSIDE_SAFE_AREA"]},
             "interactionPolicy": {"enum": ["HIT_TARGET", "DELEGATE_TO_PARENT", "NON_INTERACTIVE"]},
+            "visualOverflow": {"$ref": "#/$defs/visualOverflow"},
+            "independentContainerReason": {"$ref": "#/$defs/independentContainerReason"},
             "minimumSize": {
               "type": "object",
               "additionalProperties": false,

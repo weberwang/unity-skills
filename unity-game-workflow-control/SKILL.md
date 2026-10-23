@@ -22,6 +22,10 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 
 V4 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](references/unity-evidence.md#可见-v4-美术与动态体验)：Manifest 明确 `candidateId`、`candidateVersion`、`artExperienceAcceptanceRef`，机器只核对材料与文件，不代替用户观看判断。该材料复用现有 V4 阶段确认；纯工程工作项不适用。
 
+屏幕 UI 的 V2–V4 实施包必须绑定 `uiLayoutPlanRef: {path}`，V4 Evidence 绑定当前 evidenceRoot 内的 `uiLayoutMeasurementRef: {path}`。按[布局组件运行证据](../unity-development-workflow/references/ui-layout-runtime.md)核对同批 scene/state/candidate、完整节点覆盖、实际父级与参照、位置/宽度/高度唯一写入者及原生图片尺寸。缺失或失败时保持阻断并修复重验；普通工程和 World Space Canvas 不套用屏幕布局模型，不新增确认或 SHA 门禁。
+
+涉及资源加载或序列帧交接时，Implementation Package 的 `resourceHandoff` 绑定当前总表JSON执行快照或动画合同，Evidence 用 `resourceHandoffInspectionRef` 绑定当前 evidenceRoot 内的实际 Unity 报告。进入工程验收与交付时核对 Work Item ID、路径/GUID、Resources key、实际 Addressables 配置、帧序/Pivot/Clip 与消费者；详见[资源交接合同](../unity-development-workflow/references/resource-loading-and-frame-handoff.md)。声明后缺证或失败保持阻断，直接迁移同样重读文件；无此交接的工作不扩大范围。
+
 骨骼资产正式交付按[2D 骨骼交付门禁](references/rigging-delivery-gate.md)填写现有 Work Item/Evidence Manifest 的 `riggingDelivery`。`domain: 2d-rigging` 与 `unity-asset-change` 必须声明当前角色；F3 回读工程报告和目标角色的真实播放回归，失败、缺失、未执行或陈旧证据阻断交接。按输出岗位责任修复，由独立 QA 复验，不用公共技术夹具代替正式角色，不自动选择 `RETURN`。
 
 用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V0-V4，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。

@@ -24,6 +24,7 @@
           "visualVersion": {"type": "string", "minLength": 1},
           "path": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "address": {"type": "string", "minLength": 1},
+          "loading": {"$ref": "common.schema.json#/$defs/resourceLoading"},
           "guid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
           "importerReportPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},
           "registrationRecordPath": {"$ref": "common.schema.json#/$defs/projectRelativePath"},

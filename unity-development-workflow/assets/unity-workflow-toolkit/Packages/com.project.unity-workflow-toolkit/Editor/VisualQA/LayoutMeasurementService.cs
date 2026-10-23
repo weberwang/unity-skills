@@ -11,101 +11,6 @@ using UnityEngine.UIElements;
 
 namespace Project.UnityWorkflow.VisualQA
 {
-    /// <summary>描述一次从已加载场景读取 UI 实际几何的请求。</summary>
-    [Serializable]
-    public sealed class LayoutMeasurementRequest
-    {
-        public string taskId = string.Empty;
-        public string candidateId = string.Empty;
-        public string scenePath = string.Empty;
-        public string uiSystem = string.Empty;
-        public string coordinateSpace = string.Empty;
-        public string outputPath = string.Empty;
-        public string gapAxis = string.Empty;
-        public List<LayoutMeasurementTarget> targets = new List<LayoutMeasurementTarget>();
-    }
-
-    /// <summary>描述需要测量的 uGUI RectTransform 或 UI Toolkit 元素及其直接父框。</summary>
-    [Serializable]
-    public sealed class LayoutMeasurementTarget
-    {
-        public string id = string.Empty;
-        public string objectPath = string.Empty;
-        public string parentObjectPath = string.Empty;
-        public string documentPath = string.Empty;
-        public string elementName = string.Empty;
-        public string parentElementName = string.Empty;
-        public LayoutRect targetRect;
-        public LayoutTolerance tolerance;
-    }
-
-    /// <summary>记录一个统一采用左上原点的实际矩形。</summary>
-    [Serializable]
-    public sealed class LayoutRect
-    {
-        public float x;
-        public float y;
-        public float width;
-        public float height;
-    }
-
-    /// <summary>用一个声明的最大绝对差值同时约束位置和尺寸四个分量。</summary>
-    [Serializable]
-    public sealed class LayoutTolerance
-    {
-        public float maxAbsDelta;
-    }
-
-    /// <summary>记录实际节点相对直接父框的四边距离。</summary>
-    [Serializable]
-    public sealed class LayoutMargins
-    {
-        public float left;
-        public float top;
-        public float right;
-        public float bottom;
-    }
-
-    /// <summary>返回一次布局测量的实测值、声明目标与容差结论。</summary>
-    [Serializable]
-    public sealed class LayoutMeasurementItem
-    {
-        public string id = string.Empty;
-        public string objectPath = string.Empty;
-        public string elementName = string.Empty;
-        public string parentPath = string.Empty;
-        public LayoutRect actualRect;
-        public LayoutRect parentRect;
-        public LayoutMargins margins;
-        public LayoutRect targetRect;
-        public LayoutRect delta;
-        public LayoutTolerance tolerance;
-        public string status = "MEASURED";
-    }
-
-    /// <summary>表示布局测量结果；MEASURED 不代表通过未声明的精确度阈值。</summary>
-    [Serializable]
-    public sealed class LayoutMeasurementReport
-    {
-        public string schemaVersion = "1.0";
-        public string status = "FAIL";
-        public string errorCode = string.Empty;
-        public string message = string.Empty;
-        public string taskId = string.Empty;
-        public string candidateId = string.Empty;
-        public string scenePath = string.Empty;
-        public string uiSystem = string.Empty;
-        public string coordinateSpace = string.Empty;
-        public string unit = string.Empty;
-        public string origin = "SCREEN_TOP_LEFT";
-        public string generatedAtUtc = string.Empty;
-        public string outputPath = string.Empty;
-        public List<LayoutMeasurementItem> measurements = new List<LayoutMeasurementItem>();
-        public string gapAxis = string.Empty;
-        public string gapNote = string.Empty;
-        public List<LayoutGapMeasurement> gaps = new List<LayoutGapMeasurement>();
-    }
-
     /// <summary>
     /// 只读采集已加载 UI 的实际矩形；不调整 RectTransform、Layout Group 或 Flex 布局。
     /// </summary>
@@ -172,7 +77,7 @@ namespace Project.UnityWorkflow.VisualQA
 
             try
             {
-                ReportWriter.WriteNew(request.outputPath, report);
+                LayoutMeasurementReportWriter.WriteNew(request.outputPath, report);
             }
             catch (Exception)
             {
@@ -217,15 +122,34 @@ namespace Project.UnityWorkflow.VisualQA
             }
 
             string outputPath = Normalize(request.outputPath);
-            if (!outputPath.StartsWith(EvidenceRoot, StringComparison.OrdinalIgnoreCase) ||
-                !outputPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            bool outputUnderAllowedRoot = request.includeComponentSnapshots
+                ? !Path.IsPathRooted(outputPath)
+                : outputPath.StartsWith(EvidenceRoot, StringComparison.OrdinalIgnoreCase);
+            if (!outputUnderAllowedRoot || !outputPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                return Failure("FAIL", "INVALID_EVIDENCE_PATH", $"报告必须写入 {EvidenceRoot} 下的 JSON 文件。", request);
+                return Failure("FAIL", "INVALID_EVIDENCE_PATH",
+                    "快照报告必须使用项目相对 evidenceRoot，普通测量报告必须位于 Artifacts/Visual。", request);
             }
 
             if (request.targets == null || request.targets.Count == 0)
             {
                 return Failure("FAIL", "TARGETS_REQUIRED", "至少需要一个显式布局目标。", request);
+            }
+
+            if (request.includeComponentSnapshots &&
+                (!IsValidTaskId(request.stateId) || string.IsNullOrWhiteSpace(request.evidenceRoot)))
+            {
+                return Failure("FAIL", "SNAPSHOT_CONTEXT_REQUIRED", "组件快照必须提供有效 stateId 和 evidenceRoot。", request);
+            }
+
+            string normalizedEvidenceRoot = NormalizeHierarchyPath(request.evidenceRoot);
+            if (request.includeComponentSnapshots &&
+                (string.IsNullOrWhiteSpace(normalizedEvidenceRoot) || Path.IsPathRooted(normalizedEvidenceRoot) ||
+                 HasPathEscapeSegment(outputPath) ||
+                 HasPathEscapeSegment(normalizedEvidenceRoot) ||
+                 !outputPath.StartsWith(normalizedEvidenceRoot + "/", StringComparison.OrdinalIgnoreCase)))
+            {
+                return Failure("FAIL", "OUTPUT_OUTSIDE_EVIDENCE_ROOT", "组件快照报告必须写入指定 evidenceRoot 子目录。", request);
             }
 
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -258,6 +182,37 @@ namespace Project.UnityWorkflow.VisualQA
                     return Failure("FAIL", "MIXED_UI_TARGETS", "目标字段与声明的 UI 系统不匹配，不能混合不同坐标来源。", request);
                 }
 
+                if (request.includeComponentSnapshots && !IsValidTaskId(target.referenceId))
+                {
+                    return Failure("FAIL", "REFERENCE_ID_REQUIRED", "采集组件快照时每个目标都必须绑定稳定的 referenceId。", request);
+                }
+
+                int referenceSourceCount = 0;
+                referenceSourceCount += string.IsNullOrWhiteSpace(target.referenceObjectPath) ? 0 : 1;
+                referenceSourceCount += string.IsNullOrWhiteSpace(target.referenceElementName) ? 0 : 1;
+                referenceSourceCount += string.IsNullOrWhiteSpace(target.referenceRoot) ? 0 : 1;
+                if (referenceSourceCount > 1 ||
+                    isUgui && !string.IsNullOrWhiteSpace(target.referenceElementName) ||
+                    isUiToolkit && !string.IsNullOrWhiteSpace(target.referenceObjectPath))
+                {
+                    return Failure("FAIL", "INVALID_REFERENCE_SOURCE", "参照必须且只能使用与 UI 系统匹配的一种实际路径或逻辑根。", request);
+                }
+
+                if (!string.IsNullOrWhiteSpace(target.referenceRoot) &&
+                    (!string.Equals(target.referenceRoot, "viewport", StringComparison.Ordinal) &&
+                     !string.Equals(target.referenceRoot, "safe-area", StringComparison.Ordinal) ||
+                     !string.Equals(target.referenceId, target.referenceRoot, StringComparison.Ordinal)))
+                {
+                    return Failure("FAIL", "INVALID_REFERENCE_ROOT", "逻辑根参照仅支持 referenceId 与 referenceRoot 相同的 viewport 或 safe-area。", request);
+                }
+
+                if ((!string.IsNullOrWhiteSpace(target.referenceObjectPath) ||
+                     !string.IsNullOrWhiteSpace(target.referenceElementName)) &&
+                    !string.IsNullOrWhiteSpace(target.referenceId) && !IsValidTaskId(target.referenceId))
+                {
+                    return Failure("FAIL", "INVALID_REFERENCE_ID", "referenceId 格式无效。", request);
+                }
+
                 if (isUiToolkit)
                 {
                     string documentPath = NormalizeHierarchyPath(target.documentPath);
@@ -275,6 +230,17 @@ namespace Project.UnityWorkflow.VisualQA
             try
             {
                 string absolutePath = WorkflowPaths.ResolveProjectRelative(outputPath);
+                if (request.includeComponentSnapshots)
+                {
+                    string absoluteEvidenceRoot = WorkflowPaths.ResolveProjectRelative(normalizedEvidenceRoot + "/");
+                    string fullRoot = Path.GetFullPath(absoluteEvidenceRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                    string fullOutput = Path.GetFullPath(absolutePath);
+                    if (!fullOutput.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Failure("FAIL", "OUTPUT_OUTSIDE_EVIDENCE_ROOT", "组件快照报告路径逃出了指定 evidenceRoot。", request);
+                    }
+                }
+
                 if (File.Exists(absolutePath))
                 {
                     return Failure("FAIL", "OUTPUT_ALREADY_EXISTS", "布局报告已存在，请使用新的版本化文件名。", request);
@@ -291,9 +257,15 @@ namespace Project.UnityWorkflow.VisualQA
         /// <summary>按明确路径解析场景内 uGUI RectTransform，并统一投影为左上原点屏幕像素。</summary>
         private static void MeasureUgui(Scene scene, LayoutMeasurementRequest request, LayoutMeasurementReport report)
         {
-            if (Screen.width <= 0 || Screen.height <= 0)
+            if ((Screen.width <= 0 || Screen.height <= 0) && !request.includeComponentSnapshots)
             {
                 throw new MeasurementException("SCREEN_SIZE_UNAVAILABLE", "Unity 当前屏幕尺寸无效，无法测量 uGUI。");
+            }
+
+            if (Screen.width > 0 && Screen.height > 0)
+            {
+                report.viewportRect = LayoutComponentSnapshotCollector.CreateScreenViewport(Screen.width, Screen.height);
+                report.safeAreaRect = LayoutComponentSnapshotCollector.CreateScreenSafeArea(Screen.width, Screen.height);
             }
 
             for (int index = 0; index < request.targets.Count; index++)
@@ -308,36 +280,102 @@ namespace Project.UnityWorkflow.VisualQA
                     throw new MeasurementException("UI_PARENT_MISMATCH", $"目标 {target.id} 必须与明确父路径直接构成 RectTransform 父子关系。");
                 }
 
+                bool targetActive = targetObject.activeInHierarchy;
                 Canvas canvas = targetObject.GetComponentInParent<Canvas>(true);
                 Canvas parentCanvas = parentObject.GetComponentInParent<Canvas>(true);
                 if (canvas == null || parentCanvas == null || canvas.rootCanvas != parentCanvas.rootCanvas ||
-                    !canvas.isActiveAndEnabled || !canvas.rootCanvas.isActiveAndEnabled)
+                    targetActive && (!canvas.isActiveAndEnabled || !canvas.rootCanvas.isActiveAndEnabled))
                 {
                     throw new MeasurementException("CANVAS_UNAVAILABLE", $"目标 {target.id} 不属于同一个启用的 Canvas。");
                 }
 
                 Canvas rootCanvas = canvas.rootCanvas;
-                if (rootCanvas.targetDisplay != 0 ||
-                    rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay && rootCanvas.renderMode != RenderMode.ScreenSpaceCamera)
+                if ((targetActive || !request.includeComponentSnapshots) &&
+                    (rootCanvas.targetDisplay != 0 ||
+                     rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay && rootCanvas.renderMode != RenderMode.ScreenSpaceCamera))
                 {
                     throw new MeasurementException("UNSUPPORTED_CANVAS_MODE", $"目标 {target.id} 仅支持默认显示器上的 Screen Space Overlay 或 Screen Space Camera Canvas。");
                 }
 
                 Camera camera = null;
-                if (rootCanvas.renderMode == RenderMode.ScreenSpaceCamera)
+                if (rootCanvas.renderMode == RenderMode.ScreenSpaceCamera && rootCanvas.isActiveAndEnabled)
                 {
                     camera = rootCanvas.worldCamera;
-                    if (camera == null || !camera.isActiveAndEnabled || camera.targetDisplay != rootCanvas.targetDisplay ||
-                        camera.targetTexture != null)
+                    if ((targetActive || !request.includeComponentSnapshots) &&
+                        (camera == null || !camera.isActiveAndEnabled || camera.targetDisplay != rootCanvas.targetDisplay ||
+                         camera.targetTexture != null))
                     {
                         throw new MeasurementException("CANVAS_CAMERA_UNAVAILABLE", $"目标 {target.id} 的 Screen Space Camera Canvas 缺少可输出到屏幕的有效摄像机。");
                     }
                 }
 
-                LayoutRect actual = ToScreenRect(targetRect, camera, Screen.height);
-                LayoutRect parent = ToScreenRect(parentRect, camera, Screen.height);
+                GameObject referenceObject = parentObject;
+                RectTransform referenceTransform = parentRect;
+                string referencePath = NormalizeHierarchyPath(target.parentObjectPath);
+                LayoutRect referenceRoot = ResolveReferenceRoot(target.referenceRoot, report);
+                if (!string.IsNullOrWhiteSpace(target.referenceObjectPath))
+                {
+                    referenceObject = ResolveSceneObject(scene, target.referenceObjectPath);
+                    referenceTransform = referenceObject.GetComponent<RectTransform>();
+                    if (referenceTransform == null ||
+                        !LayoutComponentSnapshotCollector.IsAllowedUguiReference(targetRect, referenceTransform))
+                    {
+                        throw new MeasurementException("INVALID_REFERENCE_RELATION", $"目标 {target.id} 的参照必须是同级兄弟或祖先 RectTransform。");
+                    }
+
+                    Canvas referenceCanvas = referenceObject.GetComponentInParent<Canvas>(true);
+                    if (referenceCanvas == null || referenceCanvas.rootCanvas != rootCanvas)
+                    {
+                        throw new MeasurementException("REFERENCE_CANVAS_MISMATCH", $"目标 {target.id} 的参照不属于同一个 Canvas。");
+                    }
+
+                    referencePath = NormalizeHierarchyPath(target.referenceObjectPath);
+                }
+                else if (!string.IsNullOrWhiteSpace(target.referenceRoot))
+                {
+                    referenceObject = null;
+                    referenceTransform = null;
+                    referencePath = target.referenceRoot;
+                }
+
+                LayoutRect actual = null;
+                LayoutRect parent = null;
+                LayoutRect reference = referenceRoot;
+                bool hasScreen = Screen.width > 0 && Screen.height > 0;
+                if (targetActive || !request.includeComponentSnapshots)
+                {
+                    if (!hasScreen)
+                    {
+                        throw new MeasurementException("SCREEN_SIZE_UNAVAILABLE", "Unity 当前屏幕尺寸无效，无法测量 uGUI。");
+                    }
+
+                    actual = ToScreenRect(targetRect, camera, Screen.height);
+                }
+
+                if (hasScreen && (parentObject.activeInHierarchy || !request.includeComponentSnapshots) &&
+                    (camera != null || rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay))
+                {
+                    parent = ToScreenRect(parentRect, camera, Screen.height);
+                }
+
+                if (referenceRoot == null && referenceTransform != null &&
+                    (referenceObject.activeInHierarchy || !request.includeComponentSnapshots) && hasScreen &&
+                    (camera != null || rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay))
+                {
+                    reference = ToScreenRect(referenceTransform, camera, Screen.height);
+                }
+
+                if (targetActive && !IsValidRect(reference))
+                {
+                    throw new MeasurementException("REFERENCE_GEOMETRY_UNAVAILABLE", $"目标 {target.id} 的实际参照没有可用几何。");
+                }
+
+                LayoutComponentSnapshot snapshot = request.includeComponentSnapshots
+                    ? LayoutComponentSnapshotCollector.CaptureUgui(targetObject, parentObject)
+                    : null;
                 AddMeasurement(report, target, NormalizeHierarchyPath(target.objectPath), string.Empty,
-                    NormalizeHierarchyPath(target.parentObjectPath), actual, parent);
+                    NormalizeHierarchyPath(target.parentObjectPath), actual, parent, target.referenceId,
+                    referencePath, reference, snapshot, !targetActive);
             }
         }
 
@@ -351,7 +389,7 @@ namespace Project.UnityWorkflow.VisualQA
                 LayoutMeasurementTarget target = request.targets[index];
                 GameObject documentObject = ResolveSceneObject(scene, target.documentPath);
                 UIDocument document = documentObject.GetComponent<UIDocument>();
-                if (document == null || !document.isActiveAndEnabled)
+                if (document == null || !document.isActiveAndEnabled && !request.includeComponentSnapshots)
                 {
                     throw new MeasurementException("UI_DOCUMENT_UNAVAILABLE", $"找不到启用的 UIDocument：{target.documentPath}。");
                 }
@@ -366,24 +404,31 @@ namespace Project.UnityWorkflow.VisualQA
                 }
 
                 VisualElement root = document.rootVisualElement;
-                if (root == null || root.panel == null)
+                if (root == null || root.panel == null && (document.isActiveAndEnabled || !request.includeComponentSnapshots))
                 {
                     throw new MeasurementException("UI_PANEL_UNAVAILABLE", $"UIDocument 尚未连接到有效 Panel：{target.documentPath}。");
                 }
 
-                if (sharedPanel == null)
+                if (root.panel != null && sharedPanel == null)
                 {
                     sharedPanel = root.panel;
                 }
-                else if (!ReferenceEquals(sharedPanel, root.panel))
+                else if (root.panel != null && !ReferenceEquals(sharedPanel, root.panel))
                 {
                     throw new MeasurementException("MIXED_UI_PANELS", "一次 UI Toolkit 测量不能混用不同 Panel 的逻辑坐标。");
                 }
 
                 Rect rootBounds = root.worldBound;
-                if (!IsUsableRect(rootBounds))
+                bool panelGeometryAvailable = root.panel != null && IsUsableRect(rootBounds);
+                if (!panelGeometryAvailable && (document.isActiveAndEnabled || !request.includeComponentSnapshots))
                 {
                     throw new MeasurementException("UI_PANEL_SIZE_UNAVAILABLE", $"UIDocument Panel 尚无有效尺寸：{target.documentPath}。");
+                }
+
+                if (panelGeometryAvailable && report.viewportRect == null)
+                {
+                    report.viewportRect = LayoutComponentSnapshotCollector.CreatePanelViewport(rootBounds);
+                    report.safeAreaRect = LayoutComponentSnapshotCollector.CreatePanelSafeArea(rootBounds);
                 }
 
                 List<VisualElement> targetMatches = FindElementsByName(root, target.elementName);
@@ -400,19 +445,75 @@ namespace Project.UnityWorkflow.VisualQA
                     throw new MeasurementException("UI_PARENT_MISMATCH", $"元素 {target.elementName} 必须与 {target.parentElementName} 直接构成父子关系。");
                 }
 
+                VisualElement referenceElement = parentElement;
+                string referencePath = target.parentElementName;
+                LayoutRect referenceRoot = ResolveReferenceRoot(target.referenceRoot, report);
+                if (!string.IsNullOrWhiteSpace(target.referenceElementName))
+                {
+                    List<VisualElement> referenceMatches = FindElementsByName(root, target.referenceElementName);
+                    if (referenceMatches.Count != 1)
+                    {
+                        throw new MeasurementException("UI_REFERENCE_NOT_UNIQUE", $"UI Toolkit 参照名称不存在或不唯一：{target.referenceElementName}。");
+                    }
+
+                    referenceElement = referenceMatches[0];
+                    if (!LayoutComponentSnapshotCollector.IsAllowedUiToolkitReference(targetElement, referenceElement))
+                    {
+                        throw new MeasurementException("INVALID_REFERENCE_RELATION", $"目标 {target.id} 的参照必须是同级兄弟或祖先元素。");
+                    }
+
+                    if (root.panel != null && referenceElement.panel != root.panel)
+                    {
+                        throw new MeasurementException("REFERENCE_PANEL_MISMATCH", $"目标 {target.id} 的参照不属于同一个 UI Toolkit Panel。");
+                    }
+
+                    referencePath = target.referenceElementName;
+                }
+                else if (!string.IsNullOrWhiteSpace(target.referenceRoot))
+                {
+                    referenceElement = null;
+                    referencePath = target.referenceRoot;
+                }
+
                 Rect targetBounds = targetElement.worldBound;
                 Rect parentBounds = parentElement.worldBound;
-                if (!IsUsableRect(targetBounds) || !IsUsableRect(parentBounds) ||
-                    targetElement.resolvedStyle.display == DisplayStyle.None ||
-                    parentElement.resolvedStyle.display == DisplayStyle.None)
+                bool targetHasLayout = LayoutComponentSnapshotCollector.IsUiToolkitElementLayoutActive(
+                    documentObject, targetElement);
+                bool parentHasLayout = LayoutComponentSnapshotCollector.IsUiToolkitElementLayoutActive(
+                    documentObject, parentElement);
+                bool targetActive = targetHasLayout;
+                if ((!request.includeComponentSnapshots || targetHasLayout) &&
+                    (!panelGeometryAvailable || !IsUsableRect(targetBounds) || !IsUsableRect(parentBounds) ||
+                     !parentHasLayout))
                 {
                     throw new MeasurementException("UI_ELEMENT_SIZE_UNAVAILABLE", $"元素或父元素尚无可测量的显示尺寸：{target.elementName}。");
                 }
 
-                LayoutRect actual = FromPanelRect(targetBounds, rootBounds);
-                LayoutRect parent = FromPanelRect(parentBounds, rootBounds);
+                LayoutRect actual = targetHasLayout || !request.includeComponentSnapshots
+                    ? FromPanelRect(targetBounds, rootBounds)
+                    : null;
+                LayoutRect parent = panelGeometryAvailable && parentHasLayout && IsUsableRect(parentBounds)
+                    ? FromPanelRect(parentBounds, rootBounds)
+                    : null;
+                LayoutRect reference = referenceRoot;
+                if (referenceRoot == null && referenceElement != null && panelGeometryAvailable &&
+                    LayoutComponentSnapshotCollector.IsUiToolkitElementLayoutActive(documentObject, referenceElement) &&
+                    IsUsableRect(referenceElement.worldBound))
+                {
+                    reference = FromPanelRect(referenceElement.worldBound, rootBounds);
+                }
+
+                if (targetActive && !IsValidRect(reference))
+                {
+                    throw new MeasurementException("REFERENCE_GEOMETRY_UNAVAILABLE", $"目标 {target.id} 的实际参照没有可用几何。");
+                }
+
+                LayoutComponentSnapshot snapshot = request.includeComponentSnapshots
+                    ? LayoutComponentSnapshotCollector.CaptureUiToolkit(documentObject, targetElement, target.elementName)
+                    : null;
                 AddMeasurement(report, target, NormalizeHierarchyPath(target.documentPath), target.elementName,
-                    target.parentElementName, actual, parent);
+                    target.parentElementName, actual, parent, target.referenceId, referencePath, reference,
+                    snapshot, !targetActive);
             }
         }
 
@@ -525,7 +626,12 @@ namespace Project.UnityWorkflow.VisualQA
             string elementName,
             string parentPath,
             LayoutRect actual,
-            LayoutRect parent)
+            LayoutRect parent,
+            string referenceId,
+            string referencePath,
+            LayoutRect reference,
+            LayoutComponentSnapshot componentSnapshot,
+            bool inactive)
         {
             var item = new LayoutMeasurementItem
             {
@@ -533,21 +639,25 @@ namespace Project.UnityWorkflow.VisualQA
                 objectPath = objectPath,
                 elementName = elementName,
                 parentPath = parentPath,
+                referenceId = referenceId ?? string.Empty,
+                referencePath = referencePath ?? string.Empty,
                 actualRect = actual,
                 parentRect = parent,
-                margins = new LayoutMargins
-                {
-                    left = actual.x - parent.x,
-                    top = actual.y - parent.y,
-                    right = parent.x + parent.width - actual.x - actual.width,
-                    bottom = parent.y + parent.height - actual.y - actual.height
-                },
+                referenceRect = reference,
+                componentSnapshot = componentSnapshot,
+                margins = actual == null || parent == null ? null : new LayoutMargins
+                    {
+                        left = actual.x - parent.x,
+                        top = actual.y - parent.y,
+                        right = parent.x + parent.width - actual.x - actual.width,
+                        bottom = parent.y + parent.height - actual.y - actual.height
+                    },
                 targetRect = target.targetRect == null ? null : CopyRect(target.targetRect),
                 tolerance = target.tolerance == null ? null : new LayoutTolerance { maxAbsDelta = target.tolerance.maxAbsDelta },
-                status = "MEASURED"
+                status = inactive ? "INACTIVE" : "MEASURED"
             };
 
-            if (target.targetRect != null)
+            if (!inactive && target.targetRect != null && actual != null)
             {
                 item.delta = new LayoutRect
                 {
@@ -558,7 +668,7 @@ namespace Project.UnityWorkflow.VisualQA
                 };
             }
 
-            if (target.tolerance != null)
+            if (!inactive && target.tolerance != null && item.delta != null)
             {
                 float tolerance = target.tolerance.maxAbsDelta;
                 item.status = Mathf.Abs(item.delta.x) <= tolerance &&
@@ -613,8 +723,29 @@ namespace Project.UnityWorkflow.VisualQA
                 origin = isUgui ? "SCREEN_TOP_LEFT" : "UIDOCUMENT_ROOT_TOP_LEFT",
                 generatedAtUtc = UtcNow(),
                 outputPath = Normalize(request.outputPath),
+                measurementSource = "UNITY_EDITOR_LOADED_SCENE",
+                runId = Guid.NewGuid().ToString("N"),
+                frameCount = Time.frameCount,
+                stateId = request.stateId ?? string.Empty,
+                includesComponentSnapshots = request.includeComponentSnapshots,
                 gapAxis = request.gapAxis ?? string.Empty
             };
+        }
+
+        /// <summary>返回本次场景测量中同一坐标空间的逻辑根矩形。</summary>
+        private static LayoutRect ResolveReferenceRoot(string referenceRoot, LayoutMeasurementReport report)
+        {
+            if (string.Equals(referenceRoot, "viewport", StringComparison.Ordinal))
+            {
+                return report.viewportRect == null ? null : CopyRect(report.viewportRect);
+            }
+
+            if (string.Equals(referenceRoot, "safe-area", StringComparison.Ordinal))
+            {
+                return report.safeAreaRect == null ? null : CopyRect(report.safeAreaRect);
+            }
+
+            return null;
         }
 
         /// <summary>生成不含绝对主机路径的失败或阻断报告，不写入不完整证据。</summary>
@@ -720,6 +851,21 @@ namespace Project.UnityWorkflow.VisualQA
         private static string NormalizeHierarchyPath(string path)
         {
             return Normalize(path).Trim('/');
+        }
+
+        /// <summary>拒绝通过点路径段改变 evidenceRoot 的实际位置。</summary>
+        private static bool HasPathEscapeSegment(string path)
+        {
+            string[] segments = (path ?? string.Empty).Split('/');
+            for (int index = 0; index < segments.Length; index++)
+            {
+                if (segments[index] == "." || segments[index] == "..")
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>使用固定 UTC 格式记录本次测量时间。</summary>

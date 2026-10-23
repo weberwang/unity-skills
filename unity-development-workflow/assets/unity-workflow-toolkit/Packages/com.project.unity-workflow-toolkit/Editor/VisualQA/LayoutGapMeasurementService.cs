@@ -46,6 +46,12 @@ namespace Project.UnityWorkflow.VisualQA
             for (int index = 0; index < report.measurements.Count; index++)
             {
                 LayoutMeasurementItem item = report.measurements[index];
+                // 非活动目标没有实测几何，不能被排序或参与边界间距计算。
+                if (item == null || item.actualRect == null)
+                {
+                    continue;
+                }
+
                 if (!groups.TryGetValue(item.parentPath, out List<LayoutMeasurementItem> siblings))
                 {
                     siblings = new List<LayoutMeasurementItem>();

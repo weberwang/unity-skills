@@ -4,6 +4,8 @@
 
 在 V1 定义屏幕 UI 结构、V2 冻结拆解与布局合同、V3 验收正式资源、V4 实现并校准正式组合时使用。适用于 uGUI 的 Canvas/RectTransform 和 UI Toolkit 的 UIDocument/UXML；World Space Canvas 按世界尺寸、相机距离和像素密度另行设计。
 
+当前游戏运行时 UI 采用 uGUI + TextMeshPro，以 Canvas/RectTransform 和 Prefab 实现；新增编辑器工具采用 UI Toolkit。以下布局语义与机器合同仍按实际 UI 系统读取，运行时实施按已确定的 uGUI 路线执行。
+
 ## 布局基准与分层
 
 HUD、按钮、弹窗和奖励反馈先按[游戏内文案](game-copy.md)确定最小必要可见表达，再安排节点与布局。图标、数值和符号已表达的信息不重复写成解释句；数值与对应图标及语境形成同一信息组，必要条件、引导、操作后果和无障碍名称仍保留。内部规格、拆解标注和编辑器说明不加入正式 UI。
@@ -26,9 +28,11 @@ HUD、按钮、弹窗和奖励反馈先按[游戏内文案](game-copy.md)确定�
 
 场景内容区域由 V1 的场景尺寸与相机合同确定，并换算到 Canvas/Panel 坐标；它不是 Unity 场景中所有物体 bounds 的并集，也不能直接用扩展后的屏幕或装饰边带替代。场景内容区域与屏幕重合时可以共用边界，存在边带或裁切时必须保留区别。关键 UI 的可停靠范围取场景内容区域与实时屏幕安全区的交集；空间不足时重排或滚动，不把控件移入装饰边带。
 
-弹窗底板本身相对屏幕定位并约束在安全区内，内部 UI 再相对底板布局；全屏遮罩仍独立覆盖屏幕。底板可以是图片或原生面板，但必须有明确的布局容器。无底板时使用屏幕参照容器，不为布局凭空增加可见底板。
+弹窗底板本身相对屏幕定位并约束在安全区内，内部 UI 再相对底板布局；全屏遮罩仍独立覆盖屏幕。简单底板优先兼任功能与布局根：uGUI 可在同一对象上使用 RectTransform、Image 与交互组件，UI Toolkit 可由带背景样式的 VisualElement 承载子项。无底板时使用屏幕参照容器，不为布局凭空增加可见底板。
 
-uGUI 用场景区域或底板容器的 RectTransform 承担停靠参照，UI Toolkit 用对应容器的布局矩形与 Flex/定位规则实现。`parentElementId` 仍记录实际直接父节点，嵌套组件逐级继承参照；在 `constraints` 中明确场景区域、底板内容区域或屏幕的参照节点、边界来源、停靠边与边距，在 `resizePolicy` 中声明参照尺寸变化后的重算策略。安全区组件仍只应用一次，区域换算不得再次收缩父容器。
+uGUI 用场景区域或底板的 RectTransform 承担停靠参照，UI Toolkit 用对应节点的布局矩形与 Flex/定位规则实现。`parentElementId` 记录实际直接父节点；`layoutBinding.positionReferenceId` 单独记录定位参照，省略时使用实际父级。参照可为同场景、状态与坐标空间的兄弟、祖先或稳定根，不能引用任意跨分支叶子、全屏装饰背景或自身；父子边与参照边合并后不得成环。`constraints` 补充设计理由，`resizePolicy` 声明重算策略，不以自由文本替代机器引用。安全区组件仍只应用一次，区域换算不得再次收缩父容器。
+
+关闭按钮等部件突出底板时，保留真实归属并填写 `uiLayout.visualOverflow.reason`，不扩大底板框；该声明只允许超出非根父框，不能绕过 viewport、安全区、裁切和交互边界。额外纯结构根包住可用底板及其内容时，填写 `uiLayout.independentContainerReason`，说明独立动画、裁切、稳定交互尺寸或动态排布职责；仅写“分组”或“包含”不足以增加层级。
 
 ```text
 UIRoot
@@ -43,16 +47,17 @@ UIRoot
 └── DisplayLayerRoot               # 独立显示层的全屏 Canvas/UIDocument
     ├── FullscreenDimmer
     └── SafeAreaRoot               # 显示层根的直接子节点，应用一次安全区
-        └── PopupPanelRoot         # 有底板时：底板定位与内部布局
-            ├── PanelVisual       # 底板外观
-            └── PanelContent      # 标题、正文、按钮等相对底板布局
+        └── PopupPanelRoot         # 底板自身兼任功能与布局根
+            ├── Title             # 标题相对底板布局
+            ├── Content           # 仅在确有排布/滚动职责时使用容器
+            └── CloseButton       # 可声明突出底板，不扩大底板框
 ```
 
 无底板的弹窗省去 `PopupPanelRoot`，内容直接放在显示层的 `SafeAreaRoot` 或其有实际职责的子容器内，相对屏幕布局。显示层与宿主使用各自全屏 Canvas/UIDocument 时分别换算安全区；共用同一根时复用已有安全区结果，不重复挂载安全区组件。
 
 ## 细组件分组
 
-一个父节点必须拥有可解释的职责：共同定位、布局控制、交互命中、状态或生命周期、裁切边界、组件复用。只有共同主题、外观相近或图上距离近，不构成父子关系；没有依赖的元素保持同组同级。容器本身无布局或行为职责时删除空层。
+一个父节点必须拥有可解释的职责：真实布局控制、交互命中、状态或生命周期、裁切边界、组件复用。位置依赖通过位置参照表达，不要求将依赖双方改为父子。只有共同主题、外观相近或图上距离近，不构成父子关系；没有依赖的元素保持同组同级。`semanticGrouping.kind` 描述语义类别，不产生包装层要求；具有渲染能力的底板同样可以拥有子项。容器本身无布局或行为职责时删除空层。
 
 按[文本与色彩拆分路线](visual-decomposition-routes.md)拆开的字图/系统文本、填充、边框和装饰分别登记视觉来源，仍归属原功能组件。视觉子节点共用实际布局、裁切及状态来源，输入交给原组件根节点；原生文本和填充不因无需图片而从拆解清单遗漏，不能为拆分增加重叠命中目标或破坏进度、本地化更新。
 
@@ -85,19 +90,23 @@ HealthBar
 
 父子关系、布局职责和对齐决策由代理内部推导。V2 先单独展示编号拆解图并确认；确认后再展示布局图及参照、约束和适配行为，并单独确认。两项确认通过后才能生产正式资源。调整仍在既定目标内时直接修复、重验并展示对照；正式原生组合在 V4 实现，不增加其他审批。
 
-每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：`parentElementId` 指向实际直接父节点，`hierarchyRelation` 声明父子或同级，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`constraints` 必须说明上述布局参照及其依赖链，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
+每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：`parentElementId` 指向实际直接父节点，`hierarchyRelation` 声明父子或同级，`positionReferenceId` 表达独立位置依赖，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`axisAlignment` 的双轴组合表达九点停靠意图，不等同于纹理九宫格或 Pivot。严格居中、明确偏移和图文整体居中按[居中与机器布局包](ui-layout-plan.md)派生，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
 
 | 字段 | 必须回答的问题 |
 | --- | --- |
 | `groupingBasis` | 为什么存在该父子关系：`POSITION`、`LAYOUT`、`INTERACTION`、`STATE`、`CLIP` 或 `REUSE`？父子关系至少声明一个真实依赖；`SAME_LEVEL` 时填写空数组 `[]`。 |
 | `layoutOwner` | 尺寸和位置由父容器、自身还是外部布局决定？ |
+| `positionDriver` / `sizeDrivers` | 具体哪个机制分别控制位置、宽度和高度？在 V4 用真实快照核验，不能仅凭责任归属推测原生组件存在。 |
+| `imageSizing` | 图片使用原生尺寸、带理由的明确尺寸，还是冻结九宫格？源像素与实际布局尺寸分别核对。 |
 | `sizePolicy` | 固定、拉伸、按内容尺寸还是弹性分配？ |
 | `overflowPolicy` | 内容必须完整、可裁切装饰、需要重排还是允许滚动？ |
 | `safeAreaPolicy` | 可全屏延伸，还是必须留在安全区内？ |
 | `interactionPolicy` | 自身是命中目标、把输入交给父节点，还是完全无交互？ |
 | `minimumSize` | 可选的最小可读或可点击尺寸；声明后不能靠缩小突破该下限。 |
+| `visualOverflow` | 可选的非根父框越界声明；必须有实际理由，仍检查视口、安全区与裁切。 |
+| `independentContainerReason` | 额外结构层包住底板和内容时，说明其独立职责。 |
 
-`semanticGrouping.kind` 仍描述区域、组件或部件的语义层级；`uiLayout.groupingBasis` 说明实际层级依赖，两者不能互相代替。V2 必须核对 item、节点和装配实例的父级、职责与布局绑定一致；变更任一项使受影响的 V2-V4 证据失效。
+`semanticGrouping.kind` 描述区域、组件或部件的语义归属；`uiLayout.groupingBasis` 说明实际职责，两者不能互相代替。V2 核对 item、节点和装配实例的父级、职责与布局绑定；机器布局包消费同一组事实。已确认目标内的技术修复按 `repair + revalidate` 重验，不自动使人工确认失效；只有目标、范围或上游事实实质变化才按既有阶段规则处理。
 
 例如背包格根节点由网格控制尺寸并作为唯一点击目标，可在 V2 写为：
 
@@ -129,6 +138,8 @@ layoutBinding:
 需要保持面板边角的资源在 V2 先判断九宫格是否适用；适用时冻结源图像素尺寸、Unity `Sprite.border` 四边值（`left, bottom, right, top`）、目标最小尺寸与内容内边距。文字、图标、交互和装饰仍按实际布局职责作为独立节点，不合并进面板图。导入与呈现按[九宫格 UI 合同](nine-slice-ui.md)检查。
 
 V3 只做资源导入与资源级验证，可提供临时组合预览。V4 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。Toolkit 的 `uwt_measure_layout` 读取目标视口下的节点矩形、边距/间距及差值；`uwt_capture_game_view` 只采集 Unity Editor Game View。使用和差异归因规则见[布局校准合同](layout-calibration.md)。几何测量与图像采集不自动改布局、不分析截图，也不代替用户对显示效果的检查确认。
+
+位置与尺寸按[真实组件快照](ui-layout-runtime.md)分别确定唯一写入者；V2/V3 可以先记录计划，V4 必须回读实际组件、参照与活动状态，不能将计划值复制为运行结果。
 
 ## 代表性检查
 
