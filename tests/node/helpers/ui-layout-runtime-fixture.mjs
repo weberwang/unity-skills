@@ -3,6 +3,7 @@ import { deriveUiLayoutPlan } from "../../../unity-development-workflow/scripts/
 /** 创建符合布局合同的测试节点，默认保留 uGUI Sprite 的实际资产信息。 */
 export function runtimeNode(id, parentElementId, bounds, options = {}) {
   const {
+    decompositionElementId = id,
     renderKind = "SPRITE",
     positionDriver = "RECT_TRANSFORM",
     widthDriver = "RECT_TRANSFORM",
@@ -37,6 +38,7 @@ export function runtimeNode(id, parentElementId, bounds, options = {}) {
   const uiLayoutOverrides = bindingOverrides.uiLayout ?? {};
   const node = {
     id,
+    decompositionElementId,
     parentElementId,
     semanticGrouping: { kind: "part", rationale: "该运行时节点由测试夹具明确声明。" },
     renderKind,

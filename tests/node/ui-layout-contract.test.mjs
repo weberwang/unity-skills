@@ -9,6 +9,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import { deriveUiLayoutPlan } from "../../unity-development-workflow/scripts/layout-plan-derive.mjs";
 import { validateUiLayoutPlan } from "../../unity-development-workflow/scripts/layout-plan-validation.mjs";
 import { compileJsonJob, main } from "../../unity-development-workflow/scripts/workflow-files.mjs";
+import { seedUiHierarchyFixture } from "./helpers/ui-hierarchy-fixture.mjs";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const SCHEMA_DIRECTORY = resolve(ROOT, "unity-development-workflow/schemas");
@@ -36,6 +37,7 @@ function layoutNode(id, parentElementId, bounds, overrides = {}) {
   };
   return {
     id,
+    decompositionElementId: id,
     parentElementId,
     semanticGrouping: { kind: "part", rationale: "该节点独立接受布局测量。" },
     renderKind: "SPRITE",
@@ -86,6 +88,29 @@ test("公共 schema 与布局计划 schema 拒绝未声明字段并接入扩展�
   const validator = ajv.getSchema("https://codex.local/unity-workflow/schemas/ui-layout-plan.schema.json");
   const validPlan = layoutPlan();
   assert.equal(validator(validPlan), true, JSON.stringify(validator.errors));
+
+  const linkedPlan = layoutPlan(undefined, {
+    splitPlanRef: { path: "Artifacts/UI/menu-split.json" },
+    prefabStructureRef: { path: "Artifacts/UI/menu-prefab-structure.json" },
+    prefabAssemblyRef: { path: "Artifacts/UI/menu-prefab-assembly.json" },
+  });
+  assert.equal(validator(linkedPlan), true, JSON.stringify(validator.errors));
+
+  for (const path of ["../outside/split.json", "C:/outside/split.json", "Artifacts\\UI\\split.json", "   "]) {
+    const escapedReference = structuredClone(linkedPlan);
+    escapedReference.splitPlanRef.path = path;
+    assert.equal(validator(escapedReference), false, path);
+    assert.match(validateUiLayoutPlan(escapedReference).join("；"), /splitPlanRef\.path/);
+  }
+
+  const extraReferenceField = structuredClone(linkedPlan);
+  extraReferenceField.prefabStructureRef.version = "1";
+  assert.equal(validator(extraReferenceField), false);
+
+  const missingDecompositionId = structuredClone(validPlan);
+  delete missingDecompositionId.nodes[0].decompositionElementId;
+  assert.equal(validator(missingDecompositionId), false);
+  assert.match(validateUiLayoutPlan(missingDecompositionId).join("；"), /decompositionElementId/);
 
   const invalidPlan = structuredClone(validPlan);
   invalidPlan.nodes[0].layoutBinding.axisAlignment.depth = "center";
@@ -296,7 +321,12 @@ test("workflow-files 的派生、检查和 compile-json 统一执行布局校验
   const outputPath = resolve(projectRoot, "Artifacts/layout-derived.json");
   const jobPath = resolve(projectRoot, "Artifacts/layout.job.json");
   mkdirSync(resolve(projectRoot, "Artifacts"));
-  const sourcePlan = layoutPlan();
+  const sourcePlan = layoutPlan(undefined, {
+    splitPlanRef: { path: "Artifacts/UI/menu-split.json" },
+    prefabStructureRef: { path: "Artifacts/UI/menu-prefab-structure.json" },
+    prefabAssemblyRef: { path: "Artifacts/UI/menu-prefab-assembly.json" },
+  });
+  seedUiHierarchyFixture(projectRoot, sourcePlan);
   writeFileSync(sourcePath, JSON.stringify(sourcePlan, null, 2));
 
   const derivedFile = main([
@@ -345,7 +375,13 @@ test("安装到仓库外且无 node_modules 的项目仍可运行布局 CLI 与�
   assert.equal(init.status, 0, init.stderr);
 
   mkdirSync(resolve(projectRoot, "Artifacts"));
-  writeFileSync(resolve(projectRoot, "Artifacts/layout.json"), JSON.stringify(layoutPlan(), null, 2));
+  const plan = layoutPlan(undefined, {
+    splitPlanRef: { path: "Artifacts/UI/menu-split.json" },
+    prefabStructureRef: { path: "Artifacts/UI/menu-prefab-structure.json" },
+    prefabAssemblyRef: { path: "Artifacts/UI/menu-prefab-assembly.json" },
+  });
+  seedUiHierarchyFixture(projectRoot, plan);
+  writeFileSync(resolve(projectRoot, "Artifacts/layout.json"), JSON.stringify(plan, null, 2));
   const derive = runInstalled([
     "layout-plan", "--project-root", projectRoot,
     "--source", "Artifacts/layout.json", "--output", "Artifacts/layout-derived.json",

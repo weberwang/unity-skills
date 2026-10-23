@@ -20,6 +20,7 @@ import { deriveUiLayoutPlan } from "./layout-plan-derive.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
 import { validateResourceLoading } from "./resource-loading-contract.mjs";
 import { validateFrameAnimationHandoff } from "./frame-animation-contract.mjs";
+import { readUiHierarchyFiles, assertUiAssemblyMeasurement } from "./layout-hierarchy-files.mjs";
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CORE_FILES = Object.freeze(["project-profile.yaml", "GDD.md", "TDD.md", "control-plane.md"]);
@@ -158,6 +159,7 @@ export function compileJsonJob({ projectRoot, kind, source, output }) {
   if (kind === "ui-layout-plan") {
     const errors = validateUiLayoutPlan(payload, { requireDerived: true });
     if (errors.length) throw new Error(errors.join("；"));
+    readLayoutHierarchy(payload, root);
   }
   const job = {
     schemaVersion: "1.0",
@@ -179,6 +181,14 @@ function readUiLayoutPlan(path) {
   }
 }
 
+/** 文件工具与控制面使用相同的跨工件合同，引用路径统一相对项目根解析。 */
+function readLayoutHierarchy(plan, projectRoot, options = {}) {
+  return readUiHierarchyFiles(plan, (reference, label) => {
+    const path = ensureInsideProject(resolve(projectRoot, reference.path), projectRoot, label);
+    return readUiLayoutPlan(path);
+  }, options);
+}
+
 /** 从项目内原始计划生成派生副本，并拒绝覆盖输入计划。 */
 export function writeDerivedUiLayoutPlan({ projectRoot, source, output }) {
   const root = validateProjectRoot(projectRoot);
@@ -191,6 +201,7 @@ export function writeDerivedUiLayoutPlan({ projectRoot, source, output }) {
   if (existsSync(outputPath)) throw new Error("拒绝覆盖已有 UI 布局派生文件；请指定新的 --output 路径。");
   const plan = readUiLayoutPlan(sourcePath);
   const derived = deriveUiLayoutPlan(plan);
+  readLayoutHierarchy(derived, root);
   writeAtomic(outputPath, JSON.stringify(derived, null, 2) + "\n");
   return outputPath;
 }
@@ -199,8 +210,10 @@ export function writeDerivedUiLayoutPlan({ projectRoot, source, output }) {
 export function checkUiLayoutPlan({ projectRoot, source }) {
   const root = validateProjectRoot(projectRoot);
   const sourcePath = ensureInsideProject(source, root, "UI 布局计划源文件");
-  const errors = validateUiLayoutPlan(readUiLayoutPlan(sourcePath), { requireDerived: true });
+  const plan = readUiLayoutPlan(sourcePath);
+  const errors = validateUiLayoutPlan(plan, { requireDerived: true });
   if (errors.length) throw new Error(errors.join("；"));
+  readLayoutHierarchy(plan, root);
   return "UI 布局计划合同校验通过。";
 }
 
@@ -281,6 +294,8 @@ export function main(argumentsList = process.argv.slice(2)) {
     if (report.outputPath !== relative(root, reportPath).split(sep).join("/")) throw new Error("布局运行报告 outputPath 与实际输入位置不符。");
     const errors = validateUiLayoutRuntime(plan, report, { scenePath: plan.scenePath });
     if (errors.length) throw new Error(errors.join("；"));
+    const { assembly } = readLayoutHierarchy(plan, root, { requireAssembly: true, requireVerifiedAssembly: true });
+    assertUiAssemblyMeasurement(plan, assembly, report);
     return "实际布局、参照和组件控制权校验通过；显示效果仍需用户确认。";
   }
   if (command === "resource-loading-check" || command === "frame-animation-check") {

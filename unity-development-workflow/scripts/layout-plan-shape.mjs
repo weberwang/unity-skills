@@ -1,6 +1,7 @@
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const LAYOUT_COORDINATE_SPACES = new Set(["SCENE_LOCAL", "PREFAB_LOCAL", "CANVAS_LOCAL", "UI_TOOLKIT_PANEL", "SCREEN_SAFE_AREA"]);
 const LAYOUT_DRIVERS = new Set(["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"]);
+const PROJECT_RELATIVE_PATH_PATTERN = /^(?!\/)(?![A-Za-z]:\/)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*\\).+$/;
 
 /** 将字段约束错误统一标注为可定位的中文路径。 */
 function addError(errors, path, message) {
@@ -31,6 +32,12 @@ function checkString(value, path, errors, allowedValues = null, pattern = null) 
   if (value.trim().length < 1) addError(errors, path, "不能为空或仅包含空白字符");
   if (allowedValues && !allowedValues.has(value)) addError(errors, path, "值不符合允许范围");
   if (pattern && !pattern.test(value)) addError(errors, path, "值不符合路径格式");
+}
+
+/** 检查只含项目相对路径的工件引用，避免计划逃逸到目标工程以外。 */
+function checkProjectArtifactRef(value, path, errors) {
+  if (!checkObject(value, path, new Set(["path"]), ["path"], errors)) return;
+  checkString(value.path, `${path}.path`, errors, null, PROJECT_RELATIVE_PATH_PATTERN);
 }
 
 /** 检查有限数值并应用开区间下界。 */
@@ -169,7 +176,7 @@ function checkLayoutBinding(value, path, errors) {
 
   checkString(value.parentElementId, `${path}.parentElementId`, errors);
   if (value.positionReferenceId !== undefined) checkString(value.positionReferenceId, `${path}.positionReferenceId`, errors);
-  checkString(value.hierarchyRelation, `${path}.hierarchyRelation`, errors, new Set(["PARENT_CHILD", "SAME_LEVEL"]));
+  checkString(value.hierarchyRelation, `${path}.hierarchyRelation`, errors, new Set(["PARENT_CHILD"]));
   checkString(value.coordinateSpace, `${path}.coordinateSpace`, errors, LAYOUT_COORDINATE_SPACES);
   if (value.axisAlignment !== undefined) checkAxisAlignment(value.axisAlignment, `${path}.axisAlignment`, errors);
   if (value.centerAlignment !== undefined) checkCenterAlignment(value.centerAlignment, `${path}.centerAlignment`, errors);
@@ -199,11 +206,12 @@ function checkLayoutBinding(value, path, errors) {
 
 /** 检查单个计划节点，targetBounds 是可选派生字段。 */
 function checkNode(value, path, errors) {
-  const keys = new Set(["id", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding", "targetBounds", "expectedActive", "nineSlice"]);
-  const required = ["id", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding"];
+  const keys = new Set(["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding", "targetBounds", "expectedActive", "nineSlice"]);
+  const required = ["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding"];
   if (!checkObject(value, path, keys, required, errors)) return;
 
   checkString(value.id, `${path}.id`, errors);
+  checkString(value.decompositionElementId, `${path}.decompositionElementId`, errors, null, /^[a-z0-9][a-z0-9.-]{0,95}$/);
   checkString(value.parentElementId, `${path}.parentElementId`, errors);
   const semantic = value.semanticGrouping;
   if (checkObject(semantic, `${path}.semanticGrouping`, new Set(["kind", "rationale"]), ["kind", "rationale"], errors)) {
@@ -254,7 +262,7 @@ function checkNineSlice(value, path, errors) {
 /** 验证 UI 布局计划在本 Skill 中实际使用的 JSON Schema 字段约束子集。 */
 export function validateUiLayoutPlanShape(plan) {
   const errors = [];
-  const keys = new Set(["schemaVersion", "sceneId", "scenePath", "stateId", "displayLayerId", "uiSystem", "coordinateSpace", "roots", "nodes"]);
+  const keys = new Set(["schemaVersion", "sceneId", "scenePath", "stateId", "displayLayerId", "uiSystem", "coordinateSpace", "splitPlanRef", "prefabStructureRef", "prefabAssemblyRef", "roots", "nodes"]);
   const required = ["schemaVersion", "sceneId", "stateId", "uiSystem", "coordinateSpace", "roots", "nodes"];
   if (!checkObject(plan, "根对象", keys, required, errors)) return errors;
 
@@ -276,6 +284,9 @@ export function validateUiLayoutPlanShape(plan) {
   if (plan.displayLayerId !== undefined) checkString(plan.displayLayerId, "displayLayerId", errors);
   checkString(plan.uiSystem, "uiSystem", errors, new Set(["UGUI", "UI_TOOLKIT"]));
   checkString(plan.coordinateSpace, "coordinateSpace", errors, new Set(["SCREEN_SPACE_PIXELS", "UI_TOOLKIT_LOGICAL_POINTS"]));
+  for (const key of ["splitPlanRef", "prefabStructureRef", "prefabAssemblyRef"]) {
+    if (plan[key] !== undefined) checkProjectArtifactRef(plan[key], key, errors);
+  }
 
   if (checkObject(plan.roots, "roots", ROOT_IDS, ["viewport", "safe-area"], errors)) {
     checkRect(plan.roots.viewport, "roots.viewport", errors);

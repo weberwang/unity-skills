@@ -277,6 +277,28 @@ test("视觉合同 schema 可加载且合法拆解具备来源与装配证据", 
   assert.equal(scene.valid, true, JSON.stringify(scene.errors));
 });
 
+test("拆解、Prefab 结构和装配可显式绑定状态与独立显示层", () => {
+  const ajv = createAjv();
+  for (const [schemaName, createFixture] of [
+    ["split-plan.schema.json", splitPlan],
+    ["prefab-structure.schema.json", prefabStructure],
+    ["prefab-assembly.schema.json", prefabAssembly],
+  ]) {
+    const scoped = createFixture();
+    scoped.stateId = "purchase-ready";
+    scoped.displayLayerId = "shop-modal";
+    assert.equal(validate(ajv, schemaName, scoped).valid, true, schemaName);
+
+    const emptyState = structuredClone(scoped);
+    emptyState.stateId = "";
+    assert.equal(validate(ajv, schemaName, emptyState).valid, false, `${schemaName}: stateId`);
+
+    const invalidDisplayLayer = structuredClone(scoped);
+    invalidDisplayLayer.displayLayerId = "Shop Modal";
+    assert.equal(validate(ajv, schemaName, invalidDisplayLayer).valid, false, `${schemaName}: displayLayerId`);
+  }
+});
+
 test("V2 布局绑定要求 UI 布局策略并拒绝重复分组依据", () => {
   const ajv = createAjv();
   const missingUiLayout = splitPlan();
@@ -288,12 +310,38 @@ test("V2 布局绑定要求 UI 布局策略并拒绝重复分组依据", () => {
   duplicatedGroupingBasis.items[0].layoutBinding.uiLayout.groupingBasis = ["LAYOUT", "LAYOUT"];
   assert.equal(validate(ajv, "split-plan.schema.json", duplicatedGroupingBasis).valid, false);
 
-  const sameLevel = splitPlan();
-  sameLevel.items[0].layoutBinding.hierarchyRelation = "SAME_LEVEL";
-  sameLevel.items[0].layoutBinding.uiLayout.groupingBasis = [];
-  assert.equal(validate(ajv, "split-plan.schema.json", sameLevel).valid, true);
-  sameLevel.items[0].layoutBinding.uiLayout.groupingBasis = ["POSITION"];
-  assert.equal(validate(ajv, "split-plan.schema.json", sameLevel).valid, false);
+  const invalidSameLevel = splitPlan();
+  invalidSameLevel.items[0].layoutBinding.hierarchyRelation = "SAME_LEVEL";
+  invalidSameLevel.items[0].layoutBinding.uiLayout.groupingBasis = [];
+  assert.equal(validate(ajv, "split-plan.schema.json", invalidSameLevel).valid, false);
+
+  const emptyBasis = splitPlan();
+  emptyBasis.items[0].layoutBinding.uiLayout.groupingBasis = [];
+  assert.equal(validate(ajv, "split-plan.schema.json", emptyBasis).valid, false);
+
+  const siblings = splitPlan();
+  const siblingItem = structuredClone(siblings.items[0]);
+  siblingItem.id = "menu-title-sibling-item";
+  siblingItem.resourceId = "menu-title-sibling-resource";
+  siblingItem.elementIndex = 2;
+  siblingItem.purpose = "菜单标题的并列视觉部件";
+  siblingItem.targetPrefabNodeIds = ["hud-title-sibling"];
+  siblingItem.semanticGrouping = { kind: "part", rationale: "两个标题视觉部件由同一 HUD 父级布局和管理。" };
+  siblingItem.layoutBinding = layoutBinding("hud-root");
+  siblingItem.assemblyAnalysis = assemblyAnalysis("hud-title-sibling");
+  siblings.items[0].semanticGrouping = structuredClone(siblingItem.semanticGrouping);
+  siblings.items.push(siblingItem);
+  const siblingAnnotation = structuredClone(siblings.annotatedPreview.annotations[0]);
+  siblingAnnotation.itemId = siblingItem.id;
+  siblingAnnotation.elementIndex = siblingItem.elementIndex;
+  siblingAnnotation.bounds.x = 320;
+  siblingAnnotation.label = "菜单标题并列部件";
+  siblings.annotatedPreview.annotations.push(siblingAnnotation);
+  siblings.coverageDeclaration.declaredItemCount = siblings.items.length;
+  assert.equal(validate(ajv, "split-plan.schema.json", siblings).valid, true);
+  assert.equal(siblings.items[0].parentElementId, siblings.items[1].parentElementId);
+  assert.equal(siblings.items[0].layoutBinding.hierarchyRelation, "PARENT_CHILD");
+  assert.equal(siblings.items[1].layoutBinding.hierarchyRelation, "PARENT_CHILD");
 
   const uiItemWithPrefabCoordinates = splitPlan();
   uiItemWithPrefabCoordinates.items[0].layoutBinding.coordinateSpace = "PREFAB_LOCAL";

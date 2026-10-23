@@ -57,7 +57,7 @@ UIRoot
 
 ## 细组件分组
 
-一个父节点必须拥有可解释的职责：真实布局控制、交互命中、状态或生命周期、裁切边界、组件复用。位置依赖通过位置参照表达，不要求将依赖双方改为父子。只有共同主题、外观相近或图上距离近，不构成父子关系；没有依赖的元素保持同组同级。`semanticGrouping.kind` 描述语义类别，不产生包装层要求；具有渲染能力的底板同样可以拥有子项。容器本身无布局或行为职责时删除空层。
+一个父节点必须拥有可解释的职责：真实布局控制、交互命中、状态或生命周期、裁切边界、组件复用。位置依赖通过位置参照表达，不要求将依赖双方改为父子。只有共同主题、外观相近或图上距离近，不构成父子关系；没有父子依赖的节点使用相同的真实 `parentElementId` 保持同级，每个节点仍以 `PARENT_CHILD` 表示它相对于自身直接父节点的关系。`semanticGrouping.kind` 描述语义类别，不产生包装层要求；具有渲染能力的底板同样可以拥有子项。容器本身无布局或行为职责时删除空层。
 
 按[文本与色彩拆分路线](visual-decomposition-routes.md)拆开的字图/系统文本、填充、边框和装饰分别登记视觉来源，仍归属原功能组件。视觉子节点共用实际布局、裁切及状态来源，输入交给原组件根节点；原生文本和填充不因无需图片而从拆解清单遗漏，不能为拆分增加重叠命中目标或破坏进度、本地化更新。
 
@@ -90,11 +90,15 @@ HealthBar
 
 父子关系、布局职责和对齐决策由代理内部推导。V2 先单独展示编号拆解图并确认；确认后再展示布局图及参照、约束和适配行为，并单独确认。两项确认通过后才能生产正式资源。调整仍在既定目标内时直接修复、重验并展示对照；正式原生组合在 V4 实现，不增加其他审批。
 
-每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：`parentElementId` 指向实际直接父节点，`hierarchyRelation` 声明父子或同级，`positionReferenceId` 表达独立位置依赖，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`axisAlignment` 的双轴组合表达九点停靠意图，不等同于纹理九宫格或 Pivot。严格居中、明确偏移和图文整体居中按[居中与机器布局包](ui-layout-plan.md)派生，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
+V2 拆解 item、布局节点、Prefab/Scene 结构节点与装配实例必须保存同一事实：`semanticGrouping` 与完整 `layoutBinding` 不能在后续工件中省略或另行推测。布局计划中的 `decompositionElementId` 对应 `splitPlan.items[].id`；计划节点 `id` 必须是该拆解 item 的 `targetPrefabNodeIds` 之一。反向也要覆盖当前 `stateId` 与显示层内的目标节点；纯结构容器同样先进入拆解和映射，不能只映射玩家可见图片或交互控件。原生文本、填充和布局节点也不得因没有位图而漏项。
+
+`splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef` 都只含 `{path}`，保存目标 Unity 工程内对应文件的项目相对路径；填写路径不代表创建或伪造用户确认。几何 schema 可省略这些引用；文件工具与控制面在 V2 要求拆解和结构引用，在 V4 还要求装配引用。引用工件的 `projectId/sceneId/stateId/displayLayerId` 等适用身份必须与当前计划保持一致，不能沿链漂移。
+
+每个拆解 item、Prefab/Scene 节点与装配实例沿用同一 `layoutBinding`：业务节点的 `parentElementId` 始终指向真实直接父节点 ID；根节点可使用布局合同保留的逻辑 `viewport`/`safe-area` 参照，它们代表实测矩形，不假定存在同名 GameObject。`hierarchyRelation` 固定为 `PARENT_CHILD`。同级由相同的 `parentElementId` 表达，不能再用 `SAME_LEVEL` 枚举或空分组依据表示。`positionReferenceId` 表达独立位置依赖，`coordinateSpace`、`anchor`、`pivot`、`constraints` 和 `resizePolicy` 描述定位。`axisAlignment` 的双轴组合表达九点停靠意图，不等同于纹理九宫格或 Pivot。严格居中、明确偏移和图文整体居中按[居中与机器布局包](ui-layout-plan.md)派生，不能把效果图像素坐标当作运行时停靠依据。屏幕 UI 节点还必须声明 `uiLayout`：
 
 | 字段 | 必须回答的问题 |
 | --- | --- |
-| `groupingBasis` | 为什么存在该父子关系：`POSITION`、`LAYOUT`、`INTERACTION`、`STATE`、`CLIP` 或 `REUSE`？父子关系至少声明一个真实依赖；`SAME_LEVEL` 时填写空数组 `[]`。 |
+| `groupingBasis` | 为什么该节点属于这个真实父节点：`POSITION`、`LAYOUT`、`INTERACTION`、`STATE`、`CLIP` 或 `REUSE`？每个节点至少声明一个真实组织依据；同级节点共享父 ID，语义分组本身不增加层级。 |
 | `layoutOwner` | 尺寸和位置由父容器、自身还是外部布局决定？ |
 | `positionDriver` / `sizeDrivers` | 具体哪个机制分别控制位置、宽度和高度？在 V4 用真实快照核验，不能仅凭责任归属推测原生组件存在。 |
 | `imageSizing` | 图片使用原生尺寸、带理由的明确尺寸，还是冻结九宫格？源像素与实际布局尺寸分别核对。 |
@@ -106,7 +110,7 @@ HealthBar
 | `visualOverflow` | 可选的非根父框越界声明；必须有实际理由，仍检查视口、安全区与裁切。 |
 | `independentContainerReason` | 额外结构层包住底板和内容时，说明其独立职责。 |
 
-`semanticGrouping.kind` 描述区域、组件或部件的语义归属；`uiLayout.groupingBasis` 说明实际职责，两者不能互相代替。V2 核对 item、节点和装配实例的父级、职责与布局绑定；机器布局包消费同一组事实。已确认目标内的技术修复按 `repair + revalidate` 重验，不自动使人工确认失效；只有目标、范围或上游事实实质变化才按既有阶段规则处理。
+`semanticGrouping.kind` 描述区域、组件或部件的语义归属；`uiLayout.groupingBasis` 说明实际组织依据，两者不能互相代替，也都不能用来猜父级。V2 将稳定拆解身份映射到实际节点 ID，后续 Prefab 结构、装配与 V4 实测沿用这些 ID、父级、分组和完整绑定；V4 实测 `id` 继续对应布局计划的节点 `id`。检查器只对当前状态和显示层的屏幕 UI 项逐项核对。已确认目标内的技术修复按 `repair + revalidate` 重验，重新读取完整引用链与最新报告，不自动回退到 V2；只有目标、范围或上游事实实质变化才按既有阶段规则处理。
 
 例如背包格根节点由网格控制尺寸并作为唯一点击目标，可在 V2 写为：
 

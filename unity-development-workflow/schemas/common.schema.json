@@ -116,7 +116,7 @@
         "kind": {"enum": ["region", "component", "part", "standalone"]},
         "rationale": {"type": "string", "minLength": 1}
       },
-      "description": "语义归属必须由拆解阶段显式确认，不能根据距离、bounds 或组件类型猜测。"
+      "description": "语义归属必须由拆解阶段显式确认；它不创建层级，也不能根据距离、bounds 或组件类型猜测。"
     },
     "layoutBinding": {
       "type": "object",
@@ -127,7 +127,7 @@
         "positionReferenceId": {"type": "string", "minLength": 1},
         "axisAlignment": {"$ref": "#/$defs/axisAlignment"},
         "centerAlignment": {"$ref": "#/$defs/centerAlignment"},
-        "hierarchyRelation": {"enum": ["PARENT_CHILD", "SAME_LEVEL"]},
+        "hierarchyRelation": {"const": "PARENT_CHILD"},
         "coordinateSpace": {"enum": ["SCENE_LOCAL", "PREFAB_LOCAL", "CANVAS_LOCAL", "UI_TOOLKIT_PANEL", "SCREEN_SAFE_AREA"]},
         "uiLayout": {
           "type": "object",
@@ -136,7 +136,7 @@
           "properties": {
             "groupingBasis": {
               "type": "array",
-              "minItems": 0,
+              "minItems": 1,
               "uniqueItems": true,
               "items": {"enum": ["POSITION", "LAYOUT", "INTERACTION", "STATE", "CLIP", "REUSE"]}
             },
@@ -188,13 +188,9 @@
         {
           "if": {"properties": {"hierarchyRelation": {"const": "PARENT_CHILD"}}, "required": ["hierarchyRelation"]},
           "then": {"properties": {"uiLayout": {"properties": {"groupingBasis": {"minItems": 1}}}}}
-        },
-        {
-          "if": {"properties": {"hierarchyRelation": {"const": "SAME_LEVEL"}}, "required": ["hierarchyRelation"]},
-          "then": {"properties": {"uiLayout": {"properties": {"groupingBasis": {"maxItems": 0}}}}}
         }
       ],
-      "description": "节点层级关系必须显式声明；UI 坐标空间还必须声明分组和布局策略。"
+      "description": "节点只记录相对真实直接父节点的 PARENT_CHILD 关系；同级节点以相同 parentElementId 表达。UI 节点必须声明非空分组依据和布局策略。"
     },
     "visualRouteAnalysis": {
       "type": "object",

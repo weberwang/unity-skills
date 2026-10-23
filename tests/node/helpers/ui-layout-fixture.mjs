@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { deriveUiLayoutPlan } from '../../../unity-development-workflow/scripts/layout-plan-derive.mjs';
+import { seedUiHierarchyFixture } from './ui-hierarchy-fixture.mjs';
 
 const VIEWPORT = { x: 0, y: 0, width: 1920, height: 1080 };
 const SAFE_AREA = { x: 24, y: 32, width: 1872, height: 1016 };
@@ -35,6 +36,7 @@ export function makeUiLayoutPlanFixture({
     roots: { viewport: { ...VIEWPORT }, 'safe-area': { ...SAFE_AREA } },
     nodes: [{
       id: 'layout-root',
+      decompositionElementId: 'element.layout-root',
       parentElementId: 'safe-area',
       semanticGrouping: { kind: 'region', rationale: '测试用的屏幕 UI 根节点。' },
       renderKind: 'STRUCTURE',
@@ -161,6 +163,7 @@ export function seedUiLayoutFixture(repo, options = {}) {
   const evidenceRoot = options.evidenceRoot ?? '.workflow-control/evidence/WI-SCENE';
   const reportPath = options.reportPath ?? `${evidenceRoot}/ui-layout-measurement.json`;
   const plan = makeUiLayoutPlanFixture(options);
+  const hierarchy = seedUiHierarchyFixture(repo, plan, { projectId: options.projectId });
   const report = makeUiLayoutMeasurementFixture(plan, {
     candidateId: options.candidateId,
     outputPath: reportPath,
@@ -174,5 +177,6 @@ export function seedUiLayoutFixture(repo, options = {}) {
     measurementRef: { path: reportPath },
     planPath,
     reportPath,
+    hierarchy,
   };
 }

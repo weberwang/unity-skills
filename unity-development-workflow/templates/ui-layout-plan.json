@@ -3,6 +3,9 @@
   "sceneId": "shop",
   "stateId": "purchase-ready",
   "scenePath": "Assets/Scenes/Shop.unity",
+  "splitPlanRef": {"path": "Artifacts/UI/shop-split-plan.json"},
+  "prefabStructureRef": {"path": "Artifacts/UI/shop-prefab-structure.json"},
+  "prefabAssemblyRef": {"path": "Artifacts/UI/shop-prefab-assembly.json"},
   "uiSystem": "UGUI",
   "coordinateSpace": "SCREEN_SPACE_PIXELS",
   "roots": {
@@ -12,6 +15,7 @@
   "nodes": [
     {
       "id": "purchase-panel",
+      "decompositionElementId": "purchase-panel-item",
       "parentElementId": "safe-area",
       "semanticGrouping": {"kind": "component", "rationale": "底板同时管理购买按钮的布局、交互和状态。"},
       "renderKind": "SPRITE",
@@ -37,6 +41,7 @@
     },
     {
       "id": "purchase-icon",
+      "decompositionElementId": "purchase-icon-item",
       "parentElementId": "purchase-panel",
       "semanticGrouping": {"kind": "part", "rationale": "图标与价格组成同一购买信息。"},
       "renderKind": "SPRITE",
@@ -66,6 +71,7 @@
     },
     {
       "id": "purchase-label",
+      "decompositionElementId": "purchase-label-item",
       "parentElementId": "purchase-panel",
       "semanticGrouping": {"kind": "part", "rationale": "价格文字与图标同级，以图标为独立位置参照。"},
       "renderKind": "TEXT",

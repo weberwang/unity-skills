@@ -1,12 +1,18 @@
 # 居中与机器布局包
 
-在 V2 拆解确认后生成布局图时读取。`ui-layout-plan.schema.json` 规范布局图的机器数据，复用现有 `layoutBinding`；它不是第二份拆解清单、确认账本或新的工作流阶段。`sceneId/stateId`、UI 系统与坐标空间必须明确，节点 ID 和归属来自已确认拆解，不从几何位置猜测。
+在 V2 拆解确认后生成布局图时读取。`ui-layout-plan.schema.json` 规范布局图的机器数据，复用现有 `layoutBinding`；它不是第二份拆解清单、确认账本或新的工作流阶段。`sceneId/stateId`、UI 系统与坐标空间必须明确。每个节点的 `decompositionElementId` 对应 `splitPlan.items[].id`，节点 `id` 对应该 item 的 `targetPrefabNodeIds` 中某个真实 Prefab/Scene 节点 ID；不从几何位置猜测身份或层级。
+
+计划可带 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef`，格式均为 `{ "path": "Artifacts/..." }`，只允许目标 Unity 工程内的项目相对路径。路径引用的是工程中真实保存的工件，不创建虚构的确认记录。纯内存几何 schema 允许不带 refs；`layout-plan`、`layout-check`、`compile-json` 和控制面 V2 要求前两个引用，V4 的 `layout-runtime-check` 与控制面 V4 还要求 `prefabAssemblyRef`。
 
 ## 输入与派生
 
-每个节点保留原始 `bounds`、`parentElementId`、`semanticGrouping`、`renderKind` 和 `layoutBinding`。`renderKind` 区分 `SPRITE`、`STRUCTURE`、`TEXT`、`BACKGROUND`；底板使用 SPRITE，既保留图片身份也可承担组件根职责。所有几何使用当前包声明的同一种单位，不能把参考图物理像素直接写成 Unity 布局单位。
+每个节点保留原始 `bounds`、稳定的 `decompositionElementId`、实际 `id`、`parentElementId`、`semanticGrouping`、`renderKind` 和完整 `layoutBinding`。`renderKind` 区分 `SPRITE`、`STRUCTURE`、`TEXT`、`BACKGROUND`；底板使用 SPRITE，既保留图片身份也可承担组件根职责。所有几何使用当前包声明的同一种单位，不能把参考图物理像素直接写成 Unity 布局单位。
+
+跨工件时按身份逐项对应：布局节点 `decompositionElementId` 必须等于来源 `splitPlan.items[].id`，该 item 的 `targetPrefabNodeIds` 必须包含布局节点 `id`；结构和装配继续使用相同的拆解身份、节点 ID、`semanticGrouping` 与完整 `layoutBinding`。当前 `stateId` 和显示层中的所有屏幕 UI 项都须覆盖，纯结构容器、原生文本及填充也须先有拆解 item，不能只校验有 Sprite 的节点。`parentElementId` 表示实际直接父节点，同一父 ID 即同级表达，`hierarchyRelation` 始终为 `PARENT_CHILD`；`semanticGrouping` 只说明语义归属，不生成额外层级。`viewport`、`safe-area` 是根几何参照，其与结构工件中真实根节点的对应由工具按当前场景绑定，业务节点之间不得使用语义组或视觉距离代替真实父节点 ID。
 
 `roots.viewport` 保存本批完整可见矩形，`roots.safe-area` 保存同批实际安全区矩形。稳定根只是几何参照，不证明有同名 GameObject/VisualElement；它们不能占用业务节点 ID，安全区必须位于视口内。所有节点消费同一份根边界，不能因缺少单节点快照把安全区默认为全屏。
+
+跨工件比较忽略对象字段顺序；`groupingBasis`、`constraints`、`centerAlignment.memberIds` 按集合比较。省略 `positionReferenceId` 等价于使用真实父级，其余布局事实必须一致。拆解的现有 `userApproval.approvalScope` 同时用于核对获批目标节点、状态范围与编号注释中的层级合同，不能只修改下游工件后沿用旧确认。
 
 布局派生仅写入拷贝中节点的 `targetBounds`，不修改原始 `bounds`、确认记录、节点顺序、尺寸、父级或资源身份。原始拆解与布局结果使用不同路径，不能覆盖原输入。
 

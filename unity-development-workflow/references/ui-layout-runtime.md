@@ -33,7 +33,7 @@ UI Toolkit 背景图和 VisualElement 的布局尺寸独立，不拥有 uGUI Ima
 从 V2 布局包为当前目标视口与状态准备 `layout-measurement` Job，设置：
 
 - `includeComponentSnapshots: true`、当前 `stateId` 和实际 Work Item 的 `evidenceRoot`；`outputPath` 必须位于该根内，使用新版本文件名。
-- 每个目标记录稳定 `id` 与实际父路径，另写 `referenceId`；实际参照使用 `referenceObjectPath`、`referenceElementName` 或 `referenceRoot` 三者之一。逻辑根使用小写 `viewport`/`safe-area`；默认实际参照为父节点，但稳定参照 ID 仍须明确。
+- 每个目标记录布局包中的实际节点 `id` 与实际父路径，另写 `referenceId`；实际参照使用 `referenceObjectPath`、`referenceElementName` 或 `referenceRoot` 三者之一。逻辑根使用小写 `viewport`/`safe-area`，对应同批实际 viewport/safe-area 矩形，不假定场景中存在同名 GameObject；普通业务节点的 `parentElementId` 必须对应真实直接父节点。默认实际参照为父节点，但稳定参照 ID 仍须明确。
 - 同批业务节点全部覆盖，包含当前状态下不活动的节点。计划 `expectedActive` 省略时为 true，隐藏节点显式为 false。
 
 Toolkit 只读加载场景，从实际 Screen/Canvas/Panel 取得同批 viewport、安全区、节点、父框和参照框，生成 `measurementSource`、`runId`、`generatedAtUtc`、`frameCount`、状态与实际组件快照。安全区换算只应用一次。不能混 Canvas、Panel 或坐标单位，不把缺少安全区快照当作全屏。
@@ -54,8 +54,10 @@ UI Toolkit 的外部尺寸交接按实际 Flex 控制轴和明确 inline 固定�
 node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layout-runtime-check --project-root . --plan docs/layout-plan.json --source .workflow-control/evidence/current/layout-run-1.json
 ```
 
-文件工具和控制面调用同一校验器：核对当前 scene/state/candidate、同批根、完整节点覆盖、实际父/参照绑定、属性控制权、原生尺寸，以及实际严格/偏移/图文联合中心。几何直接读取正式对象，不能仅靠 anchor/flag 或计划中的零偏移自证居中。报告或节点为 FAIL 时阻断交付。声明 targetRect/tolerance 的节点必须以派生 targetBounds 为目标，从实际矩形重新计算 delta 并检查 maxAbsDelta；未声明像素容差的节点仍按当前结构、边界、中心与尺寸意图检查，不把默认 usability 升级为整屏 exact。
+文件工具和控制面调用同一校验器：核对当前 scene/state/candidate、同批根、完整节点覆盖、实际父/参照绑定、属性控制权、原生尺寸，以及实际严格/偏移/图文联合中心。V4 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。V4 控制面重读同一当前状态的拆解、布局、Prefab 结构、装配引用和最新报告，逐项核对 `decompositionElementId`、节点 ID、父级、语义分组与完整 `layoutBinding`；身份必须保持同一 project/scene/state/displayLayer。几何直接读取正式对象，不能仅靠 anchor/flag 或计划中的零偏移自证居中。报告或节点为 FAIL 时阻断交付。声明 targetRect/tolerance 的节点必须以派生 targetBounds 为目标，从实际矩形重新计算 delta 并检查 maxAbsDelta；未声明像素容差的节点仍按当前结构、边界、中心与尺寸意图检查，不把默认 usability 升级为整屏 exact。
 
-屏幕 UI 从 V2 起在 Implementation Package 绑定 `uiLayoutPlanRef: {path}`；V4 在 Evidence Manifest 绑定 `uiLayoutMeasurementRef: {path}`，报告须位于当前 evidenceRoot，且 outputPath、候选、场景与状态相符。独立 DISPLAY_LAYER 的计划同时绑定自己的 displayLayerId 和 hostSceneId 对应的 sceneId。`check/status/run` 和直接完成迁移都重新读取证据；缺失或失败时修复并重验，不自动 return V2、不改历史确认、不要求 SHA。
+屏幕 UI 从 V2 起在 Implementation Package 绑定 `uiLayoutPlanRef: {path}`，布局计划内的 `splitPlanRef` 与 `prefabStructureRef` 必填；V4 还必须绑定 `prefabAssemblyRef` 和 Evidence Manifest 的 `uiLayoutMeasurementRef: {path}`。报告须位于当前 evidenceRoot，且 outputPath、候选、场景与状态相符。独立 DISPLAY_LAYER 的计划同时绑定自己的 displayLayerId 和 hostSceneId 对应的 sceneId。`check/status/run` 和直接完成迁移都重新读取完整引用链和最新报告；技术修复完成后 `repair + revalidate`，不自动回退到 V2、不改历史确认、不要求 SHA。已有关联的装配引用在任何阶段都要检查。
+
+V4 先将装配节点 `name` 与 uGUI 实测 `objectPath` 的末段或 UI Toolkit 的 `elementName` 对应，再核对实测父路径和定位参照。本检查验证节点身份、层级与布局事实；当前测量器没有采集 Prefab 实例来源 GUID，资产来源验收仍需相应资源证据。
 
 本合同的测试夹具只验证工具，不能用作正式场景运行证据。截图仍由用户人工检查；工程与几何通过不代表显示效果已验收。

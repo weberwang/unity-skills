@@ -34,7 +34,7 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 ## V2 拆解与布局确认
 
-先按[文本与色彩拆分路线](visual-decomposition-routes.md)从 V1 的显著文字造型、底板、填充、边框、图标、光影、装饰和空间结构反查覆盖，不能只列功能名称。每项对应稳定编号、生产归属、消费节点及状态；原子资源内部包含的特征也须明确归属，系统文本和原生绘制同样进入编号清单及标注。路线判断及合并边界依该文执行，拆开来源仍保持原功能组件的交互、状态、本地化和布局联动。
+先按[文本与色彩拆分路线](visual-decomposition-routes.md)从 V1 的显著文字造型、底板、填充、边框、图标、光影、装饰和空间结构反查覆盖，不能只列功能名称。每项对应稳定编号、生产归属、消费节点及状态；原子资源内部包含的特征也须明确归属，系统文本和原生绘制同样进入编号清单及标注。路线判断及合并边界依该文执行，拆开来源仍保持原功能组件的交互、状态、本地化和布局联动。屏幕 UI 的机器布局包以 `decompositionElementId = splitPlan.items[].id` 对应拆解身份，并以节点 `id` 对应该 item 的 `targetPrefabNodeIds`；Prefab/Scene 结构、正式装配和 V4 实测沿用同一节点 ID、父级、`semanticGrouping` 与完整 `layoutBinding`。当前 `stateId` 和 `displayLayerId` 范围内的节点逐项对账，纯结构容器、原生文本与填充都要进入拆解映射。
 
 再按[公共资源登记与使用](shared-asset-usage.md#v2-查库与绑定)查询已登记字体、贴图、材质、图标和组件。合格复用保留本场景拆解编号并绑定公共资源身份及消费节点；无合格资源才安排独立生产，多个确定消费者共用同一来源和唯一所有者。
 
@@ -47,6 +47,8 @@ V1 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 ### 内部拆解合同
 
 结构化合同用于规划生产目标与边界，内部保存且与标注图使用相同编号，不作为用户侧文本拆解输出。目标内的实际生产调整在交付或验收记录说明，无需回改合同或校验内容摘要；规格与 V1 矛盾属于缺陷，不能据此改变目标。只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
+
+每个布局计划分别用 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef` 的 `{path}` 指向目标工程的真实工件；路径不替代确认事实，也不得为填字段而新造人工审批。已有 `APPROVED` 拆解及 `USER`/`ASSET_MAP` 确认沿用原记录；Prefab 结构按同一 V2 事实核对，不增加确认门；装配引用从 V4 起纳入检查。`hierarchyRelation` 仅使用 `PARENT_CHILD`，同级节点共享同一实际父节点 ID；`semanticGrouping` 只记录语义归属，整体组合关系使用 `centerAlignment.memberIds`，不因此创建层级。根几何 `viewport`/`safe-area` 是既有逻辑根参照，不假定存在同名 GameObject；除此之外的业务 `parentElementId` 必须是真实直接父节点 ID。
 
 文本节点只登记冻结目标实际存在的玩家可见文字、数值及其来源，不从 GDD 追加说明。图内拆解标注属于审阅辅助层，不能成为正式界面的说明面板；原子资源继续忠实还原所属区域，不能借文案精简删改冻结文字，也不能把动态数值或本地化文本烘焙进固定图片。
 

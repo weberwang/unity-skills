@@ -19,6 +19,7 @@ import {
 import { validateUiLayoutRuntime } from '../../unity-development-workflow/scripts/layout-runtime-contract.mjs';
 import { makeArtFixture } from './helpers/art-experience-fixture.mjs';
 import { seedVisualBaseline } from './helpers/workflow-evidence-fixture.mjs';
+import { seedUiHierarchyFixture } from './helpers/ui-hierarchy-fixture.mjs';
 import {
   makeUiLayoutMeasurementFixture,
   makeUiLayoutPlanFixture,
@@ -157,6 +158,7 @@ function seedControlFixture(repo, { stage = 'V4', state = 'VALIDATING', reportPa
   writeJson(join(repo, 'responsive-contract.json'), work.responsiveContract);
   const layout = seedUiLayoutFixture(repo, {
     sceneId: work.scene.sceneId,
+    projectId: work.projectId,
     scenePath: 'Assets/Scenes/Main.unity',
     evidenceRoot: work.evidenceRoot,
     candidateId: 'candidate-test',
@@ -287,6 +289,7 @@ test('布局计划绑定当前 sceneId 与 displayLayerId，场景计划不能�
     assert.match(validateUiLayoutPackage({ uiLayoutPlanRef: { path: 'Artifacts/Fixtures/wrong-scene.json' } }, context.work, repo).join('\n'), /当前场景/);
 
     const displayPlan = makeUiLayoutPlanFixture({ sceneId: 'MainScene', displayLayerId: 'PauseModal' });
+    seedUiHierarchyFixture(repo, displayPlan, { basePath: 'Artifacts/Fixtures/display-layer-hierarchy' });
     writeJson(join(repo, 'Artifacts/Fixtures/display-layer.json'), displayPlan);
     const layerWork = {
       workItemType: 'DISPLAY_LAYER',
@@ -407,6 +410,139 @@ test('合法工作流包只在同一候选和当前 evidenceRoot 内通过 V4 �
       repo,
     });
     assert.match(blockers.map((item) => item.message).join('\n'), /candidateId/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('V2 对账获批拆解与结构，V4 另外要求当前正式装配', () => {
+  const repo = temporaryRepo();
+  try {
+    const context = directLayoutContext(repo, 'V2');
+    const plan = structuredClone(context.layout.plan);
+    delete plan.prefabAssemblyRef;
+    writeJson(join(repo, context.layout.planPath), plan);
+    assert.deepEqual(validateUiLayoutPackage(context.pkg, context.work, repo), []);
+    context.work.scene.stage = 'V4';
+    assert.match(validateUiLayoutPackage(context.pkg, context.work, repo).join('\n'), /prefabAssemblyRef/);
+
+    plan.prefabAssemblyRef = context.layout.hierarchy.prefabAssemblyRef;
+    context.work.scene.stage = 'V2';
+    writeJson(join(repo, context.layout.planPath), plan);
+    const failedAssembly = { ...context.layout.hierarchy.assembly, status: 'FAILED' };
+    writeJson(join(repo, plan.prefabAssemblyRef.path), failedAssembly);
+    assert.match(validateUiLayoutPackage(context.pkg, context.work, repo).join('\n'), /assembly.status/);
+    writeJson(join(repo, plan.prefabAssemblyRef.path), context.layout.hierarchy.assembly);
+    delete plan.splitPlanRef;
+    writeJson(join(repo, context.layout.planPath), plan);
+    assert.match(validateUiLayoutPackage(context.pkg, context.work, repo).join('\n'), /splitPlanRef/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('控制面重新读取整条工件链，任何上游改父、增删或身份漂移均阻断且可修复重验', () => {
+  const repo = temporaryRepo();
+  try {
+    const fixture = seedControlFixture(repo);
+    const { hierarchy } = fixture.layout;
+    const cases = [
+      [hierarchy.splitPlanRef, hierarchy.splitPlan, (value) => { value.items[0].parentElementId = 'viewport'; }],
+      [hierarchy.splitPlanRef, hierarchy.splitPlan, (value) => { value.status = 'REVIEWING'; }],
+      [hierarchy.splitPlanRef, hierarchy.splitPlan, (value) => { value.userApproval.subjectVersion = 'old-version'; }],
+      [hierarchy.prefabStructureRef, hierarchy.structure, (value) => { value.prefabs[0].nodes[0].parentId = 'viewport'; }],
+      [hierarchy.prefabStructureRef, hierarchy.structure, (value) => { value.prefabs[0].nodes = []; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.prefabs[0].nodes[0].layoutBinding.positionReferenceId = 'viewport'; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.scene.prefabInstances[0].parentId = 'viewport'; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.splitPlanEvidence.path = 'other-split.json'; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.splitPlanEvidence.subjectVersion = 'old-version'; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.projectId = 'another-project'; }],
+      [hierarchy.prefabAssemblyRef, hierarchy.assembly, (value) => { value.status = 'ASSEMBLED'; }],
+    ];
+    for (const [reference, original, mutate] of cases) {
+      const broken = structuredClone(original);
+      mutate(broken);
+      writeJson(join(repo, reference.path), broken);
+      const blockers = inspect(fixture.args).blockers;
+      assert.ok(blockers.some((item) => /布局|splitPlan|Prefab|approvalScope/.test(item.message)),
+        `修改 ${reference.path} 应立即阻断：${JSON.stringify(blockers)}`);
+      assert.equal(check(fixture.args).status, 'BLOCKED');
+      writeJson(join(repo, reference.path), original);
+      assert.deepEqual(inspect(fixture.args).blockers.filter((item) => item.code === 'UI_LAYOUT_EVIDENCE_INVALID'), []);
+    }
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('同时修改拆解与后续合同也不能沿用旧 V2 确认快照', () => {
+  const repo = temporaryRepo();
+  try {
+    const context = directLayoutContext(repo, 'V2');
+    const { splitPlan, structure, assembly, splitPlanRef, prefabStructureRef, prefabAssemblyRef } = context.layout.hierarchy;
+    const plan = structuredClone(context.layout.plan);
+    plan.nodes[0].semanticGrouping.rationale = '尚未确认的新分组意图';
+    splitPlan.items[0].semanticGrouping = structuredClone(plan.nodes[0].semanticGrouping);
+    splitPlan.annotatedPreview.annotations[0].semanticGrouping = structuredClone(plan.nodes[0].semanticGrouping);
+    for (const value of [structure, assembly]) {
+      value.prefabs[0].nodes[0].semanticGrouping = structuredClone(plan.nodes[0].semanticGrouping);
+      const instances = value.sceneInstances ?? value.scene.prefabInstances;
+      instances[0].semanticGrouping = structuredClone(plan.nodes[0].semanticGrouping);
+    }
+    writeJson(join(repo, context.layout.planPath), plan);
+    writeJson(join(repo, splitPlanRef.path), splitPlan);
+    writeJson(join(repo, prefabStructureRef.path), structure);
+    writeJson(join(repo, prefabAssemblyRef.path), assembly);
+    assert.match(validateUiLayoutPackage(context.pkg, context.work, repo).join('\n'), /approvalScope.*semanticGrouping/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('同尺寸其他对象不能冒充正式装配，直接完成迁移也重新读取上游', () => {
+  const repo = temporaryRepo();
+  try {
+    const fixture = seedControlFixture(repo);
+    const report = structuredClone(fixture.layout.report);
+    report.measurements[0].objectPath = 'Canvas/AnotherRoot';
+    writeJson(join(repo, fixture.layout.reportPath), report);
+    assert.ok(inspect(fixture.args).blockers.some((item) => item.code === 'UI_LAYOUT_EVIDENCE_INVALID'));
+    writeJson(join(repo, fixture.layout.reportPath), fixture.layout.report);
+    const cleanInspection = inspect(fixture.args);
+    const splitRef = fixture.layout.hierarchy.splitPlanRef;
+    rmSync(join(repo, splitRef.path));
+    assert.throws(() => transitionWorkItem(cleanInspection, 'PASSED'), /布局|split-plan/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('直接迁移重读当前 Evidence Manifest，旧候选与旧测量引用不能沿用', () => {
+  const repo = temporaryRepo();
+  try {
+    const fixture = seedControlFixture(repo);
+    const cleanInspection = inspect(fixture.args);
+    const changedCandidate = structuredClone(fixture.evidence);
+    changedCandidate.candidateId = 'candidate-next';
+    writeJson(fixture.evidencePath, changedCandidate);
+    assert.throws(() => transitionWorkItem(cleanInspection, 'PASSED'), /布局交付门禁失败.*candidateId/);
+
+    const changedReference = structuredClone(fixture.evidence);
+    changedReference.uiLayoutMeasurementRef = { path: `${fixture.work.evidenceRoot}/new-missing-report.json` };
+    writeJson(fixture.evidencePath, changedReference);
+    assert.throws(() => transitionWorkItem(cleanInspection, 'PASSED'), /布局交付门禁失败.*new-missing-report/);
+
+    const wrongOwner = { ...fixture.evidence, workItemId: 'WI-OTHER' };
+    writeJson(fixture.evidencePath, wrongOwner);
+    assert.throws(() => transitionWorkItem(cleanInspection, 'PASSED'), /布局交付门禁失败.*身份不一致/);
+
+    for (const changedVerdict of [
+      { ...fixture.evidence, verdict: 'FAIL' },
+      { ...fixture.evidence, gateResults: { ...fixture.evidence.gateResults, F3: { status: 'FAIL' } } },
+    ]) {
+      writeJson(fixture.evidencePath, changedVerdict);
+      assert.throws(() => transitionWorkItem(cleanInspection, 'PASSED'), /布局交付门禁失败.*verdict.*F3/);
+    }
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

@@ -14,6 +14,8 @@
     "id": {"$ref": "common.schema.json#/$defs/taskId"},
     "projectId": {"$ref": "common.schema.json#/$defs/taskId"},
     "sceneId": {"$ref": "common.schema.json#/$defs/taskId"},
+    "stateId": {"type": "string", "minLength": 1, "description": "当前拆解状态；省略表示多状态，按 items[].stateVariants 筛选。"},
+    "displayLayerId": {"$ref": "common.schema.json#/$defs/taskId", "description": "独立显示层标识，跨布局、结构和装配工件保持一致。"},
     "sourceRevision": {"type": "string", "minLength": 1},
     "projectStateVersion": {"type": "string", "minLength": 1},
     "candidateSnapshot": {"$ref": "common.schema.json#/$defs/candidateSnapshot"},

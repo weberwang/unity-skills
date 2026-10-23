@@ -35,3 +35,11 @@ export function readCurrentImplementationPackage(inspection) {
   const local = relative(resolve(inspection.repo), resolve(inspection.repo, packagePath)).split(sep).join('/');
   return readProjectJson(inspection.repo, { path: local }, 'Implementation Package').value;
 }
+
+/** 直接迁移重新读取当前证据清单，避免沿用 inspect 时的旧候选和旧测量引用。 */
+export function readCurrentEvidenceManifest(inspection) {
+  const evidencePath = inspection.evidencePath ?? inspection.work.evidenceManifestPath ?? inspection.work.evidenceManifest;
+  if (!evidencePath) return inspection.evidence;
+  const local = relative(resolve(inspection.repo), resolve(inspection.repo, evidencePath)).split(sep).join('/');
+  return readProjectJson(inspection.repo, { path: local }, 'Evidence Manifest').value;
+}

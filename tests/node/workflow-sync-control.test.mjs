@@ -130,6 +130,7 @@ function makeResponsiveEvidence(repo = null) {
 /** 创建完整 V4 Evidence Manifest。 */
 function makeVisibleEvidence(work, overrides = {}, repo = null) {
   const layout = repo ? seedUiLayoutFixture(repo, {
+    projectId: work.projectId,
     sceneId: work.scene?.sceneId ?? work.displayLayer.hostSceneId,
     ...(work.displayLayer ? { displayLayerId: work.displayLayer.displayLayerId } : {}),
     uiSystem: work.responsiveContract.uiSystem === 'UI Toolkit' ? 'UI_TOOLKIT' : 'UGUI',
@@ -162,6 +163,7 @@ function makeVisiblePackage(work, repo, overrides = {}) {
   const contractPath = join(repo, 'responsive-contract.json');
   writeJson(contractPath, work.responsiveContract);
   const layout = seedUiLayoutFixture(repo, {
+    projectId: work.projectId,
     sceneId: work.scene?.sceneId ?? work.displayLayer.hostSceneId,
     ...(work.displayLayer ? { displayLayerId: work.displayLayer.displayLayerId } : {}),
     uiSystem: work.responsiveContract.uiSystem === 'UI Toolkit' ? 'UI_TOOLKIT' : 'UGUI',
@@ -341,9 +343,11 @@ test('当前 PASS 证据不能替代人工确认，run/check 阻断后确认齐�
     seedVisualBaseline(repo, work);
     const workPath = join(repo, 'work.json');
     const evidencePath = join(repo, 'evidence.json');
+    const packagePath = join(repo, 'implementation-package.json');
     writeJson(workPath, work);
     writeJson(evidencePath, makeVisibleEvidence(work, {}, repo));
-    const args = { repo, 'work-item': workPath, evidence: evidencePath };
+    writeJson(packagePath, makeVisiblePackage(work, repo));
+    const args = { repo, 'work-item': workPath, evidence: evidencePath, 'implementation-package': packagePath };
 
     const checked = check(args);
     assert.equal(checked.status, 'BLOCKED');
@@ -633,7 +637,8 @@ test('直接完成迁移也重读美术材料，不能用伪造 inspect 的 PASS
     work.stageReviews = makeStageReviews(work, ['V1', 'V2', 'V3', 'V4']);
     seedVisualBaseline(repo, work);
     const evidence = makeVisibleEvidence(work, {}, repo);
-    const inspection = { repo, work, evidence, pkg: null, blockers: [] };
+    const pkg = makeVisiblePackage(work, repo);
+    const inspection = { repo, work, evidence, pkg, blockers: [] };
     assert.equal(transitionWorkItem(inspection, 'COMPLETE').globalState, 'COMPLETE');
     delete evidence.artExperienceAcceptanceRef;
     assert.throws(() => transitionWorkItem(inspection, 'COMPLETE'), /artExperienceAcceptanceRef/);
