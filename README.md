@@ -44,7 +44,7 @@ npx -y github:weberwang/unity-skills
 npx -y github:weberwang/unity-skills D:\Projects\my-game
 ```
 
-安装器把十七个 Skills 复制到 `.agents/skills/`，默认拒绝覆盖同名目录；明确替换时使用 `--force`。已克隆仓库时可运行：
+安装器把全部 Unity Skills 安装到 `.agents/skills/`，默认完整替换安装清单内的同名目录，包括本地修改和过时文件；清单外的 Skills 保留。重复执行同一条命令即可更新。已克隆仓库时可运行：
 
 ```powershell
 node .\scripts\install-project-skills.mjs D:\Projects\my-game

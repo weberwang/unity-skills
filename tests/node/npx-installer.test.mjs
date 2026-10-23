@@ -177,6 +177,8 @@ test("npx 安装器帮助使用短命令", () => {
   const result = runInstaller(["--help"]);
   assert.equal(result.status, 0);
   assert.match(result.stdout, /npx -y github:weberwang\/unity-skills/);
+  assert.match(result.stdout, /默认覆盖/);
+  assert.doesNotMatch(result.stdout, /--force/);
 });
 
 test("npx 安装器拒绝文件系统根目录", () => {
@@ -185,7 +187,7 @@ test("npx 安装器拒绝文件系统根目录", () => {
   assert.match(result.stderr, /不能是文件系统根目录/);
 });
 
-test("npx 安装器复制当前包并要求 force", () => withTempDirectory((root) => {
+test("npx 安装器首次安装与默认覆盖均完整复制当前包", () => withTempDirectory((root) => {
   const first = runInstaller([root]);
   assert.equal(first.status, 0, first.stderr);
   const targetRoot = resolve(root, ".agents/skills");
@@ -199,10 +201,7 @@ test("npx 安装器复制当前包并要求 force", () => withTempDirectory((roo
   }
   const modified = resolve(targetRoot, "unity-game-audio/SKILL.md");
   writeFileSync(modified, "本地修改", "utf8");
-  const refused = runInstaller([root]);
-  assert.equal(refused.status, 1);
-  assert.equal(readFileSync(modified, "utf8"), "本地修改");
-  const replaced = runInstaller([root, "--force"]);
+  const replaced = runInstaller([root]);
   assert.equal(replaced.status, 0, replaced.stderr);
   assert.deepEqual(readFileSync(modified), readFileSync(resolve(ROOT, "unity-game-audio/SKILL.md")));
 }));
@@ -249,7 +248,7 @@ test("npx 安装器拒绝符号链接项目根目录", () => withTempDirectory((
   } catch {
     return;
   }
-  const result = runInstaller([linked, "--force"]);
+  const result = runInstaller([linked]);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /不能是符号链接或目录联接/);
   assert.equal(existsSync(resolve(actual, ".agents")), false);

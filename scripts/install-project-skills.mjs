@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { cpSync, existsSync, lstatSync, mkdirSync, rmSync, statSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -29,20 +29,17 @@ const SKILL_NAMES = Object.freeze([
 ]);
 
 /**
- * 解析目标目录和显式覆盖授权。
+ * 解析目标目录与帮助参数；安装默认替换清单内的同名 Skill。
  *
- * @returns {{ help: boolean, force: boolean, requestedPath: string | undefined }} 安装参数。
+ * @returns {{ help: boolean, requestedPath: string | undefined }} 安装参数。
  */
 function parseArguments() {
   let help = false;
-  let force = false;
   let requestedPath;
 
   for (const argument of process.argv.slice(2)) {
     if (argument === "--help" || argument === "-h") {
       help = true;
-    } else if (argument === "--force") {
-      force = true;
     } else if (argument.startsWith("-")) {
       throw new Error("未知参数：" + argument);
     } else if (requestedPath === undefined) {
@@ -52,7 +49,7 @@ function parseArguments() {
     }
   }
 
-  return { help, force, requestedPath };
+  return { help, requestedPath };
 }
 
 /**
@@ -82,8 +79,35 @@ function parseTargetDirectory(requestedPath) {
  * @param {string} label 错误信息中的路径标签。
  */
 function rejectSymbolicLink(path, label) {
-  if (existsSync(path) && lstatSync(path).isSymbolicLink()) {
+  let entry;
+  try {
+    entry = lstatSync(path);
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  // 失效链接同样不能作为安装目标，不能用 existsSync 的结果跳过链接检查。
+  if (entry.isSymbolicLink()) {
     throw new Error(label + "不能是符号链接或目录联接：" + path);
+  }
+}
+
+/** 判断已规范化的绝对路径是否位于指定目录内，包含目录自身。 */
+function isWithinDirectory(directory, candidate) {
+  const local = relative(directory, candidate);
+  return local === "" || (local !== ".." && !local.startsWith(".." + sep) && !isAbsolute(local));
+}
+
+/** 在删除前检查全部安装目标，避免安装源被替换或复制进自身目录。 */
+function validateInstallTargets(projectRoot, targets, sources) {
+  for (const { target } of targets) {
+    if (target === projectRoot || !isWithinDirectory(projectRoot, target)) {
+      throw new Error("Skill 目标必须位于目标项目内：" + target);
+    }
+    rejectSymbolicLink(target, "Skill 目标");
+    if (sources.some(({ source }) => isWithinDirectory(source, target) || isWithinDirectory(target, source))) {
+      throw new Error("Skill 安装源与目标不能重叠：" + target);
+    }
   }
 }
 
@@ -109,10 +133,9 @@ function validateSources() {
  * 把当前 npx 包内的全部 Skills 复制到目标项目。
  *
  * @param {string} projectRoot 已验证的项目根目录。
- * @param {boolean} force 是否显式替换同名 Skill。
  * @returns {string[]} 安装后的绝对路径。
  */
-function installSkills(projectRoot, force) {
+function installSkills(projectRoot) {
   const sources = validateSources();
   const agentsRoot = resolve(projectRoot, ".agents");
   const targetRoot = resolve(agentsRoot, "skills");
@@ -120,20 +143,12 @@ function installSkills(projectRoot, force) {
 
   rejectSymbolicLink(agentsRoot, ".agents 目录");
   rejectSymbolicLink(targetRoot, "Skills 目录");
-  for (const { target } of targets) {
-    rejectSymbolicLink(target, "Skill 目标");
-  }
-
-  const existing = targets.filter(({ target }) => existsSync(target));
-  if (existing.length > 0 && !force) {
-    const names = existing.map(({ name }) => name).join("、");
-    throw new Error("拒绝覆盖已有 Skills：" + names + "。如确需替换，请传入 --force。");
-  }
+  validateInstallTargets(projectRoot, targets, sources);
 
   mkdirSync(targetRoot, { recursive: true });
   for (const { source, target } of targets) {
     if (existsSync(target)) {
-      // --force 是用户显式授权；删除范围只限固定白名单中的同名 Skill 目录。
+      // 完整替换清单内的同名目录，清除过时文件；删除范围已在写入前统一校验。
       rmSync(target, { recursive: true, force: true });
     }
     cpSync(source, target, { recursive: true, errorOnExist: true });
@@ -146,14 +161,15 @@ function installSkills(projectRoot, force) {
  * 执行安装并输出可审计的目标路径。
  */
 function main() {
-  const { help, force, requestedPath } = parseArguments();
+  const { help, requestedPath } = parseArguments();
   if (help) {
-    console.log("用法：npx -y github:weberwang/unity-skills [目标项目目录] [--force]");
+    console.log("用法：npx -y github:weberwang/unity-skills [目标项目目录]");
+    console.log("默认覆盖 .agents/skills/ 中安装清单内的同名 Skill 目录。");
     return;
   }
 
   const projectRoot = parseTargetDirectory(requestedPath);
-  const installed = installSkills(projectRoot, force);
+  const installed = installSkills(projectRoot);
   console.log("已安装 Unity 游戏协作 Skills：");
   for (const path of installed) {
     console.log(path);
